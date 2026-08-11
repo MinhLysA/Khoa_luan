@@ -1,0 +1,5 @@
+rl_inventory/data/raw/*.csv
+data/raw/*.csv
+*.csv.gz
+checkpoints/*.pt
+logs/

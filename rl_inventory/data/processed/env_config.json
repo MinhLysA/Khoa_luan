@@ -1,0 +1,28 @@
+{
+  "n_warehouses": 2,
+  "n_skus": 30,
+  "episode_length": 112,
+  "lookback": 7,
+  "lead_time_min": 1,
+  "lead_time_max": 3,
+  "max_inventory": 500,
+  "initial_inventory": 100,
+  "holding_cost": 1.0,
+  "stockout_cost": 10.0,
+  "ordering_cost": 50.0,
+  "overflow_penalty": 5.0,
+  "order_levels": [
+    0,
+    10,
+    20,
+    30,
+    40,
+    50
+  ],
+  "stores": [
+    "CA_1",
+    "TX_1"
+  ],
+  "n_days": 1941,
+  "seed": 42
+}
