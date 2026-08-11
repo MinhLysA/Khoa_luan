@@ -1,40 +1,40 @@
 """
 agents/dqn_agent.py
 ====================
-Double DQN Agent for Multi-Warehouse Inventory Management.
+Tác tử Double DQN cho bài toán Quản lý Tồn kho Đa Kho.
 
-Architecture Overview:
------------------------
-  Input (obs_dim) -> Linear(256) -> ReLU -> Linear(256) -> ReLU
-                 -> Linear(n_pairs × n_action_levels)
-                 -> Reshape(n_pairs, n_action_levels)
-                 -> argmax per pair -> actions (n_pairs,)
+Tổng quan kiến trúc:
+--------------------
+  Đầu vào (obs_dim) -> Linear(256) -> ReLU -> Linear(256) -> ReLU
+                    -> Linear(n_pairs × n_action_levels)
+                    -> Reshape(n_pairs, n_action_levels)
+                    -> argmax trên từng cặp -> hành động (n_pairs,)
 
-Key Algorithmic Components (thesis-citations):
------------------------------------------------
+Các thành phần thuật toán chính (Trích dẫn cho khóa luận):
+----------------------------------------------------------
 1. Double DQN (van Hasselt et al., 2016 -- DDQN):
-   Standard DQN overestimates action values because the same network is
-   used for both action selection and value evaluation (maximization bias).
-   Double DQN decouples these:
-     - Online network  theta  : selects the best action (argmax)
-     - Target network  theta⁻ : evaluates the value of that action
-   Target: y = r + gamma * Q(s', argmax_a Q(s',a; theta); theta⁻)
-   This is CITATION-WORTHY in thesis: van Hasselt, H., Guez, A., & Silver, D.
-   (2016). Deep Reinforcement Learning with Double Q-learning. AAAI-2016.
+   DQN tiêu chuẩn có xu hướng đánh giá quá cao giá trị hành động (overestimation bias)
+   do cùng một mạng neural vừa dùng để chọn hành động vừa dùng để đánh giá giá trị.
+   Double DQN tách biệt hai nhiệm vụ này:
+     - Mạng trực tuyến (Online network theta): chọn hành động tốt nhất (argmax)
+     - Mạng mục tiêu (Target network theta⁻): đánh giá giá trị của hành động đó
+   Mục tiêu: y = r + gamma * Q(s', argmax_a Q(s',a; theta); theta⁻)
+   Trích dẫn khoa học: van Hasselt, H., Guez, A., & Silver, D. (2016).
+   Deep Reinforcement Learning with Double Q-learning. AAAI-2016.
 
 2. Experience Replay (Mnih et al., 2015 -- DQN Nature):
-   Random mini-batch sampling from replay buffer to break temporal correlations.
+   Lấy mẫu mini-batch ngẫu nhiên từ bộ đệm phát lại để phá vỡ sự tương quan theo thời gian.
 
-3. Target Network with Soft Update (Polyak averaging):
-   theta⁻ ← tau*theta + (1-tau)*theta⁻   (tau = 0.005 default)
-   Stabilizes training by providing a slowly-changing regression target.
+3. Target Network với Soft Update (Trung bình Polyak):
+   theta⁻ ← tau*theta + (1-tau)*theta⁻   (mặc định tau = 0.005)
+   Ổn định quá trình huấn luyện bằng cách cung cấp mục tiêu hồi quy thay đổi chậm.
 
-4. eps-Greedy Exploration with Exponential Decay:
+4. Khám phá eps-Greedy giảm theo hàm mũ:
    eps_t = eps_min + (eps_start - eps_min) × exp(-t / eps_decay)
 
-GPU Support:
-   Automatically uses CUDA if available (RTX 3050 4GB VRAM compatible
-   with batch_size=128, hidden_dim=256).
+Hỗ trợ GPU:
+   Tự động sử dụng CUDA nếu sẵn có (Tương thích với RTX 3050 4GB VRAM
+   với batch_size=128, hidden_dim=256).
 """
 
 from __future__ import annotations
@@ -57,28 +57,28 @@ from agents.replay_buffer import ReplayBuffer, PrioritizedReplayBuffer
 
 class QNetwork(nn.Module):
     """
-    Multi-layer perceptron Q-Network for factorized inventory control.
+    Mạng Perceptron Đa Lớp (MLP) Q-Network cho điều khiển tồn kho phân rã.
 
-    For each warehouse-SKU pair, outputs Q-values for all n_action_levels
-    discrete order quantities. The network shares parameters across all pairs
-    (parameter sharing) to improve generalization and sample efficiency.
+    Với mỗi cặp kho - SKU, xuất ra các giá trị Q cho tất cả n_action_levels
+    mức số lượng đặt hàng rời rạc. Mạng chia sẻ tham số trên tất cả các cặp
+    (parameter sharing) để tăng khả năng tổng quát hóa và hiệu quả lấy mẫu.
 
-    Architecture:
+    Kiến trúc:
         Linear(state_dim, hidden_dim) -> LayerNorm -> ReLU
         -> Linear(hidden_dim, hidden_dim) -> LayerNorm -> ReLU
         -> Linear(hidden_dim, n_pairs × n_action_levels)
         -> Reshape -> (n_pairs, n_action_levels)
 
-    Parameters
-    ----------
+    Tham số
+    ------
     state_dim : int
-        Input observation dimension.
+        Kích thước vectơ quan sát đầu vào.
     n_pairs : int
-        Number of warehouse-SKU pairs.
+        Số lượng cặp kho - SKU.
     n_action_levels : int
-        Number of discrete order quantities per pair.
+        Số mức hành động rời rạc cho mỗi cặp.
     hidden_dim : int
-        Width of hidden layers. Default 256 (fits RTX 3050 4GB).
+        Độ rộng của các lớp ẩn. Mặc định 256 (phù hợp với RTX 3050 4GB).
     """
 
     def __init__(
@@ -103,11 +103,11 @@ class QNetwork(nn.Module):
             nn.Linear(hidden_dim, out_dim),
         )
 
-        # Xavier initialization for stable gradients
+        # Khởi tạo trọng số Xavier cho đạo hàm ổn định
         self._init_weights()
 
     def _init_weights(self):
-        """Xavier uniform initialization for all linear layers."""
+        """Khởi tạo Xavier uniform cho tất cả các lớp tuyến tính."""
         for m in self.modules():
             if isinstance(m, nn.Linear):
                 nn.init.xavier_uniform_(m.weight)
@@ -115,14 +115,14 @@ class QNetwork(nn.Module):
 
     def forward(self, state: torch.Tensor) -> torch.Tensor:
         """
-        Forward pass.
+        Lan truyền tiến (Forward pass).
 
-        Parameters
-        ----------
+        Tham số
+        ------
         state : torch.Tensor, shape (batch, state_dim)
 
-        Returns
-        -------
+        Trả về
+        -----
         q_values : torch.Tensor, shape (batch, n_pairs, n_action_levels)
         """
         x = self.net(state)                                    # (B, n_pairs * n_action_levels)
@@ -135,51 +135,49 @@ class QNetwork(nn.Module):
 
 class DoubleDQNAgent:
     """
-    Double DQN Agent for Multi-Warehouse Inventory Optimization.
+    Tác tử Double DQN cho Tối ưu hóa Quản lý Tồn kho Đa Kho.
 
-    Implements:
-    - Double DQN loss (van Hasselt et al., 2016) -- see module docstring
-    - eps-greedy exploration with exponential decay
-    - Soft target network update (Polyak averaging)
-    - TensorBoard logging (reward, loss, epsilon per episode)
+    Triển khai:
+    - Hàm tổn thất Double DQN (van Hasselt et al., 2016)
+    - Khám phá eps-greedy với giảm hàm mũ
+    - Cập nhật mềm mạng mục tiêu (Trung bình Polyak)
+    - Ghi log TensorBoard (reward, loss, epsilon theo từng tập)
 
-    Parameters
-    ----------
+    Tham số
+    ------
     state_dim : int
-        Observation vector dimension.
+        Chiều của vectơ quan sát.
     n_pairs : int
-        Number of warehouse-SKU pairs (= n_warehouses × n_skus).
+        Số lượng cặp kho - SKU (= n_warehouses × n_skus).
     n_action_levels : int
-        Discrete action levels per pair. Default 6.
+        Các mức hành động rời rạc cho mỗi cặp. Mặc định 6.
     hidden_dim : int
-        Hidden layer size. Default 256.
+        Kích thước lớp ẩn. Mặc định 256.
     lr : float
-        Adam learning rate. Default 3e-4.
+        Tốc độ học Adam. Mặc định 3e-4.
     gamma : float
-        Discount factor. Default 0.99.
+        Hệ số chiết khấu. Mặc định 0.99.
     tau : float
-        Soft update coefficient. Default 5e-3.
+        Hệ số cập nhật mềm. Mặc định 5e-3.
     buffer_capacity : int
-        Replay buffer size. Default 100,000.
+        Dung lượng bộ đệm phát lại. Mặc định 100,000.
     batch_size : int
-        Training batch size. Default 128 (RTX 3050 optimized).
+        Kích thước lô huấn luyện. Mặc định 128 (tối ưu cho RTX 3050).
     eps_start : float
-        Initial exploration rate. Default 1.0.
+        Tỷ lệ khám phá ban đầu. Mặc định 1.0.
     eps_min : float
-        Minimum exploration rate. Default 0.05.
+        Tỷ lệ khám phá tối thiểu. Mặc định 0.05.
     eps_decay : int
-        Decay rate (steps). Default 50,000.
-    target_update_freq : int
-        Hard target update frequency (steps). Used if tau=None. Default 1000.
+        Tốc độ suy giảm (theo bước). Mặc định 50,000.
     use_per : bool
-        Use Prioritized Experience Replay. Default False.
+        Có sử dụng Prioritized Experience Replay hay không. Mặc định False.
     log_dir : str
-        TensorBoard log directory. Default 'runs/'.
+        Thư mục ghi log TensorBoard. Mặc định 'runs/'.
     device : str
-        'cuda' or 'cpu'. Auto-detected if 'auto'.
+        'cuda' hoặc 'cpu'. Tự động phát hiện nếu là 'auto'.
 
-    Example
-    -------
+    Ví dụ
+    -----
     >>> agent = DoubleDQNAgent(state_dim=267, n_pairs=60)
     >>> action = agent.select_action(obs)
     >>> agent.store_transition(obs, action, reward, next_obs, done)
@@ -204,12 +202,12 @@ class DoubleDQNAgent:
         log_dir: str = "runs/",
         device: str = "auto",
     ):
-        # Device setup -- RTX 3050 auto-detected
+        # Thiết lập thiết bị tính toán -- Tự động phát hiện GPU RTX 3050
         if device == "auto":
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         else:
             self.device = torch.device(device)
-        print(f"[DoubleDQNAgent] Device: {self.device}")
+        print(f"[DoubleDQNAgent] Thiết bị tính toán: {self.device}")
 
         self.state_dim       = state_dim
         self.n_pairs         = n_pairs
@@ -222,7 +220,7 @@ class DoubleDQNAgent:
         self.eps_decay       = eps_decay
         self.use_per         = use_per
 
-        # ---- Networks -------------------------------------------------------
+        # ---- Các Mạng Neural ------------------------------------------------
         self.online_net = QNetwork(
             state_dim, n_pairs, n_action_levels, hidden_dim
         ).to(self.device)
@@ -231,9 +229,9 @@ class DoubleDQNAgent:
             state_dim, n_pairs, n_action_levels, hidden_dim
         ).to(self.device)
 
-        # Initialize target net with same weights as online net
+        # Khởi tạo mạng mục tiêu với cùng trọng số như mạng trực tuyến
         self.target_net.load_state_dict(self.online_net.state_dict())
-        self.target_net.eval()  # Target net is never trained directly
+        self.target_net.eval()  # Mạng mục tiêu không được huấn luyện trực tiếp
 
         # ---- Optimizer & LR Scheduler ----------------------------------------
         self.optimizer = optim.Adam(self.online_net.parameters(), lr=lr)
@@ -241,7 +239,7 @@ class DoubleDQNAgent:
             self.optimizer, step_size=20_000, gamma=0.5
         )
 
-        # ---- Replay Buffer ---------------------------------------------------
+        # ---- Bộ đệm phát lại (Replay Buffer) --------------------------------
         if use_per:
             self.replay_buffer = PrioritizedReplayBuffer(
                 capacity=buffer_capacity,
@@ -257,7 +255,7 @@ class DoubleDQNAgent:
                 device=str(self.device),
             )
 
-        # ---- Counters & Logging ----------------------------------------------
+        # ---- Đếm & Ghi log ---------------------------------------------------
         self.global_step     = 0
         self.episode_count   = 0
         self.total_loss      = 0.0
@@ -267,13 +265,13 @@ class DoubleDQNAgent:
         self.writer = SummaryWriter(log_dir=log_dir)
 
     # ------------------------------------------------------------------
-    # Exploration rate
+    # Tỷ lệ khám phá
     # ------------------------------------------------------------------
 
     @property
     def epsilon(self) -> float:
         """
-        Current epsilon (exploration rate), exponentially decayed.
+        Tỷ lệ epsilon khám phá hiện tại, giảm theo hàm mũ.
 
         eps_t = eps_min + (eps_start - eps_min) × exp(-t / decay)
         """
@@ -282,7 +280,7 @@ class DoubleDQNAgent:
         )
 
     # ------------------------------------------------------------------
-    # Action Selection
+    # Lựa chọn hành động
     # ------------------------------------------------------------------
 
     def select_action(
@@ -291,28 +289,28 @@ class DoubleDQNAgent:
         greedy: bool = False,
     ) -> np.ndarray:
         """
-        eps-greedy action selection.
+        Lựa chọn hành động theo chiến lược eps-greedy.
 
-        For each of the n_pairs warehouse-SKU pairs, independently selects
-        an action index in [0, n_action_levels - 1].
+        Đối với mỗi cặp kho - SKU trong n_pairs cặp, chọn độc lập
+        một chỉ số hành động trong [0, n_action_levels - 1].
 
-        Parameters
-        ----------
+        Tham số
+        ------
         state : np.ndarray, shape (state_dim,)
         greedy : bool
-            If True, always select greedy action (used during evaluation).
+            Nếu True, luôn chọn hành động tham lam (dùng khi đánh giá).
 
-        Returns
-        -------
+        Trả về
+        -----
         actions : np.ndarray, shape (n_pairs,), dtype int
         """
         eps = 0.0 if greedy else self.epsilon
 
         if np.random.rand() < eps:
-            # Explore: random action per pair
+            # Khám phá: chọn hành động ngẫu nhiên cho từng cặp
             return np.random.randint(0, self.n_action_levels, size=self.n_pairs)
         else:
-            # Exploit: argmax Q per pair
+            # Khai thác: chọn argmax Q cho từng cặp
             with torch.no_grad():
                 s = torch.FloatTensor(state).unsqueeze(0).to(self.device)
                 q = self.online_net(s)          # (1, n_pairs, n_levels)
@@ -320,7 +318,7 @@ class DoubleDQNAgent:
                 return actions.squeeze(0).cpu().numpy().astype(np.int32)
 
     # ------------------------------------------------------------------
-    # Store Transition
+    # Lưu chuyển trạng thái
     # ------------------------------------------------------------------
 
     def store_transition(
@@ -331,35 +329,34 @@ class DoubleDQNAgent:
         next_state: np.ndarray,
         done: bool,
     ) -> None:
-        """Push one transition into the replay buffer."""
+        """Thêm một bước chuyển trạng thái vào bộ đệm phát lại."""
         self.replay_buffer.push(state, action, reward, next_state, done)
         self.global_step += 1
 
     # ------------------------------------------------------------------
-    # Learning Step (Double DQN Loss)
+    # Bước cập nhật trọng số (Double DQN Loss)
     # ------------------------------------------------------------------
 
     def update(self) -> Optional[float]:
         """
-        Sample a mini-batch and perform one gradient step.
+        Lấy mẫu một mini-batch và thực hiện một bước tối ưu lan truyền ngược.
 
-        Double DQN Loss (van Hasselt et al., 2016) -- CITATION:
-        --------------------------------------------------------
-        Standard DQN:  y = r + gamma * max_a Q(s', a; theta⁻)
-        Double DQN:    y = r + gamma * Q(s', argmax_a Q(s', a; theta); theta⁻)
+        Hàm tổn thất Double DQN (van Hasselt et al., 2016) -- TRÍCH DẪN:
+        -----------------------------------------------------------------
+        DQN tiêu chuẩn:  y = r + gamma * max_a Q(s', a; theta⁻)
+        Double DQN:      y = r + gamma * Q(s', argmax_a Q(s', a; theta); theta⁻)
 
-        By using the online net theta for action selection and the target net theta⁻
-        for value evaluation, Double DQN avoids the maximization bias that
-        causes DQN to overestimate action values.
+        Bằng cách sử dụng mạng trực tuyến theta để chọn hành động và mạng mục tiêu theta⁻
+        để đánh giá giá trị, Double DQN tránh được hiện tượng đánh giá giá trị quá cao.
 
-        Returns
-        -------
-        loss : float or None (None if buffer not yet ready)
+        Trả về
+        -----
+        loss : float hoặc None (None nếu bộ đệm chưa đủ mẫu)
         """
         if len(self.replay_buffer) < self.batch_size:
             return None
 
-        # --- Sample from buffer -------------------------------------------
+        # --- Lấy mẫu từ bộ đệm --------------------------------------------
         if self.use_per:
             beta = min(1.0, 0.4 + self.global_step * (1.0 - 0.4) / 200_000)
             (states, actions, rewards, next_states, dones), is_weights, indices = \
@@ -371,60 +368,60 @@ class DoubleDQNAgent:
             is_weights = None
             indices = None
 
-        # Convert to tensors
+        # Chuyển đổi thành Tensors
         states_t      = torch.FloatTensor(states).to(self.device)
         actions_t     = torch.LongTensor(actions).to(self.device)   # (B, n_pairs)
         rewards_t     = torch.FloatTensor(rewards).to(self.device)  # (B, 1)
         next_states_t = torch.FloatTensor(next_states).to(self.device)
         dones_t       = torch.FloatTensor(dones).to(self.device)    # (B, 1)
 
-        # --- Compute current Q values -------------------------------------
+        # --- Tính giá trị Q hiện tại --------------------------------------
         q_online = self.online_net(states_t)       # (B, n_pairs, n_levels)
 
-        # Gather Q-values for the actions taken
+        # Lấy giá trị Q ứng với các hành động đã thực hiện
         # actions_t: (B, n_pairs) -> unsqueeze -> (B, n_pairs, 1)
         current_q = q_online.gather(
             dim=2,
             index=actions_t.unsqueeze(2)
         ).squeeze(2)                               # (B, n_pairs)
 
-        # --- Compute Double DQN target ------------------------------------
+        # --- Tính mục tiêu Double DQN (Double DQN Target) -----------------
         with torch.no_grad():
-            # ACTION SELECTION: use online net
+            # LỰA CHỌN HÀNH ĐỘNG: sử dụng mạng trực tuyến (online net)
             next_q_online = self.online_net(next_states_t)        # (B, n_pairs, n_levels)
             best_actions  = next_q_online.argmax(dim=2, keepdim=True)  # (B, n_pairs, 1)
 
-            # VALUE EVALUATION: use target net
+            # ĐÁNH GIÁ GIÁ TRỊ: sử dụng mạng mục tiêu (target net)
             next_q_target = self.target_net(next_states_t)        # (B, n_pairs, n_levels)
             next_q_values = next_q_target.gather(
                 dim=2, index=best_actions
             ).squeeze(2)                                          # (B, n_pairs)
 
             # y = r + gamma * Q_target(s', a*)  ×  (1 - done)
-            # rewards_t: (B, 1) broadcast to (B, n_pairs)
+            # rewards_t: (B, 1) broadcast tới (B, n_pairs)
             target_q = rewards_t + self.gamma * next_q_values * (1.0 - dones_t)
 
-        # --- Compute loss -------------------------------------------------
+        # --- Tính hàm tổn thất --------------------------------------------
         td_errors = current_q - target_q                           # (B, n_pairs)
 
         if is_weights is not None:
-            # PER: weight loss by importance-sampling weights
+            # PER: nhân trọng số tầm quan trọng (importance-sampling weights)
             loss = (is_weights.unsqueeze(1) * td_errors.pow(2)).mean()
-            # Update priorities in PER buffer
+            # Cập nhật độ ưu tiên trong bộ đệm PER
             per_errors = td_errors.detach().abs().mean(dim=1).cpu().numpy()
             self.replay_buffer.update_priorities(indices, per_errors)
         else:
             loss = F.mse_loss(current_q, target_q)
 
-        # --- Backpropagation ----------------------------------------------
+        # --- Lan truyền ngược ---------------------------------------------
         self.optimizer.zero_grad()
         loss.backward()
-        # Gradient clipping for training stability
+        # Cắt xới đạo hàm (Gradient clipping) để ổn định huấn luyện
         nn.utils.clip_grad_norm_(self.online_net.parameters(), max_norm=10.0)
         self.optimizer.step()
         self.scheduler.step()
 
-        # --- Soft update target network (Polyak averaging) ----------------
+        # --- Cập nhật mềm mạng mục tiêu (Polyak averaging) ----------------
         # theta⁻ ← tau*theta + (1-tau)*theta⁻
         self._soft_update_target()
 
@@ -432,7 +429,7 @@ class DoubleDQNAgent:
         self.total_loss += loss_val
         self.update_count += 1
 
-        # TensorBoard logging (per step)
+        # Ghi log TensorBoard (cho mỗi bước)
         if self.update_count % 100 == 0:
             self.writer.add_scalar("train/loss", loss_val, self.global_step)
             self.writer.add_scalar("train/epsilon", self.epsilon, self.global_step)
@@ -445,16 +442,15 @@ class DoubleDQNAgent:
         return loss_val
 
     # ------------------------------------------------------------------
-    # Target Network Update
+    # Cập nhật Mạng Mục tiêu
     # ------------------------------------------------------------------
 
     def _soft_update_target(self) -> None:
         """
-        Soft (Polyak) update: theta⁻ ← tau*theta + (1-tau)*theta⁻
+        Cập nhật mềm (Polyak): theta⁻ ← tau*theta + (1-tau)*theta⁻
 
-        This gradually blends online weights into target weights,
-        providing a smoother and more stable regression target than
-        hard periodic updates.
+        Dần dần cập nhật trọng số của mạng mục tiêu theo mạng trực tuyến,
+        giúp mục tiêu hồi quy mượt mà và ổn định hơn so với cập nhật cứng định kỳ.
         """
         for param, target_param in zip(
             self.online_net.parameters(),
@@ -465,11 +461,11 @@ class DoubleDQNAgent:
             )
 
     def hard_update_target(self) -> None:
-        """Full copy of online weights to target (alternative to soft update)."""
+        """Sao chép toàn bộ trọng số mạng trực tuyến sang mạng mục tiêu."""
         self.target_net.load_state_dict(self.online_net.state_dict())
 
     # ------------------------------------------------------------------
-    # Episode Logging
+    # Ghi log Tập huấn luyện
     # ------------------------------------------------------------------
 
     def log_episode(
@@ -480,14 +476,14 @@ class DoubleDQNAgent:
         stockout_rate: float,
     ) -> None:
         """
-        Log per-episode metrics to TensorBoard.
+        Ghi lại các chỉ số của mỗi tập vào TensorBoard.
 
-        Parameters
-        ----------
-        episode_reward : float -- cumulative reward for the episode
-        episode_cost   : float -- total inventory cost
-        service_level  : float -- fraction of demand fulfilled
-        stockout_rate  : float -- fraction of demand lost
+        Tham số
+        ------
+        episode_reward : float -- phần thưởng tích lũy của tập
+        episode_cost   : float -- tổng chi phí tồn kho
+        service_level  : float -- tỷ lệ nhu cầu được đáp ứng
+        stockout_rate  : float -- tỷ lệ nhu cầu bị thiếu hàng
         """
         ep = self.episode_count
         self.writer.add_scalar("episode/reward",        episode_reward, ep)
@@ -498,11 +494,11 @@ class DoubleDQNAgent:
         self.episode_count += 1
 
     # ------------------------------------------------------------------
-    # Save / Load
+    # Lưu / Tải Mô hình
     # ------------------------------------------------------------------
 
     def save(self, path: str) -> None:
-        """Save agent weights and training state to a checkpoint file."""
+        """Lưu trọng số tác tử và trạng thái huấn luyện vào file checkpoint."""
         os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
         torch.save(
             {
@@ -514,28 +510,28 @@ class DoubleDQNAgent:
             },
             path,
         )
-        print(f"[DoubleDQNAgent] Saved checkpoint -> {path}")
+        print(f"[DoubleDQNAgent] Đã lưu checkpoint -> {path}")
 
     def load(self, path: str) -> None:
-        """Load agent from a checkpoint file."""
+        """Tải tác tử từ file checkpoint."""
         ckpt = torch.load(path, map_location=self.device)
         self.online_net.load_state_dict(ckpt["online_net"])
         self.target_net.load_state_dict(ckpt["target_net"])
         self.optimizer.load_state_dict(ckpt["optimizer"])
         self.global_step   = ckpt.get("global_step", 0)
         self.episode_count = ckpt.get("episode_count", 0)
-        print(f"[DoubleDQNAgent] Loaded checkpoint ← {path}")
+        print(f"[DoubleDQNAgent] Đã tải checkpoint ← {path}")
 
     def close(self) -> None:
-        """Close TensorBoard writer."""
+        """Đóng TensorBoard writer."""
         self.writer.close()
 
 
 # ===========================================================================
-# Quick test
+# Kiểm tra nhanh
 # ===========================================================================
 if __name__ == "__main__":
-    print("Testing DoubleDQNAgent (CPU mode)...")
+    print("Đang thử nghiệm DoubleDQNAgent (chế độ CPU)...")
     state_dim = 267
     n_pairs = 60
 
@@ -549,7 +545,7 @@ if __name__ == "__main__":
         device="cpu",
     )
 
-    # Fill buffer with dummy transitions
+    # Thêm dữ liệu chuyển trạng thái mẫu vào bộ đệm
     for _ in range(100):
         s  = np.random.randn(state_dim).astype(np.float32)
         a  = np.random.randint(0, 6, size=n_pairs).astype(np.int32)
@@ -558,16 +554,16 @@ if __name__ == "__main__":
         d  = False
         agent.store_transition(s, a, r, ns, d)
 
-    # Select action
+    # Chọn hành động
     obs = np.random.randn(state_dim).astype(np.float32)
     action = agent.select_action(obs)
-    print(f"  Action shape: {action.shape}, sample: {action[:5]}")
+    print(f"  Kích thước hành động: {action.shape}, mẫu: {action[:5]}")
     print(f"  Epsilon: {agent.epsilon:.4f}")
 
-    # Update step
+    # Bước cập nhật
     loss = agent.update()
-    print(f"  Loss: {loss:.6f}")
+    print(f"  Hàm tổn thất (Loss): {loss:.6f}")
 
     agent.save("runs/test/test_ckpt.pth")
     agent.close()
-    print("DoubleDQNAgent OK!")
+    print("DoubleDQNAgent HOÀN THÀNH TỐT!")

@@ -1,18 +1,18 @@
 """
 scripts/evaluate.py
 ====================
-Evaluation script: compare DQN vs EOQ vs (s,S) vs Newsvendor.
+Kịch bản đánh giá: So sánh mô hình DQN với các baseline EOQ, (s,S) và Newsvendor.
 
-Runs all policies on the same held-out test episodes and produces:
-  1. Summary table (total cost, service level, stockout rate per policy)
-  2. matplotlib comparison charts (bar charts + episode reward curves)
-  3. Saved CSV of metrics
+Chạy tất cả các chiến lược trên cùng các tập thử nghiệm và tạo ra:
+  1. Bảng tổng hợp chỉ số (tổng chi phí, mức độ phục vụ, tỷ lệ thiếu hàng cho mỗi chiến lược)
+  2. Các biểu đồ so sánh Matplotlib/Seaborn (biểu đồ cột + đường cong phần thưởng)
+  3. Tệp CSV lưu trữ các chỉ số đo lường
 
-Usage:
-  # After training:
+Cách sử dụng:
+  # Sau khi huấn luyện:
   python scripts/evaluate.py --checkpoint checkpoints/best_model.pth
 
-  # With synthetic data (no M5):
+  # Với dữ liệu giả lập (không cần M5):
   python scripts/evaluate.py --checkpoint checkpoints/best_model.pth --synthetic
 """
 
@@ -25,7 +25,7 @@ import argparse
 import numpy as np
 import pandas as pd
 import matplotlib
-matplotlib.use("Agg")  # Non-interactive backend (works in headless environments)
+matplotlib.use("Agg")  # Backend không tương tác (hoạt động tốt trong môi trường headless)
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import seaborn as sns
@@ -48,39 +48,39 @@ from scripts.data_preprocessing import generate_synthetic_fallback
 
 
 # ---------------------------------------------------------------------------
-# Argument parsing
+# Phân tích tham số CLI
 # ---------------------------------------------------------------------------
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Evaluate and compare DQN vs baseline policies."
+        description="Đánh giá và so sánh DQN với các chiến lược baseline truyền thống."
     )
     parser.add_argument("--checkpoint",  type=str,
                         default=str(ROOT / "checkpoints" / "best_model.pth"),
-                        help="Path to trained DQN checkpoint")
+                        help="Đường dẫn tới file checkpoint của mô hình DQN đã huấn luyện")
     parser.add_argument("--n_episodes",  type=int, default=20,
-                        help="Number of test episodes per policy (default: 20)")
+                        help="Số tập thử nghiệm cho mỗi chiến lược (mặc định: 20)")
     parser.add_argument("--data_dir",    type=str,
                         default=str(ROOT / "data" / "processed"),
-                        help="Processed data directory")
+                        help="Thư mục chứa dữ liệu đã xử lý")
     parser.add_argument("--output_dir",  type=str,
                         default=str(ROOT / "results"),
-                        help="Directory for output charts and CSV")
+                        help="Thư mục xuất biểu đồ và tệp CSV kết quả")
     parser.add_argument("--synthetic",   action="store_true",
-                        help="Use synthetic data")
+                        help="Sử dụng dữ liệu giả lập")
     parser.add_argument("--seed",        type=int, default=100,
-                        help="Starting seed for test episodes (default: 100)")
+                        help="Hạt giống khởi đầu cho các tập thử nghiệm (mặc định: 100)")
     parser.add_argument("--hidden_dim",  type=int, default=256,
-                        help="Must match training hidden_dim")
+                        help="Kích thước lớp ẩn (phải khớp với lúc huấn luyện)")
     return parser.parse_args()
 
 
 # ---------------------------------------------------------------------------
-# Data & env setup
+# Thiết lập Dữ liệu & Môi trường
 # ---------------------------------------------------------------------------
 
 def load_env(args) -> tuple:
-    """Load environment with real or synthetic demand data."""
+    """Tải môi trường với dữ liệu nhu cầu thực tế hoặc giả lập."""
     data_dir = Path(args.data_dir)
     np_path  = data_dir / "demand_data.npy"
     cfg_path = data_dir / "env_config.json"
@@ -98,7 +98,7 @@ def load_env(args) -> tuple:
 
 
 # ---------------------------------------------------------------------------
-# Policy runners
+# Trình chạy từng tập chiến lược
 # ---------------------------------------------------------------------------
 
 def run_dqn_episode(
@@ -106,7 +106,7 @@ def run_dqn_episode(
     agent: DoubleDQNAgent,
     seed: int,
 ) -> dict:
-    """Run one greedy DQN episode and collect metrics."""
+    """Chạy 1 tập DQN tham lam (greedy) và thu thập các chỉ số."""
     obs, info = env.reset(seed=seed)
     total_reward = 0.0
     daily_rewards = []
@@ -146,17 +146,17 @@ def run_baseline_episode(
     policy_name: str,
     seed: int,
 ) -> dict:
-    """Run one episode of a traditional baseline policy."""
+    """Chạy 1 tập của chiến lược baseline truyền thống."""
     obs, info = env.reset(seed=seed)
     total_reward = 0.0
     daily_rewards = []
     daily_inventory = []
 
     for _ in range(env.episode_len):
-        # Extract inventory and demand history from flat obs
+        # Trích xuất tồn kho và lịch sử nhu cầu từ quan sát phẳng
         inventory, demand_hist = extract_state_for_policy(obs, env_config)
 
-        # Get policy action
+        # Lấy hành động từ chiến lược
         action = policy.get_action(inventory, demand_hist)
 
         obs, reward, terminated, truncated, step_info = env.step(action)
@@ -181,28 +181,28 @@ def run_baseline_episode(
 
 
 # ---------------------------------------------------------------------------
-# Main evaluation
+# Đánh giá chính
 # ---------------------------------------------------------------------------
 
 def evaluate(args):
-    """Run full evaluation comparing DQN vs 3 baselines."""
+    """Chạy đánh giá toàn bộ so sánh DQN vs 3 phương pháp baseline."""
 
     print("=" * 65)
-    print("  Evaluation: DQN vs EOQ vs (s,S) vs Newsvendor")
+    print("  Đánh giá So sánh: DQN vs EOQ vs (s,S) vs Newsvendor")
     print("=" * 65)
 
     os.makedirs(args.output_dir, exist_ok=True)
 
-    # ---- Environment --------------------------------------------------------
+    # ---- Môi trường ---------------------------------------------------------
     env, env_config = load_env(args)
     n_pairs = env.n_pairs
     obs_dim = env.obs_dim
     order_levels = env.order_levels.tolist()
 
-    print(f"Environment: {env.n_w} warehouses × {env.n_s} SKUs = {n_pairs} pairs")
-    print(f"Test episodes: {args.n_episodes} per policy")
+    print(f"Môi trường: {env.n_w} nhà kho × {env.n_s} SKUs = {n_pairs} cặp kho-SKU")
+    print(f"Số tập thử nghiệm: {args.n_episodes} tập mỗi chiến lược")
 
-    # ---- Load DQN agent -----------------------------------------------------
+    # ---- Tải tác tử DQN ------------------------------------------------------
     device = "cuda" if torch.cuda.is_available() else "cpu"
     agent = DoubleDQNAgent(
         state_dim       = obs_dim,
@@ -216,12 +216,12 @@ def evaluate(args):
     ckpt_path = Path(args.checkpoint)
     if ckpt_path.exists():
         agent.load(str(ckpt_path))
-        print(f"Loaded DQN checkpoint: {ckpt_path}")
+        print(f"Đã tải checkpoint DQN: {ckpt_path}")
     else:
-        print(f"[WARNING] Checkpoint not found: {ckpt_path}")
-        print("         DQN will use random weights (untrained agent).")
+        print(f"[CẢNH BÁO] Không tìm thấy checkpoint: {ckpt_path}")
+        print("          DQN sẽ sử dụng trọng số ngẫu nhiên (chưa huấn luyện).")
 
-    # ---- Baseline policies ---------------------------------------------------
+    # ---- Các chiến lược Baseline --------------------------------------------
     baselines = {
         "EOQ":        EOQPolicy(
             n_pairs        = n_pairs,
@@ -243,14 +243,14 @@ def evaluate(args):
         ),
     }
 
-    # ---- Run evaluation episodes --------------------------------------------
+    # ---- Thống kê thực thi --------------------------------------------------
     all_results = []
     all_daily_rewards = {}
 
     policies_to_run = ["Double DQN"] + list(baselines.keys())
 
     for pol_name in policies_to_run:
-        print(f"\nEvaluating: {pol_name}")
+        print(f"\nĐang đánh giá: {pol_name}")
         pol_results = []
         daily_rew_list = []
 
@@ -272,7 +272,7 @@ def evaluate(args):
 
     agent.close()
 
-    # ---- Build summary DataFrame -------------------------------------------
+    # ---- Tạo bảng tổng hợp chỉ số -------------------------------------------
     df = pd.DataFrame(all_results)
     df_summary = df.groupby("policy").agg(
         avg_total_cost    = ("total_cost",    "mean"),
@@ -286,30 +286,30 @@ def evaluate(args):
         avg_inventory     = ("avg_inventory", "mean"),
     ).reset_index()
 
-    # Order policies nicely
+    # Sắp xếp danh sách chiến lược đẹp mắt
     order = ["Double DQN", "EOQ", "(s,S)", "Newsvendor"]
     df_summary["policy"] = pd.Categorical(df_summary["policy"], categories=order, ordered=True)
     df_summary = df_summary.sort_values("policy").reset_index(drop=True)
 
     print("\n" + "=" * 65)
-    print("RESULTS SUMMARY")
+    print("BẢNG TỔNG HỢP KẾT QUẢ")
     print("=" * 65)
     cols_show = ["policy", "avg_total_cost", "avg_service_level", "avg_stockout", "avg_reward"]
     print(df_summary[cols_show].to_string(index=False, float_format="{:.2f}".format))
 
-    # Save CSV
+    # Lưu tệp CSV
     csv_path = os.path.join(args.output_dir, "evaluation_results.csv")
     df_summary.to_csv(csv_path, index=False)
-    print(f"\nResults saved: {csv_path}")
+    print(f"\nĐã lưu tệp kết quả: {csv_path}")
 
-    # ---- Generate plots -----------------------------------------------------
+    # ---- Vẽ các biểu đồ so sánh ---------------------------------------------
     plot_comparison(df_summary, all_daily_rewards, args.output_dir)
 
     return df_summary, all_daily_rewards
 
 
 # ---------------------------------------------------------------------------
-# Plotting
+# Trực quan hóa Biểu đồ (Plotting)
 # ---------------------------------------------------------------------------
 
 POLICY_COLORS = {
@@ -326,11 +326,11 @@ def plot_comparison(
     output_dir: str,
 ) -> None:
     """
-    Generate comparison charts:
-      1. Bar chart: Total cost comparison
-      2. Bar chart: Service level comparison
-      3. Bar chart: Cost breakdown (holding + ordering)
-      4. Line chart: Daily reward curves (mean ± std) per policy
+    Tạo các biểu đồ so sánh:
+      1. Biểu đồ cột: So sánh tổng chi phí
+      2. Biểu đồ cột: So sánh mức độ phục vụ (Service level)
+      3. Biểu đồ cột: Phân rã chi phí (lưu kho + đặt hàng)
+      4. Biểu đồ đường: Đường cong phần thưởng hàng ngày (trung bình ± độ lệch chuẩn)
     """
     sns.set_theme(style="whitegrid", font_scale=1.1)
     policies = df_summary["policy"].tolist()
@@ -338,11 +338,11 @@ def plot_comparison(
 
     fig, axes = plt.subplots(2, 2, figsize=(15, 11))
     fig.suptitle(
-        "RL vs Traditional Baselines — Multi-Warehouse Inventory Management",
+        "So sánh RL và Các Phương pháp Baseline Truyền thống — Quản lý Tồn kho Đa Kho",
         fontsize=15, fontweight="bold", y=1.01,
     )
 
-    # --- (1) Total Cost ------------------------------------------------------
+    # --- (1) Tổng Chi Phí ----------------------------------------------------
     ax = axes[0, 0]
     bars = ax.bar(
         policies,
@@ -353,11 +353,11 @@ def plot_comparison(
         edgecolor="white",
         linewidth=1.2,
     )
-    ax.set_title("Average Total Inventory Cost (lower is better)", fontweight="bold")
-    ax.set_ylabel("Cost per Episode")
+    ax.set_title("Chi phí Tồn kho Trung bình (thấp hơn là tốt hơn)", fontweight="bold")
+    ax.set_ylabel("Chi phí trên mỗi Tập")
     ax.set_xlabel("")
     ax.tick_params(axis="x", rotation=15)
-    # Annotate bars
+    # Chú thích giá trị trên các cột
     for bar, val in zip(bars, df_summary["avg_total_cost"]):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
@@ -366,7 +366,7 @@ def plot_comparison(
             ha="center", va="bottom", fontsize=9, fontweight="bold",
         )
 
-    # --- (2) Service Level ---------------------------------------------------
+    # --- (2) Mức độ Phục vụ (Service Level) ----------------------------------
     ax = axes[0, 1]
     bars = ax.bar(
         policies,
@@ -377,10 +377,10 @@ def plot_comparison(
         edgecolor="white",
         linewidth=1.2,
     )
-    ax.set_title("Average Service Level % (higher is better)", fontweight="bold")
-    ax.set_ylabel("Service Level (%)")
+    ax.set_title("Mức độ Phục vụ Trung bình % (cao hơn là tốt hơn)", fontweight="bold")
+    ax.set_ylabel("Mức độ Phục vụ (%)")
     ax.set_ylim(0, 115)
-    ax.axhline(95, color="red", linestyle="--", linewidth=1, alpha=0.7, label="95% target")
+    ax.axhline(95, color="red", linestyle="--", linewidth=1, alpha=0.7, label="Mục tiêu 95%")
     ax.legend(fontsize=9)
     ax.tick_params(axis="x", rotation=15)
     for bar, val in zip(bars, df_summary["avg_service_level"]):
@@ -391,7 +391,7 @@ def plot_comparison(
             ha="center", va="bottom", fontsize=9, fontweight="bold",
         )
 
-    # --- (3) Cost Breakdown --------------------------------------------------
+    # --- (3) Phân Rã Chi Phí -------------------------------------------------
     ax = axes[1, 0]
     x = np.arange(len(policies))
     w = 0.35
@@ -399,7 +399,7 @@ def plot_comparison(
         x - w / 2,
         df_summary["avg_holding_cost"],
         width=w,
-        label="Holding Cost",
+        label="Chi phí Lưu kho",
         color="#4C72B0",
         alpha=0.85,
     )
@@ -407,28 +407,28 @@ def plot_comparison(
         x + w / 2,
         df_summary["avg_ordering_cost"],
         width=w,
-        label="Ordering Cost",
+        label="Chi phí Đặt hàng",
         color="#DD8452",
         alpha=0.85,
     )
-    ax.set_title("Cost Breakdown: Holding vs Ordering", fontweight="bold")
-    ax.set_ylabel("Average Cost per Episode")
+    ax.set_title("Phân rã Chi phí: Lưu kho vs Đặt hàng", fontweight="bold")
+    ax.set_ylabel("Chi phí Trung bình trên mỗi Tập")
     ax.set_xticks(x)
     ax.set_xticklabels(policies, rotation=15)
     ax.legend(fontsize=9)
 
-    # --- (4) Daily Reward Curves ---------------------------------------------
+    # --- (4) Đường Cong Phần Thưởng Hàng Ngày ----------------                 
     ax = axes[1, 1]
     for pol_name, ep_list in daily_rewards.items():
-        # Align episode lengths
+        # Dóng hàng độ dài các tập
         min_len = min(len(ep) for ep in ep_list)
         arr = np.array([ep[:min_len] for ep in ep_list])
         mean_r = arr.mean(axis=0)
         std_r  = arr.std(axis=0)
 
-        # Cumulative reward per episode
+        # Phần thưởng tích lũy theo tập
         cum = np.cumsum(mean_r)
-        cum_std = np.cumsum(std_r)  # approximate
+        cum_std = np.cumsum(std_r)  # xấp xỉ
 
         color = POLICY_COLORS.get(pol_name, "#888888")
         ax.plot(cum, label=pol_name, color=color, linewidth=2)
@@ -440,18 +440,18 @@ def plot_comparison(
             alpha=0.15,
         )
 
-    ax.set_title("Cumulative Reward per Episode (mean ± std)", fontweight="bold")
-    ax.set_xlabel("Day (within episode)")
-    ax.set_ylabel("Cumulative Reward")
+    ax.set_title("Phần thưởng Tích lũy mỗi Tập (trung bình ± std)", fontweight="bold")
+    ax.set_xlabel("Ngày (trong tập)")
+    ax.set_ylabel("Phần thưởng Tích lũy")
     ax.legend(fontsize=9)
 
     plt.tight_layout()
     chart_path = os.path.join(output_dir, "comparison_chart.png")
     plt.savefig(chart_path, dpi=150, bbox_inches="tight")
     plt.close()
-    print(f"Chart saved: {chart_path}")
+    print(f"Đã lưu biểu đồ: {chart_path}")
 
-    # ---- Stockout rate bar chart (separate) ----------------------------------
+    # ---- Biểu đồ cột về lượng thiếu hàng (riêng biệt) ----------------------
     fig2, ax2 = plt.subplots(figsize=(8, 5))
     ax2.bar(
         policies,
@@ -461,20 +461,20 @@ def plot_comparison(
         linewidth=1.2,
     )
     ax2.set_title(
-        "Average Total Stockout Units per Episode\n(lower is better)",
+        "Tổng số Đơn vị Thiếu hàng Trung bình mỗi Tập\n(thấp hơn là tốt hơn)",
         fontweight="bold",
     )
-    ax2.set_ylabel("Stockout Units")
+    ax2.set_ylabel("Số đơn vị thiếu hàng")
     ax2.tick_params(axis="x", rotation=15)
     plt.tight_layout()
     stockout_path = os.path.join(output_dir, "stockout_comparison.png")
     plt.savefig(stockout_path, dpi=150, bbox_inches="tight")
     plt.close()
-    print(f"Stockout chart saved: {stockout_path}")
+    print(f"Đã lưu biểu đồ thiếu hàng: {stockout_path}")
 
 
 # ---------------------------------------------------------------------------
-# Entry point
+# Điểm vào chương trình
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
@@ -482,5 +482,5 @@ if __name__ == "__main__":
     df_summary, daily_rewards = evaluate(args)
 
     print("\n" + "=" * 65)
-    print("Evaluation complete! Charts saved to:", args.output_dir)
+    print("Đánh giá hoàn tất! Tất cả biểu đồ được lưu tại:", args.output_dir)
     print("=" * 65)

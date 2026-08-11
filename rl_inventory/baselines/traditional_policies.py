@@ -1,21 +1,21 @@
 """
 baselines/traditional_policies.py
 ===================================
-Traditional Inventory Management Baselines for comparison with DQN.
+Các phương pháp quản lý tồn kho truyền thống (Baseline) để so sánh với DQN.
 
-Implements 3 classical policies (mandatory for thesis benchmark):
-  1. EOQ  -- Economic Order Quantity (Harris, 1913)
-  2. (s,S) Policy -- Reorder-point / Order-up-to policy
-  3. Newsvendor Model -- Single-period critical fractile solution
+Triển khai 3 chiến lược cổ điển (Bắt buộc cho đánh giá chuẩn trong khóa luận):
+  1. EOQ  -- Lượng đặt hàng kinh tế (Harris, 1913)
+  2. Chiến lược (s,S) -- Điểm đặt hàng lại (Reorder-point) / Mức đặt hàng lên đến S (Order-up-to)
+  3. Mô hình Newsvendor -- Bài toán người bán báo (Critical fractile đơn thời kỳ)
 
-All policies expose the same interface:
-    policy.get_action(env_state) -> np.ndarray (n_pairs,) of order indices
+Tất cả các chiến lược đều cung cấp cùng một giao diện chuẩn:
+    policy.get_action(env_state) -> np.ndarray (n_pairs,) chứa các chỉ số hành động đặt hàng
 
-This allows plug-and-play evaluation in the same environment loop
-used by the DQN agent, ensuring a fair comparison.
+Điều này cho phép đánh giá dạng "plug-and-play" trong cùng một vòng lặp môi trường
+với tác tử DQN, đảm bảo sự so sánh công bằng.
 
-References (thesis citations):
--------------------------------
+Tài liệu tham khảo (Trích dẫn khóa luận):
+------------------------------------------
 - EOQ: Harris, F.W. (1913). How many parts to make at once.
        Factory, The Magazine of Management, 10(2), 135-136.
 - (s,S): Scarf, H. (1960). The optimality of (s,S) policies in dynamic
@@ -32,29 +32,29 @@ from scipy import stats
 
 
 # ===========================================================================
-# Base class (shared interface)
+# Lớp cơ sở (Interface chung)
 # ===========================================================================
 
 class BasePolicy:
     """
-    Abstract base class for all inventory policies.
+    Lớp cơ sở trừu tượng cho tất cả các chiến lược tồn kho.
 
-    All policies take a demand history summary and return an action
-    array compatible with the MultiWarehouseInventoryEnv action space.
+    Tất cả các chiến lược nhận tóm tắt lịch sử nhu cầu và trả về một mảng
+    hành động tương thích với không gian hành động của MultiWarehouseInventoryEnv.
     """
 
     def __init__(self, n_pairs: int, n_action_levels: int = 6,
                  order_levels: Optional[list] = None):
         """
-        Parameters
-        ----------
+        Tham số
+        ------
         n_pairs : int
-            Number of warehouse-SKU pairs.
+            Số lượng cặp kho - SKU.
         n_action_levels : int
-            Number of discrete order levels (must match env).
+            Số mức số lượng đặt hàng rời rạc (phải khớp với môi trường).
         order_levels : list
-            Actual order quantities corresponding to action indices.
-            Default: [0, 10, 20, 30, 40, 50].
+            Số lượng đặt hàng thực tế tương ứng với các chỉ số hành động.
+            Mặc định: [0, 10, 20, 30, 40, 50].
         """
         self.n_pairs = n_pairs
         self.n_action_levels = n_action_levels
@@ -65,22 +65,22 @@ class BasePolicy:
 
     def _qty_to_action(self, order_qty: np.ndarray) -> np.ndarray:
         """
-        Convert continuous order quantities to discrete action indices.
+        Chuyển đổi số lượng đặt hàng liên tục sang chỉ số hành động rời rạc.
 
-        Finds the closest level in self.order_levels for each pair.
+        Tìm mức gần nhất trong self.order_levels cho từng cặp.
 
-        Parameters
-        ----------
+        Tham số
+        ------
         order_qty : np.ndarray, shape (n_pairs,)
-            Desired order quantities in units.
+            Số lượng đặt hàng mong muốn (đơn vị).
 
-        Returns
-        -------
+        Trả về
+        -----
         actions : np.ndarray, shape (n_pairs,), dtype int
         """
         actions = np.zeros(self.n_pairs, dtype=np.int32)
         for i, qty in enumerate(order_qty):
-            # Snap to nearest discrete level
+            # Chọn mức hành động rời rạc gần nhất
             idx = int(np.argmin(np.abs(self.order_levels - qty)))
             actions[i] = idx
         return actions
@@ -88,61 +88,61 @@ class BasePolicy:
     def get_action(self, inventory: np.ndarray, demand_hist: np.ndarray,
                    **kwargs) -> np.ndarray:
         """
-        Compute order action.
+        Tính toán hành động đặt hàng.
 
-        Parameters
-        ----------
+        Tham số
+        ------
         inventory : np.ndarray, shape (n_pairs,)
-            Current inventory levels (flattened).
+            Mức tồn kho hiện tại (đã làm phẳng).
         demand_hist : np.ndarray, shape (n_pairs, lookback)
-            Demand history for each pair.
+            Lịch sử nhu cầu cho từng cặp.
 
-        Returns
-        -------
+        Trả về
+        -----
         actions : np.ndarray, shape (n_pairs,), dtype int
         """
         raise NotImplementedError
 
     def reset(self):
-        """Reset any internal state at the start of a new episode."""
+        """Đặt lại trạng thái nội bộ tại thời điểm bắt đầu một tập mới."""
         pass
 
 
 # ===========================================================================
-# 1. EOQ -- Economic Order Quantity
+# 1. EOQ -- Economic Order Quantity (Mô hình Lượng đặt hàng Kinh tế)
 # ===========================================================================
 
 class EOQPolicy(BasePolicy):
     """
-    Economic Order Quantity (EOQ) Policy.
+    Chiến lược Lượng đặt hàng Kinh tế (EOQ).
 
-    The EOQ formula (Harris, 1913) minimizes the sum of ordering and holding
-    costs for a deterministic, constant-demand setting:
+    Công thức EOQ (Harris, 1913) tối thiểu hóa tổng chi phí đặt hàng và chi phí lưu kho
+    trong điều kiện nhu cầu xác định và cố định:
 
         Q* = sqrt(2 × D × K / h)
 
-    where:
-        D = average daily demand (units/day)
-        K = fixed ordering cost per order ($)
-        h = holding cost per unit per day ($)
+    Trong đó:
+        D = nhu cầu trung bình hàng ngày (đơn vị/ngày)
+        K = chi phí đặt hàng cố định cho mỗi đơn hàng ($)
+        h = chi phí lưu kho trên mỗi đơn vị mỗi ngày ($)
 
-    Adapted for discrete-action multi-warehouse setting:
-    - Estimate D from demand history (rolling mean)
-    - Compute Q* using the EOQ formula
-    - Place an order when inventory falls below a reorder point ROP = D × lead_time
-    - Snap Q* to nearest discrete level
+    Áp dụng cho môi trường đa nhà kho hành động rời rạc:
+    - Ước tính D từ lịch sử nhu cầu (trung bình trượt)
+    - Tính Q* bằng công thức EOQ
+    - Đặt hàng khi tồn kho xuống dưới điểm đặt hàng lại ROP = D × lead_time + safety_stock
+    - Làm tròn Q* về mức hành động rời rạc gần nhất
 
-    Citation (thesis-worthy):
+    Trích dẫn (dùng cho khóa luận):
         Harris, F.W. (1913). How many parts to make at once.
         Factory, The Magazine of Management, 10(2), 135-136.
 
-    Parameters
-    ----------
+    Tham số
+    ------
     n_pairs : int
-    holding_cost : float -- h, cost per unit per day
-    ordering_cost : float -- K, fixed cost per order
-    lead_time : float -- average lead time in days
-    safety_stock_k : float -- safety stock multiplier (sigma × k)
+    holding_cost : float -- h, chi phí lưu kho trên đơn vị mỗi ngày
+    ordering_cost : float -- K, chi phí đặt hàng cố định
+    lead_time : float -- thời gian cung ứng trung bình (ngày)
+    safety_stock_k : float -- hệ số tồn kho an toàn (sigma × k)
     """
 
     def __init__(
@@ -168,32 +168,32 @@ class EOQPolicy(BasePolicy):
         **kwargs
     ) -> np.ndarray:
         """
-        Compute EOQ-based order quantities.
+        Tính số lượng đặt hàng dựa trên EOQ.
 
-        Parameters
-        ----------
+        Tham số
+        ------
         inventory : np.ndarray, shape (n_pairs,)
         demand_hist : np.ndarray, shape (n_pairs, lookback)
 
-        Returns
-        -------
+        Trả về
+        -----
         actions : np.ndarray, shape (n_pairs,), dtype int
         """
         order_qty = np.zeros(self.n_pairs, dtype=np.float32)
 
         for i in range(self.n_pairs):
             hist = demand_hist[i]                # (lookback,)
-            D = float(hist.mean()) + 1e-6        # avg daily demand
+            D = float(hist.mean()) + 1e-6        # nhu cầu hàng ngày trung bình
 
-            # Safety stock: k × sigma × sqrt(lead_time)
+            # Tồn kho an toàn: k × sigma × sqrt(lead_time)
             sigma = float(hist.std()) + 1e-6
             safety_stock = self.safety_stock_k * sigma * np.sqrt(self.lead_time)
 
-            # Reorder point
+            # Điểm đặt hàng lại (Reorder Point - ROP)
             ROP = D * self.lead_time + safety_stock
 
             if inventory[i] <= ROP:
-                # EOQ formula: Q* = sqrt(2DK/h)
+                # Công thức EOQ: Q* = sqrt(2DK/h)
                 eoq = np.sqrt(2.0 * D * self.K / (self.h + 1e-6))
                 order_qty[i] = eoq
             else:
@@ -202,40 +202,40 @@ class EOQPolicy(BasePolicy):
         return self._qty_to_action(order_qty)
 
     def get_eoq(self, avg_demand: float) -> float:
-        """Return the EOQ for a given average demand (for analysis)."""
+        """Trả về EOQ cho nhu cầu trung bình cho trước (dùng cho phân tích)."""
         return np.sqrt(2.0 * avg_demand * self.K / (self.h + 1e-6))
 
 
 # ===========================================================================
-# 2. (s, S) Policy -- Reorder-Point / Order-Up-To
+# 2. Chiến lược (s, S) -- Điểm đặt hàng lại / Mức đặt hàng lên đến S
 # ===========================================================================
 
 class SsPolicyOptimized(BasePolicy):
     """
-    (s, S) Inventory Policy.
+    Chiến lược Tồn kho (s, S).
 
-    One of the most important results in inventory theory (Scarf, 1960):
-    For periodic-review inventory with fixed ordering cost, the optimal
-    policy is of the (s, S) form:
-      - If inventory ≤ s (reorder point):  order up to S (order-up-to level)
-      - Otherwise: do not order
+    Một trong những kết quả quan trọng nhất trong lý thuyết quản lý tồn kho (Scarf, 1960):
+    Đối với quản lý tồn kho kiểm tra định kỳ có chi phí đặt hàng cố định,
+    chiến lược tối ưu có dạng (s, S):
+      - Nếu tồn kho ≤ s (điểm đặt hàng lại): đặt hàng sao cho tồn kho đạt mức S (Order-up-to)
+      - Ngược lại: không đặt hàng
 
-    Parameters estimated from demand history:
+    Các tham số được ước tính từ lịch sử nhu cầu:
       s = mu_LT + z_alpha × sigma_LT
       S = s + EOQ
-    where mu_LT, sigma_LT are the mean/std of demand during lead time,
-    and z_alpha is the service-level z-score.
+    trong đó mu_LT, sigma_LT là giá trị trung bình/độ lệch chuẩn của nhu cầu trong lead time,
+    và z_alpha là z-score tương ứng với mức độ phục vụ.
 
-    Citation (thesis-worthy):
+    Trích dẫn (dùng cho khóa luận):
         Scarf, H. (1960). The optimality of (s,S) policies in the dynamic
         inventory problem. Mathematical Methods in the Social Sciences, 196-202.
 
-    Parameters
-    ----------
+    Tham số
+    ------
     n_pairs : int
-    s_params : dict, optional -- pre-set {pair_idx: (s, S)} for each pair
-    service_level : float -- target service level (e.g., 0.95)
-    lead_time : float -- average lead time in days
+    s_params : dict, optional -- cài sẵn {pair_idx: (s, S)} cho mỗi cặp
+    service_level : float -- mức độ phục vụ mục tiêu (ví dụ: 0.95)
+    lead_time : float -- thời gian cung ứng trung bình (ngày)
     holding_cost : float
     ordering_cost : float
     """
@@ -256,17 +256,17 @@ class SsPolicyOptimized(BasePolicy):
         self.lead_time = lead_time
         self.h = holding_cost
         self.K = ordering_cost
-        self.z = float(stats.norm.ppf(service_level))  # z-score for service level
+        self.z = float(stats.norm.ppf(service_level))  # z-score cho mức độ phục vụ
         self.s_params = s_params  # {pair_idx: (s_val, S_val)}
 
     def _compute_s_S(
         self, avg_demand: float, std_demand: float
     ) -> tuple:
         """
-        Compute (s, S) parameters from demand statistics.
+        Tính toán tham số (s, S) từ thống kê nhu cầu.
 
-        s = reorder point = mu_LT + z × sigma_LT
-        S = order-up-to  = s + EOQ
+        s = điểm đặt hàng lại = mu_LT + z × sigma_LT
+        S = mức đặt hàng lên đến = s + EOQ
         """
         mu_lt = avg_demand * self.lead_time
         sigma_lt = std_demand * np.sqrt(self.lead_time)
@@ -282,15 +282,15 @@ class SsPolicyOptimized(BasePolicy):
         **kwargs
     ) -> np.ndarray:
         """
-        Apply the (s,S) policy.
+        Áp dụng chiến lược (s, S).
 
-        Parameters
-        ----------
+        Tham số
+        ------
         inventory : np.ndarray, shape (n_pairs,)
         demand_hist : np.ndarray, shape (n_pairs, lookback)
 
-        Returns
-        -------
+        Trả về
+        -----
         actions : np.ndarray, shape (n_pairs,), dtype int
         """
         order_qty = np.zeros(self.n_pairs, dtype=np.float32)
@@ -300,7 +300,7 @@ class SsPolicyOptimized(BasePolicy):
             D = float(hist.mean()) + 1e-6
             sigma = float(hist.std()) + 1e-6
 
-            # Use pre-set params or compute from history
+            # Sử dụng tham số cài sẵn hoặc tính từ lịch sử
             if self.s_params and i in self.s_params:
                 s, S = self.s_params[i]
             else:
@@ -308,7 +308,7 @@ class SsPolicyOptimized(BasePolicy):
 
             cur_inv = float(inventory[i])
             if cur_inv <= s:
-                # Order up to S
+                # Đặt hàng để đạt mức S
                 order_qty[i] = max(0.0, S - cur_inv)
             else:
                 order_qty[i] = 0.0
@@ -317,36 +317,36 @@ class SsPolicyOptimized(BasePolicy):
 
 
 # ===========================================================================
-# 3. Newsvendor Model
+# 3. Mô hình Newsvendor (Bài toán Người bán báo)
 # ===========================================================================
 
 class NewsvendorPolicy(BasePolicy):
     """
-    Newsvendor Policy (critical fractile model).
+    Mô hình Newsvendor (mô hình phân số tới hạn - critical fractile).
 
-    The Newsvendor model (Arrow et al., 1951) finds the optimal order quantity
-    for a single-period stochastic demand problem by balancing:
-      - Overage cost c_o  (cost of excess inventory)
-      - Underage cost c_u (cost of stockout / lost sales)
+    Mô hình Newsvendor (Arrow et al., 1951) tìm số lượng đặt hàng tối ưu
+    cho bài toán nhu cầu ngẫu nhiên đơn thời kỳ bằng cách cân bằng:
+      - Chi phí thừa hàng c_o (overage cost - chi phí lưu kho dư thừa)
+      - Chi phí thiếu hàng c_u (underage cost - chi phí đền bù/mất doanh thu)
 
-    Optimal order quantity:
-        Q* = F⁻¹(c_u / (c_u + c_o))   (critical fractile)
+    Số lượng đặt hàng tối ưu:
+        Q* = F⁻¹(c_u / (c_u + c_o))   (tỷ lệ tới hạn - critical fractile)
 
-    where F is the demand CDF (assumed Normal, estimated from history).
+    trong đó F là hàm phân phối tích lũy CDF của nhu cầu (giả định Chuẩn, ước tính từ lịch sử).
 
-    This is extended to a multi-period rolling horizon by applying the
-    single-period optimal at each step.
+    Được mở rộng cho bài toán đa thời kỳ theo kiểu cửa sổ trượt bằng cách
+    áp dụng tối ưu đơn thời kỳ tại mỗi bước.
 
-    Citation (thesis-worthy):
+    Trích dẫn (dùng cho khóa luận):
         Arrow, K.J., Harris, T., & Marschak, J. (1951).
         Optimal inventory policy. Econometrica, 19(3), 250-272.
 
-    Parameters
-    ----------
+    Tham số
+    ------
     n_pairs : int
-    holding_cost : float -- c_o (overage cost per excess unit)
-    stockout_cost : float -- c_u (underage cost per stockout unit)
-    lead_time : float -- average lead time for demand aggregation
+    holding_cost : float -- c_o (chi phí thừa hàng trên đơn vị)
+    stockout_cost : float -- c_u (chi phí thiếu hàng trên đơn vị)
+    lead_time : float -- thời gian cung ứng trung bình để tổng hợp nhu cầu
     """
 
     def __init__(
@@ -363,9 +363,9 @@ class NewsvendorPolicy(BasePolicy):
         self.c_u = stockout_cost
         self.lead_time = lead_time
 
-        # Critical fractile (service level implied by costs)
+        # Tỷ lệ tới hạn (mức độ phục vụ hàm ý từ chi phí)
         self.critical_ratio = self.c_u / (self.c_u + self.c_o)
-        # z-score for the critical ratio
+        # z-score tương ứng với tỷ lệ tới hạn
         self.z_star = float(stats.norm.ppf(self.critical_ratio))
 
     def get_action(
@@ -375,18 +375,18 @@ class NewsvendorPolicy(BasePolicy):
         **kwargs
     ) -> np.ndarray:
         """
-        Compute Newsvendor optimal order quantity.
+        Tính số lượng đặt hàng tối ưu theo Newsvendor.
 
-        Q* = mu_LT + z* × sigma_LT  (order up to this level if below)
-        Order quantity = max(0, Q* - current_inventory)
+        Q* = mu_LT + z* × sigma_LT  (đặt hàng đến mức này nếu thấp hơn)
+        Số lượng đặt hàng = max(0, Q* - inventory_hien_tai)
 
-        Parameters
-        ----------
+        Tham số
+        ------
         inventory : np.ndarray, shape (n_pairs,)
         demand_hist : np.ndarray, shape (n_pairs, lookback)
 
-        Returns
-        -------
+        Trả về
+        -----
         actions : np.ndarray, shape (n_pairs,), dtype int
         """
         order_qty = np.zeros(self.n_pairs, dtype=np.float32)
@@ -396,12 +396,12 @@ class NewsvendorPolicy(BasePolicy):
             D = float(hist.mean()) + 1e-6
             sigma = float(hist.std()) + 1e-6
 
-            # Optimal stock level (accounting for lead-time demand)
+            # Mức tồn kho tối ưu (tính theo nhu cầu trong lead-time)
             mu_lt    = D * self.lead_time
             sigma_lt = sigma * np.sqrt(self.lead_time)
             q_star   = mu_lt + self.z_star * sigma_lt
 
-            # Order to bring inventory up to q_star
+            # Đặt hàng để đưa tồn kho lên mức q_star
             cur_inv = float(inventory[i])
             order_qty[i] = max(0.0, q_star - cur_inv)
 
@@ -409,12 +409,12 @@ class NewsvendorPolicy(BasePolicy):
 
     @property
     def implied_service_level(self) -> float:
-        """Service level implied by the cost ratio."""
+        """Mức độ phục vụ hàm ý từ tỷ lệ chi phí."""
         return self.critical_ratio
 
 
 # ===========================================================================
-# Policy runner -- extract state from env info dict
+# Trích xuất trạng thái -- lấy trạng thái từ dict info của môi trường
 # ===========================================================================
 
 def extract_state_for_policy(
@@ -422,22 +422,22 @@ def extract_state_for_policy(
     env_config: Dict[str, Any],
 ) -> tuple:
     """
-    Extract inventory and demand history from the flat observation vector.
+    Trích xuất tồn kho và lịch sử nhu cầu từ vectơ quan sát phẳng.
 
-    The env observation is structured as:
+    Cấu trúc quan sát của môi trường:
       [inventory (n_pairs) | demand_hist (n_pairs × lookback) | pipeline | dow]
 
-    Parameters
-    ----------
+    Tham số
+    ------
     obs : np.ndarray, shape (obs_dim,)
-        Raw observation from the environment.
+        Vectơ quan sát thô từ môi trường.
     env_config : dict
-        Must contain 'n_warehouses', 'n_skus', 'lookback', 'max_inventory'.
+        Phải chứa 'n_warehouses', 'n_skus', 'lookback', 'max_inventory'.
 
-    Returns
-    -------
-    inventory : np.ndarray, shape (n_pairs,) -- raw units (denormalized)
-    demand_hist : np.ndarray, shape (n_pairs, lookback) -- raw units
+    Trả về
+    -----
+    inventory : np.ndarray, shape (n_pairs,) -- số đơn vị thô (đã giải chuẩn hóa)
+    demand_hist : np.ndarray, shape (n_pairs, lookback) -- số đơn vị thô
     """
     n_w = env_config["n_warehouses"]
     n_s = env_config["n_skus"]
@@ -445,13 +445,13 @@ def extract_state_for_policy(
     lookback = env_config["lookback"]
     max_inv = env_config["max_inventory"]
 
-    # Denormalize from [0,1] back to units
+    # Giải chuẩn hóa từ [0,1] về đơn vị thực tế
     inv_norm = obs[:n_pairs]
     inventory = inv_norm * max_inv
 
     dem_norm = obs[n_pairs: n_pairs + n_pairs * lookback]
     demand_hist = dem_norm.reshape(n_pairs, lookback)
-    # Denormalize demand (approximate -- use max order level as scale)
+    # Giải chuẩn hóa nhu cầu (xấp xỉ -- dùng mức đặt hàng tối đa làm thang đo)
     max_dem = max(env_config.get("order_levels", [50]))
     demand_hist = demand_hist * max_dem
 
@@ -459,7 +459,7 @@ def extract_state_for_policy(
 
 
 # ===========================================================================
-# Quick test
+# Kiểm tra nhanh
 # ===========================================================================
 
 if __name__ == "__main__":
@@ -468,24 +468,24 @@ if __name__ == "__main__":
     N_PAIRS = 60
     LOOKBACK = 7
 
-    # Dummy state
+    # Trạng thái giả định
     inv = np.random.uniform(50, 200, size=N_PAIRS).astype(np.float32)
     dem = np.random.poisson(15, size=(N_PAIRS, LOOKBACK)).astype(np.float32)
 
-    print("Testing EOQ Policy...")
+    print("Đang thử nghiệm EOQ Policy...")
     eoq = EOQPolicy(n_pairs=N_PAIRS)
     actions = eoq.get_action(inv, dem)
-    print(f"  Actions shape: {actions.shape}, sample: {actions[:5]}")
+    print(f"  Kích thước hành động: {actions.shape}, mẫu: {actions[:5]}")
 
-    print("\nTesting (s,S) Policy...")
+    print("\nĐang thử nghiệm (s,S) Policy...")
     ss = SsPolicyOptimized(n_pairs=N_PAIRS)
     actions = ss.get_action(inv, dem)
-    print(f"  Actions shape: {actions.shape}, sample: {actions[:5]}")
+    print(f"  Kích thước hành động: {actions.shape}, mẫu: {actions[:5]}")
 
-    print("\nTesting Newsvendor Policy...")
+    print("\nĐang thử nghiệm Newsvendor Policy...")
     nv = NewsvendorPolicy(n_pairs=N_PAIRS)
     actions = nv.get_action(inv, dem)
-    print(f"  Actions shape: {actions.shape}, sample: {actions[:5]}")
-    print(f"  Implied service level: {nv.implied_service_level:.4f}")
+    print(f"  Kích thước hành động: {actions.shape}, mẫu: {actions[:5]}")
+    print(f"  Mức độ phục vụ hàm ý: {nv.implied_service_level:.4f}")
 
-    print("\nAll baselines OK!")
+    print("\nTất cả các baseline HOÀN THÀNH TỐT!")
