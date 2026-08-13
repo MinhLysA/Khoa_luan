@@ -25,7 +25,6 @@ Cách sử dụng:
   python scripts/data_preprocessing.py --stores CA_1 TX_1 --n_skus 30 --output_dir data/processed
 """
 
-import os
 import sys
 import json
 import argparse

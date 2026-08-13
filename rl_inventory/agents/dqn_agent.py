@@ -175,13 +175,6 @@ class DoubleDQNAgent:
         Thư mục ghi log TensorBoard. Mặc định 'runs/'.
     device : str
         'cuda' hoặc 'cpu'. Tự động phát hiện nếu là 'auto'.
-
-    Ví dụ
-    -----
-    >>> agent = DoubleDQNAgent(state_dim=267, n_pairs=60)
-    >>> action = agent.select_action(obs)
-    >>> agent.store_transition(obs, action, reward, next_obs, done)
-    >>> loss = agent.update()
     """
 
     def __init__(

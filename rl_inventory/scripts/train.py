@@ -3,10 +3,12 @@ scripts/train.py
 =================
 Kịch bản huấn luyện tác tử Double DQN cho bài toán Quản lý Tồn kho Đa Kho.
 
-Cách sử dụng (GPU cục bộ — RTX 3050):
-  python scripts/train.py --episodes 500 --use_m5
+Cách sử dụng khuyến nghị (qua main.py):
+  python main.py train --episodes 500
+  python main.py train --synthetic
 
-Cách sử dụng (Dữ liệu giả lập — thử nghiệm nhanh):
+Hoặc chạy trực tiếp (tương thích ngược):
+  python scripts/train.py --episodes 500
   python scripts/train.py --episodes 50 --synthetic
 
 Theo dõi TensorBoard:
@@ -23,7 +25,6 @@ from __future__ import annotations
 
 import os
 import sys
-import json
 import argparse
 import time
 import numpy as np
@@ -31,13 +32,14 @@ import torch
 from pathlib import Path
 from tqdm import tqdm
 
-# Đảm bảo đường dẫn thư mục gốc dự án nằm trong sys.path
+# Đảm bảo thư mục gốc project nằm trong sys.path (khi chạy trực tiếp)
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
-from env.inventory_env import MultiWarehouseInventoryEnv, DEFAULT_CONFIG
+from env.inventory_env import MultiWarehouseInventoryEnv
 from agents.dqn_agent import DoubleDQNAgent
-from scripts.data_preprocessing import generate_synthetic_fallback
+from utils import load_demand_data
 
 
 # ---------------------------------------------------------------------------
@@ -88,41 +90,8 @@ def parse_args():
 
 
 # ---------------------------------------------------------------------------
-# Tải dữ liệu
+# Tải dữ liệu (dùng hàm chung từ utils)
 # ---------------------------------------------------------------------------
-
-def load_demand_data(data_dir: str, args) -> tuple:
-    """
-    Tải dữ liệu nhu cầu và cấu hình môi trường từ thư mục đã xử lý.
-
-    Chuyển sang dùng dữ liệu giả lập nếu không tìm thấy tệp.
-
-    Trả về
-    -----
-    demand_data : np.ndarray, shape (T, n_w, n_s)
-    env_config : dict
-    """
-    data_dir = Path(data_dir)
-    np_path  = data_dir / "demand_data.npy"
-    cfg_path = data_dir / "env_config.json"
-
-    if not args.synthetic and np_path.exists() and cfg_path.exists():
-        print(f"[Train] Đang tải dữ liệu nhu cầu thực tế từ {data_dir}")
-        demand_data = np.load(str(np_path))
-        with open(cfg_path) as f:
-            env_config = json.load(f)
-        print(f"  Kích thước demand_data: {demand_data.shape}")
-    else:
-        print("[Train] Sử dụng dữ liệu nhu cầu giả lập (chạy data_preprocessing.py để dùng M5 thực tế)")
-        demand_data = generate_synthetic_fallback(
-            n_warehouses=2,
-            n_skus=args.n_skus,
-            n_days=800,
-            seed=args.seed,
-        )
-        env_config = {**DEFAULT_CONFIG, "n_warehouses": 2, "n_skus": args.n_skus}
-
-    return demand_data, env_config
 
 
 # ---------------------------------------------------------------------------
@@ -137,7 +106,14 @@ def train(args):
     print("=" * 65)
 
     # ---- Dữ liệu & Môi trường -----------------------------------------------
-    demand_data, env_config = load_demand_data(args.data_dir, args)
+    demand_data, env_config = load_demand_data(
+        data_dir=args.data_dir,
+        n_warehouses=2,
+        n_skus=args.n_skus,
+        n_days=800,
+        seed=args.seed,
+        synthetic=args.synthetic,
+    )
 
     # Ghi đè cấu hình từ tham số CLI
     env_config["seed"] = args.seed
@@ -216,8 +192,9 @@ def train(args):
 
             done = terminated or truncated
 
-            # Lưu chuyển trạng thái
-            agent.store_transition(obs, action, reward, next_obs, done)
+            # Lưu chuyển trạng thái (chuẩn hóa reward theo n_pairs để Q-values không bùng nổ)
+            scaled_reward = reward / env.n_pairs
+            agent.store_transition(obs, action, scaled_reward, next_obs, done)
             ep_reward += reward
             obs = next_obs
 

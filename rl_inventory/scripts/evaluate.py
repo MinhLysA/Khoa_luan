@@ -8,11 +8,12 @@ Chạy tất cả các chiến lược trên cùng các tập thử nghiệm và
   2. Các biểu đồ so sánh Matplotlib/Seaborn (biểu đồ cột + đường cong phần thưởng)
   3. Tệp CSV lưu trữ các chỉ số đo lường
 
-Cách sử dụng:
-  # Sau khi huấn luyện:
-  python scripts/evaluate.py --checkpoint checkpoints/best_model.pth
+Cách sử dụng khuyến nghị (qua main.py):
+  python main.py evaluate
+  python main.py evaluate --checkpoint checkpoints/best_model.pth --synthetic
 
-  # Với dữ liệu giả lập (không cần M5):
+Hoặc chạy trực tiếp (tương thích ngược):
+  python scripts/evaluate.py --checkpoint checkpoints/best_model.pth
   python scripts/evaluate.py --checkpoint checkpoints/best_model.pth --synthetic
 """
 
@@ -20,7 +21,13 @@ from __future__ import annotations
 
 import os
 import sys
-import json
+
+if sys.platform == "win32":
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 import argparse
 import numpy as np
 import pandas as pd
@@ -33,10 +40,12 @@ import torch
 from pathlib import Path
 from tqdm import tqdm
 
+# Đảm bảo thư mục gốc project nằm trong sys.path (khi chạy trực tiếp)
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
-from env.inventory_env import MultiWarehouseInventoryEnv, DEFAULT_CONFIG
+from env.inventory_env import MultiWarehouseInventoryEnv
 from agents.dqn_agent import DoubleDQNAgent
 from baselines.traditional_policies import (
     EOQPolicy,
@@ -44,7 +53,7 @@ from baselines.traditional_policies import (
     NewsvendorPolicy,
     extract_state_for_policy,
 )
-from scripts.data_preprocessing import generate_synthetic_fallback
+from utils import load_demand_data
 
 
 # ---------------------------------------------------------------------------
@@ -75,27 +84,6 @@ def parse_args():
     return parser.parse_args()
 
 
-# ---------------------------------------------------------------------------
-# Thiết lập Dữ liệu & Môi trường
-# ---------------------------------------------------------------------------
-
-def load_env(args) -> tuple:
-    """Tải môi trường với dữ liệu nhu cầu thực tế hoặc giả lập."""
-    data_dir = Path(args.data_dir)
-    np_path  = data_dir / "demand_data.npy"
-    cfg_path = data_dir / "env_config.json"
-
-    if not args.synthetic and np_path.exists():
-        demand_data = np.load(str(np_path))
-        with open(cfg_path) as f:
-            env_config = json.load(f)
-    else:
-        demand_data = generate_synthetic_fallback(n_warehouses=2, n_skus=30, seed=42)
-        env_config = {**DEFAULT_CONFIG, "n_warehouses": 2, "n_skus": 30}
-
-    env = MultiWarehouseInventoryEnv(config=env_config, demand_data=demand_data)
-    return env, env_config
-
 
 # ---------------------------------------------------------------------------
 # Trình chạy từng tập chiến lược
@@ -110,18 +98,14 @@ def run_dqn_episode(
     obs, info = env.reset(seed=seed)
     total_reward = 0.0
     daily_rewards = []
-    daily_stockouts = []
     daily_inventory = []
 
     for _ in range(env.episode_len):
         action = agent.select_action(obs, greedy=True)
-        obs, reward, terminated, truncated, step_info = env.step(action)
+        obs, reward, terminated, truncated, info = env.step(action)
         total_reward += reward
         daily_rewards.append(reward)
-
-        if "stockout" in step_info:
-            daily_stockouts.append(float(np.sum(step_info["stockout"])))
-        daily_inventory.append(step_info["inventory_total"])
+        daily_inventory.append(info["inventory_total"])
 
         if terminated or truncated:
             break
@@ -159,10 +143,10 @@ def run_baseline_episode(
         # Lấy hành động từ chiến lược
         action = policy.get_action(inventory, demand_hist)
 
-        obs, reward, terminated, truncated, step_info = env.step(action)
+        obs, reward, terminated, truncated, info = env.step(action)
         total_reward += reward
         daily_rewards.append(reward)
-        daily_inventory.append(step_info["inventory_total"])
+        daily_inventory.append(info["inventory_total"])
 
         if terminated or truncated:
             break
@@ -194,7 +178,14 @@ def evaluate(args):
     os.makedirs(args.output_dir, exist_ok=True)
 
     # ---- Môi trường ---------------------------------------------------------
-    env, env_config = load_env(args)
+    demand_data, env_config = load_demand_data(
+        data_dir=args.data_dir,
+        n_warehouses=2,
+        n_skus=30,
+        seed=42,
+        synthetic=args.synthetic,
+    )
+    env = MultiWarehouseInventoryEnv(config=env_config, demand_data=demand_data)
     n_pairs = env.n_pairs
     obs_dim = env.obs_dim
     order_levels = env.order_levels.tolist()
@@ -339,7 +330,7 @@ def plot_comparison(
     fig, axes = plt.subplots(2, 2, figsize=(15, 11))
     fig.suptitle(
         "So sánh RL và Các Phương pháp Baseline Truyền thống — Quản lý Tồn kho Đa Kho",
-        fontsize=15, fontweight="bold", y=1.01,
+        fontsize=14, fontweight="bold", y=0.98,
     )
 
     # --- (1) Tổng Chi Phí ----------------------------------------------------
@@ -349,19 +340,21 @@ def plot_comparison(
         df_summary["avg_total_cost"],
         yerr=df_summary["std_total_cost"],
         color=colors,
-        capsize=6,
+        capsize=5,
         edgecolor="white",
         linewidth=1.2,
     )
     ax.set_title("Chi phí Tồn kho Trung bình (thấp hơn là tốt hơn)", fontweight="bold")
     ax.set_ylabel("Chi phí trên mỗi Tập")
     ax.set_xlabel("")
+    max_cost = df_summary["avg_total_cost"].max()
+    ax.set_ylim(0, max_cost * 1.2 if max_cost > 0 else 1.0)
     ax.tick_params(axis="x", rotation=15)
     # Chú thích giá trị trên các cột
     for bar, val in zip(bars, df_summary["avg_total_cost"]):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
-            bar.get_height() + df_summary["std_total_cost"].max() * 0.05,
+            bar.get_height() * 1.02,
             f"{val:,.0f}",
             ha="center", va="bottom", fontsize=9, fontweight="bold",
         )
@@ -373,13 +366,13 @@ def plot_comparison(
         df_summary["avg_service_level"] * 100,
         yerr=df_summary["std_service_level"] * 100,
         color=colors,
-        capsize=6,
+        capsize=5,
         edgecolor="white",
         linewidth=1.2,
     )
     ax.set_title("Mức độ Phục vụ Trung bình % (cao hơn là tốt hơn)", fontweight="bold")
     ax.set_ylabel("Mức độ Phục vụ (%)")
-    ax.set_ylim(0, 115)
+    ax.set_ylim(0, 118)
     ax.axhline(95, color="red", linestyle="--", linewidth=1, alpha=0.7, label="Mục tiêu 95%")
     ax.legend(fontsize=9)
     ax.tick_params(axis="x", rotation=15)
@@ -445,9 +438,9 @@ def plot_comparison(
     ax.set_ylabel("Phần thưởng Tích lũy")
     ax.legend(fontsize=9)
 
-    plt.tight_layout()
+    plt.subplots_adjust(top=0.92, bottom=0.08, left=0.08, right=0.95, hspace=0.3, wspace=0.25)
     chart_path = os.path.join(output_dir, "comparison_chart.png")
-    plt.savefig(chart_path, dpi=150, bbox_inches="tight")
+    plt.savefig(chart_path, dpi=150)
     plt.close()
     print(f"Đã lưu biểu đồ: {chart_path}")
 

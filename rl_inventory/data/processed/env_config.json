@@ -19,10 +19,7 @@
     40,
     50
   ],
-  "stores": [
-    "CA_1",
-    "TX_1"
-  ],
-  "n_days": 1941,
-  "seed": 42
+  "n_days": 800,
+  "seed": 42,
+  "synthetic": true
 }
