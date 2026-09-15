@@ -1,0 +1,98 @@
+\chapter{KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN}
+\label{chap:chapter5}
+
+\section{Tổng kết các kết quả đạt được}
+\label{sec:tongKet}
+
+Khóa luận đã hoàn thành bốn mục tiêu nghiên cứu đề ra:
+
+\begin{enumerate}
+    \item Xây dựng môi trường mô phỏng: phát triển thành công
+    \texttt{MultiWarehouseInventoryEnv} theo chuẩn Gymnasium
+    \parencite{towers2024gymnasium}, mô hình hóa đầy đủ hệ thống $10$ kho,
+    $50$ mặt hàng ($500$ cặp tác tử), với nhu cầu ngẫu nhiên, thời gian giao
+    hàng biến động $[1, 3]$ ngày, ràng buộc sức chứa dùng chung và năm nhóm chi
+    phí vận hành. Tham số nhu cầu được hiệu chỉnh từ bộ dữ liệu M5 Walmart
+    \parencite{makridakis2022background}.
+
+    \item Thiết kế hàm phần thưởng: đề xuất hàm phần thưởng phân rã
+    cục bộ (dựa trên nguyên lý phần thưởng chênh lệch \parencite{wolpert2001}) kèm thành phần phạt fill rate ràng buộc theo tinh thần Lagrangian trên cửa sổ trượt $30$ ngày.
+
+    \item Cài đặt và huấn luyện IPPO: triển khai thuật toán Independent
+    Multi-Agent PPO \parencite{dewitt2020ippo} với cơ chế chia sẻ tham số
+    \parencite{gupta2017}, sử dụng GAE \parencite{schulman2016gae} và chuẩn hóa
+    lợi thế theo từng cặp. Mô hình hội tụ ổn định trên quy mô $500$ tác tử.
+
+    \item Đánh giá đối chứng: so sánh IPPO với ba chính sách cổ điển
+    (EOQ, $(s, S)$, Newsvendor) theo giao thức đa hạt giống có kiểm định thống
+    kê \parencite{henderson2018, agarwal2021}.
+\end{enumerate}
+
+\subsection{Trả lời các câu hỏi nghiên cứu}
+\label{subsec:traLoiCauHoi}
+
+% >>> LƯU Ý: Điền câu trả lời cụ thể sau khi có kết quả thực nghiệm.
+
+Câu hỏi 1 (IPPO vs. baselines): \textit{[Cần điền kết luận dựa trên
+bảng~\ref{tab:ketQuaChiPhi} — IPPO có tổng chi phí thấp hơn và fill rate đạt
+ngưỡng $85\%$ hay không?]}
+
+Câu hỏi 2 (Tổng quát hóa qua parameter sharing): \textit{[Cần điền
+dựa trên phân tích mục~\ref{subsec:tongQuatHoa} — chính sách chia sẻ tham số có
+hoạt động đồng đều trên các nhóm SKU khác nhau?]}
+
+Câu hỏi 3 (Local vs. global reward): \textit{[Cần điền dựa trên
+ablation study mục~\ref{subsec:ablationReward} — local reward có cải thiện tốc
+độ hội tụ và/hoặc hiệu năng cuối cùng?]}
+
+\section{Những hạn chế còn tồn tại}
+\label{sec:hanChe}
+
+\begin{itemize}
+    \item Cấu trúc mạng lưới đơn giản: các kho hoạt động song song và
+    độc lập về nguồn cung; chưa xét cấu trúc đa cấp (multi-echelon) với quan hệ
+    cung ứng giữa các kho \parencite{clark1960} và hiệu ứng bullwhip
+    \parencite{lee1997}.
+
+    \item Không có truyền thông giữa các tác tử: các tác tử ra quyết
+    định hoàn toàn dựa trên quan sát cục bộ, chưa tận dụng thông tin từ các cặp
+    kho--mặt hàng khác.
+
+    \item Không gian hành động rời rạc thô: chỉ có $K = 6$ mức đặt
+    hàng; trong thực tế, doanh nghiệp có thể cần quyết định lượng đặt chính xác
+    hơn.
+
+    \item Chưa tích hợp dự báo nhu cầu: tác tử sử dụng trực tiếp nhu
+    cầu lịch sử thay vì dự báo bằng mô hình học sâu chuỗi thời gian.
+
+    \item Thực nghiệm trên môi trường mô phỏng: chưa được kiểm chứng
+    trên hệ thống ERP thực tế hoặc dữ liệu vận hành trực tiếp.
+\end{itemize}
+
+\section{Hướng phát triển trong tương lai}
+\label{sec:huongPhatTrien}
+
+\begin{itemize}
+    \item Mở rộng sang cấu trúc đa cấp (multi-echelon): mô hình hóa
+    quan hệ cung ứng giữa kho trung tâm và kho khu vực, cho phép tác tử học
+    chiến lược điều phối liên kho.
+
+    \item Tích hợp cơ chế truyền thông giữa tác tử: áp dụng các
+    phương pháp như CommNet hoặc TarMAC để cho phép tác tử chia sẻ thông tin,
+    đặc biệt về tình trạng sức chứa kho.
+
+    \item Không gian hành động liên tục: sử dụng PPO cho hành động liên
+    tục hoặc mạng hành động phân cấp (hierarchical action) để quyết định lượng
+    đặt hàng chính xác.
+
+    \item Tích hợp dự báo nhu cầu: nhúng mô hình dự báo chuỗi thời
+    gian (LSTM, Transformer) vào vector quan sát của tác tử, tận dụng thông tin
+    xu hướng và mùa vụ.
+
+    \item Triển khai thử nghiệm thực tế: xây dựng hệ thống dạng SaaS
+    kết nối API với nền tảng quản lý kho, cho phép đánh giá mô hình trên dữ liệu
+    vận hành trực tiếp.
+
+    \item Mở rộng quy mô: thử nghiệm với toàn bộ $3.049$ SKU gốc của
+    M5 và đánh giá khả năng mở rộng của cơ chế chia sẻ tham số.
+\end{itemize}

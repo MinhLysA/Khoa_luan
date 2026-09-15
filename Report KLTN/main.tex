@@ -1,0 +1,46 @@
+\input{preamble}
+
+
+\begin{document}
+    % --- TRANG BÌA ---
+    \input{frontmatter/titlepage}
+
+    % --- PHẦN MỞ ĐẦU ---
+    \pagenumbering{roman}
+    \pagestyle{fancy}
+    \setcounter{page}{1}
+    
+    \input{frontmatter/acknowledgment}
+    \newpage
+    \input{frontmatter/declaration}
+    % \input{frontmatter/fledge}
+    \input{frontmatter/cofirm}
+    \input{frontmatter/abstract}
+    \input{frontmatter/abstract_english}
+    \input{frontmatter/lists}
+    \clearpage
+
+    % --- PHẦN NỘI DUNG CHÍNH ---
+    \pagenumbering{arabic}
+    \pagestyle{fancy}
+    \include{content/C1}
+    \include{content/C2}
+    \include{content/C3}
+    \include{content/C4}
+    \include{content/C5}
+    % \printbibheading[heading=bibcenter, title={TÀI LIỆU THAM KHẢO}]
+
+    % \printbibliography[keyword=viet, heading=subbib, title={Tiếng Việt}]
+    % \printbibliography[keyword=anh, heading=subbib, title={Tiếng Anh}]
+
+    \newpage
+    \input{phuluc_nguon}
+
+    % Định nghĩa tiêu đề "TÀI LIỆU THAM KHẢO" căn giữa
+    \printbibheading[heading=bibcenter, title={TÀI LIỆU THAM KHẢO}]
+    
+    % In toàn bộ nội dung ra (không dùng filter keyword nữa cho chắc ăn)
+    \printbibliography[heading=none]
+    
+    
+\end{document}

@@ -1,0 +1,45 @@
+{
+  "latex-workshop.view.pdf.viewer": "tab",
+  "latex-workshop.view.pdf.ref.viewer": "tab",
+  "latex-workshop.view.pdf.internal.synctex.keybinding": "ctrl-click",
+  "latex-workshop.latex.tools": [
+    {
+      "name": "xelatex",
+      "command": "C:\\Users\\HP\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\xelatex.exe",
+      "args": [
+        "-synctex=1",
+        "-interaction=nonstopmode",
+        "-file-line-error",
+        "%DOC%"
+      ],
+      "env": {}
+    },
+    {
+      "name": "biber",
+      "command": "C:\\Users\\HP\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\biber.exe",
+      "args": [
+        "%DOCFILE%"
+      ],
+      "env": {}
+    }
+  ],
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "XeLaTeX (Nhanh)",
+      "tools": [
+        "xelatex"
+      ]
+    },
+    {
+      "name": "XeLaTeX -> Biber -> XeLaTeX*2 (Day du)",
+      "tools": [
+        "xelatex",
+        "biber",
+        "xelatex",
+        "xelatex"
+      ]
+    }
+  ],
+  "latex-workshop.latex.recipe.default": "XeLaTeX (Nhanh)",
+  "latex-workshop.latex.autoBuild.run": "never"
+}

@@ -1,0 +1,235 @@
+\chapter{THỰC NGHIỆM VÀ ĐÁNH GIÁ KẾT QUẢ}
+\label{chap:chapter4}
+
+\section{Cấu hình thực nghiệm}
+\label{sec:cauHinh}
+
+\subsection{Môi trường phần cứng và phần mềm}
+\label{subsec:phanCung}
+
+Môi trường thực nghiệm được triển khai trên nền tảng Python với các thư viện
+cốt lõi: PyTorch (cài đặt mạng Actor--Critic và thuật toán PPO), Gymnasium
+(giao diện môi trường mô phỏng), NumPy và Pandas (xử lý dữ liệu M5 và tính
+toán thống kê).
+
+% >>> PLACEHOLDER: Điền cấu hình GPU/CPU cụ thể sau khi hoàn tất thực nghiệm.
+
+\subsection{Nguồn dữ liệu và tiền xử lý}
+\label{subsec:duLieu}
+
+Dữ liệu M5 Walmart. Khóa luận sử dụng hai tệp chính từ bộ dữ liệu
+M5 \parencite{makridakis2022background, m5dataset}:
+\begin{itemize}
+    \item \texttt{sales\_train\_evaluation.csv}: chứa $30.490$ chuỗi doanh số
+    theo ngày ($3.049$ mặt hàng $\times$ $10$ cửa hàng) trên $1.941$ ngày.
+    \item \texttt{calendar.csv}: chứa thông tin lịch, ngày lễ và các sự kiện
+    SNAP.
+\end{itemize}
+
+Từ tổng số $3.049$ mặt hàng, khóa luận chọn $M = 50$ mặt hàng đại diện cho
+$10$ cửa hàng (tương ứng $10$ kho), đảm bảo đa dạng về quy mô nhu cầu: từ các
+SKU có nhu cầu thấp ($\lambda < 0{,}5$ đơn vị/ngày) đến các SKU có nhu cầu cao
+($\lambda > 5$ đơn vị/ngày). Tham số nhu cầu ($\lambda_i$ trung bình hàng ngày)
+cho mỗi cặp kho--mặt hàng được tính từ dữ liệu gốc.
+
+Dữ liệu giả lập (Poisson synthetic). Song song, khóa luận sinh dữ
+liệu nhu cầu theo phân phối Poisson $D_t \sim \text{Poisson}(\lambda_i)$ để kiểm
+chứng kết quả trong điều kiện kiểm soát.
+
+\subsection{Thiết lập kịch bản mô phỏng}
+\label{subsec:kichBan}
+
+Mỗi episode huấn luyện/đánh giá kéo dài $365$ ngày. Bảng~\ref{tab:cauHinhEnv}
+tóm tắt cấu hình môi trường.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Cấu hình môi trường mô phỏng}
+    \label{tab:cauHinhEnv}
+    \begin{tabular}{|l|c|}
+        \hline
+        \textbf{Tham số} & \textbf{Giá trị} \\
+        \hline
+        Số kho ($N$) & $10$ \\ \hline
+        Số mặt hàng ($M$) & $50$ \\ \hline
+        Số tác tử ($N \times M$) & $500$ \\ \hline
+        Độ dài episode & $365$ ngày \\ \hline
+        Lead time & $\text{Uniform}(1, 3)$ ngày \\ \hline
+        Mức đặt hàng ($K$) & $\{0, 10, 20, 30, 40, 50\}$ \\ \hline
+        Ngưỡng fill rate ($\tau$) & $85\%$ \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\section{Phương pháp đối chứng (Baselines)}
+\label{sec:baselines}
+
+Hiệu năng của IPPO được so sánh với ba chính sách tồn kho cổ điển:
+
+\begin{itemize}
+    \item EOQ \cite{harris1913}: lượng đặt hàng cố định
+    $Q^* = \sqrt{2D \cdot c_{dh} / c_{lk}}$, với $D$ tính từ nhu cầu trung bình
+    của mỗi SKU. Đặt hàng khi tồn kho giảm xuống dưới ngưỡng $r = \mu_L$.
+
+    \item Chính sách $(s, S)$ \cite{scarf1960}: ngưỡng $s$ và mức
+    trần $S$ được tối ưu bằng tìm kiếm lưới (grid search) trên chính môi trường
+    mô phỏng, bảo đảm tính công bằng khi so sánh.
+
+    \item Newsvendor \cite{arrow1951}: lượng đặt hàng tối ưu đơn
+    kỳ $Q^* = F^{-1}(c_{th}/(c_{th} + c_{lk}))$, áp dụng lại mỗi ngày dựa
+    trên phân phối nhu cầu ước lượng.
+\end{itemize}
+
+Tất cả baselines được chạy trên cùng một môi trường và cùng
+các hạt giống ngẫu nhiên với IPPO để bảo đảm tính so sánh.
+
+\section{Giao thức đánh giá}
+\label{sec:giaoThuc}
+
+\subsection{Đánh giá đa hạt giống}
+\label{subsec:daHatGiong}
+
+Theo khuyến nghị của Henderson và cộng sự \cite{henderson2018} và Agarwal và cộng sự \cite{agarwal2021}, mọi
+kết quả được báo cáo trên tối thiểu $5$ hạt giống ngẫu nhiên. Mỗi seed tương
+ứng với:
+\begin{itemize}
+    \item Khởi tạo trọng số mạng khác nhau.
+    \item Chuỗi nhu cầu ngẫu nhiên khác nhau (cùng phân phối).
+    \item Chuỗi lead time ngẫu nhiên khác nhau.
+\end{itemize}
+
+Kết quả báo cáo gồm giá trị trung bình $\pm$ độ lệch chuẩn. Sự khác biệt giữa
+các phương pháp được xác nhận bằng kiểm định thống kê phù hợp (t-test hoặc
+Wilcoxon signed-rank test).
+
+\subsection{Các chỉ số đánh giá}
+\label{subsec:chiSo}
+
+Bốn nhóm chỉ số chính:
+
+\begin{enumerate}
+    \item Tổng chi phí vận hành (Total Cost): tổng $C_t$ theo công
+    thức (\ref{eq:tongchiphi}) trên toàn bộ $365$ ngày và $500$ cặp kho--mặt
+    hàng.
+
+    \item Tỷ lệ đáp ứng nhu cầu (Fill Rate): $\text{FR} =
+    \sum \text{fulfilled} / \sum \text{demand}$, tính trung bình trên toàn hệ
+    thống. Mục tiêu $\ge 85\%$.
+
+    \item Cơ cấu chi phí thành phần: phân tách tổng chi phí thành
+    holding, stockout, ordering và overflow để phân tích chiến lược mà mỗi
+    phương pháp áp dụng.
+
+    \item Đường cong học (Learning Curve): phần thưởng tích lũy trung
+    bình qua các episode huấn luyện, chứng minh tính hội tụ.
+\end{enumerate}
+
+\section{Kết quả thực nghiệm}
+\label{sec:ketQua}
+
+% >>> LƯU Ý: Toàn bộ phần kết quả dưới đây là KHUNG (placeholder).
+% >>> CHỈ ĐIỀN SỐ LIỆU SAU KHI ĐÃ CHẠY XONG THỰC NGHIỆM ĐA HẠT GIỐNG
+% >>> VÀ CÓ KIỂM ĐỊNH THỐNG KÊ. KHÔNG VIẾT TRƯỚC.
+
+\subsection{Quá trình huấn luyện và tính hội tụ}
+\label{subsec:hoiTu}
+
+Đường cong phần thưởng tích lũy trung bình qua các episode huấn luyện cho thấy
+mô hình IPPO hội tụ sau khoảng \textit{[cần điền]} episode. Phần thưởng ổn định
+và không sụp đổ sau hội tụ, chứng minh tính ổn định của thuật toán PPO với cơ
+chế clipped objective.
+
+% >>> Chèn hình đường cong học ở đây khi có:
+% \begin{figure}[htbp]
+%     \centering
+%     \includegraphics[width=0.8\textwidth]{media/learning_curve.png}
+%     \caption{Đường cong phần thưởng tích lũy qua các episode huấn luyện}
+%     \label{fig:learningCurve}
+% \end{figure}
+
+\subsection{So sánh tổng chi phí vận hành}
+\label{subsec:soSanhChiPhi}
+
+Bảng~\ref{tab:ketQuaChiPhi} trình bày tổng chi phí vận hành sau $365$ ngày,
+trung bình trên $5$ hạt giống.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Tổng chi phí vận hành (trung bình $\pm$ độ lệch chuẩn, $5$ seeds)}
+    \label{tab:ketQuaChiPhi}
+    \begin{tabular}{|l|c|c|c|}
+        \hline
+        \textbf{Phương pháp} & \textbf{Total Cost} & \textbf{Fill Rate} &
+        \textbf{$p$-value} \\
+        \hline
+        EOQ           & \textit{[cần điền]} & \textit{[cần điền]} & --- \\ \hline
+        $(s, S)$      & \textit{[cần điền]} & \textit{[cần điền]} & --- \\ \hline
+        Newsvendor    & \textit{[cần điền]} & \textit{[cần điền]} & --- \\ \hline
+        \textbf{IPPO} & \textit{[cần điền]} & \textit{[cần điền]} &
+        \textit{[cần điền]} \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\subsection{Phân tích cơ cấu chi phí}
+\label{subsec:coCauChiPhi}
+
+% >>> Chèn bảng và/hoặc biểu đồ cột so sánh holding/stockout/ordering/overflow
+% >>> giữa 4 phương pháp khi có số liệu.
+
+Phân tích cơ cấu chi phí cho thấy IPPO \textit{[cần phân tích: chiến lược
+đặt hàng thiên về tần suất thấp lô lớn hay tần suất cao lô nhỏ so với
+baselines?]}.
+
+\subsection{Đánh giá tỷ lệ đáp ứng dịch vụ}
+\label{subsec:danhGiaFillRate}
+
+Tỷ lệ đáp ứng trung bình của IPPO đạt \textit{[cần điền]}\%, so với ngưỡng
+mục tiêu $85\%$. Phân tích theo nhóm SKU (nhu cầu cao/thấp/gián đoạn) cho thấy
+\textit{[cần phân tích: IPPO có duy trì fill rate đồng đều hay có nhóm SKU bị
+hy sinh?]}.
+
+\section{Phân tích chuyên sâu}
+\label{sec:phanTich}
+
+\subsection{Khả năng tổng quát hóa qua parameter sharing (Câu hỏi 2)}
+\label{subsec:tongQuatHoa}
+
+Để trả lời Câu hỏi nghiên cứu 2, khóa luận phân tích hiệu năng của chính sách
+chia sẻ tham số theo nhóm SKU có quy mô nhu cầu khác nhau. Các SKU được phân
+thành $3$ nhóm dựa trên $\lambda_i$ trung bình: nhu cầu thấp ($\lambda < 1$),
+trung bình ($1 \le \lambda < 5$), và cao ($\lambda \ge 5$).
+
+% >>> Điền bảng/biểu đồ fill rate và cost theo nhóm SKU khi có số liệu.
+
+\subsection{Ảnh hưởng của hàm phần thưởng phân rã cục bộ (Câu hỏi 3)}
+\label{subsec:ablationReward}
+
+Để trả lời Câu hỏi nghiên cứu 3, khóa luận so sánh hai cấu hình:
+\begin{itemize}
+    \item Local reward (công thức \ref{eq:localReward}): mỗi tác tử
+    nhận phần thưởng riêng.
+    \item Global reward: tất cả tác tử nhận cùng phần thưởng
+    $r_{\text{global}} = \sum_i r_i / (N \times M)$.
+\end{itemize}
+
+% >>> Điền kết quả ablation study khi có số liệu.
+
+\subsection{Các kịch bản IPPO chưa vượt trội}
+\label{subsec:hanChe}
+
+Khóa luận trình bày trung thực những kịch bản mà IPPO không đạt hiệu năng tốt
+hơn chính sách cổ điển, kèm phân tích nguyên nhân:
+
+% >>> Điền phân tích khi có kết quả thực nghiệm cụ thể.
+% >>> Ví dụ: nhu cầu hoàn toàn ổn định (Poisson thấp) thì (s,S) đã gần tối ưu;
+% >>> hoặc SKU rất hiếm (lumpy demand) khiến tín hiệu học quá thưa.
+
+\section{Thảo luận}
+\label{sec:thaoLuan}
+
+% >>> Tổng hợp và thảo luận kết quả, trả lời 3 câu hỏi nghiên cứu.
+% >>> So sánh với kết quả của Oroojlooyjadid (2022) và Gijsbrechts (2022).
+% >>> Nhận xét về tính khả thi áp dụng trong thực tế.
+
+Kết quả thực nghiệm cho thấy \textit{[cần tổng hợp sau khi có đầy đủ số liệu]}.

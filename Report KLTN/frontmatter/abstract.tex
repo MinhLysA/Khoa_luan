@@ -1,0 +1,47 @@
+\newpage
+\begin{center}
+{\fontsize{16pt}{19.2pt}\selectfont \textbf{XÂY DỰNG MÔ HÌNH HỌC TĂNG CƯỜNG TỐI ƯU HÓA CHÍNH SÁCH ĐẶT HÀNG LẠI TRONG QUẢN LÝ TỒN KHO ĐA KHO}\par}
+\vspace{0.5cm}
+{\fontsize{16pt}{19.2pt}\selectfont \textbf{TÓM TẮT}\par}
+\end{center}
+\vspace{0.2cm}
+
+Quản lý tồn kho trong mạng lưới bán lẻ gồm nhiều kho và nhiều mặt hàng là bài
+toán ra quyết định tuần tự dưới điều kiện bất định, đòi hỏi cân bằng đồng thời
+nhiều nhóm chi phí xung đột nhau: chi phí lưu kho, chi phí thiếu hàng, chi phí
+đặt hàng cố định, chi phí phạt tràn kho và yêu cầu duy trì mức phục vụ khách
+hàng. Các chính sách cổ điển như EOQ, $(s, S)$ và Newsvendor được xây dựng trên
+những giả định chặt --- nhu cầu xác định hoặc dừng, thời gian giao hàng cố định,
+không ràng buộc sức chứa --- nên khó giữ được tính tối ưu khi nhu cầu ngẫu nhiên,
+thời gian giao hàng biến động và các mặt hàng phải chia sẻ một dung lượng kho
+hữu hạn.
+
+Khóa luận đề xuất giải quyết bài toán trên bằng học tăng cường đa tác tử. Hệ
+thống gồm $N = 10$ kho và $M = 50$ mặt hàng được mô hình hóa thành $500$ tác tử
+tương ứng với $500$ cặp kho--mặt hàng, mỗi tác tử tự ra quyết định đặt hàng dựa
+trên quan sát cục bộ của mình. Các tác tử được huấn luyện bằng thuật toán
+Independent Multi-Agent Proximal Policy Optimization (IPPO) kết hợp cơ chế chia
+sẻ tham số (parameter sharing): toàn bộ $500$ tác tử dùng chung một mạng
+Actor--Critic duy nhất, cho phép mở rộng quy mô mà không làm bùng nổ số lượng
+tham số cần học. Hàm phần thưởng được thiết kế theo hướng phân rã cục bộ
+(local reward decomposition) kèm thành phần phạt dựa trên tỷ lệ đáp ứng nhu cầu
+tính trên cửa sổ trượt 30 ngày, nhằm giảm phương sai của tín hiệu học so với
+phần thưởng toàn cục dùng chung.
+
+Môi trường mô phỏng được xây dựng theo chuẩn Gymnasium, với tham số nhu cầu
+được hiệu chỉnh từ bộ dữ liệu bán lẻ thực tế M5 Walmart (10 cửa hàng, 50 mặt
+hàng, 1.941 ngày doanh số) và thời gian giao hàng ngẫu nhiên trong khoảng từ
+một đến ba ngày. Hiệu năng của mô hình đề xuất được đối chứng với ba chính sách
+tồn kho cổ điển (EOQ, $(s, S)$, Newsvendor) trên cùng môi trường, theo một giao
+thức đánh giá thống nhất gồm nhiều hạt giống ngẫu nhiên và kiểm định thống kê,
+trên bốn nhóm chỉ số: tổng chi phí vận hành, tỷ lệ đáp ứng nhu cầu, và cơ cấu
+các thành phần chi phí thành phần.
+
+Kết quả thực nghiệm được phân tích trên ba khía cạnh: (i) so sánh giữa tác tử
+IPPO và các chính sách cổ điển về tổng chi phí vận hành và mức phục vụ;
+(ii) khả năng tổng quát hóa của chính sách chia sẻ tham số sang những mặt hàng
+có quy mô nhu cầu khác nhau; và (iii) ảnh hưởng của cách thiết kế hàm phần
+thưởng phân rã cục bộ tới quá trình học. Khóa luận đồng thời trình bày những
+kịch bản mà phương pháp đề xuất chưa vượt trội so với chính sách cổ điển kèm
+phân tích nguyên nhân.
+

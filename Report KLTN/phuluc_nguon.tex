@@ -1,0 +1,134 @@
+% =====================================================================
+%  phuluc_nguon.tex  —  PHỤ LỤC: BẢNG ĐỐI CHIẾU LUẬN ĐIỂM - NGUỒN TRÍCH DẪN
+%  Gói cần thêm vào preamble:  \usepackage{longtable}
+%  Chèn vào main.tex sau \appendix (hoặc sau chương 5) bằng:
+%      \input{phuluc_nguon}
+% =====================================================================
+
+\chapter*{PHỤ LỤC A. ĐỐI CHIẾU LUẬN ĐIỂM VÀ NGUỒN TRÍCH DẪN}
+\addcontentsline{toc}{chapter}{PHỤ LỤC A. ĐỐI CHIẾU LUẬN ĐIỂM VÀ NGUỒN TRÍCH DẪN}
+\label{app:nguon}
+
+Phụ lục này liệt kê từng luận điểm lý thuyết được sử dụng trong khóa luận kèm
+nguồn gốc học thuật tương ứng, nhằm bảo đảm mọi khẳng định đều truy nguyên được
+về tài liệu công bố chính thống.
+
+\begin{longtable}{|p{0.06\textwidth}|p{0.44\textwidth}|p{0.38\textwidth}|}
+\hline
+\textbf{Mục} & \textbf{Luận điểm} & \textbf{Nguồn} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Mục} & \textbf{Luận điểm} & \textbf{Nguồn} \\
+\hline
+\endhead
+
+\multicolumn{3}{l}{\textit{A.1. Lý thuyết tồn kho}} \\
+\hline
+1.1.1 & Quản lý tồn kho đa điểm, đa mặt hàng trong chuỗi cung ứng bán lẻ &
+\textcite{silver2016}; \textcite{zipkin2000} \\
+
+1.1.1 & Mô tả bộ dữ liệu M5: quy mô, cấu trúc phân cấp, giai đoạn thu thập &
+\textcite{makridakis2022background}; \textcite{m5dataset} \\
+
+1.1.1 & Tiêu chí phân loại dạng nhu cầu (ngưỡng $p = 1{,}32$; $CV^2 = 0{,}49$) &
+\textcite{syntetos2005categorization} \\
+
+1.1.1 & Nhu cầu gián đoạn và hạn chế của phương pháp dự báo thông thường &
+\textcite{croston1972}; \textcite{syntetos2005accuracy} \\
+
+1.1.2 & Bất định của nhu cầu và thời gian giao hàng; hiện tượng vượt đơn &
+\textcite{zipkin2000}; \textcite{silver2016} \\
+
+1.1.2 & Cấu trúc chi phí tồn kho và bài toán đánh đổi &
+\textcite{zipkin2000} \\
+
+1.1.3 & Mô hình lượng đặt hàng kinh tế (EOQ) &
+\textcite{harris1913} \\
+
+1.1.3 & Tính tối ưu của chính sách $(s, S)$ và các điều kiện kèm theo &
+\textcite{scarf1960} \\
+
+1.1.3 & Mô hình người bán báo (Newsvendor) một chu kỳ &
+\textcite{arrow1951} \\
+
+1.1.3 & Bài toán mất đơn hàng không có nghiệm giải tích dạng đóng &
+\textcite{zipkin2008} \\
+
+1.3.3 & Cấu trúc tồn kho đa cấp (nằm ngoài phạm vi) &
+\textcite{clark1960} \\
+
+1.3.3 & Hiệu ứng bullwhip (nằm ngoài phạm vi) &
+\textcite{lee1997} \\
+\hline
+
+\multicolumn{3}{l}{\textit{A.2. Học tăng cường}} \\
+\hline
+2.3.1 & Quá trình quyết định Markov và quy hoạch động ngẫu nhiên &
+\textcite{puterman1994} \\
+
+2.3.1 & Hàm giá trị, phương trình Bellman, hàm lợi thế, định lý policy gradient &
+\textcite{sutton2018} \\
+
+2.3.3 & Ước lượng lợi thế tổng quát (GAE) và đánh đổi bias--variance &
+\textcite{schulman2016gae} \\
+
+2.3.4 & Vùng tin cậy trong tối ưu hóa chính sách &
+\textcite{schulman2015trpo} \\
+
+2.3.4 & Hàm mục tiêu cắt của PPO &
+\textcite{schulman2017ppo} \\
+
+2.5.4 & Điều kiện bảo toàn chính sách tối ưu khi định hình phần thưởng &
+\textcite{ng1999} \\
+\hline
+
+\multicolumn{3}{l}{\textit{A.3. Học tăng cường đa tác tử}} \\
+\hline
+1.1.2 & Độ phức tạp NEXP-đầy đủ của điều khiển phi tập trung &
+\textcite{bernstein2002} \\
+
+2.4.1 & Mô hình Dec-POMDP &
+\textcite{oliehoek2016} \\
+
+2.4.2 & Học độc lập và vấn đề môi trường không dừng &
+\textcite{tan1993} \\
+
+2.4.3 & Thuật toán IPPO &
+\textcite{dewitt2020ippo} \\
+
+2.4.3 & MAPPO và khung huấn luyện tập trung, thực thi phân tán &
+\textcite{yu2022mappo} \\
+
+2.4.4 & Chia sẻ tham số giữa các tác tử đồng nhất &
+\textcite{gupta2017} \\
+
+2.4.5 & Phần thưởng chênh lệch và bài toán gán tín dụng đa tác tử &
+\textcite{wolpert2001} \\
+\hline
+
+\multicolumn{3}{l}{\textit{A.4. Ứng dụng, môi trường và giao thức đánh giá}} \\
+\hline
+2.8 & Học tăng cường sâu cho trò chơi phân phối bia &
+\textcite{oroojlooyjadid2022} \\
+
+2.8 & Đánh giá học tăng cường sâu trên các lớp bài toán tồn kho &
+\textcite{gijsbrechts2022} \\
+
+3.2 & Chuẩn giao diện môi trường học tăng cường &
+\textcite{brockman2016gym}; \textcite{towers2024gymnasium} \\
+
+2.7 & Yêu cầu đa hạt giống và tính tái lập trong đánh giá &
+\textcite{henderson2018} \\
+
+2.7 & Phương pháp báo cáo kết quả có kiểm định thống kê &
+\textcite{agarwal2021} \\
+\hline
+\end{longtable}
+
+\vspace{0.5\baselineskip}
+\noindent\textbf{Ghi chú.} Các số liệu thống kê mô tả bộ dữ liệu M5 trình bày
+trong Mục~\ref{subsec:thuctrang} và Bảng~\ref{tab:phanloainhucau} do nhóm tác
+giả tự tính toán từ hai tệp \texttt{sales\_train\_evaluation.csv} và
+\texttt{calendar.csv}; mã nguồn tính toán được đính kèm trong kho mã của khóa
+luận.

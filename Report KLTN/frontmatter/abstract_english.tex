@@ -1,0 +1,47 @@
+\newpage
+\begin{center}
+{\fontsize{16pt}{19.2pt}\selectfont \textbf{BUILDING A REINFORCEMENT LEARNING MODEL FOR OPTIMIZING REORDER POLICY IN MULTI-WAREHOUSE INVENTORY MANAGEMENT}\par}
+\vspace{0.5cm}
+{\fontsize{16pt}{19.2pt}\selectfont \textbf{ABSTRACT}\par}
+\end{center}
+\vspace{0.2cm}
+
+Inventory control across a retail network of multiple warehouses and multiple
+stock-keeping units (SKUs) is a sequential decision-making problem under
+uncertainty that requires balancing several conflicting cost components at
+once: holding cost, stockout cost, fixed ordering cost, warehouse overflow
+penalty, and the requirement to sustain a target customer service level.
+Classical policies such as EOQ, $(s, S)$ and the Newsvendor model rest on
+restrictive assumptions --- deterministic or stationary demand, fixed lead
+times, and unconstrained storage capacity --- and therefore lose their
+optimality guarantees once demand is stochastic, lead times fluctuate, and
+multiple SKUs must share a finite warehouse capacity.
+
+This thesis addresses the problem through multi-agent reinforcement learning.
+A system of $N = 10$ warehouses and $M = 50$ SKUs is modelled as $500$ agents,
+one per warehouse--SKU pair, each issuing its own replenishment decisions from
+local observations. The agents are trained with Independent Multi-Agent
+Proximal Policy Optimization (IPPO) under full parameter sharing: a single
+Actor--Critic network is shared across all $500$ agents, which keeps the number
+of learnable parameters constant as the system scales. The reward is designed
+with local decomposition and a 30-day rolling-window fill-rate penalty term,
+reducing the variance of the learning signal relative to a single shared
+global reward.
+
+The simulation environment follows the Gymnasium interface, with demand
+parameters calibrated from the real-world M5 Walmart retail dataset (10
+stores, 50 SKUs, 1,941 days of sales data) and stochastic lead times drawn
+from one to three days. The proposed model is benchmarked against three
+classical inventory policies (EOQ, $(s, S)$, Newsvendor) within the same
+environment under a unified evaluation protocol involving multiple random
+seeds and statistical significance testing, across four metric groups: total
+operational cost, fill rate, and the breakdown of individual cost components.
+
+Experimental results are analysed along three dimensions: (i) the comparison
+between the IPPO agent and the classical baselines in terms of total
+operational cost and service level; (ii) the generalization capability of the
+shared-parameter policy across SKUs of differing demand scale; and (iii) the
+effect of local reward decomposition on the learning process. The thesis also
+reports scenarios in which the proposed method does not outperform the
+classical baselines, together with an analysis of the underlying causes.
+
