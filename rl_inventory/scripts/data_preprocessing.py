@@ -1,503 +1,218 @@
 """
 scripts/data_preprocessing.py
-================================
-Tiền xử lý Bộ dữ liệu M5 Forecasting cho Môi trường Tồn kho RL.
+==============================
+Tien xu ly du lieu nhu cau (Demand Data).
 
-Tải/đọc dữ liệu M5 Walmart, lấy mẫu 2 cửa hàng và N mặt hàng (SKU),
-tính toán nhu cầu hàng ngày, xử lý các giá trị thiếu và lưu mảng numpy sạch
-+ tệp metadata JSON phục vụ cho MultiWarehouseInventoryEnv.
+PHIEN BAN v2:
+  [V2-17] SUA LOI CHONG CHI SO TRONG calendar_features.
+          Ban cu: no_event ghi vao cot 3 - dung cot cua "Sporting"; month ghi
+          tu cot 7 - dung cot cua "Religious". Ket qua: cot 3 co 1.799 ngay
+          (gop no_event + Sporting), cot 7 gop Religious + thang Mot, va cot 19
+          luon bang 0. Agent nhan tin hieu lich sai suot qua trinh huan luyen.
+          Nay bo cuc dung: [0-2] SNAP, [3-7] event one-hot, [8-19] thang.
 
-Các file dữ liệu M5 bắt buộc (đặt trong data/raw/):
-  - sales_train_evaluation.csv   (~100MB, tất cả mặt hàng × 1969 ngày)
-  - calendar.csv                 (~30KB, dữ liệu thời gian)
-  - sell_prices.csv              (~140MB, tùy chọn cho thông tin chi phí)
+  [V2-18] LOC BO CAC SKU GAN NHU KHONG BAN.
+          Trong tap 50 SKU phan tang co 142/500 cap (28%) cau trung binh
+          < 0,1 dv/ngay - mat hang cua hang do khong kinh doanh. Cac "tac tu"
+          nay chi them nhieu vao gradient chung. Tham so --min_mean_demand loai
+          cac SKU khong dat nguong o DA SO cua hang.
 
-Tải xuống từ Kaggle (nếu chưa có):
-  kaggle competitions download -c m5-forecasting-accuracy
-  Giải nén vào data/raw/
-
-Đầu ra (lưu tại data/processed/):
-  - demand_data.npy     dạng (T, n_warehouses, n_skus)  float32
-  - env_config.json     dict cấu hình môi trường
-  - sku_metadata.csv    tên SKU và ánh xạ cửa hàng
-
-Cách sử dụng:
-  python scripts/data_preprocessing.py --stores CA_1 TX_1 --n_skus 30 --output_dir data/processed
+  [V2-19] Metadata luu them ten SKU, ten kho, cau trung binh tung cap - app
+          Streamlit dung de hien thi thay vi chi so 0..N.
 """
 
-import sys
-import json
+import os
 import argparse
-import warnings
+import json
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from typing import List, Optional, Tuple
-
-warnings.filterwarnings("ignore")
-
-# ---------------------------------------------------------------------------
-# Đường dẫn
-# ---------------------------------------------------------------------------
-ROOT = Path(__file__).resolve().parent.parent
-RAW_DIR  = ROOT / "data" / "raw"
-OUT_DIR  = ROOT / "data" / "processed"
 
 
-# ---------------------------------------------------------------------------
-# Hàm tiền xử lý chính
-# ---------------------------------------------------------------------------
-
-def load_m5_sales(
-    raw_dir: Path,
-    stores: List[str],
-    n_skus: int = 30,
-    seed: int = 42,
-    chunk_size: int = 5000,
-) -> pd.DataFrame:
-    """
-    Tải và lọc dữ liệu M5 sales_train_evaluation.csv.
-
-    Sử dụng đọc theo từng khối (chunked reading) để xử lý tệp lớn (~100MB) mà không
-    tải toàn bộ vào RAM cùng một lúc.
-
-    Tham số
-    ------
-    raw_dir : Path
-        Thư mục chứa các tệp thô M5.
-    stores : list của str
-        Danh sách ID cửa hàng cần giữ lại (ví dụ: ['CA_1', 'TX_1']).
-        Các cửa hàng hiện có: CA_1, CA_2, CA_3, CA_4, TX_1, TX_2, TX_3,
-                              WI_1, WI_2, WI_3.
-    n_skus : int
-        Số lượng SKU duy nhất cần lấy mẫu trên mỗi cửa hàng.
-    seed : int
-        Hạt giống ngẫu nhiên cho việc lấy mẫu SKU.
-    chunk_size : int
-        Số dòng mỗi khối để tiết kiệm bộ nhớ khi đọc.
-
-    Trả về
-    -----
-    pd.DataFrame
-        Dataframe định dạng dài đã được lọc với các cột:
-        [item_id, store_id, dept_id, cat_id, d_1 ... d_1969]
-    """
-    sales_path = raw_dir / "sales_train_evaluation.csv"
-    if not sales_path.exists():
-        raise FileNotFoundError(
-            f"\n[LỖI] Không tìm thấy file M5: {sales_path}\n"
-            "Vui lòng tải về từ Kaggle:\n"
-            "  kaggle competitions download -c m5-forecasting-accuracy\n"
-            "  Giải nén vào data/raw/\n"
-        )
-
-    print(f"[Tiền xử lý] Đang đọc dữ liệu bán hàng M5 (theo khối)...")
-    print(f"  Tệp: {sales_path}")
-    print(f"  Lọc cửa hàng: {stores}, số SKU mỗi cửa hàng: {n_skus}")
-
-    chunks = []
-    total_rows = 0
-
-    for chunk in pd.read_csv(sales_path, chunksize=chunk_size):
-        # Lọc duy nhất các cửa hàng mục tiêu
-        filtered = chunk[chunk["store_id"].isin(stores)]
-        if len(filtered) > 0:
-            chunks.append(filtered)
-        total_rows += len(chunk)
-
-    print(f"  Tổng số dòng trong M5: {total_rows:,}")
-
-    if not chunks:
-        raise ValueError(
-            f"Không tìm thấy dòng nào cho các cửa hàng {stores}. "
-            f"Hãy kiểm tra lại ID cửa hàng (ví dụ: CA_1, TX_1, WI_1)."
-        )
-
-    df = pd.concat(chunks, ignore_index=True)
-    print(f"  Số dòng sau khi lọc cửa hàng: {len(df):,}")
-
-    # Lấy mẫu n_skus mỗi cửa hàng (có thể tái lập)
+def generate_synthetic_data(n_days=365, n_warehouses=4, n_skus=40, seed=42):
+    """Sinh du lieu nhu cau gia lap (Poisson + mua vu theo ngay trong tuan)."""
     rng = np.random.default_rng(seed)
-    sampled_parts = []
-    for store in stores:
-        store_df = df[df["store_id"] == store]
-        items = store_df["item_id"].unique()
-        if len(items) <= n_skus:
-            sampled_parts.append(store_df)
-        else:
-            chosen = rng.choice(items, size=n_skus, replace=False)
-            sampled_parts.append(store_df[store_df["item_id"].isin(chosen)])
-
-    df_sampled = pd.concat(sampled_parts, ignore_index=True)
-    print(f"  Số dòng sau khi lấy mẫu SKU: {len(df_sampled):,}")
-    print(f"  Số mặt hàng duy nhất mỗi cửa hàng:")
-    for store in stores:
-        cnt = df_sampled[df_sampled["store_id"] == store]["item_id"].nunique()
-        print(f"    {store}: {cnt} SKUs")
-
-    return df_sampled
-
-
-def load_calendar(raw_dir: Path) -> pd.DataFrame:
-    """
-    Tải file lịch M5 calendar.csv để dóng hàng thời gian.
-
-    Trả về DataFrame ánh xạ d_1..d_1969 sang ngày thực tế.
-    """
-    cal_path = raw_dir / "calendar.csv"
-    if not cal_path.exists():
-        print("[CẢNH BÁO] Không tìm thấy calendar.csv. Bỏ qua căn chỉnh ngày.")
-        return None
-
-    cal = pd.read_csv(cal_path, parse_dates=["date"])
-    return cal
-
-
-def compute_daily_demand(
-    df: pd.DataFrame,
-    stores: List[str],
-    calendar: Optional[pd.DataFrame] = None,
-) -> Tuple[np.ndarray, pd.DataFrame]:
-    """
-    Chuyển đổi dữ liệu M5 dạng ngang sang mảng nhu cầu 3D.
-
-    Tham số
-    ------
-    df : pd.DataFrame
-        Dữ liệu M5 đã lọc (các cột item_id, store_id, d_1 ... d_T).
-    stores : list của str
-        Danh sách cửa hàng sắp xếp (quy định trục nhà kho).
-    calendar : pd.DataFrame hoặc None
-        Dùng để cắt theo khoảng ngày thống nhất.
-
-    Trả về
-    -----
-    demand_array : np.ndarray, shape (T, n_warehouses, n_skus), float32
-        T = số ngày; các nhà kho được sắp xếp theo danh sách `stores`.
-    sku_meta : pd.DataFrame
-        Metadata: item_id, store_id, pair_idx, dept_id, cat_id.
-    """
-    # Xác định các cột ngày
-    day_cols = [c for c in df.columns if c.startswith("d_")]
-    T = len(day_cols)
-    print(f"[Tiền xử lý] Các cột ngày: {len(day_cols)} ngày (d_1 tới d_{T})")
-
-    # Xác định n_skus (đảm bảo đồng nhất giữa các cửa hàng qua reindexing)
-    skus_per_store = {}
-    for store in stores:
-        items = sorted(df[df["store_id"] == store]["item_id"].unique().tolist())
-        skus_per_store[store] = items
-
-    # Tìm số lượng SKU nhỏ nhất giữa các cửa hàng để đồng bộ
-    n_skus = min(len(v) for v in skus_per_store.values())
-    print(f"[Tiền xử lý] Sử dụng {n_skus} SKUs cho mỗi cửa hàng (đã dóng hàng)")
-
-    n_w = len(stores)
-    demand_array = np.zeros((T, n_w, n_skus), dtype=np.float32)
-    meta_records = []
-
-    for w_idx, store in enumerate(stores):
-        store_df = df[df["store_id"] == store].reset_index(drop=True)
-        items = skus_per_store[store][:n_skus]
-
-        for s_idx, item_id in enumerate(items):
-            row = store_df[store_df["item_id"] == item_id]
-            if len(row) == 0:
-                continue
-            sales = row[day_cols].values.flatten().astype(np.float32)
-            demand_array[:, w_idx, s_idx] = sales
-
-            # Metadata
-            meta_records.append({
-                "pair_idx":  w_idx * n_skus + s_idx,
-                "w_idx":     w_idx,
-                "s_idx":     s_idx,
-                "store_id":  store,
-                "item_id":   item_id,
-                "dept_id":   row["dept_id"].values[0] if "dept_id" in row else "",
-                "cat_id":    row["cat_id"].values[0]  if "cat_id"  in row else "",
-            })
-
-    sku_meta = pd.DataFrame(meta_records)
-    return demand_array, sku_meta
-
-
-def clean_demand(demand_array: np.ndarray) -> np.ndarray:
-    """
-    Xử lý các giá trị khuyết và ngoại lệ trong dữ liệu nhu cầu.
-
-    Các bước:
-      1. Thay thế NaN bằng 0 (giả định doanh số thiếu = nhu cầu bằng 0)
-      2. Giới hạn các giá trị âm về 0
-      3. Cắt xới ngoại lệ cực đoan (> percentile thứ 99 × 3) để giảm nhiễu
-
-    Tham số
-    ------
-    demand_array : np.ndarray, shape (T, n_w, n_s)
-
-    Trả về
-    -----
-    np.ndarray, cùng hình dạng, đã làm sạch
-    """
-    arr = demand_array.copy()
-
-    # 1. NaN → 0
-    nan_count = np.isnan(arr).sum()
-    if nan_count > 0:
-        print(f"[Tiền xử lý] Thay thế {nan_count} giá trị NaN bằng 0")
-    arr = np.nan_to_num(arr, nan=0.0)
-
-    # 2. Cắt giá trị âm
-    arr = np.clip(arr, 0.0, None)
-
-    # 3. Cắt ngoại lệ cực đoan cho từng cặp
-    T, n_w, n_s = arr.shape
-    for w in range(n_w):
-        for s in range(n_s):
-            series = arr[:, w, s]
-            p99 = np.percentile(series[series > 0], 99) if (series > 0).any() else 1.0
-            arr[:, w, s] = np.clip(series, 0.0, p99 * 3.0)
-
-    print(f"[Tiền xử lý] Thống kê nhu cầu sau khi làm sạch:")
-    print(f"  Trung bình toàn cục: {arr.mean():.2f}")
-    print(f"  Độ lệch chuẩn:       {arr.std():.2f}")
-    print(f"  Giá trị lớn nhất:    {arr.max():.2f}")
-    print(f"  Giá trị nhỏ nhất:    {arr.min():.2f}")
-    print(f"  Tỷ lệ khác 0 %:      {(arr > 0).mean() * 100:.1f}%")
-
-    return arr
-
-
-def save_outputs(
-    demand_array: np.ndarray,
-    sku_meta: pd.DataFrame,
-    stores: List[str],
-    out_dir: Path,
-    env_config_overrides: Optional[dict] = None,
-) -> dict:
-    """
-    Lưu dữ liệu nhu cầu đã xử lý và cấu hình môi trường ra đĩa.
-
-    Tham số
-    ------
-    demand_array : np.ndarray, shape (T, n_w, n_s)
-    sku_meta : pd.DataFrame
-    stores : list của str
-    out_dir : Path
-    env_config_overrides : dict, optional — ghi đè các giá trị cấu hình mặc định
-
-    Trả về
-    -----
-    env_config : dict — đã lưu vào env_config.json
-    """
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    T, n_w, n_s = demand_array.shape
-
-    # Xây dựng cấu hình môi trường
-    env_config = {
-        "n_warehouses":   n_w,
-        "n_skus":         n_s,
-        "episode_length": 112,
-        "lookback":       7,
-        "lead_time_min":  1,
-        "lead_time_max":  3,
-        "max_inventory":  500,
-        "initial_inventory": 100,
-        "holding_cost":   1.0,
-        "stockout_cost":  10.0,
-        "ordering_cost":  50.0,
-        "overflow_penalty": 5.0,
-        "order_levels":   [0, 10, 20, 30, 40, 50],
-        "stores":         stores,
-        "n_days":         T,
-        "seed":           42,
-    }
-    if env_config_overrides:
-        env_config.update(env_config_overrides)
-
-    # Lưu các tệp
-    np_path   = out_dir / "demand_data.npy"
-    meta_path = out_dir / "sku_metadata.csv"
-    cfg_path  = out_dir / "env_config.json"
-
-    np.save(str(np_path), demand_array)
-    sku_meta.to_csv(str(meta_path), index=False)
-    with open(cfg_path, "w") as f:
-        json.dump(env_config, f, indent=2)
-
-    print(f"\n[Tiền xử lý] Đã lưu kết quả tại {out_dir}:")
-    print(f"  demand_data.npy   kích thước={demand_array.shape}  ({np_path.stat().st_size / 1024:.1f} KB)")
-    print(f"  sku_metadata.csv  số dòng={len(sku_meta)}")
-    print(f"  env_config.json")
-
-    return env_config
-
-
-def generate_synthetic_fallback(
-    n_warehouses: int = 2,
-    n_skus: int = 30,
-    n_days: int = 800,
-    seed: int = 42,
-    out_dir: Optional[Path] = None,
-) -> np.ndarray:
-    """
-    Tạo dữ liệu nhu cầu giả lập khi không có bộ dữ liệu M5.
-
-    Tạo nhu cầu thực tế với:
-      - Phân phối Poisson cơ bản với trung bình ngẫu nhiên (5–30 đơn vị/ngày)
-      - Tính mùa vụ theo tuần (đỉnh điểm cuối tuần)
-      - Các ngày thiếu hàng ngẫu nhiên (demand = 0)
-
-    Tham số
-    ------
-    n_warehouses, n_skus, n_days : int
-    seed : int
-    out_dir : Path, optional — nếu cung cấp, lưu dữ liệu ra đĩa
-
-    Trả về
-    -----
-    np.ndarray, shape (n_days, n_warehouses, n_skus)
-    """
-    print(f"\n[Tiền xử lý] Đang tạo dữ liệu nhu cầu giả lập (synthetic demand)...")
-    print(f"  Kích thước: ({n_days}, {n_warehouses}, {n_skus})")
-    rng = np.random.default_rng(seed)
-
-    # Trung bình cơ bản cho mỗi cặp
-    base_means = rng.uniform(5, 30, size=(n_warehouses, n_skus))
-
-    # Trọng số mùa vụ theo tuần (T2=0 .. CN=6)
-    week_weights = np.array([0.8, 0.9, 1.0, 1.0, 1.1, 1.3, 1.2])
-
+    base_rates = rng.uniform(2.0, 25.0, size=(n_warehouses, n_skus))
     demand = np.zeros((n_days, n_warehouses, n_skus), dtype=np.float32)
-    for t in range(n_days):
-        dow = t % 7
-        seasonal_means = base_means * week_weights[dow]
-        demand[t] = rng.poisson(seasonal_means).astype(np.float32)
-
-    print(f"  Thống kê nhu cầu: trung bình={demand.mean():.2f}, std={demand.std():.2f}, max={demand.max():.2f}")
-
-    if out_dir is not None:
-        out_dir.mkdir(parents=True, exist_ok=True)
-        np.save(str(out_dir / "demand_data.npy"), demand)
-
-        # Xây dựng cấu hình env_config giả lập
-        config = {
-            "n_warehouses": n_warehouses,
-            "n_skus": n_skus,
-            "episode_length": 112,
-            "lookback": 7,
-            "lead_time_min": 1,
-            "lead_time_max": 3,
-            "max_inventory": 500,
-            "initial_inventory": 100,
-            "holding_cost": 1.0,
-            "stockout_cost": 10.0,
-            "ordering_cost": 50.0,
-            "overflow_penalty": 5.0,
-            "order_levels": [0, 10, 20, 30, 40, 50],
-            "n_days": n_days,
-            "seed": seed,
-            "synthetic": True,
-        }
-        with open(out_dir / "env_config.json", "w") as f:
-            json.dump(config, f, indent=2)
-        print(f"  Đã lưu tại {out_dir}")
-
+    for day in range(n_days):
+        seasonality = 1.3 if (day % 7) in (5, 6) else 0.9
+        demand[day] = rng.poisson(lam=base_rates * seasonality)
     return demand
 
 
-# ---------------------------------------------------------------------------
-# Điểm vào CLI
-# ---------------------------------------------------------------------------
+def generate_calendar_features(raw_dir: str, n_days: int = 1941) -> np.ndarray:
+    """[V2-17] Vector dac trung lich (n_days, 20) - bo cuc DUNG:
 
-def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Tiền xử lý dữ liệu M5 Forecasting cho môi trường tồn kho RL."
-    )
-    parser.add_argument(
-        "--stores", nargs="+",
-        default=["CA_1", "TX_1"],
-        help="Danh sách ID cửa hàng dùng làm nhà kho (mặc định: CA_1 TX_1)",
-    )
-    parser.add_argument(
-        "--n_skus", type=int, default=30,
-        help="Số lượng mặt hàng SKU lấy mẫu trên mỗi cửa hàng (mặc định: 30)",
-    )
-    parser.add_argument(
-        "--raw_dir", type=str, default=str(RAW_DIR),
-        help=f"Thư mục chứa các tệp CSV thô M5 (mặc định: {RAW_DIR})",
-    )
-    parser.add_argument(
-        "--output_dir", type=str, default=str(OUT_DIR),
-        help=f"Thư mục lưu dữ liệu đầu ra (mặc định: {OUT_DIR})",
-    )
-    parser.add_argument(
-        "--synthetic", action="store_true",
-        help="Tạo dữ liệu giả lập ngay cả khi có tệp M5 (phục vụ thử nghiệm)",
-    )
-    parser.add_argument(
-        "--seed", type=int, default=42,
-        help="Hạt giống ngẫu nhiên (mặc định: 42)",
-    )
-    return parser.parse_args()
+        [0]     snap_CA
+        [1]     snap_TX
+        [2]     snap_WI
+        [3]     no_event
+        [4]     Sporting
+        [5]     Cultural
+        [6]     National
+        [7]     Religious
+        [8-19]  thang 1..12 (one-hot)
+    """
+    cal = pd.read_csv(Path(raw_dir) / "calendar.csv").iloc[:n_days].reset_index(drop=True)
+    EVENT_TYPES = ["Sporting", "Cultural", "National", "Religious"]
+    features = np.zeros((n_days, 20), dtype=np.float32)
+
+    for i, row in cal.iterrows():
+        features[i, 0] = float(row["snap_CA"])
+        features[i, 1] = float(row["snap_TX"])
+        features[i, 2] = float(row["snap_WI"])
+
+        et = row["event_type_1"] if pd.notna(row["event_type_1"]) else None
+        if et is None and pd.notna(row.get("event_type_2")):
+            et = row["event_type_2"]
+        if et is not None and et in EVENT_TYPES:
+            features[i, 4 + EVENT_TYPES.index(et)] = 1.0   # cot 4..7
+        else:
+            features[i, 3] = 1.0                           # cot 3 = no_event
+
+        features[i, 8 + (int(row["month"]) - 1)] = 1.0     # cot 8..19
+
+    print(f"  Calendar features shape: {features.shape}")
+    print(f"  SNAP CA/TX/WI: {int(features[:,0].sum())}/{int(features[:,1].sum())}"
+          f"/{int(features[:,2].sum())}")
+    print(f"  Ngay khong su kien: {int(features[:,3].sum())} | co su kien: "
+          f"{int(features[:,4:8].sum())}")
+    print(f"  Tong one-hot thang: {int(features[:,8:20].sum())} (phai = {n_days})")
+    return features
+
+
+def preprocess_m5_data(raw_dir, n_warehouses=10, n_skus=30,
+                       sku_selection="stratified", min_mean_demand=0.2,
+                       split_day=1450):
+    """Doc M5 Kaggle -> mang (T, n_warehouses, n_skus)."""
+    raw_dir = Path(raw_dir)
+    sales_path = raw_dir / "sales_train_evaluation.csv"
+    print(f"Dang doc {sales_path} ({sales_path.stat().st_size / 1e6:.1f} MB)...")
+
+    df = pd.read_csv(sales_path)
+    day_cols = [c for c in df.columns if c.startswith("d_")]
+    print(f"  -> {len(df)} items x {len(day_cols)} ngay")
+
+    store_sales = df.groupby("store_id")[day_cols].sum().sum(axis=1)
+    top_stores = store_sales.nlargest(n_warehouses).index.tolist()
+    print(f"  Chon {n_warehouses} cua hang: {top_stores}")
+    df_f = df[df["store_id"].isin(top_stores)].copy()
+
+    # [V2-18] Chi giu SKU co cau du lon o DA SO cua hang (tren mien huan luyen)
+    train_cols = day_cols[:split_day]
+    per_store_mean = (df_f.groupby(["item_id", "store_id"])[train_cols]
+                      .sum().mean(axis=1).unstack())
+    du_dieu_kien = (per_store_mean >= min_mean_demand).sum(axis=1)
+    hop_le = du_dieu_kien[du_dieu_kien >= int(np.ceil(0.8 * n_warehouses))].index
+    print(f"  SKU dat nguong cau >= {min_mean_demand} dv/ngay o >=80% cua hang: "
+          f"{len(hop_le)}/{df_f['item_id'].nunique()}")
+
+    item_total = df_f[df_f["item_id"].isin(hop_le)].groupby("item_id")[train_cols].sum().sum(axis=1)
+
+    if sku_selection == "stratified":
+        cat_of = df_f.drop_duplicates("item_id").set_index("item_id")["cat_id"]
+        cats = sorted(cat_of.reindex(item_total.index).unique())
+        top_items, per_cat = [], max(1, n_skus // len(cats))
+        for ci, cat in enumerate(cats):
+            items_c = item_total[cat_of.reindex(item_total.index) == cat]
+            items_c = items_c[items_c > 0].sort_values(ascending=False)
+            if len(items_c) == 0:
+                continue
+            k = per_cat if ci < len(cats) - 1 else n_skus - len(top_items)
+            k = min(k, len(items_c))
+            idx = np.linspace(0, len(items_c) - 1, k).round().astype(int)
+            top_items += items_c.index[idx].tolist()
+        top_items = top_items[:n_skus]
+        print(f"  Chon {len(top_items)} SKU phan tang tren {len(cats)} nhom nganh hang")
+    else:
+        top_items = item_total.nlargest(n_skus).index.tolist()
+        print(f"  Chon {len(top_items)} SKU ban chay nhat (che do 'top')")
+
+    df_f = df_f[df_f["item_id"].isin(top_items)].copy()
+
+    T = len(day_cols)
+    demand = np.zeros((T, n_warehouses, n_skus), dtype=np.float32)
+    for w_idx, store in enumerate(top_stores):
+        sdf = df_f[df_f["store_id"] == store].set_index("item_id").reindex(top_items)
+        demand[:, w_idx, :] = sdf[day_cols].values.astype(np.float32).T
+
+    demand = np.nan_to_num(demand, nan=0.0)
+
+    flat = demand[:split_day].reshape(split_day, -1)
+    md = flat.mean(axis=0)
+    print(f"  Demand array shape: {demand.shape}")
+    print(f"  Cau TB/cap: {md.mean():.2f}  trung vi: {np.median(md):.2f}  "
+          f"min: {md.min():.2f}  max: {md.max():.1f}")
+    print(f"  Ty le ngay bang 0: {(demand == 0).mean():.1%}")
+    print(f"  So cap co cau < 0.1 dv/ngay: {(md < 0.1).sum()} (cang it cang tot)")
+    return demand, top_stores, top_items
 
 
 def main():
-    args = parse_args()
-    raw_dir = Path(args.raw_dir)
-    out_dir = Path(args.output_dir)
+    p = argparse.ArgumentParser(description="Tien xu ly du lieu nhu cau ton kho.")
+    p.add_argument("--synthetic", action="store_true")
+    p.add_argument("--m5", action="store_true")
+    p.add_argument("--n_days", type=int, default=365)
+    p.add_argument("--n_warehouses", type=int, default=10)
+    p.add_argument("--n_skus", type=int, default=30)
+    p.add_argument("--raw_dir", type=str, default="data/raw")
+    p.add_argument("--output_dir", type=str, default="data/processed")
+    p.add_argument("--seed", type=int, default=42)
+    p.add_argument("--split_day", type=int, default=1450)
+    p.add_argument("--min_mean_demand", type=float, default=0.2)
+    p.add_argument("--sku_selection", type=str, default="stratified",
+                   choices=["stratified", "top"])
+    args = p.parse_args()
 
-    print("=" * 60)
-    print("Tiền xử lý Dữ liệu M5 cho Môi trường Quản lý Tồn kho RL")
-    print("=" * 60)
-    print(f"Cửa hàng (Nhà kho): {args.stores}")
-    print(f"Số SKU mỗi cửa hàng: {args.n_skus}")
-    print(f"Thư mục dữ liệu thô:  {raw_dir}")
-    print(f"Thư mục đầu ra:       {out_dir}")
-    print("=" * 60)
+    os.makedirs(args.output_dir, exist_ok=True)
+    out_path = Path(args.output_dir) / "demand_data.npy"
 
-    sales_path = raw_dir / "sales_train_evaluation.csv"
-    if args.synthetic or not sales_path.exists():
-        if not args.synthetic:
-            print("\n[CẢNH BÁO] Không tìm thấy các tệp M5 trong data/raw/. Sử dụng dữ liệu giả lập.")
-            print("  Để dùng dữ liệu M5 thực tế, hãy tải về từ Kaggle và đặt vào data/raw/")
-        demand_array = generate_synthetic_fallback(
-            n_warehouses=len(args.stores),
-            n_skus=args.n_skus,
-            seed=args.seed,
-            out_dir=out_dir,
-        )
-        # Tạo metadata mẫu
-        meta = pd.DataFrame([
-            {
-                "pair_idx": w * args.n_skus + s,
-                "w_idx": w,
-                "s_idx": s,
-                "store_id": args.stores[w] if w < len(args.stores) else f"STORE_{w}",
-                "item_id": f"ITEM_{s:03d}",
-                "dept_id": "SYNTHETIC",
-                "cat_id": "SYNTHETIC",
-            }
-            for w in range(len(args.stores))
-            for s in range(args.n_skus)
-        ])
-        meta.to_csv(out_dir / "sku_metadata.csv", index=False)
-        print("\nHoàn thành! Dữ liệu giả lập đã sẵn sàng.")
+    if args.m5:
+        print("=== CHE DO: M5 Walmart Dataset ===")
+        demand, stores, items = preprocess_m5_data(
+            args.raw_dir, args.n_warehouses, args.n_skus,
+            args.sku_selection, args.min_mean_demand, args.split_day)
+        print("Dang tao calendar features...")
+        cal_feat = generate_calendar_features(args.raw_dir, n_days=demand.shape[0])
+        np.save(Path(args.output_dir) / "calendar_features.npy", cal_feat)
+        sd = min(args.split_day, demand.shape[0])
+        md = demand[:sd].reshape(sd, -1).mean(axis=0)
+        meta = {"mode": "m5", "n_days": int(demand.shape[0]),
+                "n_warehouses": args.n_warehouses, "n_skus": args.n_skus,
+                "stores": stores, "top_items": items,
+                "calendar_features_dim": 20,
+                "split_day": args.split_day,
+                "min_mean_demand": args.min_mean_demand,
+                "sku_selection": args.sku_selection,
+                # [V2-19] cho app Streamlit
+                "mean_demand_pairs": [round(float(x), 4) for x in md],
+                "mean_demand_per_warehouse": [round(float(x), 2) for x in
+                                              md.reshape(args.n_warehouses, args.n_skus).sum(1)]}
+    elif args.synthetic:
+        print("=== CHE DO: Synthetic Data ===")
+        demand = generate_synthetic_data(args.n_days, args.n_warehouses,
+                                         args.n_skus, args.seed)
+        cal_feat = np.zeros((demand.shape[0], 0), dtype=np.float32)
+        np.save(Path(args.output_dir) / "calendar_features.npy", cal_feat)
+        md = demand.reshape(demand.shape[0], -1).mean(axis=0)
+        meta = {"mode": "synthetic", "n_days": int(demand.shape[0]),
+                "n_warehouses": args.n_warehouses, "n_skus": args.n_skus,
+                "stores": [f"WH_{i+1}" for i in range(args.n_warehouses)],
+                "top_items": [f"SKU_{j+1}" for j in range(args.n_skus)],
+                "calendar_features_dim": 0,
+                "split_day": min(args.split_day, int(demand.shape[0] * 0.75)),
+                "mean_demand_pairs": [round(float(x), 4) for x in md],
+                "mean_demand_per_warehouse": [round(float(x), 2) for x in
+                                              md.reshape(args.n_warehouses, args.n_skus).sum(1)]}
+    else:
+        print("Vui long them --synthetic hoac --m5")
         return
 
-    # --- Tiền xử lý dữ liệu M5 thực tế ---
-    df = load_m5_sales(raw_dir, args.stores, n_skus=args.n_skus, seed=args.seed)
-    calendar = load_calendar(raw_dir)
-    demand_array, sku_meta = compute_daily_demand(df, args.stores, calendar)
-    demand_array = clean_demand(demand_array)
-    env_config = save_outputs(demand_array, sku_meta, args.stores, out_dir)
-
-    print("\n" + "=" * 60)
-    print("Tiền xử lý HOÀN THÀNH!")
-    print(f"Kích thước dữ liệu nhu cầu: {demand_array.shape}")
-    print(f"Cấu hình môi trường:        {env_config}")
-    print("=" * 60)
+    np.save(out_path, demand)
+    print(f"Da luu: {out_path}  shape={demand.shape}")
+    with open(Path(args.output_dir) / "env_config.json", "w", encoding="utf-8") as f:
+        json.dump(meta, f, indent=4, ensure_ascii=False)
+    print(f"Da luu metadata: {Path(args.output_dir) / 'env_config.json'}")
 
 
 if __name__ == "__main__":

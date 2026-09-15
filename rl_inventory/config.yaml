@@ -1,59 +1,112 @@
 # ============================================================
-# config.yaml — Cấu hình tập trung cho RL Inventory
-# Tất cả hyperparameter, đường dẫn và seed được định nghĩa
-# tại đây. CLI args trong main.py có thể override từng giá trị.
+# config.yaml - Cau hinh du an IPPO Inventory  (PHIEN BAN v2)
+# Cac thay doi so voi ban cu duoc danh dau [V2-n]; xem
+# BAO_CAO_SUA_LOI.md de biet ly do tung thay doi.
 # ============================================================
 
-# --- Hạt giống ngẫu nhiên (Reproducibility) ---
 seed: 42
 
-# --- Đường dẫn ---
 paths:
-  data_dir:       "data/processed"   # thư mục chứa demand_data.npy + env_config.json
-  raw_dir:        "data/raw"         # thư mục chứa file M5 thô
-  log_dir:        "runs"             # thư mục log TensorBoard
-  checkpoint_dir: "checkpoints"      # thư mục lưu checkpoint .pth
-  results_dir:    "results"          # thư mục xuất biểu đồ và CSV
+  data_dir:       "data/processed"
+  raw_dir:        "data/raw"
+  log_dir:        "runs"
+  checkpoint_dir: "checkpoints"
+  results_dir:    "results"
 
-# --- Cấu hình môi trường (Inventory Env) ---
 env:
-  n_warehouses:      2
-  n_skus:            30
-  episode_length:    112          # 16 tuần × 7 ngày
-  lookback:          7            # cửa sổ lịch sử nhu cầu (ngày)
-  lead_time_min:     1
-  lead_time_max:     3
-  max_inventory:     500
-  initial_inventory: 100
-  holding_cost:      1.0          # h: chi phí lưu kho / đơn vị / ngày
-  stockout_cost:     10.0         # p: chi phí thiếu hàng / đơn vị
-  ordering_cost:     50.0         # K: chi phí cố định / lần đặt hàng
-  overflow_penalty:  5.0
+  # [V2-20] 10 kho x 30 SKU = 300 cap (truoc: 10 x 50 = 500).
+  # Ly do: trong tap 50 SKU cu co 142/500 cap cau < 0,1 dv/ngay (cua hang do
+  # khong kinh doanh mat hang do) - cac "tac tu" nay chi them nhieu vao gradient
+  # dung chung. Sau khi loc theo min_mean_demand, 30 SKU cho 300 cap trong do
+  # chi con 5 cap gan nhu khong ban, ma van giu duoc 57% ngay bang 0 (tinh
+  # gian doan ma Chuong 1 nhan manh) va du ca 3 nhom nganh hang.
+  n_warehouses:   10
+  n_skus:         30
+  episode_length: 365
+  lookback:       7
+  lead_time_min:  1
+  lead_time_max:  3
+
+  # [V2-1] Suc chua tinh RIENG cho tung kho: capacity_cover_days x tong cau
+  # mot ngay CUA CHINH KHO DO (khong phai trung binh cac kho nhu ban cu).
+  warehouse_capacity: auto
+  # [V2-21] 3,0 -> 5,0 ngay. Voi lead time toi da 3 ngay va cau gian doan,
+  # 3 ngay suc chua khien fill rate 85% la muc tieu VO NGHIEM: agent bi phat
+  # tran kho va phat muc phuc vu cung luc, khong co hanh dong nao thoat duoc.
+  capacity_cover_days: 5.0
+  initial_cover_days:  3.0
+
+  cp_lk:  1.0     # chi phi luu kho / don vi / ngay
+  cp_th:  10.0    # chi phi thieu hang / don vi
+  cp_dh:  5.0     # chi phi dat hang / lan dat
+  pt_tk:  5.0     # phat tran kho / don vi bi tu choi nhap
+  phi_dv: 3.0     # he so phat muc phuc vu
+  muc_dv: 0.85    # nguong fill rate muc tieu (beta)
+
+  fill_rate_window: 30
+  obs_cover_days:   20.0
+  min_mean_demand:  0.05
+
+  # [V2-2] Chuan hoa phan thuong theo tung cap (cp_th*mean_demand + cp_dh).
+  # Dat false de chay ablation "khong chuan hoa" - se thay lai hien tuong
+  # khong hoi tu, rat dang dua vao Chuong 4.
+  normalize_reward_per_pair: true
+  reward_scale: 1.0
+
+  split_day: 1450
+
+  use_relative_orders: true
+  order_multipliers: [0.0, 0.5, 1.0, 2.0, 3.0, 5.0]
   order_levels:      [0, 10, 20, 30, 40, 50]
 
-# --- Cấu hình tiền xử lý dữ liệu ---
 preprocess:
-  stores:     ["CA_1", "TX_1"]    # các cửa hàng M5 làm nhà kho
+  stores:     ["CA_1", "CA_2", "CA_3", "CA_4", "TX_1", "TX_2", "TX_3", "WI_1", "WI_2", "WI_3"]
   n_skus:     30
-  chunk_size: 5000                # số dòng đọc mỗi chunk (tiết kiệm RAM)
+  sku_selection: "stratified"
+  min_mean_demand: 0.2
 
-# --- Hyperparameter huấn luyện ---
-train:
-  episodes:     1000
-  hidden_dim:   256
-  batch_size:   128               # tối ưu cho RTX 3050 4GB VRAM
-  lr:           3.0e-4
-  gamma:        0.99              # hệ số chiết khấu
-  buffer_cap:   100000            # dung lượng Replay Buffer
-  eps_start:    1.0               # epsilon ban đầu (ε-greedy)
-  eps_min:      0.05              # epsilon tối thiểu
-  eps_decay:    30000             # số bước suy giảm epsilon
-  use_per:      false             # Prioritized Experience Replay
-  save_every:   100               # lưu checkpoint mỗi N episodes
-  eval_every:   50                # chạy eval greedy mỗi N episodes
+ppo:
+  # [V2-22] n_steps 2048 -> 1024: cap nhat thuong xuyen hon, van con
+  # 1024 x 300 = 307.200 mau moi lan update (thua du cho PPO).
+  n_steps:         1024
+  ppo_epochs:      4
+  mini_batch_size: 16384
+  # [V2-8] Actor va critic la hai mang rieng nen lr khong con "ganh" nhau.
+  lr_actor:        3.0e-4
+  lr_critic:       1.0e-3
+  gamma:           0.99
+  gae_lambda:      0.95
+  clip_eps:        0.2
+  ent_coef:        0.02
+  ent_coef_end:    0.002
+  anneal_ent:      true
+  vf_coef:         0.5
+  max_grad_norm:   0.5
+  hidden_dim:      128
+  anneal_lr:       true
+  target_kl:       0.02
+  use_value_norm:  true       # [V2-10]
+  clip_value_loss: true       # [V2-11]
+  eval_every_episodes: 25
+  eval_n_episodes:     2
+  min_fill_to_save:    0.0
+  normalize_adv_per_pair: true
+  total_episodes:  5000
 
-# --- Cấu hình đánh giá ---
 eval:
-  n_episodes:   20                # số tập thử nghiệm mỗi chiến lược
-  hidden_dim:   256               # phải khớp với lúc train
-  seed:         100               # seed riêng cho eval (tách biệt với train)
+  n_episodes: 30
+  seed:       1000
+  log_cost_breakdown: true
+  compare_baselines: ["eoq", "s_S", "newsvendor"]
+
+# ============================================================
+# CAC CO ABLATION (doi gia tri roi chay lai train.py, khong can sua code):
+#   normalize_reward_per_pair : true/false  -> anh huong lon nhat toi hoi tu
+#   normalize_adv_per_pair    : true/false
+#   use_value_norm            : true/false
+#   anneal_ent                : true/false
+#   use_relative_orders       : true/false
+#   capacity_cover_days       : so thuc     -> do chat cua rang buoc ghep noi
+#   phi_dv                    : so thuc     -> do nhay he so phat service-level
+# Moi lan chi doi 1 co, giu nguyen seed.
+# ============================================================

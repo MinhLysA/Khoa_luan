@@ -1,0 +1,33 @@
+{
+  "target_fill": 0.9071083555218779,
+  "ket_qua": {
+    "IPPO": {
+      "cost": 1409909.3315759609,
+      "fill": 0.9121083555218779,
+      "params": null
+    },
+    "EOQ": {
+      "cost": null,
+      "fill": null,
+      "params": null,
+      "khong_dat": true
+    },
+    "(s,S)": {
+      "cost": 1820968.954132517,
+      "fill": 0.9248224606540875,
+      "params": {
+        "service_level": 0.99,
+        "q_factor": 0.5,
+        "lead_time": 3.0
+      }
+    },
+    "Newsvendor": {
+      "cost": 1687341.8396912813,
+      "fill": 0.9262354189863554,
+      "params": {
+        "cr_override": 0.9,
+        "lead_time": 4.0
+      }
+    }
+  }
+}

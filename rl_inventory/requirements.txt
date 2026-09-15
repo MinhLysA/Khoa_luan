@@ -1,21 +1,10 @@
-# RL Multi-Warehouse Inventory Management
-# Tested on: Python 3.10+, CUDA 11.8+ (RTX 3050 4GB)
-# Install: pip install -r requirements.txt
-
-# Core RL & Deep Learning
-torch>=2.1.0
-gymnasium>=0.29.1
-
-# Data Processing
+torch>=2.0.0
+gymnasium>=0.28.1
 numpy>=1.24.0
 pandas>=2.0.0
-scikit-learn>=1.3.0
-
-# Visualization & Logging
 matplotlib>=3.7.0
-tensorboard>=2.14.0
-
-# Utilities
-tqdm>=4.65.0
-seaborn>=0.12.0
-scipy>=1.11.0
+pyyaml>=6.0
+scipy>=1.10.0
+tensorboard>=2.12.0
+streamlit>=1.40.0
+pytest>=7.0.0

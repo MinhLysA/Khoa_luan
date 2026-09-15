@@ -1,334 +1,299 @@
 """
 scripts/train.py
-=================
-Kịch bản huấn luyện tác tử Double DQN cho bài toán Quản lý Tồn kho Đa Kho.
+================
+Vong lap huan luyen IPPO cho bai toan ton kho da kho - da SKU.
 
-Cách sử dụng khuyến nghị (qua main.py):
-  python main.py train --episodes 500
-  python main.py train --synthetic
-
-Hoặc chạy trực tiếp (tương thích ngược):
-  python scripts/train.py --episodes 500
-  python scripts/train.py --episodes 50 --synthetic
-
-Theo dõi TensorBoard:
-  tensorboard --logdir runs/
-
-Sử dụng bộ nhớ GPU (RTX 3050 4GB):
-  - Mô hình: ~2MB
-  - Bộ đệm phát lại (100K): ~500MB
-  - Batch (128): ~1MB
-  Tổng cộng: ~0.5GB — hoàn toàn nằm trong giới hạn VRAM 4GB
+PHIEN BAN v2:
+  [V2-12] Khong con "vá" phan thuong cuoi episode bang gamma*V(s_T); buffer
+          nhan next_value truc tiep (xem agents/rollout_buffer.py).
+  [V2-14] GHI NHAT KY RA results/train_log.csv sau MOI episode. App Streamlit
+          doc file nay de ve duong hoc theo thoi gian thuc.
+  [V2-15] CHON CHECKPOINT TOT NHAT BANG DANH GIA DETERMINISTIC dinh ky, thay vi
+          bang trung binh truot cua reward luc dang lay mau ngau nhien. Reward
+          khi dang explore khong phai chat luong chinh sach.
+  [V2-16] In ra canh bao chan doan (entropy khong giam, explained_variance am,
+          KL qua lon, fill rate ket) ngay trong luc chay.
 """
-
-from __future__ import annotations
 
 import os
 import sys
-import argparse
+import csv
+import yaml
 import time
+import argparse
 import numpy as np
 import torch
 from pathlib import Path
-from tqdm import tqdm
+from datetime import datetime
 
-# Đảm bảo thư mục gốc project nằm trong sys.path (khi chạy trực tiếp)
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from env.inventory_env import MultiWarehouseInventoryEnv
-from agents.dqn_agent import DoubleDQNAgent
-from utils import load_demand_data
+from agents.ppo_agent import PPOAgent
+from agents.rollout_buffer import RolloutBuffer
+
+try:
+    from torch.utils.tensorboard import SummaryWriter
+    TENSORBOARD_AVAILABLE = True
+except ImportError:
+    TENSORBOARD_AVAILABLE = False
 
 
-# ---------------------------------------------------------------------------
-# Phân tích tham số dòng lệnh CLI
-# ---------------------------------------------------------------------------
-
-def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Huấn luyện Double DQN cho bài toán tối ưu hóa quản lý tồn kho đa nhà kho."
-    )
-    parser.add_argument("--episodes",      type=int,   default=500,
-                        help="Số lượng tập huấn luyện (mặc định: 500)")
-    parser.add_argument("--hidden_dim",    type=int,   default=256,
-                        help="Kích thước lớp ẩn (mặc định: 256)")
-    parser.add_argument("--batch_size",    type=int,   default=128,
-                        help="Kích thước lô huấn luyện (mặc định: 128, tối ưu cho RTX 3050)")
-    parser.add_argument("--lr",            type=float, default=3e-4,
-                        help="Tốc độ học (mặc định: 3e-4)")
-    parser.add_argument("--gamma",         type=float, default=0.99,
-                        help="Hệ số chiết khấu gamma (mặc định: 0.99)")
-    parser.add_argument("--buffer_cap",    type=int,   default=100_000,
-                        help="Dung lượng bộ đệm phát lại (mặc định: 100000)")
-    parser.add_argument("--eps_start",     type=float, default=1.0,
-                        help="Tỷ lệ khám phá epsilon ban đầu (mặc định: 1.0)")
-    parser.add_argument("--eps_min",       type=float, default=0.05,
-                        help="Tỷ lệ khám phá epsilon tối thiểu (mặc định: 0.05)")
-    parser.add_argument("--eps_decay",     type=int,   default=50_000,
-                        help="Số bước suy giảm epsilon (mặc định: 50000)")
-    parser.add_argument("--n_skus",        type=int,   default=30,
-                        help="Số lượng SKU trên mỗi nhà kho (mặc định: 30)")
-    parser.add_argument("--use_per",       action="store_true",
-                        help="Sử dụng Prioritized Experience Replay")
-    parser.add_argument("--synthetic",     action="store_true",
-                        help="Bắt buộc sử dụng dữ liệu giả lập (bỏ qua M5)")
-    parser.add_argument("--data_dir",      type=str,   default=str(ROOT / "data" / "processed"),
-                        help="Thư mục chứa dữ liệu đã xử lý")
-    parser.add_argument("--log_dir",       type=str,   default=str(ROOT / "runs"),
-                        help="Thư mục lưu log TensorBoard")
-    parser.add_argument("--checkpoint_dir", type=str,  default=str(ROOT / "checkpoints"),
-                        help="Thư mục lưu điểm kiểm tra checkpoint")
-    parser.add_argument("--save_every",    type=int,   default=100,
-                        help="Lưu checkpoint sau mỗi N tập (mặc định: 100)")
-    parser.add_argument("--eval_every",    type=int,   default=50,
-                        help="Chạy tập đánh giá sau mỗi N tập (mặc định: 50)")
-    parser.add_argument("--seed",          type=int,   default=42,
-                        help="Hạt giống ngẫu nhiên (mặc định: 42)")
-    return parser.parse_args()
+LOG_FIELDS = ["episode", "global_step", "elapsed_s", "reward_raw", "reward_smooth",
+              "fill_rate", "stockout", "cost_holding", "cost_stockout",
+              "cost_ordering", "cost_overflow", "cost_service_penalty",
+              "cost_total", "entropy", "approx_kl", "clip_frac", "value_loss",
+              "explained_variance", "lr_scale", "ent_coef",
+              "eval_reward", "eval_fill"]
 
 
-# ---------------------------------------------------------------------------
-# Tải dữ liệu (dùng hàm chung từ utils)
-# ---------------------------------------------------------------------------
+def load_data(paths):
+    demand_data = None
+    p = ROOT / paths["data_dir"] / "demand_data.npy"
+    if p.exists():
+        demand_data = np.load(str(p))
+    calendar_features = None
+    p = ROOT / paths["data_dir"] / "calendar_features.npy"
+    if p.exists():
+        calendar_features = np.load(str(p))
+    return demand_data, calendar_features
 
 
-# ---------------------------------------------------------------------------
-# Vòng lặp huấn luyện chính
-# ---------------------------------------------------------------------------
+def train():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", type=str, default="config.yaml")
+    parser.add_argument("--episodes", type=int, default=None)
+    parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--tag", type=str, default="")
+    parser.add_argument("--device", type=str, default="auto")
+    # [V2-27] Huan luyen tren CPU rat lau; cho phep chay tiep tu checkpoint cu
+    # thay vi bat dau lai tu dau moi khi may bi ngat.
+    parser.add_argument("--resume", type=str, default=None,
+                        help="Duong dan checkpoint de hoc tiep")
+    args = parser.parse_args()
 
-def train(args):
-    """Vòng lặp huấn luyện chính cho tác tử tồn kho Double DQN."""
+    with open(ROOT / args.config, "r", encoding="utf-8") as f:
+        cfg = yaml.safe_load(f)
 
-    print("=" * 65)
-    print("  Double DQN — Tối ưu hóa Quản lý Tồn kho Đa Kho")
-    print("=" * 65)
+    env_cfg, ppo_cfg, paths = cfg["env"], cfg["ppo"], cfg["paths"]
+    seed = args.seed if args.seed is not None else cfg.get("seed", 42)
+    total_episodes = args.episodes or ppo_cfg["total_episodes"]
+    n_steps = int(ppo_cfg["n_steps"])
 
-    # ---- Dữ liệu & Môi trường -----------------------------------------------
-    demand_data, env_config = load_demand_data(
-        data_dir=args.data_dir,
-        n_warehouses=2,
-        n_skus=args.n_skus,
-        n_days=800,
-        seed=args.seed,
-        synthetic=args.synthetic,
-    )
+    checkpoint_dir = ROOT / paths["checkpoint_dir"]
+    log_dir        = ROOT / paths["log_dir"]
+    results_dir    = ROOT / paths["results_dir"]
+    for d in (checkpoint_dir, log_dir, results_dir):
+        d.mkdir(parents=True, exist_ok=True)
 
-    # Ghi đè cấu hình từ tham số CLI
-    env_config["seed"] = args.seed
+    np.random.seed(seed)
+    torch.manual_seed(seed)
 
-    env = MultiWarehouseInventoryEnv(
-        config=env_config,
-        demand_data=demand_data,
-    )
+    demand_data, calendar_features = load_data(paths)
+    if demand_data is None:
+        print("Khong tim thay demand_data.npy -> dung Poisson ngau nhien")
 
-    n_pairs = env.n_pairs
-    obs_dim = env.obs_dim
+    env = MultiWarehouseInventoryEnv(config=env_cfg, demand_data=demand_data,
+                                     calendar_features=calendar_features, mode="train")
+    eval_env = MultiWarehouseInventoryEnv(config=env_cfg, demand_data=demand_data,
+                                          calendar_features=calendar_features, mode="test")
+    eval_every      = int(ppo_cfg.get("eval_every_episodes", 25))
+    eval_n_episodes = int(ppo_cfg.get("eval_n_episodes", 2))
 
-    print(f"\nMôi trường:")
-    print(f"  Số nhà kho:               {env.n_w}")
-    print(f"  SKU / nhà kho:            {env.n_s}")
-    print(f"  Số cặp kho-SKU (n_pairs): {n_pairs}")
-    print(f"  Chiều quan sát (obs_dim): {obs_dim}")
-    print(f"  Độ dài tập (episode):     {env.episode_len} ngày")
-    print(f"  Các mức đặt hàng:         {env.order_levels.tolist()}")
+    if args.device == "auto":
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+    else:
+        device = args.device
 
-    # ---- Tác tử Agent --------------------------------------------------------
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    if device == "cuda":
-        print(f"\n[GPU] {torch.cuda.get_device_name(0)}")
-        print(f"  VRAM: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
+    agent = PPOAgent(obs_per_pair=env.obs_per_pair, n_pairs=env.n_pairs,
+                     n_action_levels=env.n_action_levels, config=ppo_cfg, device=device)
+    buffer = RolloutBuffer(buffer_size=n_steps, obs_per_pair=env.obs_per_pair,
+                           n_pairs=env.n_pairs, device=device,
+                           normalize_per_pair=ppo_cfg.get("normalize_adv_per_pair", True))
 
-    timestamp = time.strftime("%Y%m%d_%H%M%S")
-    log_dir = os.path.join(args.log_dir, f"dqn_{timestamp}")
+    if args.resume:
+        rp = ROOT / args.resume
+        if rp.exists():
+            agent.load(str(rp))
+            print(f"[V2-27] Da nap trong so tu {rp} de hoc tiep.")
+        else:
+            print(f"[V2-27] Khong tim thay {rp}, bat dau tu dau.")
 
-    agent = DoubleDQNAgent(
-        state_dim       = obs_dim,
-        n_pairs         = n_pairs,
-        n_action_levels = len(env.order_levels),
-        hidden_dim      = args.hidden_dim,
-        lr              = args.lr,
-        gamma           = args.gamma,
-        buffer_capacity = args.buffer_cap,
-        batch_size      = args.batch_size,
-        eps_start       = args.eps_start,
-        eps_min         = args.eps_min,
-        eps_decay       = args.eps_decay,
-        use_per         = args.use_per,
-        log_dir         = log_dir,
-        device          = device,
-    )
+    def run_deterministic_eval():
+        rewards, fills = [], []
+        for i in range(eval_n_episodes):
+            o, _ = eval_env.reset(seed=90000 + i)
+            ep_r, ep_f = 0.0, []
+            while True:
+                a, _, _ = agent.select_action(o, deterministic=True)
+                o, _, term, trunc, inf = eval_env.step(a)
+                ep_r += inf["raw_reward"]
+                ep_f.append(inf["fill_rate_mean"])
+                if term or trunc:
+                    break
+            rewards.append(ep_r)
+            fills.append(float(np.mean(ep_f)))
+        return float(np.mean(rewards)), float(np.mean(fills))
 
-    os.makedirs(args.checkpoint_dir, exist_ok=True)
+    suffix = f"_{args.tag}" if args.tag else ""
+    writer = None
+    if TENSORBOARD_AVAILABLE:
+        writer = SummaryWriter(
+            log_dir=str(log_dir / f"PPO{suffix}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"))
 
-    # ---- Theo dõi chỉ số ----------------------------------------------------
-    best_reward = -float("inf")
-    episode_rewards  = []
-    episode_costs    = []
-    episode_sl       = []   # service levels (mức độ phục vụ)
-    losses           = []
+    log_path = results_dir / f"train_log{suffix}.csv"
+    log_file = open(log_path, "w", newline="", encoding="utf-8")
+    log_writer = csv.DictWriter(log_file, fieldnames=LOG_FIELDS)
+    log_writer.writeheader()
 
-    print(f"\n[Train] Bắt đầu huấn luyện trong {args.episodes} tập...")
-    print(f"  Thư mục Log:        {log_dir}")
-    print(f"  Thư mục Checkpoint: {args.checkpoint_dir}")
-    print(f"  Sử dụng PER:        {args.use_per}")
-    print("=" * 65)
+    print("=" * 68)
+    print("HUAN LUYEN IPPO (parameter sharing) - phien ban v2")
+    print(f"  device={device}  obs_per_pair={env.obs_per_pair}  n_pairs={env.n_pairs}")
+    print(f"  n_actions={env.n_action_levels}  order_relative={env.use_relative_orders}")
+    print(f"  suc chua tung kho = {np.round(env.suc_chua_kho).astype(int).tolist()}")
+    print(f"  mau/update = {n_steps} x {env.n_pairs} = {n_steps*env.n_pairs:,}")
+    print(f"  nhat ky -> {log_path}")
+    print("=" * 68)
 
-    pbar = tqdm(range(1, args.episodes + 1), desc="Đang huấn luyện", unit="ep")
+    best_score = -float("inf")
+    episode_count = 0
+    global_step = 0
+    reward_window, fill_window = [], []
+    anneal     = bool(ppo_cfg.get("anneal_lr", True))
+    anneal_ent = bool(ppo_cfg.get("anneal_ent", True))
+    min_fill_to_save = float(ppo_cfg.get("min_fill_to_save", 0.0))
+    t0 = time.time()
 
-    for episode in pbar:
-        obs, info = env.reset(seed=args.seed + episode)
-        ep_reward = 0.0
-        ep_loss   = []
+    obs, _ = env.reset(seed=seed)
+    ep_reward, ep_stockout, ep_fill = 0.0, 0.0, []
+    ep_costs = {"cost_holding": 0.0, "cost_stockout": 0.0, "cost_ordering": 0.0,
+                "cost_overflow": 0.0, "cost_service_penalty": 0.0}
+    last_metrics = {}
+    last_eval = (float("nan"), float("nan"))
 
-        # ---- Vòng lặp tập (Episode loop) -----------------------------------
-        for step in range(env.episode_len):
-            # Lựa chọn hành động ε-greedy
-            action = agent.select_action(obs, greedy=False)
+    while episode_count < total_episodes:
+        buffer.reset()
 
-            # Bước môi trường
+        for _ in range(n_steps):
+            action, log_prob, value = agent.select_action(obs)
             next_obs, reward, terminated, truncated, info = env.step(action)
 
-            done = terminated or truncated
+            # [V2-12] O buoc cuoi episode (cat vi het gio), V(s_{t+1}) van ton
+            # tai va phai duoc bootstrap -> tinh va dua thang cho buffer.
+            nv = None
+            if truncated and not terminated:
+                _, _, nv = agent.select_action(next_obs)
 
-            # Lưu chuyển trạng thái (chuẩn hóa reward theo n_pairs để Q-values không bùng nổ)
-            scaled_reward = reward / env.n_pairs
-            agent.store_transition(obs, action, scaled_reward, next_obs, done)
-            ep_reward += reward
+            buffer.add(obs, action, log_prob, info["local_scaled_rewards"], value,
+                       terminated=terminated,
+                       episode_end=(terminated or truncated),
+                       next_value=nv)
+
+            ep_reward   += info["raw_reward"]
+            ep_stockout += info["stockout"]
+            ep_fill.append(info["fill_rate_mean"])
+            for k in ep_costs:
+                ep_costs[k] += info[k]
+            global_step += 1
             obs = next_obs
 
-            # Bước cập nhật mô hình
-            loss = agent.update()
-            if loss is not None:
-                ep_loss.append(loss)
-                losses.append(loss)
+            if terminated or truncated:
+                episode_count += 1
+                reward_window.append(ep_reward)
+                fill_window.append(float(np.mean(ep_fill)))
+                if len(reward_window) > 20:
+                    reward_window.pop(0)
+                    fill_window.pop(0)
 
-            if done:
-                break
+                if episode_count % eval_every == 0:
+                    last_eval = run_deterministic_eval()
+                    det_r, det_f = last_eval
+                    print(f"  [Eval] Ep {episode_count:5d}  det_reward={det_r:>14,.0f}"
+                          f"  det_fill={det_f:.3f}")
+                    # [V2-15] Chon checkpoint theo danh gia deterministic
+                    if det_f >= min_fill_to_save and det_r > best_score:
+                        best_score = det_r
+                        agent.save(str(checkpoint_dir / f"best_model{suffix}.pth"))
+                        print(f"         -> luu best_model (score={det_r:,.0f})")
 
-        # ---- Ghi nhận kết quả tập -------------------------------------------
-        service_level = env.get_service_level()
-        ep_cost = info["episode_cost"]
-        total_demand = env.demand_data[
-            env.start_idx:env.start_idx + env.t
-        ].sum()
-        stockout_rate = (
-            info["episode_stockouts"] / (total_demand + 1e-6)
-        )
+                row = {f: "" for f in LOG_FIELDS}
+                row.update({
+                    "episode": episode_count, "global_step": global_step,
+                    "elapsed_s": round(time.time() - t0, 1),
+                    "reward_raw": ep_reward,
+                    "reward_smooth": float(np.mean(reward_window)),
+                    "fill_rate": float(np.mean(ep_fill)),
+                    "stockout": ep_stockout,
+                    "cost_total": sum(ep_costs.values()),
+                    "entropy": last_metrics.get("entropy", ""),
+                    "approx_kl": last_metrics.get("approx_kl", ""),
+                    "clip_frac": last_metrics.get("clip_frac", ""),
+                    "value_loss": last_metrics.get("value_loss", ""),
+                    "explained_variance": last_metrics.get("explained_variance", ""),
+                    "ent_coef": agent.ent_coef,
+                    "eval_reward": last_eval[0], "eval_fill": last_eval[1],
+                })
+                row.update(ep_costs)
+                log_writer.writerow(row)
+                log_file.flush()
 
-        episode_rewards.append(ep_reward)
-        episode_costs.append(ep_cost)
-        episode_sl.append(service_level)
+                if episode_count % 10 == 0:
+                    print(f"Ep {episode_count:5d}/{total_episodes}"
+                          f"  reward={ep_reward:>14,.0f}"
+                          f"  smooth={np.mean(reward_window):>14,.0f}"
+                          f"  fill={np.mean(ep_fill):.3f}"
+                          f"  ent={last_metrics.get('entropy', float('nan')):.3f}"
+                          f"  ev={last_metrics.get('explained_variance', float('nan')):.2f}")
 
-        avg_loss = np.mean(ep_loss) if ep_loss else 0.0
+                if writer:
+                    writer.add_scalar("train/episode_reward", ep_reward, episode_count)
+                    writer.add_scalar("train/fill_rate", np.mean(ep_fill), episode_count)
+                    for k, v in ep_costs.items():
+                        writer.add_scalar(f"cost/{k}", v, episode_count)
 
-        # Ghi log TensorBoard
-        agent.log_episode(ep_reward, ep_cost, service_level, stockout_rate)
+                ep_reward, ep_stockout, ep_fill = 0.0, 0.0, []
+                ep_costs = {k: 0.0 for k in ep_costs}
+                obs, _ = env.reset()
+                if episode_count >= total_episodes:
+                    break
 
-        # Cập nhật thanh tiến trình progress bar
-        pbar.set_postfix({
-            "rew":   f"{ep_reward:.0f}",
-            "cost":  f"{ep_cost:.0f}",
-            "SL":    f"{service_level:.3f}",
-            "ε":     f"{agent.epsilon:.3f}",
-            "loss":  f"{avg_loss:.4f}",
-        })
+        frac = 1.0 - episode_count / max(total_episodes, 1)
+        if anneal:
+            agent.set_lr_scale(max(0.1, frac))
+        if anneal_ent:
+            agent.set_ent_scale(max(0.0, frac))
 
-        # ---- Đánh giá định kỳ (greedy policy) --------------------------------
-        if episode % args.eval_every == 0:
-            eval_reward, eval_sl = evaluate_episode(env, agent)
-            agent.writer.add_scalar("eval/reward",        eval_reward, episode)
-            agent.writer.add_scalar("eval/service_level", eval_sl,     episode)
+        _, _, last_value = agent.select_action(obs)
+        buffer.compute_gae(last_values=last_value,
+                           gamma=ppo_cfg["gamma"], gae_lambda=ppo_cfg["gae_lambda"])
+        last_metrics = agent.update(buffer)
 
-            tqdm.write(
-                f"\n[Đánh giá ep={episode:4d}] phần_thưởng={eval_reward:.1f}  "
-                f"service_level={eval_sl:.4f}  ε={agent.epsilon:.3f}"
-            )
+        if writer:
+            for k, v in last_metrics.items():
+                writer.add_scalar(f"loss/{k}", v, global_step)
 
-        # ---- Lưu checkpoint tốt nhất ----------------------------------------
-        if ep_reward > best_reward:
-            best_reward = ep_reward
-            agent.save(os.path.join(args.checkpoint_dir, "best_model.pth"))
+        # [V2-16] Canh bao chan doan
+        if last_metrics.get("explained_variance", 0) < -0.5:
+            print("  [!] explained_variance am manh -> critic chua bam duoc return.")
+        if last_metrics.get("approx_kl", 0) > 0.05:
+            print("  [!] approx_kl > 0.05 -> policy nhay qua manh, giam lr_actor.")
 
-        # ---- Lưu checkpoint định kỳ ----------------------------------------
-        if episode % args.save_every == 0:
-            agent.save(
-                os.path.join(args.checkpoint_dir, f"ckpt_ep{episode:04d}.pth")
-            )
+        if episode_count % 200 == 0 and episode_count > 0:
+            agent.save(str(checkpoint_dir / f"checkpoint_ep{episode_count}{suffix}.pth"))
 
-    # ---- Tổng kết huấn luyện ------------------------------------------------
-    agent.save(os.path.join(args.checkpoint_dir, "final_model.pth"))
-    agent.close()
+    agent.save(str(checkpoint_dir / f"final_model{suffix}.pth"))
+    if not (checkpoint_dir / f"best_model{suffix}.pth").exists():
+        agent.save(str(checkpoint_dir / f"best_model{suffix}.pth"))
+    log_file.close()
+    if writer:
+        writer.close()
+    print("=" * 68)
+    print(f"HOAN TAT sau {time.time()-t0:.0f}s. Best eval reward: {best_score:,.0f}")
+    print(f"  checkpoint : {checkpoint_dir / f'best_model{suffix}.pth'}")
+    print(f"  nhat ky    : {log_path}")
 
-    # In thống kê cuối cùng
-    last_100 = slice(-min(100, args.episodes), None)
-    print("\n" + "=" * 65)
-    print("Huấn luyện HOÀN THÀNH!")
-    print(f"  Phần thưởng tập tốt nhất:         {best_reward:.2f}")
-    print(f"  Phần thưởng trung bình 100 tập cuối: {np.mean(episode_rewards[last_100]):.2f}")
-    print(f"  Chi phí trung bình 100 tập cuối:     {np.mean(episode_costs[last_100]):.2f}")
-    print(f"  Mức độ phục vụ trung bình 100 tập:   {np.mean(episode_sl[last_100]):.4f}")
-    print(f"  Tổng số lần cập nhật gradient:       {agent.update_count}")
-    print(f"  Thư mục checkpoint: {args.checkpoint_dir}")
-    print("=" * 65)
-
-    # Lưu đường cong huấn luyện ra file numpy để vẽ biểu đồ
-    np.save(
-        os.path.join(args.checkpoint_dir, "training_rewards.npy"),
-        np.array(episode_rewards)
-    )
-    np.save(
-        os.path.join(args.checkpoint_dir, "training_service_levels.npy"),
-        np.array(episode_sl)
-    )
-
-    return episode_rewards, episode_sl
-
-
-def evaluate_episode(
-    env: MultiWarehouseInventoryEnv,
-    agent: DoubleDQNAgent,
-    seed: int = 9999,
-) -> tuple:
-    """
-    Chạy 1 tập đánh giá tham lam (không khám phá).
-
-    Tham số
-    ------
-    env : MultiWarehouseInventoryEnv
-    agent : DoubleDQNAgent
-    seed : int
-
-    Trả về
-    -----
-    total_reward : float
-    service_level : float
-    """
-    obs, _ = env.reset(seed=seed)
-    total_reward = 0.0
-
-    for _ in range(env.episode_len):
-        action = agent.select_action(obs, greedy=True)
-        obs, reward, terminated, truncated, _ = env.step(action)
-        total_reward += reward
-        if terminated or truncated:
-            break
-
-    return total_reward, env.get_service_level()
-
-
-# ---------------------------------------------------------------------------
-# Điểm vào chương trình
-# ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    args = parse_args()
-
-    # Đảm bảo tính khả lặp lại (Reproducibility)
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(args.seed)
-
-    train(args)
+    train()
