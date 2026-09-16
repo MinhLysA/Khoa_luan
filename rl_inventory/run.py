@@ -9,6 +9,7 @@ run.py — mot cua duy nhat de chay ca du an.
     python run.py train        # buoc 3: huan luyen IPPO
     python run.py eval         # buoc 4: danh gia & so sanh
     python run.py iso          # buoc 5: so sanh O CUNG MUC PHUC VU (quan trong)
+    python run.py summary      # buoc 6: xuat TONG_HOP_SO_LIEU.txt tu ket qua hien co
     python run.py test         # chay unit test moi truong
     python run.py check        # kiem tra nhanh moi thu da san sang chua
 
@@ -36,7 +37,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("lenh", choices=["app", "all", "data", "baseline",
-                                     "train", "eval", "iso", "test", "check"])
+                                     "train", "eval", "iso", "summary", "test", "check"])
     ap.add_argument("--episodes", type=int, default=None)
     ap.add_argument("--quick", action="store_true",
                     help="Ban rut gon: 60 episode, 5 episode danh gia")
@@ -60,6 +61,7 @@ def main():
     cmd_eval = [PY, "scripts/evaluate.py", "--episodes", str(eval_eps)]
     cmd_iso = [PY, "scripts/iso_service.py", "--tune_episodes", str(tune_eps),
                "--eval_episodes", str(eval_eps)]
+    cmd_summary = [PY, "scripts/generate_summary.py"]
 
     if a.lenh == "app":
         sh([PY, "-m", "streamlit", "run", "app/streamlit_app.py"])
@@ -73,10 +75,12 @@ def main():
         sh(cmd_eval)
     elif a.lenh == "iso":
         sh(cmd_iso)
+    elif a.lenh == "summary":
+        sh(cmd_summary)
     elif a.lenh == "test":
         sh([PY, "-m", "pytest", "tests/", "-q"])
     elif a.lenh == "all":
-        sh(cmd_data); sh(cmd_base); sh(cmd_train); sh(cmd_eval); sh(cmd_iso)
+        sh(cmd_data); sh(cmd_base); sh(cmd_train); sh(cmd_eval); sh(cmd_iso); sh(cmd_summary)
         print("\nXong. Mo bang dieu khien:  python run.py app")
     elif a.lenh == "check":
         ok = True

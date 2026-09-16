@@ -37,7 +37,7 @@ env:
   initial_cover_days:  3.0
 
   cp_lk:  1.0     # chi phi luu kho / don vi / ngay
-  cp_th:  10.0    # chi phi thieu hang / don vi
+  cp_th:  10.0    # chi phi thieu hang / don vi (hang so, dung chung moi cap)
   cp_dh:  5.0     # chi phi dat hang / lan dat
   pt_tk:  5.0     # phat tran kho / don vi bi tu choi nhap
   phi_dv: 3.0     # he so phat muc phuc vu

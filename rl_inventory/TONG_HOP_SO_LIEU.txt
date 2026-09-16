@@ -1,0 +1,137 @@
+================================================================================
+  TONG HOP SO LIEU -- DU AN IPPO QUAN LY TON KHO
+  Tu dong xuat luc: 16/09/2026 19:02:43
+  (File nay duoc sinh boi scripts/generate_summary.py - KHONG sua tay,
+   chay lai script sau moi lan train/eval/iso de cap nhat.)
+================================================================================
+
+PHAN 1: CAU HINH MOI TRUONG (env)
+------------------------------------------------------------------------------
+  So kho / So SKU / So cap    : 10 / 30 / 300
+  Do dai episode              : 365 ngay
+  Cua so nhin lai             : 7 ngay
+  Lead time                   : 1-3 ngay
+  Suc chua kho (capacity_cover_days = 5.0)
+    Kho 0  :    1,114.6
+    Kho 1  :      606.1
+    Kho 2  :      570.1
+    Kho 3  :      257.4
+    Kho 4  :      495.9
+    Kho 5  :      506.4
+    Kho 6  :      351.6
+    Kho 7  :      444.9
+    Kho 8  :      245.4
+    Kho 9  :      270.9
+
+  cp_lk (luu kho/dv/ngay)     : 1.0
+  cp_th (thieu hang/dv)       : 10.0
+  cp_dh (dat hang/lan)        : 5.0
+  pt_tk (phat tran kho/dv)    : 5.0
+  phi_dv (he so phat dich vu) : 3.0
+  muc_dv (nguong fill rate)   : 0.85
+  normalize_reward_per_pair   : True
+  Bang muc dat hang (nhan doi cau): [0.0, 0.5, 1.0, 2.0, 3.0, 5.0]
+  Ngay tach train/test        : 1450
+
+
+PHAN 2: CAU HINH THUAT TOAN PPO (IPPO)
+------------------------------------------------------------------------------
+  hidden_dim                  : 128
+  n_steps / ppo_epochs        : 1024 / 4
+  mini_batch_size             : 16384
+  lr_actor / lr_critic        : 0.0003 / 0.001
+  gamma / gae_lambda          : 0.99 / 0.95
+  clip_eps / target_kl        : 0.2 / 0.02
+  ent_coef (dau->cuoi)        : 0.02 -> 0.002
+  use_value_norm/clip_value   : True / True
+  normalize_adv_per_pair      : True
+  total_episodes (config)     : 5000
+  Seed                        : 42
+
+  Episode da huan luyen thuc te: 5000 (thoi gian: 78.0 phut)
+  Entropy dau -> cuoi          : 1.777 -> 0.143
+  Explained variance (cuoi)    : 0.799
+  Approx KL (cuoi)             : 0.00016
+  Eval fill rate (cuoi, deterministic): 0.893
+
+
+PHAN 3: CAU HINH CAC BASELINE
+------------------------------------------------------------------------------
+  EOQ         : {'q_factor': 2.0, 'lead_time': 3.0}
+  (s,S)       : {'service_level': 0.7, 'q_factor': 0.5, 'lead_time': 3.0}
+  Newsvendor  : {'cr_override': 0.75, 'lead_time': 3.0}
+
+
+PHAN 4: KET QUA DANH GIA TRUC TIEP (mien test)
+------------------------------------------------------------------------------
+  So episode danh gia: 30
+  Chinh sach      Tong chi phi   Fill rate      Luu kho   Thieu hang    Dat hang   Tran kho
+  IPPO               1,409,909      91.21%      970,381      292,644     124,707     22,177
+  (s,S)              1,440,177      84.12%      763,069      528,629     133,412     15,067
+  Newsvendor         1,458,825      81.09%      666,023      629,386     157,290      6,126
+  EOQ                1,641,847      76.79%      770,184      772,490      81,940     17,232
+
+
+PHAN 5: SO SANH O CUNG MUC PHUC VU (iso-service)
+------------------------------------------------------------------------------
+  Nguong fill rate muc tieu: 90.71%
+  Chinh sach      Tong chi phi   Fill rate  Tham so tot nhat
+  IPPO               1,409,909      91.21%  
+  EOQ            khong dat duoc nguong nay
+  (s,S)              1,820,969      92.48%  {'service_level': 0.99, 'q_factor': 0.5, 'lead_time': 3.0}
+  Newsvendor         1,687,342      92.62%  {'cr_override': 0.9, 'lead_time': 4.0}
+
+
+PHAN 6: KIEM DINH THONG KE (IPPO vs baseline tot nhat)
+------------------------------------------------------------------------------
+  Baseline tot nhat  : (s,S)
+  Chenh lech chi phi : -2.10%
+  Welch t-test       : t=-10.124, p=1.972e-14
+  Wilcoxon           : p=2.608e-08
+  Cohen's d          : -2.614
+  So episode / mien  : 30 / test
+
+
+PHAN 7: CAU HINH TIEN XU LY DU LIEU
+------------------------------------------------------------------------------
+  Nguon du lieu            : m5
+  Cua hang su dung         : ['CA_3', 'CA_1', 'TX_2', 'WI_2', 'WI_3', 'TX_3', 'CA_2', 'TX_1', 'WI_1', 'CA_4']
+  So SKU sau loc           : 30
+  Phuong phap chon SKU     : stratified
+  min_mean_demand (tien xu ly): 0.2
+
+  Cau trung binh moi cap   : 3.24 dv/ngay
+  Trung vi cau             : 0.74 dv/ngay
+  Cap gan nhu khong ban (<0.1 dv/ngay): 5/300
+
+
+PHAN 8: FILE KET QUA HIEN CO
+------------------------------------------------------------------------------
+  results/
+    [OK] .gitkeep
+    [OK] all_episodes.csv
+    [OK] baseline_comparison.csv
+    [OK] baseline_comparison.png
+    [OK] baseline_params.json
+    [OK] cost_service_frontier.png
+    [OK] episode_traces.json
+    [OK] iso_service.json
+    [OK] statistical_test.json
+    [OK] summary.json
+    [OK] train_log.csv
+  checkpoints/
+    [OK] .gitkeep
+    [OK] best_model.pth
+    [OK] best_model_run1.pth
+    [OK] checkpoint_ep1200.pth
+    [OK] checkpoint_ep2000.pth
+    [OK] checkpoint_ep2600.pth
+    [OK] checkpoint_ep3400.pth
+    [OK] checkpoint_ep4000.pth
+    [OK] checkpoint_ep4600.pth
+    [OK] checkpoint_ep4800.pth
+    [OK] checkpoint_ep5000.pth
+    [OK] checkpoint_ep600.pth
+    [OK] checkpoint_ep800.pth
+    [OK] final_model.pth
+
