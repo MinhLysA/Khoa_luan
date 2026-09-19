@@ -9,7 +9,7 @@
     "lead_time": 3.0
   },
   "Newsvendor": {
-    "cr_override": 0.75,
+    "cr_override": 0.85,
     "lead_time": 3.0
   }
 }

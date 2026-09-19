@@ -19,6 +19,14 @@ PHIEN BAN v2:
 
   [V2-19] Metadata luu them ten SKU, ten kho, cau trung binh tung cap - app
           Streamlit dung de hien thi thay vi chi so 0..N.
+
+PHIEN BAN v3:
+  [V3-2] GIA BAN THAT TU sell_prices.csv. Voi moi cap (kho, SKU) da chon,
+         lay gia ban trung binh CHI TREN CAC TUAN THUOC MIEN TRAIN (tranh ro
+         ri thong tin sang val/test, giong cach uoc luong mean_demand). Luu
+         ra data/processed/price_per_pair.npy, hinh dang (n_warehouses,
+         n_skus). env/inventory_env.py dung mang nay lam don gia thieu hang
+         rieng cho tung cap khi bat use_real_price_stockout trong config.yaml.
 """
 
 import os
@@ -148,6 +156,56 @@ def preprocess_m5_data(raw_dir, n_warehouses=10, n_skus=30,
     return demand, top_stores, top_items
 
 
+def load_price_data(raw_dir, top_stores, top_items, day_cols, split_day):
+    """[V3-2]/[V3-4] Doc sell_prices.csv MOT LAN, tra ve 2 mang:
+
+      price_avg_train (n_warehouses, n_skus): gia TB CHI tren mien train
+          (giong cach uoc luong mean_demand, khong ro ri) - dung lam don gia
+          cho chi phi thieu hang [V3-2].
+      price_series (n_days, n_warehouses, n_skus): gia THEO TUNG NGAY, khong
+          gioi han mien - dung lam tin hieu quan sat "dang giam gia" [V3-4]
+          (day la du lieu ty gia da cong bo tai thoi diem do, khong phai
+          "nhin truoc tuong lai", giong cach dung calendar_features).
+
+    sell_prices.csv chi co gia theo TUAN (wm_yr_wk); dung calendar.csv de doi
+    tuan -> ngay. Tuan/cap thieu gia duoc dien bang ffill/bfill roi toi gia
+    trung binh toan cuc, tranh NaN lan vao chi phi/quan sat.
+    """
+    raw_dir = Path(raw_dir)
+    n_days = len(day_cols)
+    cal = pd.read_csv(raw_dir / "calendar.csv").iloc[:n_days].reset_index(drop=True)
+    train_weeks = set(cal.loc[:split_day - 1, "wm_yr_wk"])
+
+    prices = pd.read_csv(raw_dir / "sell_prices.csv",
+                         usecols=["store_id", "item_id", "wm_yr_wk", "sell_price"])
+    prices = prices[prices["store_id"].isin(top_stores) & prices["item_id"].isin(top_items)]
+    train_prices = prices[prices["wm_yr_wk"].isin(train_weeks)]
+    fallback = float(train_prices["sell_price"].mean()) if len(train_prices) else 1.0
+
+    n_wh, n_sku = len(top_stores), len(top_items)
+    price_avg_train = np.full((n_wh, n_sku), fallback, dtype=np.float32)
+    price_series = np.full((n_days, n_wh, n_sku), fallback, dtype=np.float32)
+
+    for w_idx, store in enumerate(top_stores):
+        by_store = prices[prices["store_id"] == store]
+        for i_idx, item in enumerate(top_items):
+            by_week = by_store.loc[by_store["item_id"] == item].set_index("wm_yr_wk")["sell_price"]
+            if by_week.empty:
+                continue
+            train_vals = by_week[by_week.index.isin(train_weeks)]
+            if len(train_vals):
+                price_avg_train[w_idx, i_idx] = train_vals.mean()
+            day_series = cal["wm_yr_wk"].map(by_week).ffill().bfill()
+            price_series[:, w_idx, i_idx] = day_series.fillna(fallback).values
+
+    print(f"  Gia ban TB (mien train): {price_avg_train.mean():.2f}  "
+          f"min: {price_avg_train.min():.2f}  max: {price_avg_train.max():.2f}")
+    ty_le_giam = (price_series < 0.95 * price_avg_train[None]).mean()
+    print(f"  Chuoi gia theo ngay: shape={price_series.shape}  "
+          f"ty le (ngay,cap) dang giam gia >=5%: {ty_le_giam:.1%}")
+    return price_avg_train, price_series
+
+
 def main():
     p = argparse.ArgumentParser(description="Tien xu ly du lieu nhu cau ton kho.")
     p.add_argument("--synthetic", action="store_true")
@@ -158,7 +216,7 @@ def main():
     p.add_argument("--raw_dir", type=str, default="data/raw")
     p.add_argument("--output_dir", type=str, default="data/processed")
     p.add_argument("--seed", type=int, default=42)
-    p.add_argument("--split_day", type=int, default=1450)
+    p.add_argument("--split_day", type=int, default=1050)
     p.add_argument("--min_mean_demand", type=float, default=0.2)
     p.add_argument("--sku_selection", type=str, default="stratified",
                    choices=["stratified", "top"])
@@ -177,6 +235,15 @@ def main():
         np.save(Path(args.output_dir) / "calendar_features.npy", cal_feat)
         sd = min(args.split_day, demand.shape[0])
         md = demand[:sd].reshape(sd, -1).mean(axis=0)
+
+        print("Dang doc gia ban that (sell_prices.csv)...")
+        day_cols_all = [f"d_{i+1}" for i in range(demand.shape[0])]
+        price_avg_train, price_series = load_price_data(
+            args.raw_dir, stores, items, day_cols_all, args.split_day)
+        np.save(Path(args.output_dir) / "price_per_pair.npy", price_avg_train)
+        np.save(Path(args.output_dir) / "price_series.npy", price_series)
+        price_wh_sku = price_avg_train
+
         meta = {"mode": "m5", "n_days": int(demand.shape[0]),
                 "n_warehouses": args.n_warehouses, "n_skus": args.n_skus,
                 "stores": stores, "top_items": items,
@@ -187,7 +254,9 @@ def main():
                 # [V2-19] cho app Streamlit
                 "mean_demand_pairs": [round(float(x), 4) for x in md],
                 "mean_demand_per_warehouse": [round(float(x), 2) for x in
-                                              md.reshape(args.n_warehouses, args.n_skus).sum(1)]}
+                                              md.reshape(args.n_warehouses, args.n_skus).sum(1)],
+                # [V3-2] gia ban trung binh (mien train), don vi USD/don vi hang
+                "price_per_pair": [round(float(x), 4) for x in price_wh_sku.reshape(-1)]}
     elif args.synthetic:
         print("=== CHE DO: Synthetic Data ===")
         demand = generate_synthetic_data(args.n_days, args.n_warehouses,

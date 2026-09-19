@@ -73,7 +73,7 @@ def main():
     cfg = yaml.safe_load(open(ROOT / args.config, encoding="utf-8"))
     env_cfg, paths = cfg["env"], cfg["paths"]
 
-    demand = calf = None
+    demand = calf = price = price_series = None
     p = ROOT / paths["data_dir"] / "demand_data.npy"
     if p.exists():
         demand = np.load(str(p))
@@ -82,9 +82,15 @@ def main():
         calf = np.load(str(p))
         if calf.size == 0:
             calf = None
+    p = ROOT / paths["data_dir"] / "price_per_pair.npy"
+    if p.exists():
+        price = np.load(str(p))
+    p = ROOT / paths["data_dir"] / "price_series.npy"
+    if p.exists():
+        price_series = np.load(str(p))
 
-    env_tr = MultiWarehouseInventoryEnv(env_cfg, demand, calf, mode="train")
-    env_te = MultiWarehouseInventoryEnv(env_cfg, demand, calf, mode="test")
+    env_tr = MultiWarehouseInventoryEnv(env_cfg, demand, calf, price, price_series, mode="train")
+    env_te = MultiWarehouseInventoryEnv(env_cfg, demand, calf, price, price_series, mode="test")
     base_seed = cfg["eval"].get("seed", 1000)
 
     # -- B1: fill rate cua IPPO ---------------------------------------------

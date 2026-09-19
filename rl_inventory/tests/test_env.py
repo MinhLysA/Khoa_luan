@@ -28,7 +28,7 @@ CFG = dict(n_warehouses=3, n_skus=4, episode_length=40, lookback=5,
            order_multipliers=[0.0, 0.5, 1.0, 2.0, 3.0, 5.0])
 
 
-def make_env(**kw):
+def make_env(price_per_pair=None, price_series=None, mode="train", **kw):
     cfg = dict(CFG); cfg.update(kw)
     T, W, S = 200, cfg["n_warehouses"], cfg["n_skus"]
     rng = np.random.default_rng(0)
@@ -36,8 +36,10 @@ def make_env(**kw):
     he_so = np.array([12.0, 4.0, 1.0])[:W, None]
     demand = rng.poisson(lam=np.broadcast_to(he_so, (W, S)),
                          size=(T, W, S)).astype(np.float32)
-    cfg["split_day"] = 150
-    return MultiWarehouseInventoryEnv(config=cfg, demand_data=demand, mode="train")
+    cfg.setdefault("split_day", 150)
+    return MultiWarehouseInventoryEnv(config=cfg, demand_data=demand,
+                                      price_per_pair=price_per_pair,
+                                      price_series=price_series, mode=mode)
 
 
 # --------------------------------------------------------------------------- #
@@ -282,3 +284,106 @@ def test_info_co_du_lieu_cap_kho_cho_truc_quan():
     _, _, _, _, info = env.step(env.action_space.sample())
     for k in ("inv_wh", "cap_wh", "util_wh", "overflow_wh", "order_wh"):
         assert k in info and len(info[k]) == env.n_warehouses
+
+
+# --------------------------------------------------------------------------- #
+# [V3-1] Chia 3 mien train / val / test
+# --------------------------------------------------------------------------- #
+def test_ba_mien_train_val_test_khong_chong_lan():
+    """[V3-1] train < val < test, khong ngay nao bi dung 2 lan."""
+    L = 40  # episode_length cua CFG
+    env_tr = make_env(split_day=100, val_day=150, mode="train")
+    env_va = make_env(split_day=100, val_day=150, mode="val")
+    env_te = make_env(split_day=100, val_day=150, mode="test")
+
+    ngay_tr, ngay_va, ngay_te = [], [], []
+    for i in range(30):
+        env_tr.reset(seed=i); ngay_tr.append(env_tr.start_day)
+        env_va.reset(seed=i); ngay_va.append(env_va.start_day)
+        env_te.reset(seed=i); ngay_te.append(env_te.start_day)
+
+    assert max(ngay_tr) + L <= 100
+    assert min(ngay_va) >= 100 and max(ngay_va) + L <= 150
+    assert min(ngay_te) >= 150
+
+
+def test_val_day_mac_dinh_bang_split_day_tuong_thich_nguoc():
+    """Khong khai bao val_day -> mode="test" hanh xu giong het ban v2 cu."""
+    env = make_env(split_day=150)  # khong co val_day trong kw
+    assert env.val_day == env.split_day
+
+
+# --------------------------------------------------------------------------- #
+# [V3-2] Chi phi thieu hang theo gia ban that
+# --------------------------------------------------------------------------- #
+def test_cp_th_pair_mac_dinh_la_hang_so_khi_tat_gia_that():
+    env = make_env()
+    assert np.allclose(env.cp_th_pair, env.cp_th)
+
+
+def test_cp_th_pair_theo_gia_khi_bat_use_real_price_stockout():
+    """[V3-2] Cap gia cao phai co don gia thieu hang cao hon cap gia thap,
+    va reward_norm_pair van quy duoc SKU dat/re ve cung thang do (khong can
+    thiet ke lai co che chuan hoa da co san o [V2-2])."""
+    env = make_env()
+    gia = np.linspace(1.0, 50.0, env.n_pairs).astype(np.float32)
+    env2 = make_env(price_per_pair=gia, use_real_price_stockout=True,
+                    margin_ratio=0.3, cp_th_min=0.5)
+
+    assert np.isclose(env2.cp_th_pair[-1], gia[-1] * 0.3)
+    assert np.all(env2.cp_th_pair >= 0.5)                  # san cp_th_min
+    assert env2.cp_th_pair[-1] > env2.cp_th_pair[0]         # cap mac tien hon -> don gia cao hon
+
+    # ty le lech gan chuan hoa van nho hon truoc chuan hoa, dung y [V2-2]
+    env2.reset(seed=20)
+    _, _, _, _, info = env2.step(np.zeros(env2.n_pairs, dtype=np.int64))
+    tho = np.abs(info["local_rewards"])
+    chuan = np.abs(info["local_scaled_rewards"])
+    assert chuan.max() / max(chuan.min(), 1e-6) < tho.max() / max(tho.min(), 1e-6)
+
+
+def test_phat_sla_khong_ty_le_theo_gia():
+    """[V3-3] phi_phat_dv phai dung cp_th CO DINH, KHONG dung cp_th_pair -
+    "phai dat 85% fill rate" la muc tieu quan tri, khong nen ty le theo gia
+    SKU. Neu tinh sai (dung cp_th_pair), tat gia that (cp_th_pair nho) se lam
+    hinh phat SLA yeu di dung bang ty le gia giam - day la bug da gap phai."""
+    gia_thap = np.full(12, 1.0, dtype=np.float32)   # cp_th_pair ~ 1.0*0.3=0.3 (duoi san)
+    env = make_env(price_per_pair=gia_thap, use_real_price_stockout=True,
+                  margin_ratio=0.3, cp_th_min=0.5, muc_dv=0.85)
+    env.reset(seed=21)
+    fill_rate_thap = np.zeros(env.n_pairs, dtype=np.float32)  # ep shortfall toi da
+    _, _, breakdown_metadata = env._calculate_reward(
+        tk=np.zeros(env.n_pairs, dtype=np.float32),
+        th=np.zeros(env.n_pairs, dtype=np.float32),
+        sl_dh=np.zeros(env.n_pairs, dtype=np.float32),
+        tran=np.zeros(env.n_pairs, dtype=np.float32),
+        fill_rate=fill_rate_thap)
+    expected = env.phi_dv * env.cp_th * env.muc_dv * env.mean_demand
+    assert np.allclose(breakdown_metadata["cost_service_penalty"], expected.sum(), rtol=1e-4)
+
+
+# --------------------------------------------------------------------------- #
+# [V3-4] Tin hieu giam gia trong quan sat
+# --------------------------------------------------------------------------- #
+def test_tin_hieu_giam_gia_them_1_chieu_quan_sat():
+    env_khong_gia = make_env()
+    env_co_gia = make_env(price_per_pair=np.full(12, 5.0, dtype=np.float32),
+                          price_series=np.full((200, 3, 4), 5.0, dtype=np.float32))
+    assert env_co_gia.obs_per_pair == env_khong_gia.obs_per_pair + 1
+
+
+def test_tin_hieu_giam_gia_phan_anh_dung_muc_giam():
+    gia_tb = np.full(12, 10.0, dtype=np.float32)
+    series = np.full((200, 3, 4), 10.0, dtype=np.float32)
+    series[5] = 5.0     # ngay thu 5: giam gia 50%
+    env = make_env(price_per_pair=gia_tb, price_series=series)
+    env.reset(seed=0)
+    env.start_day = 0
+    env.current_step = 5
+    obs = env._get_observation()
+    i_gia = 1 + 1 + env.lookback + env.lead_time_max + 1 + 1 + 1 + 1
+    assert np.allclose(obs[:, i_gia], 0.5, atol=1e-4)   # giam 50% -> tin hieu 0.5
+
+    env.current_step = 6   # gia binh thuong tro lai
+    obs2 = env._get_observation()
+    assert np.allclose(obs2[:, i_gia], 0.0, atol=1e-4)

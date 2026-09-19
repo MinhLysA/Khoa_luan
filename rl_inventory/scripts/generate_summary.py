@@ -56,14 +56,25 @@ def section_env(cfg, env):
     lines += [
         "",
         f"  cp_lk (luu kho/dv/ngay)     : {e['cp_lk']}",
-        f"  cp_th (thieu hang/dv)       : {e['cp_th']}",
+    ]
+    if getattr(env, "use_real_price_stockout", False) and env.price_per_pair is not None:
+        lines.append(
+            f"  cp_th (thieu hang/dv)       : GIA THAT (margin_ratio={e.get('margin_ratio')}, "
+            f"cp_th_min={e.get('cp_th_min')}) -> cp_th_pair "
+            f"min/tb/max = {env.cp_th_pair.min():.2f} / {env.cp_th_pair.mean():.2f} / "
+            f"{env.cp_th_pair.max():.2f}")
+    else:
+        lines.append(f"  cp_th (thieu hang/dv)       : {e['cp_th']}  (hang so, dung chung)")
+    lines += [
         f"  cp_dh (dat hang/lan)        : {e['cp_dh']}",
         f"  pt_tk (phat tran kho/dv)    : {e['pt_tk']}",
         f"  phi_dv (he so phat dich vu) : {e['phi_dv']}",
         f"  muc_dv (nguong fill rate)   : {e['muc_dv']}",
         f"  normalize_reward_per_pair   : {e['normalize_reward_per_pair']}",
         f"  Bang muc dat hang (nhan doi cau): {e['order_multipliers']}",
-        f"  Ngay tach train/test        : {e['split_day']}",
+        f"  Ngay tach train/val/test    : [0,{e['split_day']}) / "
+        f"[{e['split_day']},{e.get('val_day', e['split_day'])}) / "
+        f"[{e.get('val_day', e['split_day'])}, het du lieu)",
         "",
     ]
     return lines
@@ -184,8 +195,47 @@ def section_stat(cfg):
     return lines
 
 
+def section_multiseed(cfg):
+    """[V3-6] Tong hop ket qua IPPO qua nhieu seed (python run.py multiseed).
+
+    Doc results/summary_seed*.json (moi file do scripts/evaluate.py --tag
+    seedN ghi ra), lay dong policy=IPPO, tinh trung binh +/- do lech chuan
+    QUA CAC SEED - do moi la con so dang tin cay de dua vao bao cao, thay vi
+    1 seed duy nhat.
+    """
+    lines = ["PHAN 7: DA HAT GIONG - DO TIN CAY THONG KE (IPPO)", "-" * 78,
+             "  Lenh chuan de tai lap: python run.py multiseed"]
+    results_dir = ROOT / cfg["paths"]["results_dir"]
+
+    seeds_found, costs, fills = [], [], []
+    for f in sorted(results_dir.glob("summary_seed*.json")):
+        d = _load_json(f)
+        if not d:
+            continue
+        row = next((r for r in d["summary"] if r["policy"] == "IPPO"), None)
+        if row is None:
+            continue
+        seeds_found.append(f.stem.replace("summary_", ""))
+        costs.append(row["total_cost_mean"])
+        fills.append(row["fill_rate_mean"])
+
+    if not costs:
+        lines.append(MISSING)
+        lines.append("")
+        return lines
+
+    costs, fills = np.array(costs), np.array(fills)
+    lines += [
+        f"  So seed da chay      : {len(costs)}  ({', '.join(seeds_found)})",
+        f"  IPPO tong chi phi    : {_fmt_money(costs.mean())} +/- {_fmt_money(costs.std())}",
+        f"  IPPO fill rate       : {fills.mean()*100:.2f}% +/- {fills.std()*100:.2f}%",
+        "",
+    ]
+    return lines
+
+
 def section_preprocess(cfg, env):
-    lines = ["PHAN 7: CAU HINH TIEN XU LY DU LIEU", "-" * 78]
+    lines = ["PHAN 8: CAU HINH TIEN XU LY DU LIEU", "-" * 78]
     meta = _load_json(ROOT / cfg["paths"]["data_dir"] / "env_config.json")
     if meta:
         lines += [
@@ -210,7 +260,7 @@ def section_preprocess(cfg, env):
 
 
 def section_files(cfg):
-    lines = ["PHAN 8: FILE KET QUA HIEN CO", "-" * 78]
+    lines = ["PHAN 9: FILE KET QUA HIEN CO", "-" * 78]
     results_dir = ROOT / cfg["paths"]["results_dir"]
     checkpoint_dir = ROOT / cfg["paths"]["checkpoint_dir"]
     for label, d in [("results/", results_dir), ("checkpoints/", checkpoint_dir)]:
@@ -227,7 +277,7 @@ def section_files(cfg):
 def main():
     cfg = yaml.safe_load(open(ROOT / "config.yaml", encoding="utf-8"))
 
-    demand_data = calendar_features = None
+    demand_data = calendar_features = price_per_pair = None
     p = ROOT / cfg["paths"]["data_dir"] / "demand_data.npy"
     if p.exists():
         demand_data = np.load(str(p))
@@ -236,9 +286,18 @@ def main():
         calendar_features = np.load(str(p))
         if calendar_features.size == 0:
             calendar_features = None
+    p = ROOT / cfg["paths"]["data_dir"] / "price_per_pair.npy"
+    if p.exists():
+        price_per_pair = np.load(str(p))
+    price_series = None
+    p = ROOT / cfg["paths"]["data_dir"] / "price_series.npy"
+    if p.exists():
+        price_series = np.load(str(p))
 
     env = MultiWarehouseInventoryEnv(config=cfg["env"], demand_data=demand_data,
-                                     calendar_features=calendar_features, mode="test")
+                                     calendar_features=calendar_features,
+                                     price_per_pair=price_per_pair,
+                                     price_series=price_series, mode="test")
 
     header = [
         "=" * 80,
@@ -252,7 +311,8 @@ def main():
 
     body = []
     for fn in (section_env, section_ppo, section_baselines, section_eval,
-              section_iso, section_stat, section_preprocess, section_files):
+              section_iso, section_stat, section_multiseed, section_preprocess,
+              section_files):
         args = (cfg, env) if fn in (section_env, section_preprocess) else (cfg,)
         body += fn(*args)
         body.append("")

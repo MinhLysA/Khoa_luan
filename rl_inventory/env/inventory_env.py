@@ -44,6 +44,38 @@ PHIEN BAN v2 - cac loi lam huan luyen khong hoi tu da duoc sua, danh dau [V2-n].
 
   [V2-7] info[] tra them du lieu cap kho (ton kho, suc chua, don hang) phuc vu
          mo phong truc quan trong app Streamlit.
+
+PHIEN BAN v3:
+  [V3-1] CHIA 3 MIEN: train / val / test (thay vi 2 mien train / test).
+         Ban v2 dung eval_env mode="test" de chon best_model NGAY TRONG LUC
+         HUAN LUYEN, tuc la viec chon checkpoint da "nhin thay" hieu nang tren
+         dung mien du lieu sau nay dung de bao cao va so sanh voi baseline -
+         mot dang ro ri nhe. Nay them mien "val" rieng (giua split_day va
+         val_day) chi dung de chon checkpoint; mien "test" (tu val_day tro di)
+         khong bao gio duoc dong tram trong luc huan luyen.
+
+  [V3-2] CHI PHI THIEU HANG THEO GIA BAN THAT (tuy chon, co config
+         use_real_price_stockout). Thay vi hang so cp_th dung chung cho ca
+         300 cap, moi cap co don gia rieng:
+             cp_th_pair = max(gia_ban_trung_binh(cap) * margin_ratio, cp_th_min)
+         gia_ban_trung_binh lay tu M5 sell_prices.csv, uoc luong CHI TU MIEN
+         TRAIN (giong cach uoc luong mean_demand). margin_ratio la gia dinh
+         kinh te (M5 khong co gia von). cp_th_pair thay the cp_th trong ca
+         cong thuc chi phi thieu hang lan phat muc phuc vu, va trong mau so
+         chuan hoa phan thuong [V2-2] - SKU mac tien se co reward_norm_pair
+         lon hon tuong ung, nen van duoc quy ve cung thang do nhu SKU re tien,
+         dung co che chuan hoa per-pair da co san, khong can thiet ke lai.
+
+  [V3-3] SUA LOI: phat SLA (phi_phat_dv) tach khoi cp_th_pair, dung hang so
+         cp_th co dinh - xem docstring _calculate_reward().
+
+  [V3-4] TIN HIEU GIAM GIA trong quan sat (leading indicator). Gia ban that
+         doi theo TUAN (khuyen mai), va mot dot giam gia thuong DI TRUOC hoac
+         trung luc cau tang dot bien - dung nhu hieu ung khuyen mai ban le
+         kinh dien. Ban truoc chi dung gia lam THAM SO CHI PHI (tinh, [V3-2]),
+         agent khong he "nhin thay" gia doi theo ngay. Nay them 1 chieu quan
+         sat: muc do dang giam gia so voi gia trung binh cua chinh cap do
+         (dung price_series.npy, doc tu sell_prices.csv theo tung ngay).
 """
 
 import gymnasium as gym
@@ -61,6 +93,8 @@ class MultiWarehouseInventoryEnv(gym.Env):
                  config: Optional[Dict[str, Any]] = None,
                  demand_data: Optional[np.ndarray] = None,
                  calendar_features: Optional[np.ndarray] = None,
+                 price_per_pair: Optional[np.ndarray] = None,
+                 price_series: Optional[np.ndarray] = None,
                  mode: str = "train"):
         super().__init__()
 
@@ -87,7 +121,12 @@ class MultiWarehouseInventoryEnv(gym.Env):
         self.ch_ls       = int(self.config.get("lookback", 7))
         self.do_dai_tap  = int(self.config.get("episode_length", 365))
         self.cua_so_dv   = int(self.config.get("fill_rate_window", 30))
+        # [V3-1] split_day = ranh gioi train/val; val_day = ranh gioi val/test.
+        # Neu config khong co val_day (vd cau hinh test cu), val_day = split_day
+        # -> mien "val" suy bien, hanh vi mode="test" giong het ban v2 (tuong
+        # thich nguoc, khong lam hong test cu).
         self.split_day   = int(self.config.get("split_day", 1450))
+        self.val_day     = int(self.config.get("val_day", self.split_day))
 
         self.use_relative_orders = bool(self.config.get("use_relative_orders", True))
         self.order_multipliers   = np.asarray(
@@ -107,6 +146,15 @@ class MultiWarehouseInventoryEnv(gym.Env):
         self.demand_data       = demand_data
         self.calendar_features = calendar_features
         self.calendar_dim = calendar_features.shape[1] if calendar_features is not None else 0
+        self.price_per_pair    = (np.asarray(price_per_pair, dtype=np.float32).reshape(-1)
+                                  if price_per_pair is not None else None)
+        # [V3-4] Chuoi gia theo NGAY (khac price_per_pair - trung binh TINH mien
+        # train dung cho chi phi). Reshape ve (T, n_pairs) de tra cuu theo ngay.
+        self.price_series = (np.asarray(price_series, dtype=np.float32).reshape(
+                                 price_series.shape[0], -1)
+                             if price_series is not None else None)
+        self.price_signal_dim = int(
+            self.price_series is not None and self.price_per_pair is not None)
 
         # -- Cau trung binh tung cap, uoc luong CHI TU TAP HUAN LUYEN --------
         self.min_mean_demand = float(self.config.get("min_mean_demand", 0.05))
@@ -139,11 +187,24 @@ class MultiWarehouseInventoryEnv(gym.Env):
         self.obs_cover_days = float(self.config.get("obs_cover_days", 20.0))
         self.inv_max = (self.mean_demand * self.obs_cover_days).astype(np.float32)
 
+        # [V3-2] Don gia thieu hang RIENG cho tung cap, tu gia ban that (neu bat).
+        # Rơi ve hang so cp_th dung chung khi khong bat, hoac khong co du lieu gia.
+        self.use_real_price_stockout = bool(
+            self.config.get("use_real_price_stockout", False))
+        self.margin_ratio = float(self.config.get("margin_ratio", 0.3))
+        self.cp_th_min    = float(self.config.get("cp_th_min", 0.5))
+        if self.use_real_price_stockout and self.price_per_pair is not None:
+            self.cp_th_pair = np.maximum(
+                self.price_per_pair * self.margin_ratio, self.cp_th_min
+            ).astype(np.float32)
+        else:
+            self.cp_th_pair = np.full(self.n_pairs, self.cp_th, dtype=np.float32)
+
         # [V2-2] Don vi chi phi rieng cua tung cap, dung chuan hoa phan thuong.
-        # Chon = cp_th * mean_demand + cp_dh  (chi phi cua "mot ngay xau dien
-        # hinh": het hang ca ngay, cong mot lan dat hang). Hang so cp_dh giu cho
-        # mau so khong tien ve 0 o cac SKU gan nhu khong ban.
-        self.reward_norm_pair = (self.cp_th * self.mean_demand + self.cp_dh).astype(np.float32)
+        # Chon = cp_th_pair * mean_demand + cp_dh  (chi phi cua "mot ngay xau
+        # dien hinh": het hang ca ngay, cong mot lan dat hang). Hang so cp_dh
+        # giu cho mau so khong tien ve 0 o cac SKU gan nhu khong ban.
+        self.reward_norm_pair = (self.cp_th_pair * self.mean_demand + self.cp_dh).astype(np.float32)
         self.normalize_reward_per_pair = bool(
             self.config.get("normalize_reward_per_pair", True))
         self.reward_scale = float(self.config.get("reward_scale", 1.0))
@@ -154,9 +215,11 @@ class MultiWarehouseInventoryEnv(gym.Env):
         # obs = ton kho(1) + ton kho+pipeline theo ngay cau(1) + lich su cau(L)
         #     + pipeline(LT) + fill_rate(1) + dac trung quy mo(1)
         #     + [V2-4] muc su dung kho(1) + ty trong trong kho(1)
+        #     + [V3-4] tin hieu giam gia (0 hoac 1)
         #     + day_of_week(7) + calendar(cal_dim)
         self.obs_per_pair = (1 + 1 + self.lookback + self.lead_time_max
-                             + 1 + 1 + 1 + 1 + 7 + self.calendar_dim)
+                             + 1 + 1 + 1 + 1 + self.price_signal_dim
+                             + 7 + self.calendar_dim)
         self.observation_space = spaces.Box(
             low=0.0, high=1.0, shape=(self.n_pairs, self.obs_per_pair), dtype=np.float32)
 
@@ -216,9 +279,15 @@ class MultiWarehouseInventoryEnv(gym.Env):
         if self.demand_data is not None:
             T = self.demand_data.shape[0]
             L = self.do_dai_tap
+            # [V3-1] 3 mien KHONG CHONG LAN: train [0,split_day) < val
+            # [split_day,val_day) < test [val_day, T). Episode luon nam
+            # gon trong mien cua no (khong the "tran" sang mien ke ben).
             if self.mode == "test":
-                lo = self.split_day
+                lo = self.val_day
                 hi = max(T - L, lo + 1)
+            elif self.mode == "val":
+                lo = self.split_day
+                hi = max(self.val_day - L, lo + 1)
             else:
                 lo = 0
                 hi = max(self.split_day - L, 1)
@@ -375,15 +444,36 @@ class MultiWarehouseInventoryEnv(gym.Env):
         # [V2-4] Tin hieu ghep noi cap kho
         obs[:, c] = util;                                                  c += 1
         obs[:, c] = share * self.n_skus / 3.0;                             c += 1
+        # [V3-4] Tin hieu giam gia: 0 = gia binh thuong/tang, cang gan 1 la
+        # cang giam gia sau so voi gia trung binh cua CHINH cap do.
+        if self.price_signal_dim:
+            day_idx = min(self.start_day + self.current_step,
+                          len(self.price_series) - 1)
+            gia_hom_nay = self.price_series[day_idx]
+            ty_le_gia = gia_hom_nay / np.maximum(self.price_per_pair, 1e-6)
+            obs[:, c] = np.clip(1.0 - ty_le_gia, 0.0, 1.0);                c += 1
         obs[:, c:] = global_ctx[None, :]
 
         return np.clip(obs, 0.0, 1.0)
 
     # ------------------------------------------------------------------ #
     def _calculate_reward(self, tk, th, sl_dh, tran, fill_rate):
-        """Ham thuong phan ra cuc bo cho tung cap kho-SKU (don vi TIEN GOC)."""
+        """Ham thuong phan ra cuc bo cho tung cap kho-SKU (don vi TIEN GOC).
+
+        [V3-2] cp_th_pair thay the hang so cp_th trong CHI PHI THIEU HANG THAT
+        (chi_phi_th): don gia rieng cho tung cap, tu gia ban that neu bat
+        use_real_price_stockout.
+
+        [V3-3] SUA LOI: phi_phat_dv (phat vi pham SLA 85%) KHONG con dung
+        cp_th_pair, ma dung hang so cp_th CO DINH. Ly do: "phai dat 85% fill
+        rate" la muc tieu quan tri co dinh, khong nen ty le theo gia SKU. Ban
+        truoc dung chung cp_th_pair cho ca 2 viec -> khi bat gia that (cp_th_pair
+        trung binh ~1.2, thay vi hang so cu 10), suc ep SLA yeu di ~8 lan mot
+        cach khong chu y, agent hoc ra fill rate ~53% (thap hon ca 3 baseline
+        co dien) van "re" hon giu du hang, mac du tong chi phi trong ve thap.
+        """
         chi_phi_lk = self.cp_lk * tk
-        chi_phi_th = self.cp_th * th
+        chi_phi_th = self.cp_th_pair * th
         chi_phi_dh = self.cp_dh * (sl_dh > 0)
         phi_tran   = self.pt_tk * tran
 

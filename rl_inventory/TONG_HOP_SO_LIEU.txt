@@ -1,6 +1,6 @@
 ================================================================================
   TONG HOP SO LIEU -- DU AN IPPO QUAN LY TON KHO
-  Tu dong xuat luc: 16/09/2026 19:02:43
+  Tu dong xuat luc: 19/09/2026 19:51:10
   (File nay duoc sinh boi scripts/generate_summary.py - KHONG sua tay,
    chay lai script sau moi lan train/eval/iso de cap nhat.)
 ================================================================================
@@ -12,26 +12,26 @@ PHAN 1: CAU HINH MOI TRUONG (env)
   Cua so nhin lai             : 7 ngay
   Lead time                   : 1-3 ngay
   Suc chua kho (capacity_cover_days = 5.0)
-    Kho 0  :    1,114.6
-    Kho 1  :      606.1
-    Kho 2  :      570.1
-    Kho 3  :      257.4
-    Kho 4  :      495.9
-    Kho 5  :      506.4
-    Kho 6  :      351.6
-    Kho 7  :      444.9
-    Kho 8  :      245.4
-    Kho 9  :      270.9
+    Kho 0  :    1,230.2
+    Kho 1  :      649.0
+    Kho 2  :      623.0
+    Kho 3  :      242.0
+    Kho 4  :      544.8
+    Kho 5  :      509.4
+    Kho 6  :      389.2
+    Kho 7  :      465.7
+    Kho 8  :      262.4
+    Kho 9  :      280.1
 
   cp_lk (luu kho/dv/ngay)     : 1.0
-  cp_th (thieu hang/dv)       : 10.0
+  cp_th (thieu hang/dv)       : GIA THAT (margin_ratio=0.3, cp_th_min=0.5) -> cp_th_pair min/tb/max = 0.50 / 1.20 / 3.82
   cp_dh (dat hang/lan)        : 5.0
   pt_tk (phat tran kho/dv)    : 5.0
   phi_dv (he so phat dich vu) : 3.0
   muc_dv (nguong fill rate)   : 0.85
   normalize_reward_per_pair   : True
   Bang muc dat hang (nhan doi cau): [0.0, 0.5, 1.0, 2.0, 3.0, 5.0]
-  Ngay tach train/test        : 1450
+  Ngay tach train/val/test    : [0,1050) / [1050,1450) / [1450, het du lieu)
 
 
 PHAN 2: CAU HINH THUAT TOAN PPO (IPPO)
@@ -45,54 +45,62 @@ PHAN 2: CAU HINH THUAT TOAN PPO (IPPO)
   ent_coef (dau->cuoi)        : 0.02 -> 0.002
   use_value_norm/clip_value   : True / True
   normalize_adv_per_pair      : True
-  total_episodes (config)     : 5000
+  total_episodes (config)     : 1 000
   Seed                        : 42
 
-  Episode da huan luyen thuc te: 5000 (thoi gian: 78.0 phut)
-  Entropy dau -> cuoi          : 1.777 -> 0.143
-  Explained variance (cuoi)    : 0.799
-  Approx KL (cuoi)             : 0.00016
-  Eval fill rate (cuoi, deterministic): 0.893
+  Episode da huan luyen thuc te: 5000 (thoi gian: 79.8 phut)
+  Entropy dau -> cuoi          : 1.776 -> 0.122
+  Explained variance (cuoi)    : 0.974
+  Approx KL (cuoi)             : 0.00017
+  Eval fill rate (cuoi, deterministic): 0.839
 
 
 PHAN 3: CAU HINH CAC BASELINE
 ------------------------------------------------------------------------------
   EOQ         : {'q_factor': 2.0, 'lead_time': 3.0}
   (s,S)       : {'service_level': 0.7, 'q_factor': 0.5, 'lead_time': 3.0}
-  Newsvendor  : {'cr_override': 0.75, 'lead_time': 3.0}
+  Newsvendor  : {'cr_override': 0.85, 'lead_time': 3.0}
 
 
 PHAN 4: KET QUA DANH GIA TRUC TIEP (mien test)
 ------------------------------------------------------------------------------
   So episode danh gia: 30
   Chinh sach      Tong chi phi   Fill rate      Luu kho   Thieu hang    Dat hang   Tran kho
-  IPPO               1,409,909      91.21%      970,381      292,644     124,707     22,177
-  (s,S)              1,440,177      84.12%      763,069      528,629     133,412     15,067
-  Newsvendor         1,458,825      81.09%      666,023      629,386     157,290      6,126
-  EOQ                1,641,847      76.79%      770,184      772,490      81,940     17,232
+  EOQ                  951,263      75.01%      785,408       52,599      92,853     20,403
+  IPPO                 987,745      85.21%      820,119       38,314     125,492      3,820
+  (s,S)              1,003,584      84.23%      803,997       37,393     149,455     12,740
+  Newsvendor         1,039,680      84.47%      805,053       38,400     184,622     11,605
 
 
 PHAN 5: SO SANH O CUNG MUC PHUC VU (iso-service)
 ------------------------------------------------------------------------------
-  Nguong fill rate muc tieu: 90.71%
+  Nguong fill rate muc tieu: 84.71%
   Chinh sach      Tong chi phi   Fill rate  Tham so tot nhat
-  IPPO               1,409,909      91.21%  
-  EOQ            khong dat duoc nguong nay
-  (s,S)              1,820,969      92.48%  {'service_level': 0.99, 'q_factor': 0.5, 'lead_time': 3.0}
-  Newsvendor         1,687,342      92.62%  {'cr_override': 0.9, 'lead_time': 4.0}
+  IPPO                 987,745      85.21%  
+  EOQ                1,882,296      92.81%  {'q_factor': 3.0, 'lead_time': 5.0}
+  (s,S)              1,254,160      89.22%  {'service_level': 0.9, 'q_factor': 0.5, 'lead_time': 3.0}
+  Newsvendor         1,113,546      86.28%  {'cr_override': 0.9, 'lead_time': 3.0}
 
 
 PHAN 6: KIEM DINH THONG KE (IPPO vs baseline tot nhat)
 ------------------------------------------------------------------------------
-  Baseline tot nhat  : (s,S)
-  Chenh lech chi phi : -2.10%
-  Welch t-test       : t=-10.124, p=1.972e-14
-  Wilcoxon           : p=2.608e-08
-  Cohen's d          : -2.614
+  Baseline tot nhat  : EOQ
+  Chenh lech chi phi : +3.84%
+  Welch t-test       : t=7.087, p=3.643e-09
+  Wilcoxon           : p=1.863e-09
+  Cohen's d          : 1.830
   So episode / mien  : 30 / test
 
 
-PHAN 7: CAU HINH TIEN XU LY DU LIEU
+PHAN 7: DA HAT GIONG - DO TIN CAY THONG KE (IPPO)
+------------------------------------------------------------------------------
+  Lenh chuan de tai lap: python run.py multiseed
+  So seed da chay      : 3  (seed1, seed2, seed42)
+  IPPO tong chi phi    : 1,043,125 +/- 9,272
+  IPPO fill rate       : 86.10% +/- 0.15%
+
+
+PHAN 8: CAU HINH TIEN XU LY DU LIEU
 ------------------------------------------------------------------------------
   Nguon du lieu            : m5
   Cua hang su dung         : ['CA_3', 'CA_1', 'TX_2', 'WI_2', 'WI_3', 'TX_3', 'CA_2', 'TX_1', 'WI_1', 'CA_4']
@@ -100,29 +108,60 @@ PHAN 7: CAU HINH TIEN XU LY DU LIEU
   Phuong phap chon SKU     : stratified
   min_mean_demand (tien xu ly): 0.2
 
-  Cau trung binh moi cap   : 3.24 dv/ngay
-  Trung vi cau             : 0.74 dv/ngay
-  Cap gan nhu khong ban (<0.1 dv/ngay): 5/300
+  Cau trung binh moi cap   : 3.46 dv/ngay
+  Trung vi cau             : 0.76 dv/ngay
+  Cap gan nhu khong ban (<0.1 dv/ngay): 6/300
 
 
-PHAN 8: FILE KET QUA HIEN CO
+PHAN 9: FILE KET QUA HIEN CO
 ------------------------------------------------------------------------------
   results/
     [OK] .gitkeep
     [OK] all_episodes.csv
+    [OK] all_episodes_seed1.csv
+    [OK] all_episodes_seed2.csv
+    [OK] all_episodes_seed42.csv
     [OK] baseline_comparison.csv
     [OK] baseline_comparison.png
+    [OK] baseline_comparison_seed1.csv
+    [OK] baseline_comparison_seed1.png
+    [OK] baseline_comparison_seed2.csv
+    [OK] baseline_comparison_seed2.png
+    [OK] baseline_comparison_seed42.csv
+    [OK] baseline_comparison_seed42.png
     [OK] baseline_params.json
     [OK] cost_service_frontier.png
+    [OK] cost_service_frontier_seed1.png
+    [OK] cost_service_frontier_seed2.png
+    [OK] cost_service_frontier_seed42.png
     [OK] episode_traces.json
+    [OK] episode_traces_seed1.json
+    [OK] episode_traces_seed2.json
+    [OK] episode_traces_seed42.json
     [OK] iso_service.json
     [OK] statistical_test.json
+    [OK] statistical_test_seed1.json
+    [OK] statistical_test_seed2.json
+    [OK] statistical_test_seed42.json
     [OK] summary.json
+    [OK] summary_seed1.json
+    [OK] summary_seed2.json
+    [OK] summary_seed42.json
     [OK] train_log.csv
+    [OK] train_log_seed1.csv
+    [OK] train_log_seed2.csv
+    [OK] train_log_seed42.csv
   checkpoints/
     [OK] .gitkeep
     [OK] best_model.pth
     [OK] best_model_run1.pth
+    [OK] best_model_seed1.pth
+    [OK] best_model_seed2.pth
+    [OK] best_model_seed42.pth
+    [OK] checkpoint_ep1000.pth
+    [OK] checkpoint_ep1000_seed1.pth
+    [OK] checkpoint_ep1000_seed2.pth
+    [OK] checkpoint_ep1000_seed42.pth
     [OK] checkpoint_ep1200.pth
     [OK] checkpoint_ep2000.pth
     [OK] checkpoint_ep2600.pth
@@ -132,6 +171,12 @@ PHAN 8: FILE KET QUA HIEN CO
     [OK] checkpoint_ep4800.pth
     [OK] checkpoint_ep5000.pth
     [OK] checkpoint_ep600.pth
+    [OK] checkpoint_ep600_seed1.pth
+    [OK] checkpoint_ep600_seed2.pth
+    [OK] checkpoint_ep600_seed42.pth
     [OK] checkpoint_ep800.pth
     [OK] final_model.pth
+    [OK] final_model_seed1.pth
+    [OK] final_model_seed2.pth
+    [OK] final_model_seed42.pth
 

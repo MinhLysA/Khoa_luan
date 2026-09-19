@@ -10,6 +10,12 @@ PHIEN BAN v2:
           lai "chuyen gi da xay ra".
   [V2-24] Bang ket qua them cot chi phi tran kho va do lech chuan, xuat ca
           results/summary.json de app doc truc tiep.
+
+PHIEN BAN v3:
+  [V3-5] Them --tag: moi file ket qua duoc ghi voi hau to rieng
+         (vd summary_seed1.json) thay vi de --checkpoint danh de len
+         results/summary.json mac dinh. Can cho `python run.py multiseed`
+         chay nhieu seed ma khong lam mat ket qua cua seed truoc.
 """
 
 import os
@@ -120,6 +126,8 @@ def main():
     parser.add_argument("--checkpoint", type=str, default="checkpoints/best_model.pth")
     parser.add_argument("--episodes", type=int, default=None)
     parser.add_argument("--mode", type=str, default="test", choices=["train", "test"])
+    parser.add_argument("--tag", type=str, default="",
+                        help="Hau to ten file ket qua, vd --tag seed1 -> summary_seed1.json")
     args = parser.parse_args()
 
     with open(ROOT / args.config, "r", encoding="utf-8") as f:
@@ -127,11 +135,12 @@ def main():
     env_cfg, paths = cfg["env"], cfg["paths"]
     n_episodes = args.episodes or cfg["eval"]["n_episodes"]
     base_seed = cfg["eval"].get("seed", 1000)
+    suffix = f"_{args.tag}" if args.tag else ""
 
     results_dir = ROOT / paths["results_dir"]
     results_dir.mkdir(parents=True, exist_ok=True)
 
-    demand_data = calendar_features = None
+    demand_data = calendar_features = price_per_pair = price_series = None
     p = ROOT / paths["data_dir"] / "demand_data.npy"
     if p.exists():
         demand_data = np.load(str(p))
@@ -140,9 +149,17 @@ def main():
         calendar_features = np.load(str(p))
         if calendar_features.size == 0:
             calendar_features = None
+    p = ROOT / paths["data_dir"] / "price_per_pair.npy"
+    if p.exists():
+        price_per_pair = np.load(str(p))
+    p = ROOT / paths["data_dir"] / "price_series.npy"
+    if p.exists():
+        price_series = np.load(str(p))
 
     env = MultiWarehouseInventoryEnv(config=env_cfg, demand_data=demand_data,
                                      calendar_features=calendar_features,
+                                     price_per_pair=price_per_pair,
+                                     price_series=price_series,
                                      mode=args.mode)
 
     print("=" * 70)
@@ -193,7 +210,7 @@ def main():
                                        base_seed=base_seed, traces=traces))
 
     df_all = pd.concat(all_dfs, ignore_index=True)
-    df_all.to_csv(results_dir / "all_episodes.csv", index=False)
+    df_all.to_csv(results_dir / f"all_episodes{suffix}.csv", index=False)
 
     metrics = ["total_cost", "holding_cost", "stockout_cost", "ordering_cost",
                "overflow_cost", "fill_rate", "avg_inventory", "n_order_events",
@@ -201,7 +218,7 @@ def main():
     summary = df_all.groupby("policy")[metrics].agg(["mean", "std"])
     summary.columns = ["_".join(c) for c in summary.columns]
     summary = summary.reset_index()
-    summary.to_csv(results_dir / "baseline_comparison.csv", index=False)
+    summary.to_csv(results_dir / f"baseline_comparison{suffix}.csv", index=False)
 
     print()
     print(f"{'Policy':<12}{'Tong CP':>15}{'Luu kho':>14}{'Thieu hang':>14}"
@@ -242,22 +259,22 @@ def main():
                     "t_stat": float(t_stat), "p_ttest": float(p_t),
                     "p_wilcoxon": float(p_w), "cohen_d": float(cohen_d),
                     "n_episodes": int(n_episodes), "mode": args.mode}
-        json.dump(stat_out, open(results_dir / "statistical_test.json", "w"), indent=2)
+        json.dump(stat_out, open(results_dir / f"statistical_test{suffix}.json", "w"), indent=2)
 
     # [V2-24] xuat summary.json cho app
     json.dump({"summary": summary.to_dict(orient="records"),
                "stat": stat_out,
                "capacity_per_warehouse": [float(x) for x in env.suc_chua_kho],
                "n_pairs": int(env.n_pairs), "mode": args.mode},
-              open(results_dir / "summary.json", "w"), indent=2)
+              open(results_dir / f"summary{suffix}.json", "w"), indent=2)
     # [V2-23] dien bien theo ngay
-    json.dump(traces, open(results_dir / "episode_traces.json", "w"))
+    json.dump(traces, open(results_dir / f"episode_traces{suffix}.json", "w"))
 
-    _plot(summary, results_dir)
+    _plot(summary, results_dir, suffix)
     print(f"\nDa luu ket qua vao {results_dir}")
 
 
-def _plot(summary, results_dir):
+def _plot(summary, results_dir, suffix=""):
     fig, axes = plt.subplots(1, 3, figsize=(16, 4.5))
     pol = summary["policy"].tolist()
 
@@ -285,7 +302,7 @@ def _plot(summary, results_dir):
     axes[2].tick_params(axis="x", rotation=20)
 
     plt.tight_layout()
-    plt.savefig(results_dir / "baseline_comparison.png", dpi=140)
+    plt.savefig(results_dir / f"baseline_comparison{suffix}.png", dpi=140)
     plt.close()
 
     plt.figure(figsize=(6, 5))
@@ -298,7 +315,7 @@ def _plot(summary, results_dir):
     plt.title("Danh doi chi phi - muc phuc vu\n(tot = phia duoi ben phai)")
     plt.grid(alpha=0.3)
     plt.tight_layout()
-    plt.savefig(results_dir / "cost_service_frontier.png", dpi=140)
+    plt.savefig(results_dir / f"cost_service_frontier{suffix}.png", dpi=140)
     plt.close()
 
 

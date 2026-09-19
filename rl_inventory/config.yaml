@@ -1,7 +1,11 @@
 # ============================================================
-# config.yaml - Cau hinh du an IPPO Inventory  (PHIEN BAN v2)
+# config.yaml - Cau hinh du an IPPO Inventory  (PHIEN BAN v2 + v3)
 # Cac thay doi so voi ban cu duoc danh dau [V2-n]; xem
 # BAO_CAO_SUA_LOI.md de biet ly do tung thay doi.
+# [V3-1] Chia 3 mien du lieu train/val/test (thay vi 2 mien train/test).
+# [V3-2] Chi phi thieu hang co the lay tu gia ban that cua M5 (sell_prices.csv)
+#        thay vi hang so cp_th dung chung. Xem README.md muc "Chi phi thieu
+#        hang theo gia that" de biet chi tiet + gia dinh kinh te.
 # ============================================================
 
 seed: 42
@@ -15,33 +19,32 @@ paths:
 
 env:
   # [V2-20] 10 kho x 30 SKU = 300 cap (truoc: 10 x 50 = 500).
-  # Ly do: trong tap 50 SKU cu co 142/500 cap cau < 0,1 dv/ngay (cua hang do
-  # khong kinh doanh mat hang do) - cac "tac tu" nay chi them nhieu vao gradient
-  # dung chung. Sau khi loc theo min_mean_demand, 30 SKU cho 300 cap trong do
-  # chi con 5 cap gan nhu khong ban, ma van giu duoc 57% ngay bang 0 (tinh
-  # gian doan ma Chuong 1 nhan manh) va du ca 3 nhom nganh hang.
   n_warehouses:   10
   n_skus:         30
   episode_length: 365
   lookback:       7
   lead_time_min:  1
   lead_time_max:  3
-
-  # [V2-1] Suc chua tinh RIENG cho tung kho: capacity_cover_days x tong cau
-  # mot ngay CUA CHINH KHO DO (khong phai trung binh cac kho nhu ban cu).
   warehouse_capacity: auto
-  # [V2-21] 3,0 -> 5,0 ngay. Voi lead time toi da 3 ngay va cau gian doan,
-  # 3 ngay suc chua khien fill rate 85% la muc tieu VO NGHIEM: agent bi phat
-  # tran kho va phat muc phuc vu cung luc, khong co hanh dong nao thoat duoc.
   capacity_cover_days: 5.0
   initial_cover_days:  3.0
 
   cp_lk:  1.0     # chi phi luu kho / don vi / ngay
-  cp_th:  10.0    # chi phi thieu hang / don vi (hang so, dung chung moi cap)
+  cp_th:  10.0    # chi phi thieu hang / don vi - DUNG KHI use_real_price_stockout=false
   cp_dh:  5.0     # chi phi dat hang / lan dat
   pt_tk:  5.0     # phat tran kho / don vi bi tu choi nhap
   phi_dv: 3.0     # he so phat muc phuc vu
   muc_dv: 0.85    # nguong fill rate muc tieu (beta)
+
+  # [V3-2] Chi phi thieu hang theo GIA BAN THAT cua tung cap (M5 sell_prices.csv),
+  # thay vi hang so cp_th dung chung cho ca 300 cap. Cong thuc:
+  #   cp_th_pair = max(gia_ban_trung_binh(cap) * margin_ratio, cp_th_min)
+  # margin_ratio la GIA DINH (M5 khong cong bo gia von) - dat 0.3 nghia la coi
+  # thieu 1 don vi hang = mat 30% gia ban do la loi nhuan bien. Doi false de
+  # quay lai hang so cp_th cu (dung so sanh truoc/sau khi them tinh nang nay).
+  use_real_price_stockout: true
+  margin_ratio: 0.3
+  cp_th_min:    0.5
 
   fill_rate_window: 30
   obs_cover_days:   20.0
@@ -53,7 +56,13 @@ env:
   normalize_reward_per_pair: true
   reward_scale: 1.0
 
-  split_day: 1450
+  # [V3-1] 3 mien rieng biet, khong chong lan: train [0,split_day),
+  # val [split_day,val_day) dung de chon best_model trong luc train,
+  # test [val_day, het du lieu) CHI dung 1 lan de bao cao ket qua cuoi.
+  # Mien test GIU NGUYEN [1450, 1941) nhu ban v2 de cac ket qua da co van
+  # so sanh duoc; mien val duoc "cat" ra tu phan truoc do la train cu.
+  split_day: 1050
+  val_day:   1450
 
   use_relative_orders: true
   order_multipliers: [0.0, 0.5, 1.0, 2.0, 3.0, 5.0]
@@ -91,7 +100,7 @@ ppo:
   eval_n_episodes:     2
   min_fill_to_save:    0.0
   normalize_adv_per_pair: true
-  total_episodes:  5000
+  total_episodes: 1 000
 
 eval:
   n_episodes: 30

@@ -13,6 +13,13 @@ PHIEN BAN v2:
           khi dang explore khong phai chat luong chinh sach.
   [V2-16] In ra canh bao chan doan (entropy khong giam, explained_variance am,
           KL qua lon, fill rate ket) ngay trong luc chay.
+
+PHIEN BAN v3:
+  [V3-1] eval_env DUNG mode="val" (khong con "test"): chon best_model bang
+         mien VALIDATION rieng, khong con dong tram vao mien test dung de bao
+         cao ket qua cuoi (xem env/inventory_env.py mo ta [V3-1]).
+  [V3-2] Nap them price_per_pair.npy (neu co) de dua vao chi phi thieu hang
+         theo gia that.
 """
 
 import os
@@ -58,7 +65,15 @@ def load_data(paths):
     p = ROOT / paths["data_dir"] / "calendar_features.npy"
     if p.exists():
         calendar_features = np.load(str(p))
-    return demand_data, calendar_features
+    price_per_pair = None
+    p = ROOT / paths["data_dir"] / "price_per_pair.npy"
+    if p.exists():
+        price_per_pair = np.load(str(p))
+    price_series = None
+    p = ROOT / paths["data_dir"] / "price_series.npy"
+    if p.exists():
+        price_series = np.load(str(p))
+    return demand_data, calendar_features, price_per_pair, price_series
 
 
 def train():
@@ -91,14 +106,20 @@ def train():
     np.random.seed(seed)
     torch.manual_seed(seed)
 
-    demand_data, calendar_features = load_data(paths)
+    demand_data, calendar_features, price_per_pair, price_series = load_data(paths)
     if demand_data is None:
         print("Khong tim thay demand_data.npy -> dung Poisson ngau nhien")
 
     env = MultiWarehouseInventoryEnv(config=env_cfg, demand_data=demand_data,
-                                     calendar_features=calendar_features, mode="train")
+                                     calendar_features=calendar_features,
+                                     price_per_pair=price_per_pair,
+                                     price_series=price_series, mode="train")
+    # [V3-1] mode="val": chon best_model bang mien validation, KHONG dong tram
+    # vao mien "test" dung de bao cao ket qua cuoi (scripts/evaluate.py).
     eval_env = MultiWarehouseInventoryEnv(config=env_cfg, demand_data=demand_data,
-                                          calendar_features=calendar_features, mode="test")
+                                          calendar_features=calendar_features,
+                                          price_per_pair=price_per_pair,
+                                          price_series=price_series, mode="val")
     eval_every      = int(ppo_cfg.get("eval_every_episodes", 25))
     eval_n_episodes = int(ppo_cfg.get("eval_n_episodes", 2))
 

@@ -10,12 +10,14 @@ run.py — mot cua duy nhat de chay ca du an.
     python run.py eval         # buoc 4: danh gia & so sanh
     python run.py iso          # buoc 5: so sanh O CUNG MUC PHUC VU (quan trong)
     python run.py summary      # buoc 6: xuat TONG_HOP_SO_LIEU.txt tu ket qua hien co
+    python run.py multiseed    # train + eval 3 SEED (do tin cay thong ke), roi xuat summary
     python run.py test         # chay unit test moi truong
     python run.py check        # kiem tra nhanh moi thu da san sang chua
 
 Tuy chon hay dung:
     python run.py train --episodes 800
     python run.py all --quick          # ban rut gon de thu duong ong (~5 phut)
+    python run.py multiseed --episodes 1000   # doi so episode moi seed (mac dinh 1000)
 """
 import argparse
 import subprocess
@@ -24,6 +26,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 PY = sys.executable
+
+# [V3-6] 3 seed dung de danh gia do tin cay thong ke (python run.py multiseed).
+# Co dinh (khong random moi lan chay) de ket qua tai lap duoc.
+MULTISEED_SEEDS = [42, 1, 2]
 
 
 def sh(cmd):
@@ -36,8 +42,9 @@ def sh(cmd):
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("lenh", choices=["app", "all", "data", "baseline",
-                                     "train", "eval", "iso", "summary", "test", "check"])
+    ap.add_argument("lenh", choices=["app", "all", "data", "baseline", "train",
+                                     "eval", "iso", "summary", "multiseed",
+                                     "test", "check"])
     ap.add_argument("--episodes", type=int, default=None)
     ap.add_argument("--quick", action="store_true",
                     help="Ban rut gon: 60 episode, 5 episode danh gia")
@@ -55,7 +62,10 @@ def main():
 
     cmd_data = [PY, "scripts/data_preprocessing.py", "--m5",
                 "--n_warehouses", str(n_wh), "--n_skus", str(n_sku),
-                "--min_mean_demand", str(cfg["preprocess"].get("min_mean_demand", 0.2))]
+                "--min_mean_demand", str(cfg["preprocess"].get("min_mean_demand", 0.2)),
+                # split_day phai KHOP voi config.yaml env.split_day, vi day la
+                # ranh gioi loc SKU va uoc luong gia/cau chi tu mien train.
+                "--split_day", str(cfg["env"].get("split_day", 1050))]
     cmd_base = [PY, "scripts/tune_baselines.py", "--episodes", str(tune_eps)]
     cmd_train = [PY, "scripts/train.py", "--episodes", str(eps)]
     cmd_eval = [PY, "scripts/evaluate.py", "--episodes", str(eval_eps)]
@@ -77,6 +87,21 @@ def main():
         sh(cmd_iso)
     elif a.lenh == "summary":
         sh(cmd_summary)
+    elif a.lenh == "multiseed":
+        # [V3-6] Train + danh gia MULTISEED_SEEDS (mac dinh 3 seed), moi seed
+        # gan --tag rieng nen khong ghi de ket qua cua seed truoc. Mac dinh
+        # 1000 episode/seed (nhanh hon 5000 de kiem tra do tin cay thong ke,
+        # doi bang --episodes).
+        ms_episodes = a.episodes or 1000
+        for s in MULTISEED_SEEDS:
+            tag = f"seed{s}"
+            sh([PY, "scripts/train.py", "--seed", str(s),
+               "--episodes", str(ms_episodes), "--tag", tag])
+            sh([PY, "scripts/evaluate.py",
+               "--checkpoint", f"checkpoints/best_model_{tag}.pth",
+               "--episodes", str(cfg["eval"]["n_episodes"]), "--tag", tag])
+        sh(cmd_summary)
+        print("\nXong da hat giong. Xem muc 'DA HAT GIONG' trong TONG_HOP_SO_LIEU.txt.")
     elif a.lenh == "test":
         sh([PY, "-m", "pytest", "tests/", "-q"])
     elif a.lenh == "all":
