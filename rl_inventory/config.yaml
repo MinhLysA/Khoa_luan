@@ -86,7 +86,7 @@ ppo:
   # 1024 x 300 = 307.200 mau moi lan update (thua du cho PPO).
   n_steps:         1024
   ppo_epochs:      4
-  mini_batch_size: 16384
+  mini_batch_size: 16384  
   # [V2-8] Actor va critic la hai mang rieng nen lr khong con "ganh" nhau.
   lr_actor:        3.0e-4
   lr_critic:       1.0e-3
@@ -111,7 +111,11 @@ ppo:
   # khop voi rang buoc that su cua bai toan (fill rate >= 85%).
   min_fill_to_save:    0.85
   normalize_adv_per_pair: true
+<<<<<<< HEAD
   total_episodes: 500
+=======
+  total_episodes: 1000
+>>>>>>> 26115a634fccdcc89423918419bacc46698d3083
 
 eval:
   n_episodes: 30

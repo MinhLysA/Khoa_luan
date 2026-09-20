@@ -13,6 +13,11 @@ Muc dich: nhin thay CHUYEN GI DANG XAY RA, thay vi doc log chu chay.
   Tab 3  Huan luyen     - duong hoc theo thoi gian thuc (doc results/train_log*.csv)
   Tab 4  So sanh        - IPPO vs EOQ / (s,S) / Newsvendor
   Tab 5  Mo phong       - chieu lai 365 ngay cua mot chinh sach, theo tung ngay
+  Tab 6  Gia lap tay    - tu tay dat hang cho 1 kho-SKU qua vai ngay, de hieu
+                          co che truoc khi nhin ca 300 cap cung luc
+
+[V3-7] Cac tab so lieu (3, 4, 5) co them expander "Vi du doc so lieu" giai
+       thich bang mot vi du tinh toan cu the, khong chi noi suong ten chi so.
 """
 
 import io
@@ -102,9 +107,9 @@ st.caption("Da kho - da SKU | du lieu M5 Walmart | Independent Multi-Agent PPO "
            "voi chia se tham so")
 
 cfg = load_cfg()
-tab1, tab2, tab3, tab4, tab5 = st.tabs(
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
     ["📊 Du lieu", "⚙️ Cau hinh & Chay", "📈 Huan luyen",
-     "🏁 So sanh chinh sach", "🎬 Mo phong tung ngay"])
+     "🏁 So sanh chinh sach", "🎬 Mo phong tung ngay", "🧪 Gia lap tay"])
 
 
 # =========================================================================== #
@@ -146,6 +151,19 @@ with tab1:
         st.caption(f"Suc chua moi kho = {cov} ngay cau CUA CHINH KHO DO. Day la "
                    "diem sua quan trong: ban cu dung mot con so chung cho ca "
                    f"{W} kho, nen kho lon nhat chi chua duoc ~1,4 ngay cau.")
+
+        with st.expander("❓ Vi du doc con so nay"):
+            vd_kho = df_kho.index[0]
+            vd_cau = df_kho["Cau/ngay"].iloc[0]
+            vd_sc = df_kho["Suc chua (auto)"].iloc[0]
+            st.markdown(
+                f"Kho **{vd_kho}** ban trung binh **{vd_cau:.0f} don vi/ngay** "
+                f"(cong don ca {S} SKU trong kho). Voi capacity_cover_days = "
+                f"**{cov}**, suc chua tinh ra la {vd_cau:.0f} × {cov} = "
+                f"**{vd_sc:.0f} don vi** — du tru cho {cov} ngay ban trung binh. "
+                f"Neu tong ton kho CA {S} SKU trong kho **{vd_kho}** cong lai "
+                f"vuot qua {vd_sc:.0f}, phan vuot bi TU CHOI ngay luc nhap hang "
+                f"(khong duoc luu kho), du don da dat va da tra tien dat hang.")
 
         st.subheader("Phan bo quy mo cau cua 300 cap (kho, SKU)")
         hist = pd.DataFrame({"cau_tb": md})
@@ -282,6 +300,27 @@ with tab3:
             st.line_chart(df.set_index("episode")[["explained_variance"]].dropna(),
                           height=200)
 
+        with st.expander("❓ Vi du doc 3 chi so tren"):
+            st.markdown(
+                "- **Fill rate**: ty le nhu cau duoc dap ung trong cua so 30 "
+                "ngay gan nhat. VD 30 ngay qua khach can tong 300 don vi, kho "
+                "ban duoc 255 -> fill rate = 255/300 = **85%**. Muc tieu cua "
+                f"khoa luan la {cfg['env']['muc_dv']*100:.0f}%.\n"
+                "- **Entropy**: do 'phan van' cua chinh sach khi chon 1 trong "
+                "6 muc dat hang. Chon deu ca 6 muc (ngau nhien hoan toan) cho "
+                "entropy = ln(6) ≈ **1,79** — dung o dau qua trinh hoc, luc "
+                "con dang tham do. Entropy -> 0 nghia la agent gan nhu LUON "
+                "chon 1 muc co dinh cho moi trang thai — da 'chot' chinh sach. "
+                "Neu no giam ve gan 0 CHI SAU VAI CHUC episode dau (chua kip "
+                "hoc gi) thi do la dau hieu dong cung som vao mot nghiem toi, "
+                "khong phai hoi tu that.\n"
+                "- **Explained variance**: critic du doan gia tri trang thai "
+                "tot toi dau. VD return that su la [-100, -80, -120], neu "
+                "critic doan dung xu huong thi explained variance gan **1**; "
+                "neu du doan khong hon gi viec doan trung binh (-100 cho ca 3) "
+                "thi no gan **0**; am nghia la du doan CON TE HON ca doan bua "
+                "trung binh.")
+
         st.subheader("Co cau chi phi qua qua trinh hoc")
         cols = ["cost_holding", "cost_stockout", "cost_ordering",
                 "cost_overflow", "cost_service_penalty"]
@@ -329,6 +368,23 @@ with tab4:
             "Ton kho TB": summ.avg_inventory_mean.round(0),
         }).set_index("Chinh sach")
         st.dataframe(bang, width="stretch")
+
+        with st.expander("❓ Vi du doc bang nay"):
+            hang0 = bang.index[0]
+            r0 = bang.iloc[0]
+            st.markdown(
+                f"Doc hang **{hang0}**: tong chi phi van hanh trung binh mot "
+                f"episode (365 ngay) la **{r0['Tong chi phi']:,.0f}**, trong do "
+                f"lưu kho {r0['Luu kho']:,.0f} + thieu hang {r0['Thieu hang']:,.0f} "
+                f"+ dat hang {r0['Dat hang']:,.0f} + tran kho {r0['Tran kho']:,.0f} "
+                f"= tong. Fill rate {r0['Fill rate']:.1f}% nghia la chinh sach "
+                f"nay dap ung duoc chung do % nhu cau trong ca nam.\n\n"
+                "So SAI lam pho bien: thay IPPO co tong chi phi cao hon 1 "
+                "baseline roi ket luan 'IPPO kem hon' — trong khi hai chinh "
+                "sach co the co fill rate khac han nhau (chi phi thap de dat "
+                "duoc neu chap nhan thieu hang nhieu). Phai so o **cung mot "
+                "muc fill rate** moi cong bang — xem bang 'So sanh o CUNG MUC "
+                "PHUC VU' phia duoi.")
 
         if stat:
             gap = stat.get("gap_percent", 0.0)
@@ -381,6 +437,18 @@ with tab4:
                          width="stretch")
             st.caption("Cot cuoi: so AM nghia la IPPO RE HON o cung muc phuc vu. "
                        "Day moi la bang nen dua vao Chuong 4.")
+            with st.expander("❓ Vi du doc bang iso-service"):
+                st.markdown(
+                    f"IPPO tu no dat fill rate {iso['target_fill']*100:.1f}%. "
+                    "Voi TUNG baseline, script `iso_service.py` do tim tham so "
+                    "re nhat (vd tang service_level, tang q_factor) de baseline "
+                    "do CUNG dat duoc muc fill rate nay, roi moi so tong chi "
+                    "phi. VD neu (s,S) can chi 1.250.000 de dat 89% fill rate "
+                    "con IPPO chi can 990.000 de dat 89% — thi ghi la IPPO re "
+                    "hon (990.000-1.250.000)/1.250.000 = **-21%**, tuc IPPO re "
+                    "hon 21%. Dong 'khong dat duoc muc nay' nghia la du quet "
+                    "het luoi tham so, baseline do van khong co cau hinh nao "
+                    "vuon toi muc fill rate cua IPPO.")
 
         for img, cap in [("baseline_comparison.png", "Bieu do tong hop"),
                          ("cost_service_frontier.png", "Duong danh doi")]:
@@ -503,6 +571,15 @@ with tab5:
                    "mot kho tranh nhau mot suc chua co han. Neu duong nay ep "
                    "sat 1,0 lien tuc thi rang buoc dang can — do la dieu can "
                    "co de bai toan thuc su la da tac tu.")
+        with st.expander("❓ Vi du doc chi so nay"):
+            st.markdown(
+                "Kho suc chua 500 don vi (cong don ca 30 SKU trong kho). Neu "
+                "hom nay tong ton kho ca 30 SKU la 450 -> muc su dung = "
+                "450/500 = **0,90**. Neu 1 SKU trong kho dat them 80 don vi "
+                "(450+80=530 > 500) -> **30 don vi vuot bi tu choi ngay luc "
+                "nhap** (van bi tinh phi tran kho), 500 don vi con lai duoc "
+                "luu binh thuong. Muc su dung > 1,0 tren do thi nghia la "
+                "NGAY DO co tu choi nhap hang xay ra.")
 
         c1, c2 = st.columns(2)
         c1.markdown("**Fill rate cua so truot 30 ngay**")
@@ -515,3 +592,120 @@ with tab5:
         st.download_button("⬇️ Tai CSV mo phong",
                            df.to_csv(index=False).encode("utf-8"),
                            file_name=f"mo_phong_{ten}.csv", mime="text/csv")
+
+
+# =========================================================================== #
+# TAB 6 - GIA LAP TAY (1 kho - 1 SKU, tu tay dat hang tung ngay)
+# =========================================================================== #
+with tab6:
+    st.subheader("Tu tay dat hang cho 1 kho - 1 mat hang, xem chuyen gi xay ra")
+    st.caption("Ban 5 chay san 1 chinh sach roi xem lai ca 365 ngay cung luc. "
+               "O day ban TU MINH quyet dinh dat bao nhieu MOI NGAY cho DUY "
+               "NHAT 1 cap kho-SKU, de cam nhan truc tiep co che truoc khi "
+               "nhin ca 300 cap chay tu dong.")
+
+    d6, meta6 = load_demand(data_mtime())
+    dung_du_lieu_that = d6 is not None
+
+    cs = st.columns(3)
+    if dung_du_lieu_that:
+        ten_kho_list = meta6.get("stores", [f"WH{i}" for i in range(d6.shape[1])])
+        ten_sku_list = meta6.get("top_items", [f"SKU{i}" for i in range(d6.shape[2])])
+        w_idx = cs[0].selectbox("Kho", range(len(ten_kho_list)),
+                                format_func=lambda i: ten_kho_list[i], key="g6_w")
+        s_idx = cs[1].selectbox("Mat hang (SKU)", range(len(ten_sku_list)),
+                                format_func=lambda i: ten_sku_list[i], key="g6_s")
+    else:
+        st.info("Chua co du lieu M5 → dung cau gia lap ngau nhien "
+                "(Poisson, trung binh ~10 don vi/ngay).")
+        w_idx = s_idx = 0
+    so_ngay6 = cs[2].number_input("So ngay mo phong", 10, 90, 30, key="g6_len")
+
+    if st.button("🔄 Bat dau / Lam lai", key="g6_reset"):
+        from env.inventory_env import MultiWarehouseInventoryEnv
+        e6 = dict(cfg["env"])
+        e6["n_warehouses"] = 1
+        e6["n_skus"] = 1
+        e6["episode_length"] = int(so_ngay6)
+        e6["warehouse_capacity"] = "auto"
+        if dung_du_lieu_that:
+            demand_1 = d6[:, w_idx:w_idx + 1, s_idx:s_idx + 1]
+            e6["split_day"] = max(demand_1.shape[0] - int(so_ngay6) - 1, 1)
+        else:
+            demand_1 = None
+        env6 = MultiWarehouseInventoryEnv(config=e6, demand_data=demand_1, mode="train")
+        obs6, _ = env6.reset(seed=42)
+        st.session_state["g6"] = {"env": env6, "history": [], "done": False}
+
+    if "g6" in st.session_state:
+        g = st.session_state["g6"]
+        env6 = g["env"]
+
+        if g["done"]:
+            st.success(f"Da mo phong xong {len(g['history'])} ngay. Bam "
+                       "*Bat dau / Lam lai* o tren de thu lai.")
+        else:
+            ton_dau_ngay = float(env6.inventory[0])
+            sap_ve = float(env6.pipeline_orders[0, 0])
+            dong_trang_thai = (f"**Ngay {env6.current_step + 1}/{env6.episode_length}** "
+                               f"— ton kho dau ngay: **{ton_dau_ngay:.0f}** don vi")
+            if sap_ve > 0:
+                dong_trang_thai += f", hom nay nhan them **{sap_ve:.0f}** don vi tu don da dat truoc do"
+            st.markdown(dong_trang_thai)
+            st.caption(f"Cau trung binh lich su cua cap nay: khoang "
+                       f"{float(env6.mean_demand[0]):.1f} don vi/ngay — dung con "
+                       "so nay de uoc luong nen dat bao nhieu.")
+
+            muc_luong = env6.order_qty_table[0]
+            nhan_muc = [f"Muc {i}: dat {int(q)} don vi" for i, q in enumerate(muc_luong)]
+            chon = st.radio("Ban muon dat hang bao nhieu cho HOM NAY?",
+                            range(len(nhan_muc)), format_func=lambda i: nhan_muc[i],
+                            horizontal=True, key=f"g6_act_{env6.current_step}")
+
+            if st.button("✅ Xac nhan — qua ngay tiep theo",
+                         key=f"g6_step_{env6.current_step}", type="primary"):
+                _, _, te, tr, inf = env6.step(np.array([chon], dtype=np.int64))
+                g["history"].append({
+                    "Ngay": env6.current_step, "Ton kho dau ngay": ton_dau_ngay,
+                    "Dat hang": inf["order_qty"], "Cau": inf["demand"],
+                    "Ban duoc": inf["sold"], "Thieu hang": inf["stockout"],
+                    "Ton kho cuoi ngay": inf["inventory"],
+                    "Chi phi luu kho": inf["cost_holding"],
+                    "Chi phi thieu hang": inf["cost_stockout"],
+                    "Chi phi dat hang": inf["cost_ordering"],
+                    "Chi phi tran kho": inf["cost_overflow"],
+                    "Chi phi ngay": (inf["cost_holding"] + inf["cost_stockout"]
+                                     + inf["cost_ordering"] + inf["cost_overflow"]),
+                })
+                g["done"] = bool(te or tr)
+                st.rerun()
+
+        if g["history"]:
+            dfh = pd.DataFrame(g["history"])
+            c = st.columns(4)
+            c[0].metric("Tong chi phi den gio", f"{dfh['Chi phi ngay'].sum():,.0f}")
+            fr6 = 1 - dfh["Thieu hang"].sum() / max(dfh["Cau"].sum(), 1e-6)
+            c[1].metric("Fill rate den gio", f"{fr6:.1%}")
+            c[2].metric("So lan da dat hang", int((dfh["Dat hang"] > 0).sum()))
+            c[3].metric("Tong don vi thieu hang", f"{dfh['Thieu hang'].sum():,.0f}")
+
+            st.markdown("**Ton kho vs Cau qua cac ngay ban da choi**")
+            st.line_chart(dfh.set_index("Ngay")[["Ton kho cuoi ngay", "Cau"]], height=240)
+            with st.expander("Bang chi tiet tung ngay ban da dat"):
+                st.dataframe(dfh, width="stretch")
+
+        with st.expander("❓ Vi du doc cac chi so o tab nay"):
+            st.markdown(
+                "- **Ton kho dau ngay**: so hang con lai TRUOC khi ban hang "
+                "hom nay (hang dat truoc co the da ve them vao day).\n"
+                "- **Fill rate den gio**: VD tinh den ngay hien tai khach can "
+                "tong 40 don vi, ban ban duoc 34 → fill rate = 34/40 = **85%**. "
+                "Thieu hang 1-2 ngay khong sao, mien ca ky khong thieu trien "
+                "mien.\n"
+                f"- **Chi phi luu kho** = ton kho cuoi ngay × cp_lk. VD con "
+                f"20 don vi ton, cp_lk = {cfg['env']['cp_lk']} → chi phi luu "
+                f"kho ngay do = {20*cfg['env']['cp_lk']:.0f}.\n"
+                "- **Chi phi tran kho**: neu ban dat qua tay va tong ton kho "
+                "vuot suc chua, phan vuot bi TU CHOI NGAY LUC NHAP — vua mat "
+                "tien dat hang (cp_dh) vua khong co hang de ban, con bi tinh "
+                "them phi phat tren so don vi bi tu choi do.")
