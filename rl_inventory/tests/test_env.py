@@ -129,6 +129,38 @@ def test_tran_kho_chi_xay_ra_khi_vuot_suc_chua():
             break
 
 
+def test_tran_kho_chi_tu_choi_hang_moi_khong_dung_ton_kho_cu():
+    """[P0-1] Tran kho CHI duoc tu choi tu phan hang MOI VE vuot dung luong
+    con trong, KHONG duoc "an" vao ton kho cu dang nam hop le trong suc chua.
+
+    Kich ban tu README_CLAUDE_CODE_KLTN.md muc P0.2: 1 kho 2 SKU, suc chua
+    = 100. Ton kho cu (SKU0=90, SKU1=0). Hang moi ve = 20, toan bo o SKU1
+    (SKU0=0, SKU1=20). Tong sau nhap = 110 -> vuot 10.
+    Ky vong: CHI 10/20 (50%) hang MOI cua SKU1 bi tu choi; SKU0 (ton kho cu)
+    khong doi.
+    """
+    T = 20
+    demand_zero = np.zeros((T, 1, 2), dtype=np.float32)
+    cfg = dict(CFG)
+    cfg.update(n_warehouses=1, n_skus=2, warehouse_capacity=100.0,
+              lead_time_min=1, lead_time_max=1, split_day=15, val_day=18)
+    env = MultiWarehouseInventoryEnv(config=cfg, demand_data=demand_zero, mode="train")
+    env.reset(seed=0)
+    env.inventory = np.array([90.0, 0.0], dtype=np.float32)
+    env.pipeline_orders[:] = 0.0
+    env.pipeline_orders[0] = np.array([0.0, 20.0], dtype=np.float32)
+
+    _, _, _, _, info = env.step(np.zeros(env.n_pairs, dtype=np.int64))
+
+    assert np.isclose(info["overflow"], 10.0, atol=1e-3)
+    assert np.isclose(env.inventory[0], 90.0, atol=1e-3), "ton kho cu khong duoc bi dung"
+    assert np.isclose(env.inventory[1], 10.0, atol=1e-3), "20 hang moi ve, 10 bi tu choi"
+    assert np.isclose(info["received_accepted"], 10.0, atol=1e-3)
+    assert env.inventory.sum() <= env.suc_chua_kho.sum() + 1e-6
+    # Bao toan dong chay: ton_cu + hang_moi = ton_sau_nhap + tran_kho (cau bang 0)
+    assert np.isclose(90.0 + 20.0, env.inventory.sum() + info["overflow"], atol=1e-3)
+
+
 # --------------------------------------------------------------------------- #
 # [V2-3] Bang muc dat hang
 # --------------------------------------------------------------------------- #

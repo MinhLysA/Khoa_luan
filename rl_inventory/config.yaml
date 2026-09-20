@@ -40,9 +40,16 @@ env:
   # thay vi hang so cp_th dung chung cho ca 300 cap. Cong thuc:
   #   cp_th_pair = max(gia_ban_trung_binh(cap) * margin_ratio, cp_th_min)
   # margin_ratio la GIA DINH (M5 khong cong bo gia von) - dat 0.3 nghia la coi
-  # thieu 1 don vi hang = mat 30% gia ban do la loi nhuan bien. Doi false de
-  # quay lai hang so cp_th cu (dung so sanh truoc/sau khi them tinh nang nay).
-  use_real_price_stockout: true
+  # thieu 1 don vi hang = mat 30% gia ban do la loi nhuan bien.
+  # [P0-3] TAT cho THI NGHIEM CHINH: M5 khong cong bo gia von/chi phi that
+  # cua Walmart, nen goi ket qua bang tien "that" (USD) la mot khang dinh
+  # qua muc dua tren mot gia dinh (margin_ratio) khong kiem chung duoc. Thi
+  # nghiem chinh dung hang so cp_th chung cho moi cap, bao cao bang "don vi
+  # chi phi mo phong chuan hoa" thay vi USD. Tin hieu gia (price_series) VAN
+  # duoc dua vao quan sat (chi bao giam gia, xem obs) du co bat co nay hay
+  # khong - chi rieng CONG THUC CHI PHI THIEU HANG la quay ve hang so.
+  # Doi true de bat lai lam ablation rieng (khong dung cho ket qua chinh).
+  use_real_price_stockout: false
   margin_ratio: 0.3
   cp_th_min:    0.5
 
@@ -98,9 +105,13 @@ ppo:
   clip_value_loss: true       # [V2-11]
   eval_every_episodes: 25
   eval_n_episodes:     2
-  min_fill_to_save:    0.0
+  # [P0-5] Nguong fill rate de mot checkpoint duoc coi la "kha thi"
+  # (feasible): chi nhung checkpoint dat >= muc_dv moi duoc xet chon theo
+  # chi phi thap nhat. Truoc la 0.0 (moi checkpoint deu "kha thi"), khong
+  # khop voi rang buoc that su cua bai toan (fill rate >= 85%).
+  min_fill_to_save:    0.85
   normalize_adv_per_pair: true
-  total_episodes: 1 000
+  total_episodes: 500
 
 eval:
   n_episodes: 30

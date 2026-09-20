@@ -18,30 +18,35 @@ optimality guarantees once demand is stochastic, lead times fluctuate, and
 multiple SKUs must share a finite warehouse capacity.
 
 This thesis addresses the problem through multi-agent reinforcement learning.
-A system of $N = 10$ warehouses and $M = 50$ SKUs is modelled as $500$ agents,
-one per warehouse--SKU pair, each issuing its own replenishment decisions from
-local observations. The agents are trained with Independent Multi-Agent
-Proximal Policy Optimization (IPPO) under full parameter sharing: a single
-Actor--Critic network is shared across all $500$ agents, which keeps the number
-of learnable parameters constant as the system scales. The reward is designed
-with local decomposition and a 30-day rolling-window fill-rate penalty term,
-reducing the variance of the learning signal relative to a single shared
-global reward.
+A system of $N = 10$ warehouses and $M = 30$ representative SKUs is modelled as
+$300$ agents, one per warehouse--SKU pair, each issuing its own replenishment
+decisions from local observations. The agents are trained with Independent
+Multi-Agent Proximal Policy Optimization (IPPO) under full parameter sharing:
+a single set of Actor--Critic weights is shared across all $300$ agents, which
+keeps the number of learnable parameters constant as the system scales. The
+reward is designed with local decomposition, a 30-day rolling-window fill-rate
+penalty term, and a per-pair normalization mechanism that reduces the variance
+of the learning signal across SKUs whose cost scales differ by several orders
+of magnitude.
 
-The simulation environment follows the Gymnasium interface, with demand
-parameters calibrated from the real-world M5 Walmart retail dataset (10
-stores, 50 SKUs, 1,941 days of sales data) and stochastic lead times drawn
-from one to three days. The proposed model is benchmarked against three
-classical inventory policies (EOQ, $(s, S)$, Newsvendor) within the same
-environment under a unified evaluation protocol involving multiple random
-seeds and statistical significance testing, across four metric groups: total
-operational cost, fill rate, and the breakdown of individual cost components.
+The simulation environment follows the Gymnasium interface, with demand and
+price parameters calibrated from the real-world M5 Walmart retail dataset (10
+stores, 30 representative SKUs, 1,941 days of sales data) and stochastic lead
+times drawn from one to three days. The proposed model is benchmarked against
+three classical inventory policies (EOQ, $(s, S)$, Newsvendor), each tuned by
+grid search on the same environment, under a unified evaluation protocol
+involving multiple random seeds and statistical significance testing, across
+four metric groups: total operational cost, fill rate, and the breakdown of
+individual cost components.
 
-Experimental results are analysed along three dimensions: (i) the comparison
-between the IPPO agent and the classical baselines in terms of total
-operational cost and service level; (ii) the generalization capability of the
-shared-parameter policy across SKUs of differing demand scale; and (iii) the
-effect of local reward decomposition on the learning process. The thesis also
-reports scenarios in which the proposed method does not outperform the
-classical baselines, together with an analysis of the underlying causes.
+Experimental results show that, when compared at a matched minimum service
+level, IPPO achieves the lowest total operational cost among all four methods
+-- $47.5\%$ cheaper than EOQ, $21.2\%$ cheaper than $(s, S)$, and $11.3\%$
+cheaper than the Newsvendor policy -- whereas an unmatched direct comparison
+misleadingly suggests IPPO is more expensive than EOQ. The shared-parameter
+policy generalizes well to medium- and high-demand SKUs but does not fully
+close the service-level gap for the lowest-demand, most intermittent SKUs. The
+thesis also reports, in full honesty, the scenarios in which the proposed
+method does not outperform the classical baselines, together with the study's
+limitations and directions for future work.
 

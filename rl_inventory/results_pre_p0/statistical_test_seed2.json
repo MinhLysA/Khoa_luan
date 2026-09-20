@@ -1,0 +1,10 @@
+{
+  "best_baseline": "EOQ",
+  "gap_percent": 9.944922289170533,
+  "t_stat": 18.92198644311272,
+  "p_ttest": 2.93577895086311e-25,
+  "p_wilcoxon": 1.862645149230957e-09,
+  "cohen_d": 4.885635891422287,
+  "n_episodes": 30,
+  "mode": "test"
+}

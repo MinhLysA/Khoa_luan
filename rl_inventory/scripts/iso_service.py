@@ -37,6 +37,29 @@ from agents.ppo_agent import PPOAgent
 from baselines.traditional_policies import (
     EOQPolicy, SsPolicy, NewsvendorPolicy, build_env_state)
 
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
+
+def _plot_iso(ket_qua, target_fill, out_path):
+    """Bieu do cot: tong chi phi cua tung chinh sach o cung muc phuc vu."""
+    names = [n for n in ket_qua if not ket_qua[n].get("khong_dat")]
+    costs = [ket_qua[n]["cost"] for n in names]
+    fills = [ket_qua[n]["fill"] * 100 for n in names]
+    colors = ["#2ca02c" if n == "IPPO" else "#4C72B0" for n in names]
+
+    fig, ax = plt.subplots(figsize=(6.5, 4.5))
+    bars = ax.bar(names, costs, color=colors)
+    for b, f in zip(bars, fills):
+        ax.text(b.get_x() + b.get_width() / 2, b.get_height() * 1.01,
+                f"{f:.1f}%", ha="center", fontsize=9)
+    ax.set_ylabel("Tổng chi phí vận hành (miền test)")
+    ax.set_title(f"So sánh ở cùng mức phục vụ (ngưỡng ≥ {target_fill*100:.2f}%)")
+    plt.tight_layout()
+    plt.savefig(out_path, dpi=140)
+    plt.close()
+
 
 def chay(env, policy, n, seed, is_ppo=False):
     costs, fills = [], []
@@ -173,6 +196,10 @@ def main():
     out.write_text(json.dumps({"target_fill": target, "ket_qua": ket_qua},
                               indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nDa luu {out}")
+
+    fig_path = ROOT / paths["results_dir"] / "iso_service_chart.png"
+    _plot_iso(ket_qua, target, fig_path)
+    print(f"Da luu {fig_path}")
 
 
 if __name__ == "__main__":

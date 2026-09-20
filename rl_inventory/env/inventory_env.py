@@ -76,6 +76,17 @@ PHIEN BAN v3:
          agent khong he "nhin thay" gia doi theo ngay. Nay them 1 chieu quan
          sat: muc do dang giam gia so voi gia trung binh cua chinh cap do
          (dung price_series.npy, doc tu sell_prices.csv theo tung ngay).
+
+PHIEN BAN P0 (sua truoc khi huan luyen lai lan cuoi, xem
+README_CLAUDE_CODE_KLTN.md):
+  [P0-1] SUA LOI TRAN KHO: chi tu choi hang MOI VE vuot dung luong con
+         trong, khong con phan bo phan vuot theo ty trong tren CA ton kho cu
+         lan hang moi. Ban [V2-5] tinh tong (ton_cu + hang_moi) roi tru theo
+         ty trong -> vo tinh "an" ca vao ton kho cu dang nam hop le trong suc
+         chua (vd ton cu=90, suc chua=100, hang moi=20 -> ban cu tu choi
+         10/110 tren ca hai nguon, lam ton kho cu giam oan). Nay tinh
+         free_capacity = suc_chua - ton_cu, chi tu choi dung phan hang moi
+         vuot qua free_capacity; ton kho cu khong bao gio bi buoc nay giam.
 """
 
 import gymnasium as gym
@@ -307,16 +318,33 @@ class MultiWarehouseInventoryEnv(gym.Env):
 
         # -- B2: Nhan hang tu pipeline --------------------------------------
         hang_ve = self.pipeline_orders[0].copy()
-        self.inventory = self.inventory + hang_ve
 
-        # -- [V2-5] Tu choi hang vuot suc chua NGAY LUC NHAP ----------------
-        inv_wh   = self.inventory.reshape(self.n_warehouses, self.n_skus)
-        tong_kho = inv_wh.sum(axis=1, keepdims=True)                      # (n_wh,1)
-        cap      = self.suc_chua_kho[:, None]                             # (n_wh,1)
-        vuot     = np.maximum(0.0, tong_kho - cap)
-        ty_le    = inv_wh / np.maximum(tong_kho, 1e-6)
-        overflow = (vuot * ty_le).reshape(-1).astype(np.float32)
-        self.inventory = (inv_wh - vuot * ty_le).reshape(-1).astype(np.float32)
+        # -- [P0-1] Tu choi hang vuot suc chua NGAY LUC NHAP, CHI TU PHAN
+        # HANG MOI VE. Ban truoc ([V2-5]) tinh tong (ton kho cu + hang moi)
+        # roi phan bo phan vuot theo TY TRONG tren ca hai nguon -> co the
+        # "an" vao ca ton kho cu dang nam hop le trong suc chua (vd ton cu=90,
+        # suc chua=100, hang moi ve=20 -> ban truoc tu choi 10/110 tren CA
+        # ton cu lan hang moi, lam ton kho cu cung bi giam). Nay chi tinh
+        # dung luong con trong (free_capacity = suc_chua - ton_cu), roi tu
+        # choi dung phan hang moi vuot qua dung luong con trong do; ton kho
+        # cu KHONG BAO GIO bi giam boi buoc nay.
+        inv_before_wh = self.inventory.reshape(self.n_warehouses, self.n_skus)
+        incoming_wh   = hang_ve.reshape(self.n_warehouses, self.n_skus)
+
+        used_capacity = inv_before_wh.sum(axis=1)
+        free_capacity = np.maximum(self.suc_chua_kho - used_capacity, 0.0)
+        incoming_total = incoming_wh.sum(axis=1)
+
+        accept_ratio = np.ones(self.n_warehouses, dtype=np.float32)
+        vuot_kho = incoming_total > free_capacity
+        accept_ratio[vuot_kho] = (free_capacity[vuot_kho]
+                                  / np.maximum(incoming_total[vuot_kho], 1e-6))
+
+        accepted_wh = incoming_wh * accept_ratio[:, None]
+        rejected_wh = incoming_wh - accepted_wh
+
+        self.inventory = (inv_before_wh + accepted_wh).reshape(-1).astype(np.float32)
+        overflow = rejected_wh.reshape(-1).astype(np.float32)
 
         # -- B3: Dich pipeline, ghi don hang moi ----------------------------
         self.pipeline_orders = np.roll(self.pipeline_orders, shift=-1, axis=0)
@@ -397,7 +425,8 @@ class MultiWarehouseInventoryEnv(gym.Env):
             "util_wh":      (inv_wh_end.sum(axis=1) / self.suc_chua_kho).astype(np.float32),
             "overflow_wh":  overflow.reshape(self.n_warehouses, self.n_skus).sum(axis=1),
             "order_wh":     order_qty.reshape(self.n_warehouses, self.n_skus).sum(axis=1),
-            "received":     float(hang_ve.sum()),
+            "received":          float(hang_ve.sum()),           # tuong thich nguoc: hang du kien ve
+            "received_accepted": float(accepted_wh.sum()),       # [P0-1] hang MOI thuc su duoc nhap
             "day_index":    int(min(self.start_day + self.current_step - 1,
                                     (self.demand_data.shape[0] - 1)
                                     if self.demand_data is not None else 0)),

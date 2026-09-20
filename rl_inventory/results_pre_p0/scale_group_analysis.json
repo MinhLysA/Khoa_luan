@@ -1,0 +1,34 @@
+{
+  "n_pairs": 300,
+  "episodes": 30,
+  "groups": [
+    {
+      "group": "Thấp (tercile 1)",
+      "n_pairs": 100,
+      "fill_rate_mean": 0.7279056557957965,
+      "fill_rate_min": 0.09375,
+      "fill_rate_std": 0.13827263049786417,
+      "cost_per_pair_day_mean": 3.5861510816912183,
+      "cost_per_pair_day_std": 1.3100298286922318
+    },
+    {
+      "group": "Trung bình (tercile 2)",
+      "n_pairs": 100,
+      "fill_rate_mean": 0.8357049890979915,
+      "fill_rate_min": 0.5357975748582915,
+      "fill_rate_std": 0.08956456630509987,
+      "cost_per_pair_day_mean": 5.029141293225592,
+      "cost_per_pair_day_std": 2.3872799877513335
+    },
+    {
+      "group": "Cao (tercile 3)",
+      "n_pairs": 100,
+      "fill_rate_mean": 0.8630806119434824,
+      "fill_rate_min": 0.6206430284730138,
+      "fill_rate_std": 0.06082421824816431,
+      "cost_per_pair_day_mean": 23.651068839198274,
+      "cost_per_pair_day_std": 38.57942294804878
+    }
+  ],
+  "fill_rate_all_pairs_std": 0.11698268721826824
+}

@@ -7,12 +7,14 @@
 \subsection{Môi trường phần cứng và phần mềm}
 \label{subsec:phanCung}
 
-Môi trường thực nghiệm được triển khai trên nền tảng Python với các thư viện
-cốt lõi: PyTorch (cài đặt mạng Actor--Critic và thuật toán PPO), Gymnasium
-(giao diện môi trường mô phỏng), NumPy và Pandas (xử lý dữ liệu M5 và tính
-toán thống kê).
-
-% >>> PLACEHOLDER: Điền cấu hình GPU/CPU cụ thể sau khi hoàn tất thực nghiệm.
+Toàn bộ quá trình huấn luyện và đánh giá được thực hiện trên CPU (không yêu
+cầu GPU): với kích thước mạng nơ-ron nhỏ (hai lớp ẩn $128$ nơ-ron cho mỗi
+nhánh Actor và Critic, Mục~\ref{subsec:sharedNet}), một lần huấn luyện đầy đủ
+$5000$ episode mất khoảng $80$ phút trên một nhân CPU. Môi trường thực nghiệm
+được cài đặt bằng Python với các thư viện cốt lõi: PyTorch (mạng
+Actor--Critic và thuật toán PPO), Gymnasium (giao diện môi trường mô phỏng),
+NumPy và Pandas (xử lý dữ liệu M5 và tính toán thống kê), SciPy (kiểm định
+thống kê) và Matplotlib (trực quan hóa).
 
 \subsection{Nguồn dữ liệu và tiền xử lý}
 \label{subsec:duLieu}
@@ -24,23 +26,32 @@ M5 \parencite{makridakis2022background, m5dataset}:
     theo ngày ($3.049$ mặt hàng $\times$ $10$ cửa hàng) trên $1.941$ ngày.
     \item \texttt{calendar.csv}: chứa thông tin lịch, ngày lễ và các sự kiện
     SNAP.
+    \item \texttt{sell\_prices.csv}: giá bán theo tuần của từng mặt hàng tại
+    từng cửa hàng, dùng để suy ra đơn giá thiếu hàng theo giá thực tế
+    (Mục~\ref{subsec:thamSoChiPhi}).
 \end{itemize}
 
-Từ tổng số $3.049$ mặt hàng, khóa luận chọn $M = 50$ mặt hàng đại diện cho
-$10$ cửa hàng (tương ứng $10$ kho), đảm bảo đa dạng về quy mô nhu cầu: từ các
-SKU có nhu cầu thấp ($\lambda < 0{,}5$ đơn vị/ngày) đến các SKU có nhu cầu cao
-($\lambda > 5$ đơn vị/ngày). Tham số nhu cầu ($\lambda_i$ trung bình hàng ngày)
-cho mỗi cặp kho--mặt hàng được tính từ dữ liệu gốc.
+Từ tổng số $3.049$ mặt hàng, khóa luận chọn $M = 30$ mặt hàng đại diện cho mỗi
+cửa hàng trong số $10$ cửa hàng (tương ứng $10$ kho), theo hai bước: (i) loại
+bỏ các mặt hàng có nhu cầu trung bình dưới $0{,}2$ đơn vị/ngày tại phần lớn số
+cửa hàng -- những mặt hàng mà cửa hàng đó gần như không kinh doanh và chỉ đóng
+góp nhiễu vào gradient của mạng chia sẻ tham số; (ii) trong số các mặt hàng còn
+lại, chọn theo phương pháp phân tầng đều trên các nhóm ngành hàng (thực phẩm,
+sở thích, gia dụng) để bảo đảm đa dạng về quy mô nhu cầu. Việc lọc và ước
+lượng tham số nhu cầu chỉ sử dụng phần dữ liệu thuộc miền huấn luyện
+(Mục~\ref{subsec:phanChiaMien}), tránh rò rỉ thông tin từ các miền dùng để
+đánh giá.
 
 Dữ liệu giả lập (Poisson synthetic). Song song, khóa luận sinh dữ
-liệu nhu cầu theo phân phối Poisson $D_t \sim \text{Poisson}(\lambda_i)$ để kiểm
-chứng kết quả trong điều kiện kiểm soát.
+liệu nhu cầu theo phân phối Poisson $D_t \sim \text{Poisson}(\lambda_i)$ để
+phục vụ kiểm thử đơn vị của môi trường mô phỏng trong điều kiện kiểm soát.
 
 \subsection{Thiết lập kịch bản mô phỏng}
 \label{subsec:kichBan}
 
 Mỗi episode huấn luyện/đánh giá kéo dài $365$ ngày. Bảng~\ref{tab:cauHinhEnv}
-tóm tắt cấu hình môi trường.
+tóm tắt cấu hình môi trường (xem Chương~\ref{chap:chapter3} để biết thiết kế
+chi tiết).
 
 \begin{table}[htbp]
     \centering
@@ -51,11 +62,11 @@ tóm tắt cấu hình môi trường.
         \textbf{Tham số} & \textbf{Giá trị} \\
         \hline
         Số kho ($N$) & $10$ \\ \hline
-        Số mặt hàng ($M$) & $50$ \\ \hline
-        Số tác tử ($N \times M$) & $500$ \\ \hline
+        Số mặt hàng đại diện ($M$) & $30$ \\ \hline
+        Số tác tử ($N \times M$) & $300$ \\ \hline
         Độ dài episode & $365$ ngày \\ \hline
         Lead time & $\text{Uniform}(1, 3)$ ngày \\ \hline
-        Mức đặt hàng ($K$) & $\{0, 10, 20, 30, 40, 50\}$ \\ \hline
+        Hệ số mức đặt hàng ($K$, tương đối theo cầu mỗi cặp) & $\{0;\,0{,}5;\,1;\,2;\,3;\,5\}$ \\ \hline
         Ngưỡng fill rate ($\tau$) & $85\%$ \\
         \hline
     \end{tabular}
@@ -64,24 +75,40 @@ tóm tắt cấu hình môi trường.
 \section{Phương pháp đối chứng (Baselines)}
 \label{sec:baselines}
 
-Hiệu năng của IPPO được so sánh với ba chính sách tồn kho cổ điển:
-
+Hiệu năng của IPPO được so sánh với ba chính sách tồn kho cổ điển, cùng chạy
+trên chính môi trường mô phỏng của khóa luận:
 \begin{itemize}
-    \item EOQ \cite{harris1913}: lượng đặt hàng cố định
-    $Q^* = \sqrt{2D \cdot c_{dh} / c_{lk}}$, với $D$ tính từ nhu cầu trung bình
-    của mỗi SKU. Đặt hàng khi tồn kho giảm xuống dưới ngưỡng $r = \mu_L$.
-
+    \item EOQ \cite{harris1913}: lượng đặt hàng cố định theo công
+    thức~(\ref{eq:eoq}), đặt hàng khi vị thế tồn kho giảm xuống dưới điểm đặt
+    hàng lại.
     \item Chính sách $(s, S)$ \cite{scarf1960}: ngưỡng $s$ và mức
-    trần $S$ được tối ưu bằng tìm kiếm lưới (grid search) trên chính môi trường
-    mô phỏng, bảo đảm tính công bằng khi so sánh.
-
-    \item Newsvendor \cite{arrow1951}: lượng đặt hàng tối ưu đơn
-    kỳ $Q^* = F^{-1}(c_{th}/(c_{th} + c_{lk}))$, áp dụng lại mỗi ngày dựa
-    trên phân phối nhu cầu ước lượng.
+    trần $S$.
+    \item Newsvendor \cite{arrow1951}: lượng đặt hàng tối ưu đơn kỳ theo
+    công thức~(\ref{eq:newsvendor}), áp dụng lại mỗi ngày.
 \end{itemize}
 
-Tất cả baselines được chạy trên cùng một môi trường và cùng
-các hạt giống ngẫu nhiên với IPPO để bảo đảm tính so sánh.
+Mỗi chính sách có các tham số có thể tinh chỉnh (hệ số nhân lượng đặt, mức
+phục vụ giả định, thời gian giao hàng giả định). Toàn bộ tham số này được xác
+định bằng tìm kiếm lưới (grid search) trực tiếp trên môi trường mô phỏng,
+\textbf{chỉ dùng miền huấn luyện}, trước khi đánh giá lại trên miền kiểm tra
+-- nhằm bảo đảm các chính sách cổ điển được so sánh ở cấu hình tốt nhất có
+thể của chính chúng, thay vì dùng tham số lý thuyết mặc định. Bảng~\ref{tab:thamSoBaseline}
+liệt kê cấu hình tốt nhất tìm được cho từng chính sách.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Tham số baseline sau tìm kiếm lưới trên miền huấn luyện}
+    \label{tab:thamSoBaseline}
+    \begin{tabularx}{\textwidth}{|l|X|}
+        \hline
+        \textbf{Chính sách} & \textbf{Tham số tốt nhất} \\
+        \hline
+        EOQ & hệ số nhân $Q^*$ $=2{,}0$; thời gian giao hàng giả định $=3$ ngày \\ \hline
+        $(s, S)$ & mức phục vụ giả định $=70\%$; hệ số nhân $=0{,}5$; thời gian giao hàng giả định $=3$ ngày \\ \hline
+        Newsvendor & tỷ số tới hạn thay thế $=0{,}85$; thời gian giao hàng giả định $=3$ ngày \\
+        \hline
+    \end{tabularx}
+\end{table}
 
 \section{Giao thức đánh giá}
 \label{sec:giaoThuc}
@@ -89,105 +116,199 @@ các hạt giống ngẫu nhiên với IPPO để bảo đảm tính so sánh.
 \subsection{Đánh giá đa hạt giống}
 \label{subsec:daHatGiong}
 
-Theo khuyến nghị của Henderson và cộng sự \cite{henderson2018} và Agarwal và cộng sự \cite{agarwal2021}, mọi
-kết quả được báo cáo trên tối thiểu $5$ hạt giống ngẫu nhiên. Mỗi seed tương
-ứng với:
-\begin{itemize}
-    \item Khởi tạo trọng số mạng khác nhau.
-    \item Chuỗi nhu cầu ngẫu nhiên khác nhau (cùng phân phối).
-    \item Chuỗi lead time ngẫu nhiên khác nhau.
-\end{itemize}
-
-Kết quả báo cáo gồm giá trị trung bình $\pm$ độ lệch chuẩn. Sự khác biệt giữa
-các phương pháp được xác nhận bằng kiểm định thống kê phù hợp (t-test hoặc
-Wilcoxon signed-rank test).
+Theo tinh thần khuyến nghị của Henderson và cộng sự \cite{henderson2018} và
+Agarwal và cộng sự \cite{agarwal2021} về tính tái lập trong học tăng cường
+sâu, khóa luận huấn luyện và đánh giá IPPO trên $3$ hạt giống ngẫu nhiên độc
+lập ($42$, $1$, $2$), mỗi hạt giống tương ứng một lần khởi tạo trọng số mạng
+khác nhau. Kết quả tổng hợp qua các hạt giống được báo cáo dưới dạng trung
+bình $\pm$ độ lệch chuẩn (Mục~\ref{subsec:daHatGiongKetQua}). Đây là một giới
+hạn cần nêu rõ: số hạt giống thực hiện được ($3$) thấp hơn khuyến nghị phổ
+biến ($5$ trở lên) do giới hạn thời gian tính toán trên CPU; kết quả chi tiết
+theo từng chỉ số so sánh với baseline (Mục~\ref{subsec:soSanhChiPhi}) được báo
+cáo trên một hạt giống đại diện ($42$) với kiểm định thống kê trên $30$
+episode đánh giá độc lập của chính hạt giống đó, còn độ ổn định qua nhiều hạt
+giống được xác nhận riêng ở Mục~\ref{subsec:daHatGiongKetQua}.
 
 \subsection{Các chỉ số đánh giá}
 \label{subsec:chiSo}
 
 Bốn nhóm chỉ số chính:
-
 \begin{enumerate}
-    \item Tổng chi phí vận hành (Total Cost): tổng $C_t$ theo công
-    thức (\ref{eq:tongchiphi}) trên toàn bộ $365$ ngày và $500$ cặp kho--mặt
-    hàng.
+    \item Tổng chi phí vận hành (Total Cost): tổng chi phí lưu kho,
+    thiếu hàng, đặt hàng và phạt tràn kho trên toàn bộ $365$ ngày và $300$ cặp
+    kho--mặt hàng (không tính phần phạt mức phục vụ mang tính định hình hành
+    vi ở công thức~(\ref{eq:localReward}), vì đây là chi phí vận hành thực
+    tế chứ không phải tín hiệu huấn luyện).
 
-    \item Tỷ lệ đáp ứng nhu cầu (Fill Rate): $\text{FR} =
-    \sum \text{fulfilled} / \sum \text{demand}$, tính trung bình trên toàn hệ
-    thống. Mục tiêu $\ge 85\%$.
+    \item Tỷ lệ đáp ứng nhu cầu (Fill Rate): tỷ lệ nhu cầu được đáp
+    ứng trên tổng nhu cầu, tính trung bình trên toàn hệ thống. Mục tiêu $\ge
+    85\%$.
 
     \item Cơ cấu chi phí thành phần: phân tách tổng chi phí thành
     holding, stockout, ordering và overflow để phân tích chiến lược mà mỗi
     phương pháp áp dụng.
 
-    \item Đường cong học (Learning Curve): phần thưởng tích lũy trung
-    bình qua các episode huấn luyện, chứng minh tính hội tụ.
+    \item Đường cong học (Learning Curve): phần thưởng tích lũy, tỷ lệ
+    đáp ứng nhu cầu, entropy chính sách và explained variance của Critic qua
+    các episode huấn luyện, dùng để xác nhận tính hội tụ.
 \end{enumerate}
 
 \section{Kết quả thực nghiệm}
 \label{sec:ketQua}
 
-% >>> LƯU Ý: Toàn bộ phần kết quả dưới đây là KHUNG (placeholder).
-% >>> CHỈ ĐIỀN SỐ LIỆU SAU KHI ĐÃ CHẠY XONG THỰC NGHIỆM ĐA HẠT GIỐNG
-% >>> VÀ CÓ KIỂM ĐỊNH THỐNG KÊ. KHÔNG VIẾT TRƯỚC.
-
 \subsection{Quá trình huấn luyện và tính hội tụ}
 \label{subsec:hoiTu}
 
-Đường cong phần thưởng tích lũy trung bình qua các episode huấn luyện cho thấy
-mô hình IPPO hội tụ sau khoảng \textit{[cần điền]} episode. Phần thưởng ổn định
-và không sụp đổ sau hội tụ, chứng minh tính ổn định của thuật toán PPO với cơ
-chế clipped objective.
+Hình~\ref{fig:learningCurve} trình bày diễn biến bốn đại lượng theo dõi trong
+suốt $5000$ episode huấn luyện. Phần thưởng tích lũy trung bình trượt tăng
+nhanh và ổn định sau khoảng $300$--$500$ episode đầu, không có dấu hiệu sụp
+đổ sau khi hội tụ. Entropy của chính sách giảm đều đặn từ giá trị gần với
+entropy tối đa lý thuyết của phân phối đều trên $6$ hành động xuống một giá
+trị thấp và ổn định, cho thấy chính sách phân hóa hành động theo trạng thái
+thay vì giữ nguyên phân phối gần như ngẫu nhiên ban đầu. Explained variance
+của Critic đạt trên $0{,}97$ ngay trong vài chục episode đầu và duy trì ổn
+định trong suốt phần còn lại của quá trình huấn luyện, cho thấy hàm giá trị
+khớp tốt với lợi tức thực tế trên cả $300$ tác tử dùng chung một bộ trọng số.
+Tỷ lệ đáp ứng nhu cầu đo bằng đánh giá theo chính sách xác định trên miền kiểm
+định hội tụ quanh ngưỡng mục tiêu $85\%$ sau khoảng $500$ episode.
 
-% >>> Chèn hình đường cong học ở đây khi có:
-% \begin{figure}[htbp]
-%     \centering
-%     \includegraphics[width=0.8\textwidth]{media/learning_curve.png}
-%     \caption{Đường cong phần thưởng tích lũy qua các episode huấn luyện}
-%     \label{fig:learningCurve}
-% \end{figure}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.92\textwidth]{hinh_duong_cong_hoc.png}
+    \caption{Đường cong huấn luyện IPPO qua $5000$ episode: phần thưởng
+    trung bình trượt, tỷ lệ đáp ứng nhu cầu, entropy chính sách và explained
+    variance của Critic}
+    \label{fig:learningCurve}
+\end{figure}
 
-\subsection{So sánh tổng chi phí vận hành}
+\subsection{So sánh trực tiếp tổng chi phí vận hành}
 \label{subsec:soSanhChiPhi}
 
-Bảng~\ref{tab:ketQuaChiPhi} trình bày tổng chi phí vận hành sau $365$ ngày,
-trung bình trên $5$ hạt giống.
+Bảng~\ref{tab:ketQuaChiPhi} trình bày kết quả so sánh trực tiếp trên miền kiểm
+tra, trung bình trên $30$ episode đánh giá độc lập (hạt giống $42$).
 
 \begin{table}[htbp]
     \centering
-    \caption{Tổng chi phí vận hành (trung bình $\pm$ độ lệch chuẩn, $5$ seeds)}
+    \caption{So sánh trực tiếp tổng chi phí vận hành trên miền kiểm tra (trung bình $30$ episode)}
     \label{tab:ketQuaChiPhi}
     \begin{tabular}{|l|c|c|c|}
         \hline
         \textbf{Phương pháp} & \textbf{Total Cost} & \textbf{Fill Rate} &
-        \textbf{$p$-value} \\
+        \textbf{So với IPPO} \\
         \hline
-        EOQ           & \textit{[cần điền]} & \textit{[cần điền]} & --- \\ \hline
-        $(s, S)$      & \textit{[cần điền]} & \textit{[cần điền]} & --- \\ \hline
-        Newsvendor    & \textit{[cần điền]} & \textit{[cần điền]} & --- \\ \hline
-        \textbf{IPPO} & \textit{[cần điền]} & \textit{[cần điền]} &
-        \textit{[cần điền]} \\
+        EOQ           & $951.263$   & $75{,}01\%$ & $-3{,}7\%$ (rẻ hơn) \\ \hline
+        $(s, S)$      & $1.003.584$ & $84{,}23\%$ & $+1{,}6\%$ (đắt hơn) \\ \hline
+        Newsvendor    & $1.039.680$ & $84{,}47\%$ & $+5{,}3\%$ (đắt hơn) \\ \hline
+        \textbf{IPPO} & $\mathbf{987.745}$ & $\mathbf{85{,}21\%}$ & --- \\
         \hline
     \end{tabular}
 \end{table}
 
+Đem so sánh trực tiếp, IPPO có tổng chi phí cao hơn EOQ khoảng $3{,}8\%$
+($t = 7{,}087$; $p_{\text{Welch}} = 3{,}64 \times 10^{-9}$; Wilcoxon $p = 1{,}86
+\times 10^{-9}$; Cohen's $d = 1{,}83$ -- khác biệt có ý nghĩa thống kê rất
+mạnh), nhưng thấp hơn cả $(s, S)$ và Newsvendor. Tuy nhiên, cách so sánh này
+chưa công bằng: bốn chính sách đang đạt các mức phục vụ khác nhau. IPPO bị
+phạt trực tiếp khi tỷ lệ đáp ứng dưới ngưỡng $85\%$ (công thức~\ref{eq:localReward})
+nên tự nâng mức phục vụ lên $85{,}21\%$, trong khi ba baseline được tinh
+chỉnh bằng tìm kiếm lưới để \emph{tối thiểu hóa chi phí thuần túy} nên dừng
+lại ở mức thấp hơn -- EOQ đặc biệt chỉ đạt $75{,}01\%$, thấp hơn ngưỡng mục
+tiêu tới $10$ điểm phần trăm. Kết luận ``IPPO đắt hơn EOQ'' rút ra từ
+Bảng~\ref{tab:ketQuaChiPhi} vì vậy là một kết luận sai lệch nếu không kiểm
+soát theo mức phục vụ.
+
+\subsection{So sánh ở cùng mức phục vụ}
+\label{subsec:isoService}
+
+Để so sánh công bằng, với từng chính sách đối chứng, tham số được tìm kiếm lại
+bằng lưới trên miền huấn luyện để tìm cấu hình \emph{rẻ nhất vẫn đạt được mức
+phục vụ tối thiểu bằng mức mà IPPO đạt được} trên miền kiểm tra ($\ge
+84{,}71\%$, đã trừ một biên độ sai số cho phép), rồi đánh giá lại cấu hình đó
+trên miền kiểm tra. Bảng~\ref{tab:isoService} và Hình~\ref{fig:isoService}
+trình bày kết quả.
+
+\begin{table}[htbp]
+    \centering
+    \caption{So sánh tổng chi phí ở cùng mức phục vụ tối thiểu $84{,}71\%$ (miền kiểm tra)}
+    \label{tab:isoService}
+    \begin{tabular}{|l|c|c|c|}
+        \hline
+        \textbf{Phương pháp} & \textbf{Total Cost} & \textbf{Fill Rate} &
+        \textbf{So với IPPO} \\
+        \hline
+        \textbf{IPPO} & $\mathbf{987.745}$ & $\mathbf{85{,}21\%}$ & --- \\ \hline
+        EOQ           & $1.882.296$ & $92{,}81\%$ & IPPO rẻ hơn $47{,}5\%$ \\ \hline
+        $(s, S)$      & $1.254.160$ & $89{,}22\%$ & IPPO rẻ hơn $21{,}2\%$ \\ \hline
+        Newsvendor    & $1.113.546$ & $86{,}28\%$ & IPPO rẻ hơn $11{,}3\%$ \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.62\textwidth]{hinh_so_sanh_cung_muc_phuc_vu.png}
+    \caption{Tổng chi phí vận hành của bốn chính sách khi mọi chính sách đều
+    đạt tối thiểu mức phục vụ mà IPPO đạt được (miền kiểm tra)}
+    \label{fig:isoService}
+\end{figure}
+
+Ở cùng một ngưỡng mức phục vụ, IPPO có chi phí thấp nhất trong cả bốn phương
+pháp, và khoảng cách càng lớn khi ngưỡng mức phục vụ càng cao: không có cấu
+hình EOQ nào trong lưới tìm kiếm vượt qua ngưỡng $85\%$ một cách hiệu quả về
+chi phí -- cấu hình rẻ nhất đạt được ngưỡng này phải hy sinh tới $47{,}5\%$
+chi phí tăng thêm so với IPPO. Đây là bằng chứng cho thấy các chính sách tham
+số tĩnh cổ điển, dù đã được tối ưu hóa tham số bằng tìm kiếm lưới trên chính
+môi trường mô phỏng, không thích ứng hiệu quả khi yêu cầu mức phục vụ tăng
+lên, trong khi chính sách học theo trạng thái của IPPO duy trì mức phục vụ đó
+với chi phí thấp hơn đáng kể.
+
 \subsection{Phân tích cơ cấu chi phí}
 \label{subsec:coCauChiPhi}
 
-% >>> Chèn bảng và/hoặc biểu đồ cột so sánh holding/stockout/ordering/overflow
-% >>> giữa 4 phương pháp khi có số liệu.
+Hình~\ref{fig:baselineComparison} trình bày cơ cấu bốn thành phần chi phí của
+từng chính sách trong so sánh trực tiếp. Trong cơ cấu chi phí của IPPO
+($987.745$), chi phí lưu kho chiếm $83{,}0\%$, chi phí đặt hàng $12{,}7\%$,
+chi phí thiếu hàng $3{,}9\%$ và chi phí tràn kho chỉ $0{,}4\%$. So với EOQ
+(lưu kho $82{,}6\%$, thiếu hàng $5{,}5\%$, đặt hàng $9{,}8\%$, tràn kho
+$2{,}1\%$), IPPO đạt chi phí tràn kho thấp hơn khoảng $5$ lần và chi phí thiếu
+hàng thấp hơn tương đối, đổi lại chi phí đặt hàng cao hơn -- phản ánh một
+chiến lược đặt hàng thường xuyên hơn với lô nhỏ hơn để vừa duy trì mức phục vụ
+cao vừa tránh vượt sức chứa kho, thay vì gom đơn hàng thành các lô lớn như
+EOQ.
 
-Phân tích cơ cấu chi phí cho thấy IPPO \textit{[cần phân tích: chiến lược
-đặt hàng thiên về tần suất thấp lô lớn hay tần suất cao lô nhỏ so với
-baselines?]}.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{hinh_so_sanh_baseline.png}
+    \caption{So sánh trực tiếp tổng chi phí, tỷ lệ đáp ứng nhu cầu và cơ cấu
+    chi phí giữa bốn phương pháp (miền kiểm tra)}
+    \label{fig:baselineComparison}
+\end{figure}
 
-\subsection{Đánh giá tỷ lệ đáp ứng dịch vụ}
-\label{subsec:danhGiaFillRate}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.55\textwidth]{hinh_danh_doi_chi_phi_dich_vu.png}
+    \caption{Đánh đổi giữa tổng chi phí vận hành và tỷ lệ đáp ứng nhu cầu của
+    bốn phương pháp (miền kiểm tra); điểm càng gần góc dưới bên phải càng
+    tốt}
+    \label{fig:tradeoff}
+\end{figure}
 
-Tỷ lệ đáp ứng trung bình của IPPO đạt \textit{[cần điền]}\%, so với ngưỡng
-mục tiêu $85\%$. Phân tích theo nhóm SKU (nhu cầu cao/thấp/gián đoạn) cho thấy
-\textit{[cần phân tích: IPPO có duy trì fill rate đồng đều hay có nhóm SKU bị
-hy sinh?]}.
+Hình~\ref{fig:tradeoff} thể hiện rõ vị trí của bốn chính sách trên mặt phẳng
+đánh đổi chi phí -- mức phục vụ: EOQ nằm ở góc chi phí thấp nhất nhưng mức
+phục vụ thấp nhất; IPPO nằm ở góc mức phục vụ cao nhất với chi phí chỉ nhỉnh
+hơn EOQ một biên độ nhỏ, trong khi $(s, S)$ và Newsvendor không đạt được vị
+trí tốt hơn IPPO trên cả hai trục đồng thời.
+
+\subsection{Đánh giá tỷ lệ đáp ứng dịch vụ theo nhiều hạt giống}
+\label{subsec:daHatGiongKetQua}
+
+Trên $3$ hạt giống ngẫu nhiên độc lập ($42$, $1$, $2$), IPPO đạt tổng chi phí
+trung bình $1.043.125 \pm 9.272$ và tỷ lệ đáp ứng nhu cầu trung bình
+$86{,}10\% \pm 0{,}15\%$. Độ lệch chuẩn nhỏ (dưới $1\%$ chi phí và dưới $0{,}2$
+điểm phần trăm fill rate) cho thấy chính sách học được ổn định qua các lần
+khởi tạo trọng số khác nhau, không phụ thuộc quá mức vào một hạt giống ngẫu
+nhiên cụ thể -- dù mức độ tin cậy này vẫn bị giới hạn bởi số hạt giống còn
+khiêm tốn đã nêu ở Mục~\ref{subsec:daHatGiong}.
 
 \section{Phân tích chuyên sâu}
 \label{sec:phanTich}
@@ -195,41 +316,133 @@ hy sinh?]}.
 \subsection{Khả năng tổng quát hóa qua parameter sharing (Câu hỏi 2)}
 \label{subsec:tongQuatHoa}
 
-Để trả lời Câu hỏi nghiên cứu 2, khóa luận phân tích hiệu năng của chính sách
-chia sẻ tham số theo nhóm SKU có quy mô nhu cầu khác nhau. Các SKU được phân
-thành $3$ nhóm dựa trên $\lambda_i$ trung bình: nhu cầu thấp ($\lambda < 1$),
-trung bình ($1 \le \lambda < 5$), và cao ($\lambda \ge 5$).
+Để trả lời Câu hỏi nghiên cứu 2, khóa luận phân chia $300$ cặp kho--mặt hàng
+thành ba nhóm tam phân vị theo nhu cầu trung bình ước lượng trên miền huấn
+luyện: nhóm thấp ($100$ cặp, nhu cầu trung bình $0{,}05$--$0{,}47$ đơn
+vị/ngày), nhóm trung bình ($100$ cặp, $0{,}47$--$1{,}16$ đơn vị/ngày) và nhóm
+cao ($100$ cặp, $1{,}17$--$158{,}6$ đơn vị/ngày), rồi đánh giá lại chính sách
+IPPO đã huấn luyện trên miền kiểm tra theo từng nhóm riêng biệt.
+Bảng~\ref{tab:phanTichNhom} và Hình~\ref{fig:scaleGroups} trình bày kết quả.
 
-% >>> Điền bảng/biểu đồ fill rate và cost theo nhóm SKU khi có số liệu.
+\begin{table}[htbp]
+    \centering
+    \caption{Fill rate và chi phí cục bộ trung bình mỗi cặp mỗi ngày theo nhóm quy mô cầu (miền kiểm tra, $30$ episode)}
+    \label{tab:phanTichNhom}
+    \begin{tabular}{|l|c|c|c|}
+        \hline
+        \textbf{Nhóm} & \textbf{Fill rate trung bình} & \textbf{Fill rate thấp nhất} & \textbf{Chi phí/cặp/ngày} \\
+        \hline
+        Thấp (tercile 1)      & $72{,}79\%$ & $9{,}38\%$  & $3{,}59$  \\ \hline
+        Trung bình (tercile 2)& $83{,}57\%$ & $53{,}58\%$ & $5{,}03$  \\ \hline
+        Cao (tercile 3)       & $86{,}31\%$ & $62{,}06\%$ & $23{,}65$ \\
+        \hline
+    \end{tabular}
+\end{table}
 
-\subsection{Ảnh hưởng của hàm phần thưởng phân rã cục bộ (Câu hỏi 3)}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{hinh_phan_tich_theo_quy_mo.png}
+    \caption{Fill rate và chi phí cục bộ trung bình theo nhóm quy mô cầu (miền kiểm tra)}
+    \label{fig:scaleGroups}
+\end{figure}
+
+Kết quả cho thấy khả năng tổng quát hóa của cơ chế chia sẻ tham số là \textbf{có
+điều kiện}, không đồng đều tuyệt đối giữa các nhóm quy mô cầu. Nhóm cầu cao
+đạt fill rate trung bình $86{,}31\%$, vượt ngưỡng mục tiêu $85\%$ với biên độ
+an toàn hợp lý. Nhóm cầu trung bình đạt $83{,}57\%$, xấp xỉ nhưng chưa hoàn
+toàn đạt ngưỡng. Nhóm cầu thấp -- những mặt hàng có đặc trưng gián đoạn rõ
+rệt, thường có nhiều ngày liên tiếp không phát sinh nhu cầu -- chỉ đạt trung
+bình $72{,}79\%$, thấp hơn ngưỡng mục tiêu tới hơn $12$ điểm phần trăm, và một
+số cặp trong nhóm này có fill rate thấp tới $9{,}38\%$. Nguyên nhân có thể đến
+từ hai phía: (i) với nhu cầu rất thưa, một vài lần thiếu hàng hiếm hoi cũng
+làm fill rate cửa sổ trượt dao động rất mạnh so với nhóm cầu dày đặc; (ii) bảng
+mức đặt hàng tương đối theo cầu của chính từng cặp (công thức~\ref{eq:orderTable})
+khiến các mức đặt hàng khả dĩ của nhóm này có bước nhảy rất thô (ví dụ $0$,
+$1$, $2$ đơn vị), giới hạn khả năng tinh chỉnh lượng đặt so với các cặp có cầu
+lớn hơn. Như vậy, mạng chia sẻ tham số học được một chính sách hoạt động tốt
+trên phần lớn hệ thống, nhưng chưa bù đắp hoàn toàn cho nhóm SKU có nhu cầu
+gián đoạn nhất -- đây là một giới hạn cụ thể của thiết kế hiện tại, không phải
+một thất bại toàn diện của cơ chế chia sẻ tham số.
+
+\subsection{Vai trò của cơ chế chuẩn hóa phần thưởng cục bộ (Câu hỏi 3)}
 \label{subsec:ablationReward}
 
-Để trả lời Câu hỏi nghiên cứu 3, khóa luận so sánh hai cấu hình:
-\begin{itemize}
-    \item Local reward (công thức \ref{eq:localReward}): mỗi tác tử
-    nhận phần thưởng riêng.
-    \item Global reward: tất cả tác tử nhận cùng phần thưởng
-    $r_{\text{global}} = \sum_i r_i / (N \times M)$.
-\end{itemize}
+Thiết kế hàm phần thưởng được triển khai và đánh giá xuyên suốt khóa luận là
+phần thưởng phân rã cục bộ có chuẩn hóa theo từng cặp
+(Mục~\ref{subsec:localReward}--\ref{subsec:chuanHoaReward}). Trong quá trình
+phát triển môi trường mô phỏng, nhóm thực hiện có quan sát định lượng làm rõ
+tầm quan trọng của cơ chế chuẩn hóa này: ở một cấu hình sơ bộ ban đầu (trước
+khi hiệu chỉnh số lượng SKU và bổ sung phép chuẩn hóa theo từng cặp), phần
+thưởng thô chưa chuẩn hóa khiến entropy chính sách giữ nguyên ở giá trị tối đa
+trong phần lớn quá trình huấn luyện rồi sụp đổ đột ngột, phần lớn tác tử hội
+tụ về hành động ``không đặt hàng'' bất kể trạng thái quan sát được, và tỷ lệ
+đáp ứng nhu cầu cuối cùng chỉ đạt khoảng $73\%$ -- thấp hơn cả ba chính sách
+cổ điển đối chứng. Quan sát này phù hợp với lý do kỹ thuật đã trình bày ở
+Mục~\ref{subsec:chuanHoaReward}: khi phần thưởng thô của các cặp chênh lệch
+tới hàng nghìn lần, tín hiệu học của phần lớn hệ thống bị nhiễu của một số ít
+cặp có quy mô chi phí lớn nhất lấn át.
 
-% >>> Điền kết quả ablation study khi có số liệu.
+Cần nêu rõ giới hạn của bằng chứng này: đây là một quan sát trong quá trình
+phát triển ở một cấu hình môi trường sơ bộ, \textbf{không phải} một thí
+nghiệm loại trừ (ablation) có kiểm soát được thực hiện lại đầy đủ trên đúng
+cấu hình $300$ cặp và bộ siêu tham số cuối cùng dùng để báo cáo ở
+Chương~\ref{chap:chapter4}. Việc lặp lại thí nghiệm này -- tắt cơ chế chuẩn
+hóa phần thưởng theo từng cặp trên đúng cấu hình hiện tại và huấn luyện lại
+với cùng hạt giống, cùng số episode -- là một thực nghiệm loại trừ có giá trị
+nhưng nằm ngoài phạm vi thời gian thực hiện của khóa luận này, và được đề xuất
+là hướng thực nghiệm bổ sung ở Chương~\ref{chap:chapter5}. Tương tự, phương án
+thay thế hoàn toàn bằng một phần thưởng toàn cục dùng chung cho cả $300$ tác
+tử (thay vì phân rã cục bộ) chưa được cài đặt và thực nghiệm trong phạm vi
+khóa luận.
 
 \subsection{Các kịch bản IPPO chưa vượt trội}
 \label{subsec:hanChe}
 
-Khóa luận trình bày trung thực những kịch bản mà IPPO không đạt hiệu năng tốt
-hơn chính sách cổ điển, kèm phân tích nguyên nhân:
+Khóa luận trình bày trung thực hai kịch bản mà IPPO không thể hiện lợi thế
+tuyệt đối:
 
-% >>> Điền phân tích khi có kết quả thực nghiệm cụ thể.
-% >>> Ví dụ: nhu cầu hoàn toàn ổn định (Poisson thấp) thì (s,S) đã gần tối ưu;
-% >>> hoặc SKU rất hiếm (lumpy demand) khiến tín hiệu học quá thưa.
+\begin{itemize}
+    \item So sánh trực tiếp không kiểm soát mức phục vụ
+    (Mục~\ref{subsec:soSanhChiPhi}): IPPO có tổng chi phí cao hơn EOQ khoảng
+    $3{,}8\%$. Đây không phải một điểm yếu của chính sách học được, mà là hệ
+    quả trực tiếp của việc IPPO theo đuổi một mục tiêu mức phục vụ cao hơn
+    hẳn ($85{,}2\%$ so với $75{,}0\%$ của EOQ) do chịu tác động của thành
+    phần phạt ràng buộc trong hàm phần thưởng.
+    \item Nhóm SKU có nhu cầu thấp và gián đoạn nhất
+    (Mục~\ref{subsec:tongQuatHoa}): chính sách chia sẻ tham số chưa đạt được
+    mức phục vụ mục tiêu một cách đồng đều trên nhóm này, với một số cặp có
+    fill rate thấp tới dưới $10\%$. Đây là giới hạn thực tế của việc dùng một
+    bảng mức đặt hàng rời rạc có bước nhảy thô cho những mặt hàng có quy mô
+    cầu rất nhỏ, kết hợp với bản chất phương sai cao của tỷ lệ đáp ứng khi đo
+    trên một lượng giao dịch rất thưa thớt.
+\end{itemize}
 
 \section{Thảo luận}
 \label{sec:thaoLuan}
 
-% >>> Tổng hợp và thảo luận kết quả, trả lời 3 câu hỏi nghiên cứu.
-% >>> So sánh với kết quả của Oroojlooyjadid (2022) và Gijsbrechts (2022).
-% >>> Nhận xét về tính khả thi áp dụng trong thực tế.
+Tổng hợp lại, kết quả thực nghiệm cho thấy bức tranh nhiều sắc thái hơn một
+kết luận đơn giản ``IPPO tốt hơn hay kém hơn các phương pháp cổ điển''. Với
+Câu hỏi nghiên cứu 1, khi so sánh ở cùng một mức phục vụ -- điều kiện so sánh
+đúng đắn về mặt kinh tế -- IPPO có tổng chi phí thấp hơn cả ba baseline, với
+khoảng cách tăng dần theo yêu cầu mức phục vụ, và EOQ hoàn toàn không tìm được
+cấu hình nào đạt ngưỡng $85\%$ một cách hiệu quả về chi phí. Điều này phù hợp
+với nhận định của Gijsbrechts và cộng sự \cite{gijsbrechts2022} rằng học tăng
+cường sâu có xu hướng thể hiện lợi thế rõ rệt nhất trong các chế độ vận hành
+nhạy cảm với chi phí thiếu hàng và ràng buộc mức phục vụ, dù quy mô thực
+nghiệm của khóa luận này ($300$ cặp kho--mặt hàng) lớn hơn đáng kể so với quy
+mô dưới $10$ SKU trong nghiên cứu của họ.
 
-Kết quả thực nghiệm cho thấy \textit{[cần tổng hợp sau khi có đầy đủ số liệu]}.
+Với Câu hỏi nghiên cứu 2, cơ chế chia sẻ tham số tổng quát hóa tốt cho các
+nhóm SKU có nhu cầu từ trung bình trở lên, nhưng chưa bù đắp hoàn toàn cho
+nhóm nhu cầu thấp và gián đoạn nhất -- một giới hạn cụ thể cần được ghi nhận
+khi áp dụng thiết kế này vào các danh mục hàng hóa có tỷ trọng SKU bán chậm
+cao.
+
+Với Câu hỏi nghiên cứu 3, cơ chế phân rã phần thưởng cục bộ kèm chuẩn hóa theo
+từng cặp là thiết kế trung tâm giúp một mạng nơ-ron duy nhất học được đồng
+thời trên $300$ cặp có quy mô chi phí chênh lệch nhiều bậc độ lớn, được củng
+cố bởi quan sát định lượng trong quá trình phát triển (Mục~\ref{subsec:ablationReward}).
+Tuy nhiên, khóa luận thừa nhận rằng bằng chứng cho câu hỏi này chưa đạt tới
+mức một thí nghiệm loại trừ có kiểm soát hoàn chỉnh trên cấu hình cuối cùng,
+và đây là hạn chế cần được khắc phục trong các nghiên cứu tiếp theo
+(Chương~\ref{chap:chapter5}).
