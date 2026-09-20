@@ -54,19 +54,54 @@ Mọi tham số nằm ở **`config.yaml`**, không cần sửa code để chạ
 
 ---
 
-## Bảng điều khiển Streamlit
+## App Streamlit
+
+Có **2 app riêng biệt**, mục đích khác nhau:
+
+### 1. Demo cho hội đồng (`app/app.py`, `python run.py app`)
+
+```bash
+streamlit run app/app.py
+```
+
+4 trang (Streamlit tự nhận trong `app/pages/`):
+
+| Trang | Nội dung |
+|---|---|
+| Tổng quan mạng lưới kho | Slider chọn ngày mô phỏng, heatmap tồn kho kho × SKU (đỏ = thiếu hàng, vàng = tồn dư), KPI fill rate/chi phí lũy kế/số lượt thiếu hàng |
+| Đề xuất đặt hàng | Nhập 1 tình huống (kho, SKU thật hoặc tự giả định, tồn hiện tại, dự báo cầu) → IPPO và 3 baseline đề xuất đặt bao nhiêu; có thể áp dụng đề xuất rồi chạy tiếp để xem diễn biến |
+| So sánh policy | Chạy IPPO + 3 baseline trên **cùng một chuỗi cầu** (cùng seed) — đường tồn kho, tổng chi phí, phân rã chi phí |
+| What-if | Đổi lead time / chi phí lưu kho / sức chứa, hoặc tạo cú sốc cầu (nhân toàn chuỗi cầu với 1 hệ số) — so sánh chính sách nào giữ được fill rate tốt hơn khi bị sốc |
+
+Backend dùng chung: `app/backend/simulator.py` (bọc `MultiWarehouseInventoryEnv`,
+chạy 1 hoặc nhiều chính sách song song trên cùng seed) và
+`app/backend/policy_runner.py` (nạp IPPO từ checkpoint + 3 baseline thành
+cùng một giao diện `action_fn(obs, env) -> action`).
+
+**Lưu ý trung thực khi demo** (trang chủ có nhắc lại): so tổng chi phí giữa
+các chính sách có fill rate khác nhau là không công bằng — luôn nhìn cột
+fill rate cạnh chi phí. Kết quả chính thức (trung bình nhiều episode, kiểm
+định thống kê) nằm ở `results/` và `TONG_HOP_SO_LIEU.txt`, không phải số
+liệu từ 1 lần chạy demo.
+
+### 2. Bảng điều khiển vận hành dự án (`app/streamlit_app.py`)
 
 ```bash
 streamlit run app/streamlit_app.py
 ```
 
+Dùng khi **làm khóa luận** (không phải lúc demo): sửa `config.yaml` bằng
+form, bấm nút chạy từng bước pipeline, xem đường học huấn luyện theo thời
+gian thực, và tab "Giả lập tay" để tự đặt hàng từng ngày cho 1 cặp kho-SKU.
+
 | Tab | Nội dung |
 |---|---|
 | Dữ liệu | Cầu M5 sau tiền xử lý: phân bố quy mô của 300 cặp, cầu từng kho, sức chứa tương ứng, tỷ lệ ngày bằng 0, chuỗi thời gian |
 | Cấu hình và Chạy | Sửa tham số bằng form rồi lưu `config.yaml`; các nút chạy từng bước, log hiện trực tiếp |
-| Huấn luyện | Đường học đọc từ `results/train_log*.csv`: reward, fill rate, entropy, explained variance, cơ cấu chi phí, approx_kl |
+| Huấn luyện | Đường học đọc từ `results/train_log*.csv`: reward, fill rate, entropy, explained variance, cơ cấu chi phí, approx_kl — mỗi chỉ số có ví dụ tính tay |
 | So sánh | Bảng IPPO đối chứng 3 baseline, kiểm định Welch t-test, Wilcoxon, Cohen's d, biểu đồ đánh đổi chi phí và mức phục vụ, và bảng so sánh ở cùng mức phục vụ |
 | Mô phỏng | Chiếu lại 365 ngày của một chính sách bất kỳ theo ngày: tồn kho đối chiếu cầu, thiếu hàng đối chiếu lượng đặt, mức sử dụng sức chứa từng kho, fill rate cửa sổ trượt, chi phí mỗi ngày |
+| Giả lập tay | Tự tay đặt hàng từng ngày cho 1 cặp kho-SKU (dữ liệu thật hoặc giả lập Poisson), xem ngay tồn kho/chi phí cập nhật — để cảm nhận cơ chế trước khi nhìn cả 300 cặp chạy tự động |
 
 Tab Mô phỏng là chỗ trả lời câu "chuyện gì đang xảy ra". Nếu đường mức sử dụng
 sức chứa ép sát 1,0 liên tục thì ràng buộc đang cắn — đó là lúc 30 SKU trong
@@ -82,7 +117,11 @@ rl_inventory/
 ├── run.py                        <- một cửa duy nhất cho mọi lệnh
 ├── config.yaml                   <- toàn bộ tham số và các cờ ablation
 ├── BAO_CAO_SUA_LOI.md            <- chẩn đoán, bằng chứng số cho bản v2
-├── app/streamlit_app.py          <- bảng điều khiển trực quan
+├── app/
+│   ├── app.py                    <- demo 4 trang cho hội đồng (python run.py app)
+│   ├── pages/                    <- 1_Tong_quan, 2_De_xuat_dat_hang, 3_So_sanh_policy, 4_What_if
+│   ├── backend/                  <- simulator.py + policy_runner.py (dung chung 4 trang)
+│   └── streamlit_app.py          <- bảng điều khiển vận hành dự án (sửa config, chạy pipeline)
 ├── env/inventory_env.py          <- môi trường Gymnasium
 ├── agents/
 │   ├── ppo_agent.py              <- actor và critic TÁCH RIÊNG, value normalization

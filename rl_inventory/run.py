@@ -74,7 +74,11 @@ def main():
     cmd_summary = [PY, "scripts/generate_summary.py"]
 
     if a.lenh == "app":
-        sh([PY, "-m", "streamlit", "run", "app/streamlit_app.py"])
+        # [V3-8] app/app.py = demo 4 trang (tong quan, de xuat, so sanh,
+        # what-if). Bang dieu khien VAN HANH du an cu (sua config, chay tung
+        # buoc, xem duong hoc) van con o app/streamlit_app.py, chay rieng
+        # bang: streamlit run app/streamlit_app.py
+        sh([PY, "-m", "streamlit", "run", "app/app.py"])
     elif a.lenh == "data":
         sh(cmd_data)
     elif a.lenh == "baseline":
