@@ -1,0 +1,15 @@
+{
+  "EOQ": {
+    "q_factor": 2.0,
+    "lead_time": 3.0
+  },
+  "(s,S)": {
+    "service_level": 0.7,
+    "q_factor": 0.5,
+    "lead_time": 3.0
+  },
+  "Newsvendor": {
+    "cr_override": 0.85,
+    "lead_time": 3.0
+  }
+}

@@ -109,8 +109,8 @@ các bài toán độc lập, mà mang bản chất của một bài toán ra qu
 
 Thứ tư, quy mô không gian hành động. Với $N$ kho và $M$ mặt hàng, mỗi
 cặp có $K$ mức đặt hàng khả dĩ, không gian hành động chung là tích Descartes
-có kích thước $K^{NM}$. Với cấu hình của khóa luận ($N = 10$, $M = 50$,
-$K = 6$), con số này là $6^{500}$ --- vượt xa khả năng xử lý của bất kỳ phương
+có kích thước $K^{NM}$. Với cấu hình của khóa luận ($N = 10$, $M = 30$,
+$K = 6$), con số này là $6^{300}$ --- vượt xa khả năng xử lý của bất kỳ phương
 pháp tìm kiếm tập trung nào, và cũng vượt quá khả năng biểu diễn của các thuật
 toán học tăng cường dựa trên hàm giá trị vốn phải liệt kê toàn bộ hành động khả
 dĩ \parencite{sutton2018}. Trên phương diện lý thuyết độ phức tạp, bài toán
@@ -182,7 +182,7 @@ Khóa luận đặt ra bốn mục tiêu cụ thể:
 
     \item Cài đặt và huấn luyện thuật toán Independent Multi-Agent PPO
     \parencite{schulman2017ppo, dewitt2020ippo} với cơ chế chia sẻ tham số cho
-    $500$ cặp kho--mặt hàng, sử dụng ước lượng lợi thế tổng quát
+    $300$ cặp kho--mặt hàng, sử dụng ước lượng lợi thế tổng quát
     \parencite{schulman2016gae} và chuẩn hóa lợi thế theo từng cặp.
 
     \item Đánh giá hiệu năng của mô hình đề xuất trong so sánh với ba chính
@@ -202,7 +202,7 @@ Khóa luận hướng tới trả lời ba câu hỏi:
     cầu ngẫu nhiên và thời gian giao hàng biến động hay không, và mức cải thiện
     đó có ý nghĩa thống kê hay không?
 
-    \item Câu hỏi 2: Cơ chế chia sẻ tham số giữa $500$ tác tử có đủ để
+    \item Câu hỏi 2: Cơ chế chia sẻ tham số giữa $300$ tác tử có đủ để
     học một chính sách tổng quát hóa được cho các mặt hàng có quy mô nhu cầu
     khác biệt đáng kể hay không?
 
@@ -225,8 +225,9 @@ lại trong hệ thống tồn kho đa kho -- đa mặt hàng, và thuật toán
 \label{subsec:phamvitrong}
 
 \begin{itemize}
-    \item Cấu hình hệ thống: $N = 10$ kho, $M = 50$ mặt hàng, tương
-    ứng $500$ cặp ra quyết định; độ dài mỗi tập huấn luyện là $365$ ngày; thời
+    \item Cấu hình hệ thống: $N = 10$ kho, $M = 30$ mặt hàng đại diện
+    (chọn lọc theo phương pháp phân tầng trên các nhóm ngành hàng), tương
+    ứng $300$ cặp ra quyết định; độ dài mỗi tập huấn luyện là $365$ ngày; thời
     gian giao hàng ngẫu nhiên trong khoảng từ một đến ba ngày.
 
     \item Cấu trúc mạng lưới: các kho hoạt động song song và độc lập

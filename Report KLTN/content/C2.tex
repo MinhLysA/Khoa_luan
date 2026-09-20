@@ -227,7 +227,7 @@ hành động, một mạng nơ-ron duy nhất có thể được chia sẻ gi�
 Mỗi tác tử vẫn ra quyết định dựa trên quan sát riêng nhưng dùng chung bộ trọng
 số. Lợi ích:
 \begin{itemize}
-    \item Số tham số cần học không tăng theo số tác tử (ở đây: $500$).
+    \item Số tham số cần học không tăng theo số tác tử (ở đây: $300$).
     \item Mỗi bước cập nhật sử dụng dữ liệu từ tất cả tác tử, tăng hiệu quả mẫu.
     \item Chính sách học được có khả năng tổng quát hóa cho các mặt hàng có quy
     mô nhu cầu khác nhau.
@@ -295,14 +295,14 @@ Bảng~\ref{tab:soSanhCongTrinh} tóm tắt so sánh tổng quan giữa khóa lu
         Yang et al. (2023) & Đa cấp / Đa kho & $>2000$ & Có & Có & IPPO / MAPPO \\ \hline
         Kotecha (2024) & Đa điểm phân tán & Biến đổi & Có & Không & IPPO / MAPPO \\ \hline
         Liu et al. (2025) & Đa cấp phức tạp & Nhiều SKU & Có & Có & HAPPO \\ \hline
-        \textbf{Khóa luận này} & \textbf{10 kho song song} & \textbf{50} & \textbf{Có} & \textbf{M5 Walmart} & \textbf{IPPO} \\
+        \textbf{Khóa luận này} & \textbf{10 kho song song} & \textbf{30} & \textbf{Có} & \textbf{M5 Walmart} & \textbf{IPPO} \\
         \hline
     \end{tabularx}
 \end{table}
 
 Thay vì đưa ra các khẳng định tuyệt đối về tính duy nhất hay tính "đầu tiên", khóa luận định vị đóng góp theo hướng \textbf{tái lập và mở rộng có kiểm soát} đối với ứng dụng MARL trong kiểm soát tồn kho, tập trung vào ba trọng tâm chính:
 \begin{enumerate}
-    \item Khảo sát sâu cấu hình \textbf{10 kho song song thuần túy (non-multi-echelon)} với ràng buộc sức chứa kho dùng chung ở quy mô $500$ cặp kho--mặt hàng, tạo sự đối sánh rõ rệt với các mô hình đa cấp (multi-echelon) của MABIM \parencite{yang2023mabim} hay Liu và cộng sự \parencite{liu2025happo}.
-    \item Đánh giá \textbf{ablation study tường minh} tác động của tín hiệu thưởng phân rã cục bộ (local reward decomposition) kèm phạt ràng buộc fill rate cửa sổ trượt ở quy mô 500 tác tử, làm rõ cơ chế gán tín dụng và tốc độ hội tụ của IPPO.
+    \item Khảo sát sâu cấu hình \textbf{10 kho song song thuần túy (non-multi-echelon)} với ràng buộc sức chứa kho dùng chung ở quy mô $300$ cặp kho--mặt hàng, tạo sự đối sánh rõ rệt với các mô hình đa cấp (multi-echelon) của MABIM \parencite{yang2023mabim} hay Liu và cộng sự \parencite{liu2025happo}.
+    \item Đánh giá \textbf{ablation study tường minh} tác động của cơ chế chuẩn hóa phần thưởng phân rã cục bộ (local reward decomposition) kèm phạt ràng buộc fill rate cửa sổ trượt ở quy mô 300 tác tử, làm rõ cơ chế gán tín dụng và tốc độ hội tụ của IPPO.
     \item Hiệu chỉnh môi trường mô phỏng lost-sales trực tiếp từ dữ liệu bán lẻ thực tế M5 Walmart và thực hiện kiểm chứng đối chứng nghiêm ngặt với các chính sách cổ điển EOQ, $(s,S)$ và Newsvendor.
 \end{enumerate}

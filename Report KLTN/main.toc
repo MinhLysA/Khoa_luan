@@ -15,7 +15,7 @@
 \contentsline {subsection}{\numberline {1.3.2}Phạm vi trong đề tài}{5}{subsection.1.3.2}%
 \contentsline {subsection}{\numberline {1.3.3}Giới hạn phạm vi}{6}{subsection.1.3.3}%
 \contentsline {section}{\numberline {1.4}Phương pháp nghiên cứu}{6}{section.1.4}%
-\contentsline {section}{\numberline {1.5}Ý nghĩa khoa học và thực tiễn của đề tài}{6}{section.1.5}%
+\contentsline {section}{\numberline {1.5}Ý nghĩa khoa học và thực tiễn của đề tài}{7}{section.1.5}%
 \contentsline {section}{\numberline {1.6}Bố cục của khóa luận}{7}{section.1.6}%
 \contentsline {chapter}{\numberline {2}CƠ SỞ LÝ THUYẾT VÀ CÁC CÔNG TRÌNH LIÊN QUAN}{8}{chapter.2}%
 \contentsline {section}{\numberline {2.1}Lý thuyết kiểm soát tồn kho ngẫu nhiên}{8}{section.2.1}%
@@ -39,38 +39,42 @@
 \contentsline {chapter}{\numberline {3}PHÂN TÍCH VÀ THIẾT KẾ MÔ HÌNH}{16}{chapter.3}%
 \contentsline {section}{\numberline {3.1}Mô hình hóa bài toán tồn kho đa kho}{16}{section.3.1}%
 \contentsline {subsection}{\numberline {3.1.1}Mô tả mạng lưới}{16}{subsection.3.1.1}%
-\contentsline {subsection}{\numberline {3.1.2}Thiết lập bài toán dưới dạng MDP đa tác tử}{16}{subsection.3.1.2}%
-\contentsline {section}{\numberline {3.2}Thiết kế hàm phần thưởng}{17}{section.3.2}%
-\contentsline {subsection}{\numberline {3.2.1}Phần thưởng phân rã cục bộ}{17}{subsection.3.2.1}%
-\contentsline {subsection}{\numberline {3.2.2}Vai trò của thành phần phạt fill rate}{17}{subsection.3.2.2}%
-\contentsline {subsection}{\numberline {3.2.3}Các tham số chi phí}{18}{subsection.3.2.3}%
-\contentsline {section}{\numberline {3.3}Kiến trúc mạng Actor--Critic chia sẻ tham số}{18}{section.3.3}%
-\contentsline {subsection}{\numberline {3.3.1}Mạng SharedActorCritic}{18}{subsection.3.3.1}%
-\contentsline {subsection}{\numberline {3.3.2}Quy trình huấn luyện IPPO}{18}{subsection.3.3.2}%
-\contentsline {section}{\numberline {3.4}Thiết kế môi trường mô phỏng}{19}{section.3.4}%
-\contentsline {chapter}{\numberline {4}THỰC NGHIỆM VÀ ĐÁNH GIÁ KẾT QUẢ}{21}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Cấu hình thực nghiệm}{21}{section.4.1}%
-\contentsline {subsection}{\numberline {4.1.1}Môi trường phần cứng và phần mềm}{21}{subsection.4.1.1}%
-\contentsline {subsection}{\numberline {4.1.2}Nguồn dữ liệu và tiền xử lý}{21}{subsection.4.1.2}%
-\contentsline {subsection}{\numberline {4.1.3}Thiết lập kịch bản mô phỏng}{21}{subsection.4.1.3}%
-\contentsline {section}{\numberline {4.2}Phương pháp đối chứng (Baselines)}{21}{section.4.2}%
-\contentsline {section}{\numberline {4.3}Giao thức đánh giá}{22}{section.4.3}%
-\contentsline {subsection}{\numberline {4.3.1}Đánh giá đa hạt giống}{22}{subsection.4.3.1}%
-\contentsline {subsection}{\numberline {4.3.2}Các chỉ số đánh giá}{22}{subsection.4.3.2}%
-\contentsline {section}{\numberline {4.4}Kết quả thực nghiệm}{23}{section.4.4}%
-\contentsline {subsection}{\numberline {4.4.1}Quá trình huấn luyện và tính hội tụ}{23}{subsection.4.4.1}%
-\contentsline {subsection}{\numberline {4.4.2}So sánh tổng chi phí vận hành}{23}{subsection.4.4.2}%
-\contentsline {subsection}{\numberline {4.4.3}Phân tích cơ cấu chi phí}{23}{subsection.4.4.3}%
-\contentsline {subsection}{\numberline {4.4.4}Đánh giá tỷ lệ đáp ứng dịch vụ}{23}{subsection.4.4.4}%
-\contentsline {section}{\numberline {4.5}Phân tích chuyên sâu}{24}{section.4.5}%
-\contentsline {subsection}{\numberline {4.5.1}Khả năng tổng quát hóa qua parameter sharing (Câu hỏi 2)}{24}{subsection.4.5.1}%
-\contentsline {subsection}{\numberline {4.5.2}Ảnh hưởng của hàm phần thưởng phân rã cục bộ (Câu hỏi 3)}{24}{subsection.4.5.2}%
-\contentsline {subsection}{\numberline {4.5.3}Các kịch bản IPPO chưa vượt trội}{24}{subsection.4.5.3}%
-\contentsline {section}{\numberline {4.6}Thảo luận}{24}{section.4.6}%
-\contentsline {chapter}{\numberline {5}KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN}{25}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Tổng kết các kết quả đạt được}{25}{section.5.1}%
-\contentsline {subsection}{\numberline {5.1.1}Trả lời các câu hỏi nghiên cứu}{25}{subsection.5.1.1}%
-\contentsline {section}{\numberline {5.2}Những hạn chế còn tồn tại}{25}{section.5.2}%
-\contentsline {section}{\numberline {5.3}Hướng phát triển trong tương lai}{26}{section.5.3}%
-\contentsline {chapter}{PHỤ LỤC A. ĐỐI CHIẾU LUẬN ĐIỂM VÀ NGUỒN TRÍCH DẪN}{27}{chapter*.11}%
-\contentsline {chapter}{TÀI LIỆU THAM KHẢO}{30}{section*.12}%
+\contentsline {subsection}{\numberline {3.1.2}Thiết lập bài toán dưới dạng MDP đa tác tử}{17}{subsection.3.1.2}%
+\contentsline {subsection}{\numberline {3.1.3}Phân chia miền dữ liệu huấn luyện -- kiểm định -- kiểm tra}{19}{subsection.3.1.3}%
+\contentsline {section}{\numberline {3.2}Thiết kế hàm phần thưởng}{19}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Phần thưởng phân rã cục bộ}{19}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}Chuẩn hóa phần thưởng theo từng cặp}{20}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Vai trò của thành phần phạt fill rate}{20}{subsection.3.2.3}%
+\contentsline {subsection}{\numberline {3.2.4}Các tham số chi phí}{21}{subsection.3.2.4}%
+\contentsline {section}{\numberline {3.3}Kiến trúc mạng Actor--Critic chia sẻ tham số}{22}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}Hai mạng Actor và Critic độc lập, chia sẻ giữa các tác tử}{22}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Ổn định hóa quá trình huấn luyện}{22}{subsection.3.3.2}%
+\contentsline {subsection}{\numberline {3.3.3}Quy trình huấn luyện IPPO}{23}{subsection.3.3.3}%
+\contentsline {section}{\numberline {3.4}Thiết kế môi trường mô phỏng}{24}{section.3.4}%
+\contentsline {chapter}{\numberline {4}THỰC NGHIỆM VÀ ĐÁNH GIÁ KẾT QUẢ}{26}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Cấu hình thực nghiệm}{26}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}Môi trường phần cứng và phần mềm}{26}{subsection.4.1.1}%
+\contentsline {subsection}{\numberline {4.1.2}Nguồn dữ liệu và tiền xử lý}{26}{subsection.4.1.2}%
+\contentsline {subsection}{\numberline {4.1.3}Thiết lập kịch bản mô phỏng}{27}{subsection.4.1.3}%
+\contentsline {section}{\numberline {4.2}Phương pháp đối chứng (Baselines)}{27}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Giao thức đánh giá}{28}{section.4.3}%
+\contentsline {subsection}{\numberline {4.3.1}Đánh giá đa hạt giống}{28}{subsection.4.3.1}%
+\contentsline {subsection}{\numberline {4.3.2}Các chỉ số đánh giá}{28}{subsection.4.3.2}%
+\contentsline {section}{\numberline {4.4}Kết quả thực nghiệm}{28}{section.4.4}%
+\contentsline {subsection}{\numberline {4.4.1}Quá trình huấn luyện và tính hội tụ}{28}{subsection.4.4.1}%
+\contentsline {subsection}{\numberline {4.4.2}So sánh trực tiếp tổng chi phí vận hành}{29}{subsection.4.4.2}%
+\contentsline {subsection}{\numberline {4.4.3}So sánh ở cùng mức phục vụ}{30}{subsection.4.4.3}%
+\contentsline {subsection}{\numberline {4.4.4}Phân tích cơ cấu chi phí}{31}{subsection.4.4.4}%
+\contentsline {subsection}{\numberline {4.4.5}Đánh giá tỷ lệ đáp ứng dịch vụ theo nhiều hạt giống}{32}{subsection.4.4.5}%
+\contentsline {section}{\numberline {4.5}Phân tích chuyên sâu}{32}{section.4.5}%
+\contentsline {subsection}{\numberline {4.5.1}Khả năng tổng quát hóa qua parameter sharing (Câu hỏi 2)}{32}{subsection.4.5.1}%
+\contentsline {subsection}{\numberline {4.5.2}Vai trò của cơ chế chuẩn hóa phần thưởng cục bộ (Câu hỏi 3)}{33}{subsection.4.5.2}%
+\contentsline {subsection}{\numberline {4.5.3}Các kịch bản IPPO chưa vượt trội}{34}{subsection.4.5.3}%
+\contentsline {section}{\numberline {4.6}Thảo luận}{35}{section.4.6}%
+\contentsline {chapter}{\numberline {5}KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN}{36}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Tổng kết các kết quả đạt được}{36}{section.5.1}%
+\contentsline {subsection}{\numberline {5.1.1}Trả lời các câu hỏi nghiên cứu}{36}{subsection.5.1.1}%
+\contentsline {section}{\numberline {5.2}Những hạn chế còn tồn tại}{37}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Hướng phát triển trong tương lai}{38}{section.5.3}%
+\contentsline {chapter}{PHỤ LỤC A. ĐỐI CHIẾU LUẬN ĐIỂM VÀ NGUỒN TRÍCH DẪN}{40}{chapter*.19}%
+\contentsline {chapter}{TÀI LIỆU THAM KHẢO}{43}{section*.20}%

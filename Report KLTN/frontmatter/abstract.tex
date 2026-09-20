@@ -17,31 +17,35 @@ thời gian giao hàng biến động và các mặt hàng phải chia sẻ mộ
 hữu hạn.
 
 Khóa luận đề xuất giải quyết bài toán trên bằng học tăng cường đa tác tử. Hệ
-thống gồm $N = 10$ kho và $M = 50$ mặt hàng được mô hình hóa thành $500$ tác tử
-tương ứng với $500$ cặp kho--mặt hàng, mỗi tác tử tự ra quyết định đặt hàng dựa
-trên quan sát cục bộ của mình. Các tác tử được huấn luyện bằng thuật toán
-Independent Multi-Agent Proximal Policy Optimization (IPPO) kết hợp cơ chế chia
-sẻ tham số (parameter sharing): toàn bộ $500$ tác tử dùng chung một mạng
-Actor--Critic duy nhất, cho phép mở rộng quy mô mà không làm bùng nổ số lượng
-tham số cần học. Hàm phần thưởng được thiết kế theo hướng phân rã cục bộ
-(local reward decomposition) kèm thành phần phạt dựa trên tỷ lệ đáp ứng nhu cầu
-tính trên cửa sổ trượt 30 ngày, nhằm giảm phương sai của tín hiệu học so với
-phần thưởng toàn cục dùng chung.
+thống gồm $N = 10$ kho và $M = 30$ mặt hàng đại diện được mô hình hóa thành
+$300$ tác tử tương ứng với $300$ cặp kho--mặt hàng, mỗi tác tử tự ra quyết định
+đặt hàng dựa trên quan sát cục bộ của mình. Các tác tử được huấn luyện bằng
+thuật toán Independent Multi-Agent Proximal Policy Optimization (IPPO) kết hợp
+cơ chế chia sẻ tham số (parameter sharing): toàn bộ $300$ tác tử dùng chung một
+bộ trọng số Actor--Critic duy nhất, cho phép mở rộng quy mô mà không làm bùng
+nổ số lượng tham số cần học. Hàm phần thưởng được thiết kế theo hướng phân rã
+cục bộ (local reward decomposition) kèm thành phần phạt dựa trên tỷ lệ đáp ứng
+nhu cầu tính trên cửa sổ trượt 30 ngày và cơ chế chuẩn hóa phần thưởng theo
+từng cặp, nhằm giảm phương sai của tín hiệu học giữa các mặt hàng có quy mô chi
+phí chênh lệch nhiều bậc độ lớn.
 
-Môi trường mô phỏng được xây dựng theo chuẩn Gymnasium, với tham số nhu cầu
-được hiệu chỉnh từ bộ dữ liệu bán lẻ thực tế M5 Walmart (10 cửa hàng, 50 mặt
-hàng, 1.941 ngày doanh số) và thời gian giao hàng ngẫu nhiên trong khoảng từ
-một đến ba ngày. Hiệu năng của mô hình đề xuất được đối chứng với ba chính sách
-tồn kho cổ điển (EOQ, $(s, S)$, Newsvendor) trên cùng môi trường, theo một giao
-thức đánh giá thống nhất gồm nhiều hạt giống ngẫu nhiên và kiểm định thống kê,
-trên bốn nhóm chỉ số: tổng chi phí vận hành, tỷ lệ đáp ứng nhu cầu, và cơ cấu
-các thành phần chi phí thành phần.
+Môi trường mô phỏng được xây dựng theo chuẩn Gymnasium, với tham số nhu cầu và
+giá bán được hiệu chỉnh từ bộ dữ liệu bán lẻ thực tế M5 Walmart (10 cửa hàng,
+30 mặt hàng đại diện, 1.941 ngày doanh số) và thời gian giao hàng ngẫu nhiên
+trong khoảng từ một đến ba ngày. Hiệu năng của mô hình đề xuất được đối chứng
+với ba chính sách tồn kho cổ điển (EOQ, $(s, S)$, Newsvendor) đã được tinh
+chỉnh tham số bằng tìm kiếm lưới trên cùng môi trường, theo một giao thức đánh
+giá thống nhất gồm nhiều hạt giống ngẫu nhiên và kiểm định thống kê, trên bốn
+nhóm chỉ số: tổng chi phí vận hành, tỷ lệ đáp ứng nhu cầu, và cơ cấu các thành
+phần chi phí.
 
-Kết quả thực nghiệm được phân tích trên ba khía cạnh: (i) so sánh giữa tác tử
-IPPO và các chính sách cổ điển về tổng chi phí vận hành và mức phục vụ;
-(ii) khả năng tổng quát hóa của chính sách chia sẻ tham số sang những mặt hàng
-có quy mô nhu cầu khác nhau; và (iii) ảnh hưởng của cách thiết kế hàm phần
-thưởng phân rã cục bộ tới quá trình học. Khóa luận đồng thời trình bày những
-kịch bản mà phương pháp đề xuất chưa vượt trội so với chính sách cổ điển kèm
-phân tích nguyên nhân.
+Kết quả thực nghiệm cho thấy khi so sánh ở cùng một mức phục vụ tối thiểu,
+IPPO đạt tổng chi phí vận hành thấp nhất trong cả bốn phương pháp -- rẻ hơn
+EOQ $47{,}5\%$, rẻ hơn $(s, S)$ $21{,}2\%$ và rẻ hơn Newsvendor $11{,}3\%$ --
+trong khi so sánh trực tiếp không kiểm soát mức phục vụ lại cho kết luận sai
+lệch rằng IPPO đắt hơn EOQ. Cơ chế chia sẻ tham số tổng quát hóa tốt cho các
+mặt hàng có nhu cầu từ trung bình trở lên, nhưng chưa bù đắp hoàn toàn cho các
+mặt hàng có nhu cầu thấp và gián đoạn nhất. Khóa luận đồng thời trình bày trung
+thực những kịch bản mà phương pháp đề xuất chưa vượt trội so với chính sách cổ
+điển, cùng những hạn chế và hướng nghiên cứu tiếp theo.
 

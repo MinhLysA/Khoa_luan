@@ -5,9 +5,12 @@
 \addvspace {10\p@ }
 \contentsline {table}{\numberline {2.1}{\ignorespaces So sánh tổng quan các công trình nghiên cứu liên quan}}{14}{table.caption.6}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {3.1}{\ignorespaces Tham số chi phí trong môi trường mô phỏng}}{18}{table.caption.7}%
-\contentsline {table}{\numberline {3.2}{\ignorespaces Siêu tham số huấn luyện}}{19}{table.caption.8}%
+\contentsline {table}{\numberline {3.1}{\ignorespaces Tham số chi phí trong môi trường mô phỏng}}{21}{table.caption.7}%
+\contentsline {table}{\numberline {3.2}{\ignorespaces Siêu tham số huấn luyện}}{24}{table.caption.8}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {4.1}{\ignorespaces Cấu hình môi trường mô phỏng}}{22}{table.caption.9}%
-\contentsline {table}{\numberline {4.2}{\ignorespaces Tổng chi phí vận hành (trung bình $\pm $ độ lệch chuẩn, $5$ seeds)}}{23}{table.caption.10}%
+\contentsline {table}{\numberline {4.1}{\ignorespaces Cấu hình môi trường mô phỏng}}{27}{table.caption.9}%
+\contentsline {table}{\numberline {4.2}{\ignorespaces Tham số baseline sau tìm kiếm lưới trên miền huấn luyện}}{27}{table.caption.10}%
+\contentsline {table}{\numberline {4.3}{\ignorespaces So sánh trực tiếp tổng chi phí vận hành trên miền kiểm tra (trung bình $30$ episode)}}{30}{table.caption.12}%
+\contentsline {table}{\numberline {4.4}{\ignorespaces So sánh tổng chi phí ở cùng mức phục vụ tối thiểu $84{,}71\%$ (miền kiểm tra)}}{30}{table.caption.13}%
+\contentsline {table}{\numberline {4.5}{\ignorespaces Fill rate và chi phí cục bộ trung bình mỗi cặp mỗi ngày theo nhóm quy mô cầu (miền kiểm tra, $30$ episode)}}{33}{table.caption.17}%
 \addvspace {10\p@ }

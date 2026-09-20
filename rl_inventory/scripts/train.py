@@ -20,6 +20,19 @@ PHIEN BAN v3:
          cao ket qua cuoi (xem env/inventory_env.py mo ta [V3-1]).
   [V3-2] Nap them price_per_pair.npy (neu co) de dua vao chi phi thieu hang
          theo gia that.
+
+PHIEN BAN P0 (xem README_CLAUDE_CODE_KLTN.md):
+  [P0-4] "fill_rate" ghi nhat ky (ca train lan eval) nay la TRUE EPISODE FILL
+         RATE = 1 - tong_thieu_hang/tong_cau CUA CA EPISODE, khong con la
+         trung binh cong cua tin hieu fill rate cua so truot 30 ngay tai
+         moi buoc (ban cu: trung binh cua N so da trung lap chong lan nhau,
+         thien lech nhat luc dau episode khi cua so con rong).
+  [P0-5] Chon best_model theo CHI PHI VAN HANH THAP NHAT trong nhom cac
+         checkpoint DAT duoc rang buoc fill rate >= ppo.min_fill_to_save
+         (truoc: chon theo REWARD cao nhat, kem theo nguong fill_to_save
+         mac dinh 0.0 tuc moi checkpoint deu "dat"). Neu chua checkpoint nao
+         dat rang buoc, tam luu checkpoint co fill rate cao nhat lam
+         fallback va IN RO feasible=False.
 """
 
 import os
@@ -53,7 +66,7 @@ LOG_FIELDS = ["episode", "global_step", "elapsed_s", "reward_raw", "reward_smoot
               "cost_ordering", "cost_overflow", "cost_service_penalty",
               "cost_total", "entropy", "approx_kl", "clip_frac", "value_loss",
               "explained_variance", "lr_scale", "ent_coef",
-              "eval_reward", "eval_fill"]
+              "eval_reward", "eval_cost", "eval_fill", "eval_feasible"]
 
 
 def load_data(paths):
@@ -143,26 +156,46 @@ def train():
             print(f"[V2-27] Khong tim thay {rp}, bat dau tu dau.")
 
     def run_deterministic_eval():
-        rewards, fills = [], []
+        """[P0-4] Tra ve (reward, chi phi van hanh, TRUE fill rate) - ca ba
+        deu tinh tren TOAN BO episode, khong phai trung binh cua tin hieu
+        cua so truot tai tung buoc. Chi phi van hanh KHONG gom phat SLA
+        (chi_phi_service_penalty) vi do la tin hieu dinh hinh hanh vi cho
+        huan luyen, khong phai chi phi van hanh thuc te (dung cong thuc
+        giong scripts/evaluate.py de hai noi nhat quan)."""
+        rewards, costs, fills = [], [], []
         for i in range(eval_n_episodes):
             o, _ = eval_env.reset(seed=90000 + i)
-            ep_r, ep_f = 0.0, []
+            ep_r, ep_cost = 0.0, 0.0
+            ep_demand, ep_stockout = 0.0, 0.0
             while True:
                 a, _, _ = agent.select_action(o, deterministic=True)
                 o, _, term, trunc, inf = eval_env.step(a)
-                ep_r += inf["raw_reward"]
-                ep_f.append(inf["fill_rate_mean"])
+                ep_r    += inf["raw_reward"]
+                ep_cost += (inf["cost_holding"] + inf["cost_stockout"]
+                           + inf["cost_ordering"] + inf["cost_overflow"])
+                ep_demand   += inf["demand"]
+                ep_stockout += inf["stockout"]
                 if term or trunc:
                     break
             rewards.append(ep_r)
-            fills.append(float(np.mean(ep_f)))
-        return float(np.mean(rewards)), float(np.mean(fills))
+            costs.append(ep_cost)
+            fills.append(1.0 - ep_stockout / max(ep_demand, 1e-6))
+        return float(np.mean(rewards)), float(np.mean(costs)), float(np.mean(fills))
 
     suffix = f"_{args.tag}" if args.tag else ""
     writer = None
     if TENSORBOARD_AVAILABLE:
-        writer = SummaryWriter(
-            log_dir=str(log_dir / f"PPO{suffix}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"))
+        # TensorBoard/TensorFlow gfile co the loi tren duong dan chua ky tu
+        # Unicode (dau tieng Viet trong ten thu muc du an) o mot so may Windows -
+        # day chi la log phu (nguon su that la results/train_log*.csv), nen
+        # khong de loi nay lam hong ca qua trinh huan luyen.
+        try:
+            writer = SummaryWriter(
+                log_dir=str(log_dir / f"PPO{suffix}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"))
+        except Exception as e:
+            print(f"[!] Khong khoi tao duoc TensorBoard SummaryWriter ({e!r}); "
+                  f"bo qua, chi dung results/train_log{suffix}.csv.")
+            writer = None
 
     log_path = results_dir / f"train_log{suffix}.csv"
     log_file = open(log_path, "w", newline="", encoding="utf-8")
@@ -178,21 +211,27 @@ def train():
     print(f"  nhat ky -> {log_path}")
     print("=" * 68)
 
-    best_score = -float("inf")
+    # [P0-5] Chon checkpoint theo chi phi thap nhat TRONG SO cac lan danh
+    # gia dat rang buoc fill rate; fallback theo fill rate cao nhat neu chua
+    # co lan nao dat rang buoc.
+    best_feasible_cost  = float("inf")
+    best_feasible_found = False
+    fallback_best_fill  = -float("inf")
     episode_count = 0
     global_step = 0
-    reward_window, fill_window = [], []
+    reward_window = []
     anneal     = bool(ppo_cfg.get("anneal_lr", True))
     anneal_ent = bool(ppo_cfg.get("anneal_ent", True))
     min_fill_to_save = float(ppo_cfg.get("min_fill_to_save", 0.0))
     t0 = time.time()
 
     obs, _ = env.reset(seed=seed)
-    ep_reward, ep_stockout, ep_fill = 0.0, 0.0, []
+    ep_reward, ep_stockout = 0.0, 0.0
+    ep_demand_true, ep_stockout_true = 0.0, 0.0
     ep_costs = {"cost_holding": 0.0, "cost_stockout": 0.0, "cost_ordering": 0.0,
                 "cost_overflow": 0.0, "cost_service_penalty": 0.0}
     last_metrics = {}
-    last_eval = (float("nan"), float("nan"))
+    last_eval = (float("nan"), float("nan"), float("nan"))
 
     while episode_count < total_episodes:
         buffer.reset()
@@ -214,7 +253,8 @@ def train():
 
             ep_reward   += info["raw_reward"]
             ep_stockout += info["stockout"]
-            ep_fill.append(info["fill_rate_mean"])
+            ep_demand_true   += info["demand"]
+            ep_stockout_true += info["stockout"]
             for k in ep_costs:
                 ep_costs[k] += info[k]
             global_step += 1
@@ -222,22 +262,33 @@ def train():
 
             if terminated or truncated:
                 episode_count += 1
+                # [P0-6] fill rate CUA EPISODE (khong phai trung binh cong
+                # cua tin hieu cua so truot tung buoc).
+                episode_fill = 1.0 - ep_stockout_true / max(ep_demand_true, 1e-6)
                 reward_window.append(ep_reward)
-                fill_window.append(float(np.mean(ep_fill)))
                 if len(reward_window) > 20:
                     reward_window.pop(0)
-                    fill_window.pop(0)
 
+                eval_feasible = ""
                 if episode_count % eval_every == 0:
                     last_eval = run_deterministic_eval()
-                    det_r, det_f = last_eval
-                    print(f"  [Eval] Ep {episode_count:5d}  det_reward={det_r:>14,.0f}"
-                          f"  det_fill={det_f:.3f}")
-                    # [V2-15] Chon checkpoint theo danh gia deterministic
-                    if det_f >= min_fill_to_save and det_r > best_score:
-                        best_score = det_r
+                    det_r, det_cost, det_f = last_eval
+                    feasible = det_f >= min_fill_to_save
+                    eval_feasible = feasible
+                    print(f"  [Eval] Ep {episode_count:5d}  det_cost={det_cost:>14,.0f}"
+                          f"  det_fill={det_f:.3f}  feasible={feasible}")
+                    # [P0-5] Chon checkpoint theo chi phi thap nhat TRONG SO
+                    # cac lan dat rang buoc fill rate; neu chua co lan nao
+                    # dat, tam giu checkpoint co fill rate cao nhat (fallback).
+                    if feasible and det_cost < best_feasible_cost:
+                        best_feasible_cost = det_cost
+                        best_feasible_found = True
                         agent.save(str(checkpoint_dir / f"best_model{suffix}.pth"))
-                        print(f"         -> luu best_model (score={det_r:,.0f})")
+                        print(f"         -> luu best_model (feasible, cost={det_cost:,.0f})")
+                    elif not best_feasible_found and det_f > fallback_best_fill:
+                        fallback_best_fill = det_f
+                        agent.save(str(checkpoint_dir / f"best_model{suffix}.pth"))
+                        print(f"         -> luu best_model (fallback, CHUA feasible, fill={det_f:.3f})")
 
                 row = {f: "" for f in LOG_FIELDS}
                 row.update({
@@ -245,7 +296,7 @@ def train():
                     "elapsed_s": round(time.time() - t0, 1),
                     "reward_raw": ep_reward,
                     "reward_smooth": float(np.mean(reward_window)),
-                    "fill_rate": float(np.mean(ep_fill)),
+                    "fill_rate": episode_fill,
                     "stockout": ep_stockout,
                     "cost_total": sum(ep_costs.values()),
                     "entropy": last_metrics.get("entropy", ""),
@@ -254,7 +305,8 @@ def train():
                     "value_loss": last_metrics.get("value_loss", ""),
                     "explained_variance": last_metrics.get("explained_variance", ""),
                     "ent_coef": agent.ent_coef,
-                    "eval_reward": last_eval[0], "eval_fill": last_eval[1],
+                    "eval_reward": last_eval[0], "eval_cost": last_eval[1],
+                    "eval_fill": last_eval[2], "eval_feasible": eval_feasible,
                 })
                 row.update(ep_costs)
                 log_writer.writerow(row)
@@ -264,17 +316,18 @@ def train():
                     print(f"Ep {episode_count:5d}/{total_episodes}"
                           f"  reward={ep_reward:>14,.0f}"
                           f"  smooth={np.mean(reward_window):>14,.0f}"
-                          f"  fill={np.mean(ep_fill):.3f}"
+                          f"  fill={episode_fill:.3f}"
                           f"  ent={last_metrics.get('entropy', float('nan')):.3f}"
                           f"  ev={last_metrics.get('explained_variance', float('nan')):.2f}")
 
                 if writer:
                     writer.add_scalar("train/episode_reward", ep_reward, episode_count)
-                    writer.add_scalar("train/fill_rate", np.mean(ep_fill), episode_count)
+                    writer.add_scalar("train/fill_rate", episode_fill, episode_count)
                     for k, v in ep_costs.items():
                         writer.add_scalar(f"cost/{k}", v, episode_count)
 
-                ep_reward, ep_stockout, ep_fill = 0.0, 0.0, []
+                ep_reward, ep_stockout = 0.0, 0.0
+                ep_demand_true, ep_stockout_true = 0.0, 0.0
                 ep_costs = {k: 0.0 for k in ep_costs}
                 obs, _ = env.reset()
                 if episode_count >= total_episodes:
@@ -311,7 +364,16 @@ def train():
     if writer:
         writer.close()
     print("=" * 68)
-    print(f"HOAN TAT sau {time.time()-t0:.0f}s. Best eval reward: {best_score:,.0f}")
+    if best_feasible_found:
+        print(f"HOAN TAT sau {time.time()-t0:.0f}s. "
+              f"Best FEASIBLE checkpoint (fill>={min_fill_to_save:.0%}): "
+              f"cost={best_feasible_cost:,.0f}")
+    else:
+        print(f"HOAN TAT sau {time.time()-t0:.0f}s.")
+        print(f"  [!] KHONG checkpoint nao dat fill >= {min_fill_to_save:.0%} trong "
+              f"suot qua trinh huan luyen; best_model{suffix}.pth la FALLBACK theo "
+              f"fill rate cao nhat (fill={fallback_best_fill:.3f}), feasible=False. "
+              f"Can xem xet tang so episode, giam min_fill_to_save, hoac tang phi_dv.")
     print(f"  checkpoint : {checkpoint_dir / f'best_model{suffix}.pth'}")
     print(f"  nhat ky    : {log_path}")
 

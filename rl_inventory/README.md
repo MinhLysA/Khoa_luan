@@ -4,11 +4,23 @@ Môi trường Gymnasium đa kho, đa SKU trên dữ liệu M5 Walmart, huấn l
 **Independent Multi-Agent PPO với chia sẻ tham số**, so sánh đối chứng với EOQ,
 (s,S) và Newsvendor.
 
-> **Đây là bản v3.** Bản v2 đã sửa các lỗi khiến huấn luyện không hội tụ (xem
-> [`BAO_CAO_SUA_LOI.md`](BAO_CAO_SUA_LOI.md)). Bản v3 thêm: chia dữ liệu 3
-> miền train/val/test (thay vì 2 miền), và chi phí thiếu hàng theo **giá bán
-> thật** của M5 (thay vì hằng số). Xem mục [Thay đổi trong bản v3](#thay-đổi-trong-bản-v3)
-> ở cuối file — **cần huấn luyện lại** trước khi dùng số liệu cho báo cáo.
+> **Đây là bản P0** (xem [`README_CLAUDE_CODE_KLTN.md`](README_CLAUDE_CODE_KLTN.md)
+> — bản kế hoạch sửa lỗi/nâng cấp đầy đủ, P0 là nhóm bắt buộc sửa trước khi
+> huấn luyện lại lần cuối). Bản v2 sửa các lỗi khiến huấn luyện không hội tụ
+> (xem [`BAO_CAO_SUA_LOI.md`](BAO_CAO_SUA_LOI.md)); bản v3 thêm chia 3 miền
+> train/val/test và chi phí thiếu hàng theo giá bán thật; bản P0 sửa **một lỗi
+> tràn kho** (có thể vô tình xóa oan tồn kho cũ hợp lệ), đổi cách chọn
+> checkpoint sang theo chi phí thấp nhất trong số các checkpoint đạt fill rate
+> ≥ 85%, và đổi cách tính chi phí thiếu hàng về hằng số dùng chung cho thí
+> nghiệm chính (tránh khẳng định số liệu là USD thật khi M5 không công bố giá
+> vốn). Xem mục [Thay đổi trong bản P0](#thay-đổi-trong-bản-p0) để biết chi
+> tiết đầy đủ.
+>
+> **QUAN TRỌNG: `results/`, `checkpoints/` và `Report KLTN/` hiện tại vẫn là
+> số liệu TRƯỚC bản P0** (đã archive nguyên vẹn vào `results_pre_p0/` và
+> `checkpoints_pre_p0/`). Cần chạy lại toàn bộ pipeline huấn luyện + đánh giá
+> với code hiện tại rồi mới có số liệu khớp để cập nhật báo cáo — xem mục
+> [Trạng thái báo cáo LaTeX](#trạng-thái-báo-cáo-latex).
 
 ---
 
@@ -133,10 +145,13 @@ rl_inventory/
 │   ├── train.py                  <- vòng lặp huấn luyện, chọn checkpoint bằng miền VAL
 │   ├── evaluate.py               <- đánh giá trên miền TEST, kiểm định thống kê
 │   ├── iso_service.py            <- so sánh ở cùng mức phục vụ (chống phản biện)
+│   ├── analyze_scale_groups.py   <- hậu nghiệm: fill rate/chi phí theo nhóm quy mô cầu (Câu hỏi 2)
+│   ├── plot_learning_curve.py    <- ve duong cong hoc tu results/train_log*.csv
 │   └── generate_summary.py       <- xuất TONG_HOP_SO_LIEU.txt tự động, không lệch số
 ├── tests/test_env.py             <- test hồi quy cho từng lỗi/ tính năng đã thêm
 ├── data/{raw,processed}/
-└── checkpoints/  results/  runs/
+├── checkpoints/  results/  runs/
+└── checkpoints_pre_p0/  results_pre_p0/   <- archive ket qua TRUOC ban P0 (xem canh bao dau file)
 ```
 
 ---
@@ -208,17 +223,27 @@ chạm vào đúng 1 lần, ở cuối cùng.
 
 ---
 
-## Chi phí thiếu hàng theo giá thật (tùy chọn)
+## Chi phí thiếu hàng theo giá thật (tùy chọn, TẮT mặc định từ bản P0)
 
 Mặc định `env.cp_th = 10.0` là **hằng số dùng chung cho cả 300 cặp**, bất kể
 SKU đó bán 50 xu hay 100 đô. `config.yaml` có tùy chọn dùng **giá bán thật**
 của M5 (`sell_prices.csv`) để mỗi cặp có đơn giá thiếu hàng riêng:
 
 ```yaml
-use_real_price_stockout: true   # false -> quay ve hang so cp_th cu
+use_real_price_stockout: false  # [P0-3] TAT mac dinh cho thi nghiem chinh -
+                                 # xem ly do trong muc "Thay doi trong ban P0"
 margin_ratio: 0.3                # gia dinh: thieu 1 don vi = mat 30% gia ban
 cp_th_min:    0.5                # san toi thieu, tranh SKU re tien ve gan 0
 ```
+
+**[P0-3] Vì sao tắt mặc định**: M5 không công bố giá vốn của từng mặt hàng,
+nên `cp_th_pair` suy ra từ giá bán × `margin_ratio` là một **giả định**, không
+phải số đo được. Gọi thẳng kết quả mô phỏng là chi phí "USD thật" của Walmart
+khi dựa trên giả định này là một khẳng định quá mức. Thí nghiệm chính vì vậy
+dùng hằng số `cp_th` chung (đơn vị chi phí mô phỏng chuẩn hóa), còn tín hiệu
+giá theo ngày (`price_series`) vẫn được đưa vào quan sát của tác tử (chỉ báo
+giảm giá) bất kể cờ này bật hay tắt. Bật `true` để chạy như một ablation
+riêng, không dùng cho số liệu báo cáo chính.
 
 Công thức: `cp_th_pair = max(giá_bán_trung_bình(cặp) * margin_ratio, cp_th_min)`,
 với giá trung bình chỉ ước lượng **trên miền train** (tránh rò rỉ, giống cách
@@ -247,7 +272,7 @@ cặp trên các tuần thuộc miền train, lưu vào `data/processed/price_pe
 | Cờ | Ý nghĩa |
 |---|---|
 | `env.normalize_reward_per_pair` | **Quan trọng nhất.** Đặt `false` sẽ tái hiện đúng hiện tượng không hội tụ của bản v1 |
-| `env.use_real_price_stockout` | Bật/tắt chi phí thiếu hàng theo giá thật (v3) so với hằng số `cp_th` |
+| `env.use_real_price_stockout` | Bật/tắt chi phí thiếu hàng theo giá thật (v3); **tắt mặc định từ P0** cho thí nghiệm chính |
 | `env.margin_ratio`, `env.cp_th_min` | Độ nhạy của giả định kinh tế khi bật giá thật |
 | `env.capacity_cover_days` | Độ chặt của ràng buộc ghép nối giữa các tác tử |
 | `env.phi_dv` | Độ nhạy của hệ số phạt mức phục vụ |
@@ -266,17 +291,34 @@ python scripts/train.py --seed 1 --tag khong_chuan_hoa_reward
 
 ## Ba câu hỏi nghiên cứu — trạng thái
 
-1. *IPPO có tốt hơn EOQ, (s,S), Newsvendor không?*
-2. *Parameter sharing có tổng quát hóa được qua các quy mô cầu không?*
-3. *Phần thưởng phân rã cục bộ có giúp học tốt hơn thưởng tổng thể không?*
+> ⚠️ **Số liệu dưới đây là kết quả TRƯỚC bản P0** (đã archive ở
+> `results_pre_p0/`), giữ lại để tham khảo xu hướng. Cấu hình đã đổi thực sự
+> từ bản P0 (sửa lỗi tràn kho, đổi chọn checkpoint theo chi phí thấp nhất
+> trong nhóm đạt fill ≥ 85%, tắt chi phí thiếu hàng theo giá thật) nên **cần
+> chạy lại pipeline với code hiện tại** để có số liệu chính thức — xem mục
+> [Trạng thái báo cáo LaTeX](#trạng-thái-báo-cáo-latex).
 
-`results/`, `TONG_HOP_SO_LIEU.txt` có số liệu của bản **trước v3** (hằng số
-`cp_th`, chia 2 miền train/test cũ). Sau khi thêm giá thật + chia lại dữ liệu,
-**cần chạy lại `python run.py train` rồi `python run.py eval && python run.py
-iso && python run.py summary`** để có số liệu khớp với cấu hình hiện tại — chi
-phí thiếu hàng đã giảm mạnh về độ lớn (giá trung bình M5 × 30% margin ≈ 1,2,
-thay vì hằng số 10 cũ), nên checkpoint cũ (`best_model.pth`) được huấn luyện
-dưới thang chi phí cũ, không còn tối ưu cho thang chi phí mới.
+1. *IPPO có tốt hơn EOQ, (s,S), Newsvendor không?* — **Có, khi so cùng mức
+   phục vụ** (kết quả trước P0). So thẳng, IPPO đắt hơn EOQ 3,8% (nhưng fill
+   rate 85,2% so với 75,0%). Ở cùng ngưỡng phục vụ ≥ 84,71%, IPPO rẻ hơn EOQ
+   47,5%, rẻ hơn (s,S) 21,2%, rẻ hơn Newsvendor 11,3% (`python run.py iso`,
+   xem `results_pre_p0/iso_service.json`).
+2. *Parameter sharing có tổng quát hóa được qua các quy mô cầu không?* —
+   **Có điều kiện** (kết quả trước P0). Nhóm cầu cao/trung bình đạt fill rate
+   86,3%/83,6%, nhưng nhóm cầu thấp và gián đoạn nhất chỉ đạt 72,8%
+   (`python scripts/analyze_scale_groups.py`, xem
+   `results_pre_p0/scale_group_analysis.json`).
+3. *Phần thưởng phân rã cục bộ có giúp học tốt hơn thưởng tổng thể không?* —
+   **Chưa kiểm chứng đầy đủ.** Thiết kế cục bộ + chuẩn hóa theo cặp là thiết
+   kế được dùng xuyên suốt và có bằng chứng phát triển sơ bộ ủng hộ (xem
+   `BAO_CAO_SUA_LOI.md`), nhưng chưa có thí nghiệm loại trừ (tắt
+   `normalize_reward_per_pair`, hoặc thay bằng phần thưởng toàn cục dùng
+   chung) chạy lại trên đúng cấu hình 300 cặp hiện tại — xem mục
+   [Ablation](#ablation--đổi-giá-trị-trong-configyaml-rồi-chạy-lại) ở trên.
+
+Số liệu chi tiết đầy đủ của lần chạy trước P0 (bảng so sánh, kiểm định thống
+kê, đa hạt giống) nằm trong `results_pre_p0/` — `Report KLTN/` hiện vẫn phản
+ánh đúng các số liệu này (chưa cập nhật theo P0).
 
 ---
 
@@ -301,11 +343,84 @@ So với bản v2 (mô tả trong `BAO_CAO_SUA_LOI.md`):
 - `demo_app/` (thư mục ngoài `rl_inventory/`) đã bị **xóa**: import
   `agents.dqn_agent.DoubleDQNAgent` không tồn tại, tàn dư kiến trúc Double DQN
   đời trước, không tương thích với `env/inventory_env.py` hiện tại.
-- **Việc còn lại**: `results/`, `checkpoints/`, `TONG_HOP_SO_LIEU.txt` hiện
-  tại vẫn là số liệu **trước** khi thêm v3 — cần chạy lại toàn bộ pipeline
-  (mục "Ba câu hỏi nghiên cứu" ở trên) trước khi dùng cho báo cáo. Đồng thời
-  `Report KLTN/content/*.tex` vẫn mô tả cấu hình đời v1 (500 tác tử, sức chứa
-  dùng chung) và chưa được cập nhật theo v2/v3.
+- `main.py` (shim tương thích ngược trỏ sang `run.py`) đã bị **xóa** vì không
+  còn nơi nào gọi tới; `run.py` là điểm vào duy nhất.
+
+---
+
+## Thay đổi trong bản P0
+
+Theo kế hoạch chi tiết trong [`README_CLAUDE_CODE_KLTN.md`](README_CLAUDE_CODE_KLTN.md)
+(nhóm P0 — bắt buộc sửa trước khi huấn luyện lại lần cuối):
+
+- **[P0-1] Sửa lỗi tràn kho** (`env/inventory_env.py`): bản trước ([V2-5])
+  tính tổng (tồn kho cũ + hàng mới về) rồi phân bổ phần vượt sức chứa theo
+  **tỷ trọng trên cả hai nguồn** — có thể vô tình "ăn" vào tồn kho cũ đang nằm
+  hợp lệ trong sức chứa (ví dụ tồn cũ 90, sức chứa 100, hàng mới về 20 → bản
+  cũ từ chối 10/110 trên cả hai nguồn, làm tồn kho cũ cũng bị giảm oan). Nay
+  chỉ tính đúng phần hàng **mới về** vượt quá dung lượng còn trống; tồn kho cũ
+  không bao giờ bị buộc này giảm. Có test hồi quy
+  `test_tran_kho_chi_tu_choi_hang_moi_khong_dung_ton_kho_cu`.
+- **[P0-3] Chi phí thiếu hàng cho thí nghiệm chính quay về hằng số** dùng
+  chung (`use_real_price_stockout: false` mặc định) — xem mục
+  [Chi phí thiếu hàng theo giá thật](#chi-phí-thiếu-hàng-theo-giá-thật-tùy-chọn-tắt-mặc-định-từ-bản-p0).
+- **[P0-4]/[P0-6] "fill_rate" trong `train_log*.csv` (cả lúc huấn luyện lẫn
+  đánh giá) nay là fill rate THẬT của toàn episode** (1 − tổng thiếu
+  hàng/tổng cầu), không còn là trung bình cộng của tín hiệu cửa sổ trượt 30
+  ngày tại từng bước — cách tính cũ thiên lệch, đặc biệt ở đầu episode khi cửa
+  sổ chưa đầy.
+- **[P0-5] Chọn `best_model` theo chi phí vận hành thấp nhất** trong số các
+  lần đánh giá đạt ràng buộc `fill_rate >= ppo.min_fill_to_save` (nay mặc
+  định `0.85`, trước là `0.0` tức mọi checkpoint đều "đạt"). Nếu chưa lần nào
+  đạt ràng buộc, tạm giữ checkpoint có fill rate cao nhất làm fallback và in
+  rõ `feasible=False` — không âm thầm coi một checkpoint chưa đạt SLA là tốt
+  nhất.
+- Sửa thêm một lỗi môi trường: `SummaryWriter` (TensorBoard) có thể crash
+  trên Windows khi đường dẫn dự án chứa dấu tiếng Việt (lỗi
+  `FailedPreconditionError` từ `tensorflow.io.gfile`) — nay lỗi này chỉ in
+  cảnh báo và bỏ qua TensorBoard, không làm hỏng cả quá trình huấn luyện (vẫn
+  ghi đầy đủ `results/train_log*.csv`).
+- Kết quả/checkpoint trước bản P0 được archive nguyên vẹn vào
+  `results_pre_p0/` và `checkpoints_pre_p0/`, không ghi đè mất.
+- **Việc còn lại**: cần chạy lại `python scripts/train.py --episodes 5000`
+  (hoặc `python run.py train`) rồi `python run.py eval && python run.py iso
+  && python run.py summary && python scripts/analyze_scale_groups.py` để có
+  số liệu khớp với code hiện tại, sau đó cập nhật lại Chương 4/5 của
+  `Report KLTN/`. Các hạng mục P1/P2 (tune baseline trên miền val thay vì
+  train, kiểm định thống kê dạng paired, cửa sổ đánh giá cố định toàn miền,
+  warm-start lịch sử cầu, thí nghiệm theo chế độ nhu cầu, phân tích độ nhạy)
+  vẫn còn nguyên trong `README_CLAUDE_CODE_KLTN.md`, chưa thực hiện.
+
+---
+
+## Trạng thái báo cáo LaTeX
+
+`Report KLTN/` hiện phản ánh đúng cấu hình **trước bản P0** (10 kho × 30 SKU
+= 300 tác tử, kiến trúc Actor/Critic tách riêng, chuẩn hóa phần thưởng theo
+cặp, chia 3 miền train/val/test, chi phí thiếu hàng theo giá thật) — Chương
+4/5 đã điền số liệu thật (không còn placeholder `[cần điền]`), nhưng số liệu
+đó lấy từ lần chạy **trước** các sửa lỗi P0 ở trên (đã archive ở
+`results_pre_p0/`). Sau khi chạy lại pipeline với code hiện tại (mục
+[Thay đổi trong bản P0](#thay-đổi-trong-bản-p0)), cần:
+
+1. Copy các hình mới vào `Report KLTN/media/` (`hinh_duong_cong_hoc.png`,
+   `hinh_so_sanh_baseline.png`, `hinh_danh_doi_chi_phi_dich_vu.png`,
+   `hinh_so_sanh_cung_muc_phuc_vu.png`, `hinh_phan_tich_theo_quy_mo.png` —
+   sinh bởi `scripts/plot_learning_curve.py`, `scripts/evaluate.py`,
+   `scripts/iso_service.py`, `scripts/analyze_scale_groups.py`).
+2. Cập nhật lại các bảng số liệu và phần thảo luận trong `content/C4.tex` và
+   `content/C5.tex` theo số liệu mới (bảng so sánh trực tiếp, so sánh cùng
+   mức phục vụ, phân tích theo nhóm quy mô cầu, đa hạt giống).
+3. Cập nhật ngắn gọn mục "Các tham số chi phí" ở `content/C3.tex` nếu chạy
+   chính thức với `use_real_price_stockout: false` (bỏ phần mô tả đơn giá suy
+   ra từ giá thật khỏi số liệu chính, hoặc chuyển thành mục ablation).
+
+Báo cáo **không** tự động đồng bộ với `results/` — đây là bước thủ công sau
+mỗi lần huấn luyện lại.
+
+Câu hỏi nghiên cứu 3 (local reward so với global reward) vẫn chưa có thí
+nghiệm loại trừ chạy lại trên đúng cấu hình 300 cặp — xem mục "Ba câu hỏi
+nghiên cứu" và mục "Ablation" ở trên.
 
 ---
 
