@@ -62,16 +62,16 @@ Bài toán cực kỳ phức tạp do:
 │                     PHẠM VI NGHIÊN CỨU                         │
 │                                                                 │
 │  ✅ Xây dựng môi trường Gymnasium tùy chỉnh                    │
-│     • N=10 kho × M=50 SKU → 500 agents đồng thời              │
+│     • N=10 kho × M=30 SKU → 300 agents đồng thời              │
 │     • Nhu cầu stochastic (M5 Walmart hoặc Poisson Synthetic)   │
 │     • Lead time ngẫu nhiên [1, 3] ngày                         │
 │     • Hàm thưởng phân rã cục bộ (local reward decomposition)  │
 │     • Rolling-window fill rate per-pair (30 ngày)              │
 │                                                                 │
 │  ✅ Thuật toán IPPO với Parameter Sharing                       │
-│     • 1 mạng SharedActorCritic dùng chung cho 500 cặp          │
+│     • 1 mạng SharedActorCritic dùng chung cho 300 cặp          │
 │     • GAE + per-pair advantage normalization                    │
-│     • Sample efficiency: 4096×500 = ~2M mẫu/update            │
+│     • Sample efficiency: 4096×300 = ~1.2M mẫu/update            │
 │                                                                 │
 │  ✅ So sánh đối chứng với 3 Baselines truyền thống             │
 │     • EOQ, (s,S) Policy, Newsvendor Model                      │
