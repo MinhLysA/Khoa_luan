@@ -39,14 +39,20 @@ involving multiple random seeds and statistical significance testing, across
 four metric groups: total operational cost, fill rate, and the breakdown of
 individual cost components.
 
-Experimental results show that, when compared at a matched minimum service
-level, IPPO achieves the lowest total operational cost among all four methods
--- $47.5\%$ cheaper than EOQ, $21.2\%$ cheaper than $(s, S)$, and $11.3\%$
-cheaper than the Newsvendor policy -- whereas an unmatched direct comparison
-misleadingly suggests IPPO is more expensive than EOQ. The shared-parameter
-policy generalizes well to medium- and high-demand SKUs but does not fully
-close the service-level gap for the lowest-demand, most intermittent SKUs. The
-thesis also reports, in full honesty, the scenarios in which the proposed
-method does not outperform the classical baselines, together with the study's
-limitations and directions for future work.
+Experimental results show that, at the operating point each method chooses for
+itself, IPPO reaches the highest fill rate (about $90.5\%$, versus
+$75$--$84\%$ for the three classical policies) but a moderately higher total
+cost than $(s, S)$ and the Newsvendor policy, while still remaining cheaper
+than EOQ -- an incomplete comparison, since the four methods sit at four
+different points on the cost--service trade-off curve. When compared at a
+matched minimum service level, which removes this bias, IPPO achieves the
+lowest total operational cost among the methods that reach that service
+level -- $10.2\%$ cheaper than $(s, S)$ and $14.4\%$ cheaper than the
+Newsvendor policy -- while no EOQ configuration reaches that service level at
+all. The shared-parameter policy generalizes well to medium- and high-demand
+SKUs but does not fully close the service-level gap for the lowest-demand,
+most intermittent SKUs. The thesis also reports, in full honesty, the
+scenarios in which the proposed method does not outperform the classical
+baselines, together with the study's limitations and directions for future
+work.
 

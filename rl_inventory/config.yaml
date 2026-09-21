@@ -57,6 +57,18 @@ env:
   obs_cover_days:   20.0
   min_mean_demand:  0.05
 
+  # [P0-7] Truoc day self.price_signal_dim = 1 bat cu khi nao
+  # price_series.npy/price_per_pair.npy TON TAI, bat ke co dinh dat
+  # su dung gia that hay khong (xem [V3-4] trong env/inventory_env.py) ->
+  # obs_per_pair am tham thanh 44 thay vi 43 ngay khi cac file gia duoc
+  # tao ra o buoc tien xu ly, MA KHONG co dong flag nao trong config phan
+  # anh dieu do. Chuong 3 cua bao cao mo ta kien truc quan sat 43 chieu
+  # (Bang doi chieu bien trang thai, Muc 3.1.2) KHONG bao gom tin hieu
+  # giam gia nay. Dat false de giu dung kien truc 43 chieu da tai lieu
+  # hoa; doi true CHI KHI da cap nhat lai Chuong 3 (them dac trung, sua
+  # cong thuc obs_per_pair, sua bang doi chieu) cho khop.
+  include_price_signal: false
+
   # [V2-2] Chuan hoa phan thuong theo tung cap (cp_th*mean_demand + cp_dh).
   # Dat false de chay ablation "khong chuan hoa" - se thay lai hien tuong
   # khong hoi tu, rat dang dua vao Chuong 4.
@@ -111,11 +123,7 @@ ppo:
   # khop voi rang buoc that su cua bai toan (fill rate >= 85%).
   min_fill_to_save:    0.85
   normalize_adv_per_pair: true
-<<<<<<< HEAD
-  total_episodes: 500
-=======
-  total_episodes: 1000
->>>>>>> 26115a634fccdcc89423918419bacc46698d3083
+  total_episodes: 5000
 
 eval:
   n_episodes: 30

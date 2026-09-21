@@ -56,6 +56,16 @@ nhóm \textit{intermittent} và \textit{lumpy}
     \end{tabular}
 \end{table}
 
+Cần nói rõ rằng các thống kê trên được tính trên toàn bộ $30.490$ chuỗi của bộ
+dữ liệu gốc. Tập thực nghiệm của khóa luận là một tập con đã qua sàng lọc: các
+mặt hàng mà cửa hàng trên thực tế không kinh doanh (nhu cầu trung bình dưới
+$0{,}2$ đơn vị mỗi ngày ở phần lớn cửa hàng) bị loại bỏ, vì chúng không tạo
+thành bài toán đặt hàng lại mà chỉ thêm nhiễu vào tín hiệu học. Sau sàng lọc,
+tập $300$ cặp dùng trong thực nghiệm vẫn giữ tỷ lệ ngày không phát sinh giao
+dịch ở mức $57{,}4\%$ --- nghĩa là tính gián đoạn được bảo toàn --- với nhu
+cầu trung bình $3{,}24$ và trung vị $0{,}74$ đơn vị mỗi ngày. Chi tiết quy
+trình sàng lọc được trình bày ở Mục~\ref{subsec:duLieu}.
+
 Đặc điểm gián đoạn này khiến các phương pháp dự báo và các công thức tồn kho
 xây dựng trên giả định nhu cầu liên tục và phân phối chuẩn trở nên kém phù hợp
 \parencite{croston1972, syntetos2005accuracy}. Quản lý tồn kho trên một mạng
@@ -156,11 +166,22 @@ trên PPO đạt hiệu năng cạnh tranh trên nhiều môi trường hợp t�
 
 Khảo sát tài liệu cho thấy phần lớn các nghiên cứu áp dụng học tăng cường cho
 quản lý tồn kho hiện nay được tiến hành ở quy mô nhỏ, với một vài kho và một
-vài mặt hàng, trên dữ liệu nhu cầu sinh theo phân phối lý thuyết. Số công trình
-đồng thời mở rộng tới quy mô hàng trăm cặp kho--mặt hàng bằng cơ chế chia sẻ
-tham số, đánh giá tường minh ảnh hưởng của cách phân rã hàm phần thưởng ở quy
-mô đó, và hiệu chỉnh môi trường mô phỏng từ dữ liệu bán lẻ thực tế còn hạn chế.
-Đây chính là khoảng trống mà khóa luận hướng tới.
+vài mặt hàng, trên dữ liệu nhu cầu sinh theo phân phối lý thuyết. Ngay cả những
+công trình gần đây nhất cùng bối cảnh cũng để lại những khoảng trống rõ rệt.
+Zhu và Wu \cite{zhu2026spatiotemporal} cũng sử dụng bộ dữ liệu M5 và học tăng
+cường đa tác tử, nhưng giả định nguồn cung không giới hạn và không đưa sức chứa
+kho vào hàm mục tiêu, nên sự ràng buộc giữa các mặt hàng trong cùng một kho
+không được mô hình hóa. Ở chiều ngược lại, khung làm việc của Jeong và cộng sự
+\cite{jeong2026alca} có xét ràng buộc sức chứa nhưng chỉ trên một kho duy nhất
+và trên dữ liệu tổng hợp, đồng thời hàm phần thưởng không quy về đơn vị tiền tệ
+nên khó diễn giải về mặt kinh tế.
+
+Khoảng trống mà khóa luận hướng tới nằm ở giao của ba yếu tố: mở rộng tới quy
+mô hàng trăm cặp kho--mặt hàng bằng cơ chế chia sẻ tham số; mô hình hóa ràng
+buộc sức chứa hữu hạn dùng chung giữa các mặt hàng, tính riêng cho từng kho
+theo quy mô nhu cầu không đồng nhất của kho đó; và đánh giá so sánh với các
+chính sách cổ điển ở cùng một mức phục vụ, trên môi trường mô phỏng hiệu chỉnh
+từ dữ liệu bán lẻ thực tế.
 
 \section{Mục tiêu và câu hỏi nghiên cứu}
 \label{sec:muctieu}
@@ -225,8 +246,7 @@ lại trong hệ thống tồn kho đa kho -- đa mặt hàng, và thuật toán
 \label{subsec:phamvitrong}
 
 \begin{itemize}
-    \item Cấu hình hệ thống: $N = 10$ kho, $M = 30$ mặt hàng đại diện
-    (chọn lọc theo phương pháp phân tầng trên các nhóm ngành hàng), tương
+    \item Cấu hình hệ thống: $N = 10$ kho, $M = 30$ mặt hàng, tương
     ứng $300$ cặp ra quyết định; độ dài mỗi tập huấn luyện là $365$ ngày; thời
     gian giao hàng ngẫu nhiên trong khoảng từ một đến ba ngày.
 
@@ -247,7 +267,10 @@ lại trong hệ thống tồn kho đa kho -- đa mặt hàng, và thuật toán
     chính môi trường mô phỏng nhằm bảo đảm tính công bằng của so sánh.
 
     \item Chỉ số đánh giá: tổng chi phí vận hành, tỷ lệ đáp ứng nhu
-    cầu, và cơ cấu các thành phần chi phí lưu kho, thiếu hàng, đặt hàng.
+    cầu, và cơ cấu các thành phần chi phí lưu kho, thiếu hàng, đặt hàng, tràn
+    kho. Việc so sánh chi phí được thực hiện bổ sung ở cùng một mức
+    phục vụ nhằm tránh kết luận sai lệch khi hai chính sách nằm ở hai điểm
+    khác nhau trên đường đánh đổi chi phí --- mức phục vụ.
 \end{itemize}
 
 \subsection{Giới hạn phạm vi}
@@ -281,8 +304,8 @@ tồn kho ngẫu nhiên \parencite{zipkin2000} và học tăng cường
 môi trường mô phỏng có kiểm thử đơn vị theo chuẩn giao diện Gymnasium
 \parencite{brockman2016gym, towers2024gymnasium}, hiệu chỉnh tham số từ dữ liệu
 M5, huấn luyện tác tử và thu thập số liệu vận hành. Về phân tích, mọi
-so sánh giữa các phương pháp đều được thực hiện trên tối thiểu năm hạt giống
-ngẫu nhiên, báo cáo giá trị trung bình kèm độ lệch chuẩn, và được xác nhận bằng
+so sánh giữa các phương pháp đều được thực hiện trên cùng một tập hạt giống
+đánh giá, báo cáo giá trị trung bình kèm độ lệch chuẩn, và được xác nhận bằng
 kiểm định thống kê phù hợp trước khi kết luận --- theo khuyến nghị về tính tái
 lập trong đánh giá học tăng cường sâu của Henderson và cộng sự \cite{henderson2018} và
 Agarwal và cộng sự \cite{agarwal2021}.

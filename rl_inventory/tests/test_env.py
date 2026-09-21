@@ -397,10 +397,22 @@ def test_phat_sla_khong_ty_le_theo_gia():
 # --------------------------------------------------------------------------- #
 # [V3-4] Tin hieu giam gia trong quan sat
 # --------------------------------------------------------------------------- #
-def test_tin_hieu_giam_gia_them_1_chieu_quan_sat():
+def test_tin_hieu_giam_gia_khong_bat_neu_thieu_co_include_price_signal():
+    # [P0-7] price_signal_dim chi bat khi config.include_price_signal=True,
+    # khong con suy ra tu viec truyen price_per_pair/price_series hay khong -
+    # tranh am tham doi obs_per_pair (xem config.yaml, muc [P0-7]).
+    env_khong_gia = make_env()
+    env_co_du_lieu_gia = make_env(
+        price_per_pair=np.full(12, 5.0, dtype=np.float32),
+        price_series=np.full((200, 3, 4), 5.0, dtype=np.float32))
+    assert env_co_du_lieu_gia.obs_per_pair == env_khong_gia.obs_per_pair
+
+
+def test_tin_hieu_giam_gia_them_1_chieu_quan_sat_khi_bat_co():
     env_khong_gia = make_env()
     env_co_gia = make_env(price_per_pair=np.full(12, 5.0, dtype=np.float32),
-                          price_series=np.full((200, 3, 4), 5.0, dtype=np.float32))
+                          price_series=np.full((200, 3, 4), 5.0, dtype=np.float32),
+                          include_price_signal=True)
     assert env_co_gia.obs_per_pair == env_khong_gia.obs_per_pair + 1
 
 
@@ -408,7 +420,8 @@ def test_tin_hieu_giam_gia_phan_anh_dung_muc_giam():
     gia_tb = np.full(12, 10.0, dtype=np.float32)
     series = np.full((200, 3, 4), 10.0, dtype=np.float32)
     series[5] = 5.0     # ngay thu 5: giam gia 50%
-    env = make_env(price_per_pair=gia_tb, price_series=series)
+    env = make_env(price_per_pair=gia_tb, price_series=series,
+                   include_price_signal=True)
     env.reset(seed=0)
     env.start_day = 0
     env.current_step = 5

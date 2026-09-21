@@ -3,9 +3,7 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {4.1}{\ignorespaces Đường cong huấn luyện IPPO qua $5000$ episode: phần thưởng trung bình trượt, tỷ lệ đáp ứng nhu cầu, entropy chính sách và explained variance của Critic}}{29}{figure.caption.11}%
-\contentsline {figure}{\numberline {4.2}{\ignorespaces Tổng chi phí vận hành của bốn chính sách khi mọi chính sách đều đạt tối thiểu mức phục vụ mà IPPO đạt được (miền kiểm tra)}}{31}{figure.caption.14}%
-\contentsline {figure}{\numberline {4.3}{\ignorespaces So sánh trực tiếp tổng chi phí, tỷ lệ đáp ứng nhu cầu và cơ cấu chi phí giữa bốn phương pháp (miền kiểm tra)}}{31}{figure.caption.15}%
-\contentsline {figure}{\numberline {4.4}{\ignorespaces Đánh đổi giữa tổng chi phí vận hành và tỷ lệ đáp ứng nhu cầu của bốn phương pháp (miền kiểm tra); điểm càng gần góc dưới bên phải càng tốt}}{32}{figure.caption.16}%
-\contentsline {figure}{\numberline {4.5}{\ignorespaces Fill rate và chi phí cục bộ trung bình theo nhóm quy mô cầu (miền kiểm tra)}}{33}{figure.caption.18}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Diễn biến huấn luyện qua $1.000$ episode (hạt giống $42$): (a) phần thưởng tích lũy; (b) tỷ lệ đáp ứng nhu cầu; (c) entropy của chính sách; (d) explained variance của Critic}}{35}{figure.caption.16}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces So sánh bốn phương pháp trên miền đánh giá: (a) tổng chi phí vận hành; (b) tỷ lệ đáp ứng nhu cầu; (c) cơ cấu chi phí thành phần}}{37}{figure.caption.18}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Đường đánh đổi chi phí --- mức phục vụ. Dấu chữ thập xám: cấu hình tối thiểu chi phí; dấu tròn: cấu hình ở cùng mức phục vụ với IPPO}}{40}{figure.caption.20}%
 \addvspace {10\p@ }

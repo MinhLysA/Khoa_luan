@@ -33,11 +33,24 @@ PHIEN BAN P0 (xem README_CLAUDE_CODE_KLTN.md):
          mac dinh 0.0 tuc moi checkpoint deu "dat"). Neu chua checkpoint nao
          dat rang buoc, tam luu checkpoint co fill rate cao nhat lam
          fallback va IN RO feasible=False.
+  [P0-8] SUA LOI --resume KHONG THUC SU "RESUME": ban truoc --resume chi nap
+         lai TRONG SO mang, con episode_count/global_step luon bat dau lai tu
+         0, file log mo o che do "w" (GHI DE, mat toan bo lich su cu), va
+         optimizer Adam khoi tao lai tu dau (mat dong luong). Hau qua: lich
+         trinh suy giam LR/entropy chay lai tu dau thay vi noi tiep, va cac
+         file checkpoint_epNNN co the bi ghi de boi mot giai doan huan luyen
+         khac voi cung so N. Nay moi episode deu ghi kem
+         checkpoints/train_state{tag}.json (episode_count, global_step,
+         elapsed_s, best_feasible_cost, best_feasible_found,
+         fallback_best_fill, reward_window); --resume doc lai file nay (neu
+         co, khop voi --tag) de noi tiep dung episode_count va tieu chi chon
+         best_model, mo log o che do "a" (noi tiep) thay vi "w".
 """
 
 import os
 import sys
 import csv
+import json
 import yaml
 import time
 import argparse
@@ -147,11 +160,49 @@ def train():
                            n_pairs=env.n_pairs, device=device,
                            normalize_per_pair=ppo_cfg.get("normalize_adv_per_pair", True))
 
+    suffix = f"_{args.tag}" if args.tag else ""
+    state_path = checkpoint_dir / f"train_state{suffix}.json"
+
+    # [P0-8] Trang thai noi tiep khi --resume: episode_count/global_step,
+    # tieu chi chon best_model, va do lech elapsed_s cua (cac) lan chay truoc.
+    # Mac dinh nhu chua tung resume; se bi ghi de neu doc duoc state_path.
+    resumed_episode_count = 0
+    resumed_global_step   = 0
+    resumed_elapsed_s     = 0.0
+    resumed_reward_window = []
+    resumed_best_feasible_cost  = float("inf")
+    resumed_best_feasible_found = False
+    resumed_fallback_best_fill  = -float("inf")
+    da_resume = False
+
     if args.resume:
         rp = ROOT / args.resume
         if rp.exists():
-            agent.load(str(rp))
-            print(f"[V2-27] Da nap trong so tu {rp} de hoc tiep.")
+            agent.load(str(rp), load_optimizer=True)
+            print(f"[V2-27] Da nap trong so + optimizer tu {rp} de hoc tiep.")
+            if state_path.exists():
+                st = json.loads(state_path.read_text(encoding="utf-8"))
+                resumed_episode_count = int(st.get("episode_count", 0))
+                resumed_global_step   = int(st.get("global_step", 0))
+                resumed_elapsed_s     = float(st.get("elapsed_s", 0.0))
+                resumed_reward_window = list(st.get("reward_window", []))
+                # None trong json = "chua co gia tri" (da ghi lai tu +-inf
+                # luc luu, vi JSON khong co Infinity chuan) -> doi lai +-inf.
+                v = st.get("best_feasible_cost")
+                resumed_best_feasible_cost = float("inf") if v is None else float(v)
+                resumed_best_feasible_found = bool(st.get("best_feasible_found", False))
+                v = st.get("fallback_best_fill")
+                resumed_fallback_best_fill = -float("inf") if v is None else float(v)
+                da_resume = True
+                print(f"[P0-8] Da nap {state_path.name}: noi tiep tu episode "
+                      f"{resumed_episode_count}, best_feasible_found="
+                      f"{resumed_best_feasible_found}.")
+            else:
+                print(f"[P0-8] KHONG THAY {state_path.name} -> checkpoint nay "
+                      f"duoc luu TRUOC ban vá [P0-8] (hoac khac --tag). Tiep "
+                      f"tuc voi trong so da nap nhung episode_count, lich su "
+                      f"log va tieu chi chon best_model se BAT DAU LAI TU 0 -"
+                      f" kiem tra ky --tag truoc khi chay dai.")
         else:
             print(f"[V2-27] Khong tim thay {rp}, bat dau tu dau.")
 
@@ -182,7 +233,6 @@ def train():
             fills.append(1.0 - ep_stockout / max(ep_demand, 1e-6))
         return float(np.mean(rewards)), float(np.mean(costs)), float(np.mean(fills))
 
-    suffix = f"_{args.tag}" if args.tag else ""
     writer = None
     if TENSORBOARD_AVAILABLE:
         # TensorBoard/TensorFlow gfile co the loi tren duong dan chua ky tu
@@ -197,10 +247,16 @@ def train():
                   f"bo qua, chi dung results/train_log{suffix}.csv.")
             writer = None
 
+    # [P0-8] Noi tiep (append) log cu khi resume THAT SU (co state_path va
+    # file log da ton tai); nguoc lai ghi moi nhu cu. Tranh mat lich su cu
+    # khi keo dai mot hat giong da huan luyen mot phan.
     log_path = results_dir / f"train_log{suffix}.csv"
-    log_file = open(log_path, "w", newline="", encoding="utf-8")
+    tiep_noi_log = da_resume and log_path.exists()
+    log_file = open(log_path, "a" if tiep_noi_log else "w",
+                    newline="", encoding="utf-8")
     log_writer = csv.DictWriter(log_file, fieldnames=LOG_FIELDS)
-    log_writer.writeheader()
+    if not tiep_noi_log:
+        log_writer.writeheader()
 
     print("=" * 68)
     print("HUAN LUYEN IPPO (parameter sharing) - phien ban v2")
@@ -214,16 +270,18 @@ def train():
     # [P0-5] Chon checkpoint theo chi phi thap nhat TRONG SO cac lan danh
     # gia dat rang buoc fill rate; fallback theo fill rate cao nhat neu chua
     # co lan nao dat rang buoc.
-    best_feasible_cost  = float("inf")
-    best_feasible_found = False
-    fallback_best_fill  = -float("inf")
-    episode_count = 0
-    global_step = 0
-    reward_window = []
+    # [P0-8] Khoi tao tu trang thai da resume (neu co) thay vi luon bat dau
+    # tu gia tri "trong".
+    best_feasible_cost  = resumed_best_feasible_cost
+    best_feasible_found = resumed_best_feasible_found
+    fallback_best_fill  = resumed_fallback_best_fill
+    episode_count = resumed_episode_count
+    global_step = resumed_global_step
+    reward_window = resumed_reward_window
     anneal     = bool(ppo_cfg.get("anneal_lr", True))
     anneal_ent = bool(ppo_cfg.get("anneal_ent", True))
     min_fill_to_save = float(ppo_cfg.get("min_fill_to_save", 0.0))
-    t0 = time.time()
+    t0 = time.time() - resumed_elapsed_s
 
     obs, _ = env.reset(seed=seed)
     ep_reward, ep_stockout = 0.0, 0.0
@@ -311,6 +369,21 @@ def train():
                 row.update(ep_costs)
                 log_writer.writerow(row)
                 log_file.flush()
+
+                # [P0-8] Ghi lai trang thai de --resume sau nay noi tiep dung
+                # (episode_count, tieu chi chon best_model, ...). Re, ghi moi
+                # episode la du (khong can dong bo voi nhip luu checkpoint).
+                state_path.write_text(json.dumps({
+                    "episode_count": episode_count,
+                    "global_step": global_step,
+                    "elapsed_s": round(time.time() - t0, 1),
+                    "reward_window": reward_window,
+                    "best_feasible_cost": (None if best_feasible_cost == float("inf")
+                                           else best_feasible_cost),
+                    "best_feasible_found": best_feasible_found,
+                    "fallback_best_fill": (None if fallback_best_fill == -float("inf")
+                                           else fallback_best_fill),
+                }), encoding="utf-8")
 
                 if episode_count % 10 == 0:
                     print(f"Ep {episode_count:5d}/{total_episodes}"

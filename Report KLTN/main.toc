@@ -9,72 +9,76 @@
 \contentsline {subsection}{\numberline {1.1.3}Hạn chế của phương pháp truyền thống và sự cần thiết của học tăng cường đa tác tử}{3}{subsection.1.1.3}%
 \contentsline {section}{\numberline {1.2}Mục tiêu và câu hỏi nghiên cứu}{4}{section.1.2}%
 \contentsline {subsection}{\numberline {1.2.1}Mục tiêu nghiên cứu}{4}{subsection.1.2.1}%
-\contentsline {subsection}{\numberline {1.2.2}Câu hỏi nghiên cứu}{4}{subsection.1.2.2}%
+\contentsline {subsection}{\numberline {1.2.2}Câu hỏi nghiên cứu}{5}{subsection.1.2.2}%
 \contentsline {section}{\numberline {1.3}Đối tượng và phạm vi nghiên cứu}{5}{section.1.3}%
 \contentsline {subsection}{\numberline {1.3.1}Đối tượng nghiên cứu}{5}{subsection.1.3.1}%
-\contentsline {subsection}{\numberline {1.3.2}Phạm vi trong đề tài}{5}{subsection.1.3.2}%
+\contentsline {subsection}{\numberline {1.3.2}Phạm vi trong đề tài}{6}{subsection.1.3.2}%
 \contentsline {subsection}{\numberline {1.3.3}Giới hạn phạm vi}{6}{subsection.1.3.3}%
-\contentsline {section}{\numberline {1.4}Phương pháp nghiên cứu}{6}{section.1.4}%
+\contentsline {section}{\numberline {1.4}Phương pháp nghiên cứu}{7}{section.1.4}%
 \contentsline {section}{\numberline {1.5}Ý nghĩa khoa học và thực tiễn của đề tài}{7}{section.1.5}%
 \contentsline {section}{\numberline {1.6}Bố cục của khóa luận}{7}{section.1.6}%
-\contentsline {chapter}{\numberline {2}CƠ SỞ LÝ THUYẾT VÀ CÁC CÔNG TRÌNH LIÊN QUAN}{8}{chapter.2}%
-\contentsline {section}{\numberline {2.1}Lý thuyết kiểm soát tồn kho ngẫu nhiên}{8}{section.2.1}%
-\contentsline {subsection}{\numberline {2.1.1}Mô hình tồn kho và các thành phần chi phí}{8}{subsection.2.1.1}%
-\contentsline {subsection}{\numberline {2.1.2}Các chính sách đặt hàng lại cổ điển}{9}{subsection.2.1.2}%
-\contentsline {subsection}{\numberline {2.1.3}Các thước đo mức phục vụ trong quản lý tồn kho}{9}{subsection.2.1.3}%
-\contentsline {section}{\numberline {2.2}Nền tảng học tăng cường}{10}{section.2.2}%
-\contentsline {subsection}{\numberline {2.2.1}Quá trình quyết định Markov (MDP)}{10}{subsection.2.2.1}%
-\contentsline {subsection}{\numberline {2.2.2}Hàm giá trị và phương trình Bellman}{10}{subsection.2.2.2}%
-\contentsline {subsection}{\numberline {2.2.3}Ước lượng lợi thế tổng quát (GAE)}{11}{subsection.2.2.3}%
-\contentsline {subsection}{\numberline {2.2.4}Thuật toán PPO (Proximal Policy Optimization)}{11}{subsection.2.2.4}%
-\contentsline {section}{\numberline {2.3}Học tăng cường đa tác tử}{11}{section.2.3}%
-\contentsline {subsection}{\numberline {2.3.1}Mô hình Dec-POMDP}{11}{subsection.2.3.1}%
-\contentsline {subsection}{\numberline {2.3.2}Học độc lập (Independent Learning)}{12}{subsection.2.3.2}%
-\contentsline {subsection}{\numberline {2.3.3}IPPO — Independent Multi-Agent PPO}{12}{subsection.2.3.3}%
-\contentsline {subsection}{\numberline {2.3.4}Chia sẻ tham số (Parameter Sharing)}{12}{subsection.2.3.4}%
-\contentsline {subsection}{\numberline {2.3.5}Phần thưởng phân rã cục bộ và bài toán gán tín dụng}{13}{subsection.2.3.5}%
-\contentsline {section}{\numberline {2.4}Các công trình nghiên cứu liên quan}{13}{section.2.4}%
-\contentsline {subsection}{\numberline {2.4.1}Học tăng cường trong quản lý tồn kho}{13}{subsection.2.4.1}%
-\contentsline {subsection}{\numberline {2.4.2}Khoảng trống nghiên cứu và định vị đóng góp}{14}{subsection.2.4.2}%
-\contentsline {chapter}{\numberline {3}PHÂN TÍCH VÀ THIẾT KẾ MÔ HÌNH}{16}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Mô hình hóa bài toán tồn kho đa kho}{16}{section.3.1}%
-\contentsline {subsection}{\numberline {3.1.1}Mô tả mạng lưới}{16}{subsection.3.1.1}%
-\contentsline {subsection}{\numberline {3.1.2}Thiết lập bài toán dưới dạng MDP đa tác tử}{17}{subsection.3.1.2}%
-\contentsline {subsection}{\numberline {3.1.3}Phân chia miền dữ liệu huấn luyện -- kiểm định -- kiểm tra}{19}{subsection.3.1.3}%
-\contentsline {section}{\numberline {3.2}Thiết kế hàm phần thưởng}{19}{section.3.2}%
-\contentsline {subsection}{\numberline {3.2.1}Phần thưởng phân rã cục bộ}{19}{subsection.3.2.1}%
-\contentsline {subsection}{\numberline {3.2.2}Chuẩn hóa phần thưởng theo từng cặp}{20}{subsection.3.2.2}%
-\contentsline {subsection}{\numberline {3.2.3}Vai trò của thành phần phạt fill rate}{20}{subsection.3.2.3}%
-\contentsline {subsection}{\numberline {3.2.4}Các tham số chi phí}{21}{subsection.3.2.4}%
-\contentsline {section}{\numberline {3.3}Kiến trúc mạng Actor--Critic chia sẻ tham số}{22}{section.3.3}%
-\contentsline {subsection}{\numberline {3.3.1}Hai mạng Actor và Critic độc lập, chia sẻ giữa các tác tử}{22}{subsection.3.3.1}%
-\contentsline {subsection}{\numberline {3.3.2}Ổn định hóa quá trình huấn luyện}{22}{subsection.3.3.2}%
-\contentsline {subsection}{\numberline {3.3.3}Quy trình huấn luyện IPPO}{23}{subsection.3.3.3}%
-\contentsline {section}{\numberline {3.4}Thiết kế môi trường mô phỏng}{24}{section.3.4}%
-\contentsline {chapter}{\numberline {4}THỰC NGHIỆM VÀ ĐÁNH GIÁ KẾT QUẢ}{26}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Cấu hình thực nghiệm}{26}{section.4.1}%
-\contentsline {subsection}{\numberline {4.1.1}Môi trường phần cứng và phần mềm}{26}{subsection.4.1.1}%
-\contentsline {subsection}{\numberline {4.1.2}Nguồn dữ liệu và tiền xử lý}{26}{subsection.4.1.2}%
-\contentsline {subsection}{\numberline {4.1.3}Thiết lập kịch bản mô phỏng}{27}{subsection.4.1.3}%
-\contentsline {section}{\numberline {4.2}Phương pháp đối chứng (Baselines)}{27}{section.4.2}%
-\contentsline {section}{\numberline {4.3}Giao thức đánh giá}{28}{section.4.3}%
-\contentsline {subsection}{\numberline {4.3.1}Đánh giá đa hạt giống}{28}{subsection.4.3.1}%
-\contentsline {subsection}{\numberline {4.3.2}Các chỉ số đánh giá}{28}{subsection.4.3.2}%
-\contentsline {section}{\numberline {4.4}Kết quả thực nghiệm}{28}{section.4.4}%
-\contentsline {subsection}{\numberline {4.4.1}Quá trình huấn luyện và tính hội tụ}{28}{subsection.4.4.1}%
-\contentsline {subsection}{\numberline {4.4.2}So sánh trực tiếp tổng chi phí vận hành}{29}{subsection.4.4.2}%
-\contentsline {subsection}{\numberline {4.4.3}So sánh ở cùng mức phục vụ}{30}{subsection.4.4.3}%
-\contentsline {subsection}{\numberline {4.4.4}Phân tích cơ cấu chi phí}{31}{subsection.4.4.4}%
-\contentsline {subsection}{\numberline {4.4.5}Đánh giá tỷ lệ đáp ứng dịch vụ theo nhiều hạt giống}{32}{subsection.4.4.5}%
-\contentsline {section}{\numberline {4.5}Phân tích chuyên sâu}{32}{section.4.5}%
-\contentsline {subsection}{\numberline {4.5.1}Khả năng tổng quát hóa qua parameter sharing (Câu hỏi 2)}{32}{subsection.4.5.1}%
-\contentsline {subsection}{\numberline {4.5.2}Vai trò của cơ chế chuẩn hóa phần thưởng cục bộ (Câu hỏi 3)}{33}{subsection.4.5.2}%
-\contentsline {subsection}{\numberline {4.5.3}Các kịch bản IPPO chưa vượt trội}{34}{subsection.4.5.3}%
-\contentsline {section}{\numberline {4.6}Thảo luận}{35}{section.4.6}%
-\contentsline {chapter}{\numberline {5}KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN}{36}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Tổng kết các kết quả đạt được}{36}{section.5.1}%
-\contentsline {subsection}{\numberline {5.1.1}Trả lời các câu hỏi nghiên cứu}{36}{subsection.5.1.1}%
-\contentsline {section}{\numberline {5.2}Những hạn chế còn tồn tại}{37}{section.5.2}%
-\contentsline {section}{\numberline {5.3}Hướng phát triển trong tương lai}{38}{section.5.3}%
-\contentsline {chapter}{PHỤ LỤC A. ĐỐI CHIẾU LUẬN ĐIỂM VÀ NGUỒN TRÍCH DẪN}{40}{chapter*.19}%
-\contentsline {chapter}{TÀI LIỆU THAM KHẢO}{43}{section*.20}%
+\contentsline {chapter}{\numberline {2}CƠ SỞ LÝ THUYẾT VÀ CÁC CÔNG TRÌNH LIÊN QUAN}{9}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Lý thuyết kiểm soát tồn kho ngẫu nhiên}{9}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}Mô hình tồn kho và các thành phần chi phí}{9}{subsection.2.1.1}%
+\contentsline {subsection}{\numberline {2.1.2}Các chính sách đặt hàng lại cổ điển}{10}{subsection.2.1.2}%
+\contentsline {subsection}{\numberline {2.1.3}Các thước đo mức phục vụ trong quản lý tồn kho}{10}{subsection.2.1.3}%
+\contentsline {section}{\numberline {2.2}Nền tảng học tăng cường}{11}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}Quá trình quyết định Markov (MDP)}{11}{subsection.2.2.1}%
+\contentsline {subsection}{\numberline {2.2.2}Hàm giá trị và phương trình Bellman}{12}{subsection.2.2.2}%
+\contentsline {subsection}{\numberline {2.2.3}Ước lượng lợi thế tổng quát (GAE)}{12}{subsection.2.2.3}%
+\contentsline {subsection}{\numberline {2.2.4}Thuật toán PPO (Proximal Policy Optimization)}{12}{subsection.2.2.4}%
+\contentsline {section}{\numberline {2.3}Học tăng cường đa tác tử}{13}{section.2.3}%
+\contentsline {subsection}{\numberline {2.3.1}Mô hình Dec-POMDP}{13}{subsection.2.3.1}%
+\contentsline {subsection}{\numberline {2.3.2}Học độc lập (Independent Learning)}{13}{subsection.2.3.2}%
+\contentsline {subsection}{\numberline {2.3.3}IPPO — Independent Multi-Agent PPO}{14}{subsection.2.3.3}%
+\contentsline {subsection}{\numberline {2.3.4}Chia sẻ tham số (Parameter Sharing)}{14}{subsection.2.3.4}%
+\contentsline {subsection}{\numberline {2.3.5}Phần thưởng phân rã cục bộ và bài toán gán tín dụng}{15}{subsection.2.3.5}%
+\contentsline {section}{\numberline {2.4}Các công trình nghiên cứu liên quan}{15}{section.2.4}%
+\contentsline {subsection}{\numberline {2.4.1}Học tăng cường trong quản lý tồn kho}{15}{subsection.2.4.1}%
+\contentsline {subsection}{\numberline {2.4.2}Hai công trình gần nhất cùng bối cảnh}{16}{subsection.2.4.2}%
+\contentsline {subsection}{\numberline {2.4.3}Khoảng trống nghiên cứu và định vị đóng góp}{17}{subsection.2.4.3}%
+\contentsline {chapter}{\numberline {3}PHÂN TÍCH VÀ THIẾT KẾ MÔ HÌNH}{19}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Mô hình hóa bài toán tồn kho đa kho}{19}{section.3.1}%
+\contentsline {subsection}{\numberline {3.1.1}Mô tả mạng lưới}{19}{subsection.3.1.1}%
+\contentsline {subsection}{\numberline {3.1.2}Thiết lập bài toán dưới dạng MDP đa tác tử}{19}{subsection.3.1.2}%
+\contentsline {paragraph}{Phân rã nhiệm vụ và thiết kế tác tử.}{19}{subsection.3.1.2}%
+\contentsline {paragraph}{Ghi chú về thời gian giao hàng.}{21}{table.caption.8}%
+\contentsline {subsection}{\numberline {3.1.3}Ràng buộc sức chứa kho và cơ chế từ chối nhập hàng}{23}{subsection.3.1.3}%
+\contentsline {subsection}{\numberline {3.1.4}Cơ chế phối hợp giữa các tác tử}{24}{subsection.3.1.4}%
+\contentsline {section}{\numberline {3.2}Thiết kế hàm phần thưởng}{25}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Phần thưởng phân rã cục bộ}{25}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}Vai trò của thành phần phạt fill rate}{26}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Các tham số chi phí}{26}{subsection.3.2.3}%
+\contentsline {subsection}{\numberline {3.2.4}Chuẩn hóa phần thưởng theo từng cặp}{27}{subsection.3.2.4}%
+\contentsline {section}{\numberline {3.3}Kiến trúc mạng Actor--Critic chia sẻ tham số}{27}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}Mạng SharedActorCritic}{27}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Quy trình huấn luyện IPPO}{28}{subsection.3.3.2}%
+\contentsline {section}{\numberline {3.4}Thiết kế môi trường mô phỏng}{29}{section.3.4}%
+\contentsline {chapter}{\numberline {4}THỰC NGHIỆM VÀ ĐÁNH GIÁ KẾT QUẢ}{31}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Cấu hình thực nghiệm}{31}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}Môi trường phần cứng và phần mềm}{31}{subsection.4.1.1}%
+\contentsline {subsection}{\numberline {4.1.2}Nguồn dữ liệu và tiền xử lý}{31}{subsection.4.1.2}%
+\contentsline {subsection}{\numberline {4.1.3}Thiết lập kịch bản mô phỏng}{32}{subsection.4.1.3}%
+\contentsline {section}{\numberline {4.2}Phương pháp đối chứng}{33}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Giao thức đánh giá}{33}{section.4.3}%
+\contentsline {subsection}{\numberline {4.3.1}Quy trình đánh giá}{33}{subsection.4.3.1}%
+\contentsline {subsection}{\numberline {4.3.2}Các chỉ số đánh giá}{34}{subsection.4.3.2}%
+\contentsline {section}{\numberline {4.4}Kết quả thực nghiệm}{34}{section.4.4}%
+\contentsline {subsection}{\numberline {4.4.1}Quá trình huấn luyện và tính hội tụ}{34}{subsection.4.4.1}%
+\contentsline {subsection}{\numberline {4.4.2}So sánh trực tiếp với các chính sách cổ điển}{36}{subsection.4.4.2}%
+\contentsline {subsection}{\numberline {4.4.3}Phân tích cơ cấu chi phí}{37}{subsection.4.4.3}%
+\contentsline {subsection}{\numberline {4.4.4}So sánh ở cùng mức phục vụ}{38}{subsection.4.4.4}%
+\contentsline {section}{\numberline {4.5}Phân tích chuyên sâu}{39}{section.4.5}%
+\contentsline {subsection}{\numberline {4.5.1}Khả năng tổng quát hóa qua chia sẻ tham số (Câu hỏi 2)}{39}{subsection.4.5.1}%
+\contentsline {subsection}{\numberline {4.5.2}Ảnh hưởng của chuẩn hóa phần thưởng theo từng cặp (Câu hỏi 3)}{42}{subsection.4.5.2}%
+\contentsline {subsection}{\numberline {4.5.3}Vai trò của việc tách Actor và Critic}{42}{subsection.4.5.3}%
+\contentsline {subsection}{\numberline {4.5.4}Các kịch bản IPPO chưa vượt trội}{42}{subsection.4.5.4}%
+\contentsline {section}{\numberline {4.6}Hạn chế của thực nghiệm}{42}{section.4.6}%
+\contentsline {section}{\numberline {4.7}Thảo luận}{42}{section.4.7}%
+\contentsline {chapter}{\numberline {5}KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN}{44}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Tổng kết các kết quả đạt được}{44}{section.5.1}%
+\contentsline {subsection}{\numberline {5.1.1}Trả lời các câu hỏi nghiên cứu}{44}{subsection.5.1.1}%
+\contentsline {section}{\numberline {5.2}Những hạn chế còn tồn tại}{45}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Hướng phát triển trong tương lai}{46}{section.5.3}%
+\contentsline {chapter}{PHỤ LỤC A. ĐỐI CHIẾU LUẬN ĐIỂM VÀ NGUỒN TRÍCH DẪN}{49}{chapter*.23}%
+\contentsline {chapter}{TÀI LIỆU THAM KHẢO}{52}{section*.24}%

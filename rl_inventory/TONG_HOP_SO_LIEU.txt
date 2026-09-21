@@ -1,6 +1,6 @@
 ================================================================================
   TONG HOP SO LIEU -- DU AN IPPO QUAN LY TON KHO
-  Tu dong xuat luc: 19/09/2026 19:51:10
+  Tu dong xuat luc: 21/09/2026 00:27:55
   (File nay duoc sinh boi scripts/generate_summary.py - KHONG sua tay,
    chay lai script sau moi lan train/eval/iso de cap nhat.)
 ================================================================================
@@ -24,7 +24,7 @@ PHAN 1: CAU HINH MOI TRUONG (env)
     Kho 9  :      280.1
 
   cp_lk (luu kho/dv/ngay)     : 1.0
-  cp_th (thieu hang/dv)       : GIA THAT (margin_ratio=0.3, cp_th_min=0.5) -> cp_th_pair min/tb/max = 0.50 / 1.20 / 3.82
+  cp_th (thieu hang/dv)       : 10.0  (hang so, dung chung)
   cp_dh (dat hang/lan)        : 5.0
   pt_tk (phat tran kho/dv)    : 5.0
   phi_dv (he so phat dich vu) : 3.0
@@ -45,14 +45,14 @@ PHAN 2: CAU HINH THUAT TOAN PPO (IPPO)
   ent_coef (dau->cuoi)        : 0.02 -> 0.002
   use_value_norm/clip_value   : True / True
   normalize_adv_per_pair      : True
-  total_episodes (config)     : 1 000
+  total_episodes (config)     : 5000
   Seed                        : 42
 
-  Episode da huan luyen thuc te: 5000 (thoi gian: 79.8 phut)
-  Entropy dau -> cuoi          : 1.776 -> 0.122
-  Explained variance (cuoi)    : 0.974
-  Approx KL (cuoi)             : 0.00017
-  Eval fill rate (cuoi, deterministic): 0.839
+  Episode da huan luyen thuc te: 500 (thoi gian: 18.7 phut)
+  Entropy dau -> cuoi          : 1.778 -> 0.214
+  Explained variance (cuoi)    : 0.717
+  Approx KL (cuoi)             : 0.00028
+  Eval fill rate (cuoi, deterministic): 0.898
 
 
 PHAN 3: CAU HINH CAC BASELINE
@@ -64,12 +64,11 @@ PHAN 3: CAU HINH CAC BASELINE
 
 PHAN 4: KET QUA DANH GIA TRUC TIEP (mien test)
 ------------------------------------------------------------------------------
-  So episode danh gia: 30
+  So episode danh gia: ?
   Chinh sach      Tong chi phi   Fill rate      Luu kho   Thieu hang    Dat hang   Tran kho
-  EOQ                  951,263      75.01%      785,408       52,599      92,853     20,403
-  IPPO                 987,745      85.21%      820,119       38,314     125,492      3,820
-  (s,S)              1,003,584      84.23%      803,997       37,393     149,455     12,740
-  Newsvendor         1,039,680      84.47%      805,053       38,400     184,622     11,605
+  (s,S)              1,520,337      84.13%      807,198      545,684     149,203     18,252
+  Newsvendor         1,545,816      84.40%      808,608      536,469     184,572     16,166
+  EOQ                1,779,966      74.76%      789,953      868,000      92,864     29,148
 
 
 PHAN 5: SO SANH O CUNG MUC PHUC VU (iso-service)
@@ -84,11 +83,11 @@ PHAN 5: SO SANH O CUNG MUC PHUC VU (iso-service)
 
 PHAN 6: KIEM DINH THONG KE (IPPO vs baseline tot nhat)
 ------------------------------------------------------------------------------
-  Baseline tot nhat  : EOQ
-  Chenh lech chi phi : +3.84%
-  Welch t-test       : t=7.087, p=3.643e-09
-  Wilcoxon           : p=1.863e-09
-  Cohen's d          : 1.830
+  Baseline tot nhat  : (s,S)
+  Chenh lech chi phi : -2.33%
+  Welch t-test       : t=-8.735, p=4.203e-12
+  Wilcoxon           : p=3.725e-09
+  Cohen's d          : -2.255
   So episode / mien  : 30 / test
 
 
@@ -96,8 +95,8 @@ PHAN 7: DA HAT GIONG - DO TIN CAY THONG KE (IPPO)
 ------------------------------------------------------------------------------
   Lenh chuan de tai lap: python run.py multiseed
   So seed da chay      : 3  (seed1, seed2, seed42)
-  IPPO tong chi phi    : 1,043,125 +/- 9,272
-  IPPO fill rate       : 86.10% +/- 0.15%
+  IPPO tong chi phi    : 1,594,686 +/- 6,540
+  IPPO fill rate       : 90.53% +/- 0.03%
 
 
 PHAN 8: CAU HINH TIEN XU LY DU LIEU
@@ -139,6 +138,10 @@ PHAN 9: FILE KET QUA HIEN CO
     [OK] episode_traces_seed2.json
     [OK] episode_traces_seed42.json
     [OK] iso_service.json
+    [OK] iso_service_chart.png
+    [OK] learning_curve.png
+    [OK] scale_group_analysis.json
+    [OK] scale_group_analysis.png
     [OK] statistical_test.json
     [OK] statistical_test_seed1.json
     [OK] statistical_test_seed2.json

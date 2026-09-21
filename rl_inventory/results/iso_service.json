@@ -1,33 +1,31 @@
 {
-  "target_fill": 0.8471410174497427,
+  "target_fill": 0.9007462921181617,
   "ket_qua": {
     "IPPO": {
-      "cost": 987744.9962578844,
-      "fill": 0.8521410174497427,
+      "cost": 1589471.6828645905,
+      "fill": 0.9057462921181617,
       "params": null
     },
     "EOQ": {
-      "cost": 1882295.665878892,
-      "fill": 0.928071119310685,
-      "params": {
-        "q_factor": 3.0,
-        "lead_time": 5.0
-      }
+      "cost": null,
+      "fill": null,
+      "params": null,
+      "khong_dat": true
     },
     "(s,S)": {
-      "cost": 1254160.0011397232,
-      "fill": 0.8921730506817821,
+      "cost": 1770256.404855303,
+      "fill": 0.8994932923842185,
       "params": {
-        "service_level": 0.9,
+        "service_level": 0.95,
         "q_factor": 0.5,
         "lead_time": 3.0
       }
     },
     "Newsvendor": {
-      "cost": 1113546.2412104667,
-      "fill": 0.862784666501604,
+      "cost": 1856657.0629721223,
+      "fill": 0.9056785393528072,
       "params": {
-        "cr_override": 0.9,
+        "cr_override": 0.99,
         "lead_time": 3.0
       }
     }

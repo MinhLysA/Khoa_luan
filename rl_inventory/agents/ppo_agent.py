@@ -265,16 +265,32 @@ class PPOAgent:
 
     # ------------------------------------------------------------------ #
     def save(self, filepath: str):
+        # [P0-8] Luu them trang thai 2 optimizer (Adam moments) de --resume
+        # trong train.py la mot lan warm-start THAT SU, khong phai khoi tao
+        # lai Adam tu dau. Khong anh huong checkpoint cu: cac noi chi doc
+        # "network"/"value_norm" (evaluate.py, iso_service.py, ...) van chay
+        # binh thuong vi khong dong cham toi 2 key moi nay.
         torch.save({"network": self.network.state_dict(),
                     "value_norm": (self.value_norm.state_dict()
-                                   if self.value_norm is not None else None)},
+                                   if self.value_norm is not None else None),
+                    "opt_actor": self.opt_actor.state_dict(),
+                    "opt_critic": self.opt_critic.state_dict()},
                    filepath)
 
-    def load(self, filepath: str):
+    def load(self, filepath: str, load_optimizer: bool = False):
         blob = torch.load(filepath, map_location=self.device, weights_only=False)
         if isinstance(blob, dict) and "network" in blob:
             self.network.load_state_dict(blob["network"])
             if self.value_norm is not None and blob.get("value_norm"):
                 self.value_norm.load_state_dict(blob["value_norm"])
+            # [P0-8] load_optimizer=False la mac dinh (dung cho evaluate.py,
+            # iso_service.py, analyze_scale_groups.py - chi can trong so).
+            # Checkpoint cu (truoc [P0-8]) khong co 2 key nay -> .get() tra
+            # None, bo qua an toan, chi mat dong luong Adam chu khong loi.
+            if load_optimizer:
+                if blob.get("opt_actor"):
+                    self.opt_actor.load_state_dict(blob["opt_actor"])
+                if blob.get("opt_critic"):
+                    self.opt_critic.load_state_dict(blob["opt_critic"])
         else:                                     # tuong thich checkpoint cu
             self.network.load_state_dict(blob)

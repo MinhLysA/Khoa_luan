@@ -164,8 +164,14 @@ class MultiWarehouseInventoryEnv(gym.Env):
         self.price_series = (np.asarray(price_series, dtype=np.float32).reshape(
                                  price_series.shape[0], -1)
                              if price_series is not None else None)
+        # [P0-7] Chi bat tin hieu gia khi config CHU DONG yeu cau, khong con
+        # suy ra tu viec file .npy co ton tai hay khong (truoc day am tham
+        # doi obs_per_pair tu 43 sang 44 ngay khi buoc tien xu ly tao ra
+        # price_series.npy, lam sai lech voi kien truc 43 chieu da mo ta o
+        # Chuong 3). Xem giai thich chi tiet trong config.yaml.
         self.price_signal_dim = int(
-            self.price_series is not None and self.price_per_pair is not None)
+            bool(self.config.get("include_price_signal", False))
+            and self.price_series is not None and self.price_per_pair is not None)
 
         # -- Cau trung binh tung cap, uoc luong CHI TU TAP HUAN LUYEN --------
         self.min_mean_demand = float(self.config.get("min_mean_demand", 0.05))

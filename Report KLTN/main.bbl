@@ -866,6 +866,73 @@
       \field{pages}{24611\bibrangedash 24624}
       \range{pages}{14}
     \endentry
+    \entry{zhu2026spatiotemporal}{article}{}{}
+      \name{author}{2}{}{%
+        {{hash=df6afef6b7a60034d2495df9e685e4e6}{%
+           family={Zhu},
+           familyi={Z\bibinitperiod},
+           given={Haibo},
+           giveni={H\bibinitperiod}}}%
+        {{hash=d69605a750afc1f837415835bfa176ef}{%
+           family={Wu},
+           familyi={W\bibinitperiod},
+           given={Hongmei},
+           giveni={H\bibinitperiod}}}%
+      }
+      \strng{namehash}{cfb7ace5790ac7e1b2b9fe6033009700}
+      \strng{fullhash}{cfb7ace5790ac7e1b2b9fe6033009700}
+      \strng{fullhashraw}{cfb7ace5790ac7e1b2b9fe6033009700}
+      \strng{bibnamehash}{cfb7ace5790ac7e1b2b9fe6033009700}
+      \strng{authorbibnamehash}{cfb7ace5790ac7e1b2b9fe6033009700}
+      \strng{authornamehash}{cfb7ace5790ac7e1b2b9fe6033009700}
+      \strng{authorfullhash}{cfb7ace5790ac7e1b2b9fe6033009700}
+      \strng{authorfullhashraw}{cfb7ace5790ac7e1b2b9fe6033009700}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{International Journal of Simulation and Process Modelling}
+      \field{number}{5}
+      \field{title}{Deep learning and multi-agent simulation for spatiotemporal inventory management in e-commerce}
+      \field{volume}{23}
+      \field{year}{2026}
+      \field{pages}{11\bibrangedash 23}
+      \range{pages}{13}
+      \verb{doi}
+      \verb 10.1504/IJSPM.2026.10077092
+      \endverb
+      \keyw{anh}
+    \endentry
+    \entry{jeong2026alca}{misc}{}{}
+      \name{author}{1}{}{%
+        {{hash=4fb36b7ad29d06ce63d2a0c6a8d9fb6c}{%
+           family={{Nhóm tác giả}},
+           familyi={N\bibinitperiod}}}%
+      }
+      \strng{namehash}{4fb36b7ad29d06ce63d2a0c6a8d9fb6c}
+      \strng{fullhash}{4fb36b7ad29d06ce63d2a0c6a8d9fb6c}
+      \strng{fullhashraw}{4fb36b7ad29d06ce63d2a0c6a8d9fb6c}
+      \strng{bibnamehash}{4fb36b7ad29d06ce63d2a0c6a8d9fb6c}
+      \strng{authorbibnamehash}{4fb36b7ad29d06ce63d2a0c6a8d9fb6c}
+      \strng{authornamehash}{4fb36b7ad29d06ce63d2a0c6a8d9fb6c}
+      \strng{authorfullhash}{4fb36b7ad29d06ce63d2a0c6a8d9fb6c}
+      \strng{authorfullhashraw}{4fb36b7ad29d06ce63d2a0c6a8d9fb6c}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{SSRN}
+      \field{note}{Preprint, chưa qua phản biện}
+      \field{title}{Action-Linked Credit Assignment for Event-Driven Warehouse Management via Multi-Agentic Reinforcement Learning}
+      \field{year}{2026}
+      \verb{urlraw}
+      \verb https://ssrn.com/abstract=7068293
+      \endverb
+      \verb{url}
+      \verb https://ssrn.com/abstract=7068293
+      \endverb
+      \keyw{anh}
+    \endentry
     \entry{towers2024gymnasium}{misc}{}{}
       \true{moreauthor}
       \true{morelabelname}
@@ -994,8 +1061,8 @@
       \strng{authorfullhash}{a6c6ed5a5aeb74e536f16291276ae392}
       \strng{authorfullhashraw}{a6c6ed5a5aeb74e536f16291276ae392}
       \field{extraname}{1}
-      \field{sortinit}{2}
-      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{eprinttype}{arXiv}
@@ -1043,8 +1110,8 @@
       \strng{authorfullhash}{824be54bbf358cb68164f9e82cccbd21}
       \strng{authorfullhashraw}{824be54bbf358cb68164f9e82cccbd21}
       \field{extraname}{2}
-      \field{sortinit}{2}
-      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{booktitle}{Proceedings of the 4th International Conference on Learning Representations (ICLR)}
@@ -1251,8 +1318,8 @@
       \strng{authornamehash}{b4258b9291d903d97b69d703eebf790a}
       \strng{authorfullhash}{b4258b9291d903d97b69d703eebf790a}
       \strng{authorfullhashraw}{b4258b9291d903d97b69d703eebf790a}
-      \field{sortinit}{3}
-      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{title}{Markov Decision Processes: Discrete Stochastic Dynamic Programming}
@@ -1362,6 +1429,35 @@
       \field{year}{2015}
       \field{pages}{1889\bibrangedash 1897}
       \range{pages}{9}
+    \endentry
+    \entry{bellman1957}{book}{}{}
+      \name{author}{1}{}{%
+        {{hash=2b0e24f47216c32d9ca0eb6f643646da}{%
+           family={Bellman},
+           familyi={B\bibinitperiod},
+           given={Richard\bibnamedelima E.},
+           giveni={R\bibinitperiod\bibinitdelim E\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {Princeton, NJ}%
+      }
+      \list{publisher}{1}{%
+        {Princeton University Press}%
+      }
+      \strng{namehash}{2b0e24f47216c32d9ca0eb6f643646da}
+      \strng{fullhash}{2b0e24f47216c32d9ca0eb6f643646da}
+      \strng{fullhashraw}{2b0e24f47216c32d9ca0eb6f643646da}
+      \strng{bibnamehash}{2b0e24f47216c32d9ca0eb6f643646da}
+      \strng{authorbibnamehash}{2b0e24f47216c32d9ca0eb6f643646da}
+      \strng{authornamehash}{2b0e24f47216c32d9ca0eb6f643646da}
+      \strng{authorfullhash}{2b0e24f47216c32d9ca0eb6f643646da}
+      \strng{authorfullhashraw}{2b0e24f47216c32d9ca0eb6f643646da}
+      \field{sortinit}{6}
+      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Dynamic Programming}
+      \field{year}{1957}
     \endentry
     \entry{ng1999}{inproceedings}{}{}
       \name{author}{3}{}{%
@@ -1512,8 +1608,8 @@
       \strng{authornamehash}{f405f972f5b5b9aa6658dfe3651734cc}
       \strng{authorfullhash}{713e79e09bfc3063bc279bf06e52b100}
       \strng{authorfullhashraw}{713e79e09bfc3063bc279bf06e52b100}
-      \field{sortinit}{6}
-      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{eprinttype}{arXiv}
