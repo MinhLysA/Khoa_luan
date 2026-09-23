@@ -43,8 +43,8 @@ import matplotlib.pyplot as plt
 
 
 def run_episode(env, policy, is_ppo=False, seed=None, deterministic=True,
-                collect_trace=False):
-    obs, _ = env.reset(seed=seed)
+                collect_trace=False, start_day=None):
+    obs, _ = env.reset(seed=seed, options={"start_day": start_day})
     hold = stock = order = over = svc = 0.0
     demand_tot = stockout_tot = 0.0
     n_order_events = 0
@@ -102,13 +102,34 @@ def run_episode(env, policy, is_ppo=False, seed=None, deterministic=True,
     return (res, trace) if collect_trace else (res, None)
 
 
+def paired_test(a, b):
+    """So sanh theo cap hai day chi phi cung hat giong: hieu trung binh, khoang
+    tin cay 95% (phan phoi t), kiem dinh t theo cap, Wilcoxon, hieu ung d_z."""
+    n = min(len(a), len(b))
+    a, b = np.asarray(a[:n], float), np.asarray(b[:n], float)
+    d = a - b
+    se = d.std(ddof=1) / np.sqrt(n)
+    h = stats.t.ppf(0.975, n - 1) * se
+    try:
+        p_w = float(stats.wilcoxon(a, b).pvalue)
+    except ValueError:
+        p_w = float("nan")
+    return {"n": int(n), "gap_percent": float(100 * (a.mean() / b.mean() - 1)),
+            "mean_diff": float(d.mean()), "ci95_low": float(d.mean() - h),
+            "ci95_high": float(d.mean() + h),
+            "p_paired": float(stats.ttest_rel(a, b).pvalue), "p_wilcoxon": p_w,
+            "d_z": float(d.mean() / (d.std(ddof=1) + 1e-9)),
+            "n_ippo_cheaper": int((d < 0).sum())}
+
+
 def evaluate_policy(env, policy, n_episodes, is_ppo=False, name="", base_seed=1000,
-                    traces=None):
+                    traces=None, start_days=None):
     rows = []
     for i in range(n_episodes):
         want_trace = (traces is not None and i == 0)
         r, tr = run_episode(env, policy, is_ppo=is_ppo, seed=base_seed + i,
-                            collect_trace=want_trace)
+                            collect_trace=want_trace,
+                            start_day=None if start_days is None else start_days[i])
         if want_trace:
             traces[name] = tr
         r["episode"] = i
@@ -128,6 +149,9 @@ def main():
     parser.add_argument("--mode", type=str, default="test", choices=["train", "test"])
     parser.add_argument("--tag", type=str, default="",
                         help="Hau to ten file ket qua, vd --tag seed1 -> summary_seed1.json")
+    # [P1-3] Ngay bat dau CO DINH, trai deu tren toan mien test (moi chinh
+    # sach dung dung cac cua so nay) thay vi rut ngau nhien theo seed.
+    parser.add_argument("--fixed_windows", action="store_true")
     args = parser.parse_args()
 
     with open(ROOT / args.config, "r", encoding="utf-8") as f:
@@ -177,6 +201,12 @@ def main():
               "scripts/tune_baselines.py truoc de so sanh cong bang.")
 
     all_dfs, traces = [], {}
+    start_days = None
+    if args.fixed_windows and env.demand_data is not None:
+        lo = env.val_day if args.mode == "test" else 0
+        hi = (env.demand_data.shape[0] if args.mode == "test" else env.split_day) - env.episode_length
+        start_days = np.linspace(lo, max(hi, lo), n_episodes).round().astype(int).tolist()
+        print(f"Cua so co dinh: ngay bat dau {start_days[0]}..{start_days[-1]}")
 
     ckpt = ROOT / args.checkpoint
     if ckpt.exists():
@@ -187,7 +217,7 @@ def main():
             agent.network.eval()
             all_dfs.append(evaluate_policy(env, agent, n_episodes, is_ppo=True,
                                            name="IPPO", base_seed=base_seed,
-                                           traces=traces))
+                                           traces=traces, start_days=start_days))
         except (RuntimeError, KeyError) as e:
             print(f"  [IPPO] khong nap duoc checkpoint: {e}")
     else:
@@ -207,7 +237,8 @@ def main():
         kw.update(tuned.get(name, {}))
         pol = cls(n_pairs=env.n_pairs, **kw)
         all_dfs.append(evaluate_policy(env, pol, n_episodes, name=name,
-                                       base_seed=base_seed, traces=traces))
+                                       base_seed=base_seed, traces=traces,
+                                       start_days=start_days))
 
     df_all = pd.concat(all_dfs, ignore_index=True)
     df_all.to_csv(results_dir / f"all_episodes{suffix}.csv", index=False)
@@ -232,33 +263,25 @@ def main():
 
     stat_out = {}
     if "IPPO" in df_all.policy.values:
-        ppo_cost = df_all[df_all.policy == "IPPO"].total_cost.values
+        ppo_cost = df_all[df_all.policy == "IPPO"].sort_values("episode").total_cost.values
         others = summary[summary.policy != "IPPO"]
         best_name = others.loc[others.total_cost_mean.idxmin(), "policy"]
-        base_cost = df_all[df_all.policy == best_name].total_cost.values
 
-        t_stat, p_t = stats.ttest_ind(ppo_cost, base_cost, equal_var=False)
-        try:
-            n = min(len(ppo_cost), len(base_cost))
-            _, p_w = stats.wilcoxon(ppo_cost[:n], base_cost[:n])
-        except ValueError:
-            p_w = float("nan")
-        pooled = np.sqrt((ppo_cost.var(ddof=1) + base_cost.var(ddof=1)) / 2)
-        cohen_d = (ppo_cost.mean() - base_cost.mean()) / (pooled + 1e-9)
-        gap = 100 * (ppo_cost.mean() - base_cost.mean()) / base_cost.mean()
-
-        print()
-        print(f"Kiem dinh IPPO vs {best_name} (baseline tot nhat):")
-        print(f"  Chenh lech chi phi : {gap:+.1f}%  "
-              f"({'IPPO tot hon' if gap < 0 else 'IPPO kem hon'})")
-        print(f"  Welch t-test       : t={t_stat:.3f}, p={p_t:.3e}")
-        print(f"  Wilcoxon           : p={p_w:.3e}")
-        print(f"  Cohen's d          : {cohen_d:.3f}")
-
-        stat_out = {"best_baseline": best_name, "gap_percent": float(gap),
-                    "t_stat": float(t_stat), "p_ttest": float(p_t),
-                    "p_wilcoxon": float(p_w), "cohen_d": float(cohen_d),
+        # [P3-4] Moi lan danh gia cua IPPO va baseline dung CUNG hat giong
+        # (cung nhu cau, cung thoi gian giao ngau nhien) -> chi dung kiem dinh
+        # THEO CAP tren hieu so Delta_j = C_j^IPPO - C_j^baseline.
+        per = {name: paired_test(ppo_cost, df_all[df_all.policy == name]
+                                 .sort_values("episode").total_cost.values)
+               for name in others.policy}
+        stat_out = {"best_baseline": best_name, **per[best_name],
+                    "per_baseline": per, "fixed_windows": bool(args.fixed_windows),
                     "n_episodes": int(n_episodes), "mode": args.mode}
+        print()
+        for name, r in per.items():
+            print(f"IPPO - {name:<11s}: {r['gap_percent']:+6.2f}%  "
+                  f"Delta={r['mean_diff']:+,.0f} [{r['ci95_low']:+,.0f}; {r['ci95_high']:+,.0f}]  "
+                  f"p_t={r['p_paired']:.2e}  p_W={r['p_wilcoxon']:.2e}  d_z={r['d_z']:+.2f}  "
+                  f"IPPO re hon {r['n_ippo_cheaper']}/{r['n']}")
         json.dump(stat_out, open(results_dir / f"statistical_test{suffix}.json", "w"), indent=2)
 
     # [V2-24] xuat summary.json cho app

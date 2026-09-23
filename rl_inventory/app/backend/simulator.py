@@ -96,6 +96,7 @@ def run_episode(env: MultiWarehouseInventoryEnv, action_fn: ActionFn, seed: int,
 
     daily_rows = []
     inv_mat, dem_mat, stockout_mat, util_mat = [], [], [], []
+    order_mat, incoming_mat, reward_mat, cost_mat = [], [], [], []
 
     for t in range(n_days):
         action = action_fn(obs, env)
@@ -105,18 +106,29 @@ def run_episode(env: MultiWarehouseInventoryEnv, action_fn: ActionFn, seed: int,
             "Ngày": t, "Cầu": info["demand"], "Bán được": info["sold"],
             "Thiếu hàng": info["stockout"], "Đặt hàng": info["order_qty"],
             "Số lần đặt": info["n_orders"], "Tràn kho": info["overflow"],
-            "Tồn kho": info["inventory"], "Fill rate": info["fill_rate_mean"],
+            "Tồn kho": info["inventory"],
+            "Hàng đang về": float(env.pipeline_orders.sum()),
+            "Fill rate": info["fill_rate_mean"],
             "Chi phí lưu kho": info["cost_holding"],
             "Chi phí thiếu hàng": info["cost_stockout"],
             "Chi phí đặt hàng": info["cost_ordering"],
             "Chi phí tràn kho": info["cost_overflow"],
             "Chi phí ngày": (info["cost_holding"] + info["cost_stockout"]
                             + info["cost_ordering"] + info["cost_overflow"]),
+            # reward = -(chi phi + phat muc phuc vu), tong 300 tac tu, chua chuan hoa
+            "Reward": float(info["local_rewards"].sum()),
         })
         inv_mat.append(info["inventory_pairs"].reshape(env.n_warehouses, env.n_skus))
         dem_mat.append(info["demand_pairs"].reshape(env.n_warehouses, env.n_skus))
         stockout_mat.append(info["stockout_pairs"].reshape(env.n_warehouses, env.n_skus))
         util_mat.append(info["util_wh"])
+        shape = (env.n_warehouses, env.n_skus)
+        order_mat.append(info["order_qty_pairs"].reshape(shape))
+        incoming_mat.append(env.pipeline_orders.sum(axis=0).reshape(shape))
+        reward_mat.append(np.asarray(info["local_rewards"]).reshape(shape))
+        # Chi phi van hanh cua tung cap = -reward tru phan phat muc phuc vu
+        phat_dv = env.phi_dv * np.maximum(0.0, env.muc_dv - env.fill_rate_per_pair) * env.sla_scale
+        cost_mat.append((-np.asarray(info["local_rewards"]) - phat_dv).reshape(shape))
 
         if terminated or truncated:
             break
@@ -128,6 +140,10 @@ def run_episode(env: MultiWarehouseInventoryEnv, action_fn: ActionFn, seed: int,
         "demand_matrix": np.stack(dem_mat),
         "stockout_matrix": np.stack(stockout_mat),
         "util_wh": np.stack(util_mat),
+        "order_matrix": np.stack(order_mat),
+        "incoming_matrix": np.stack(incoming_mat),
+        "reward_matrix": np.stack(reward_mat),
+        "cost_matrix": np.stack(cost_mat),
     }
 
 

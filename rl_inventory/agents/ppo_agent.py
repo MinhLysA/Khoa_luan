@@ -89,12 +89,26 @@ class ValueNormalizer:
 class SharedActorCriticNetwork(nn.Module):
     """[V2-8] Actor va Critic la HAI mang doc lap (van chia se giua cac tac tu)."""
 
-    def __init__(self, obs_per_pair: int, n_action_levels: int, hidden_dim: int = 128):
+    def __init__(self, obs_per_pair: int, n_action_levels: int, hidden_dim: int = 128,
+                 shared_trunk: bool = False):
         super().__init__()
         self.obs_per_pair = obs_per_pair
         self.n_action_levels = n_action_levels
-        self.actor  = _mlp(obs_per_pair, hidden_dim, n_action_levels, out_gain=0.01)
-        self.critic = _mlp(obs_per_pair, hidden_dim, 1, out_gain=1.0)
+        self.shared_trunk = shared_trunk
+        if shared_trunk:
+            # [P2-7] ABLATION: tai hien kien truc v1 - Actor va Critic DUNG CHUNG
+            # than mang (2 lop an), chi khac lop dau ra. Dung de chung minh
+            # bang thuc nghiem vi sao [V2-8] phai tach hai mang.
+            trunk = _mlp(obs_per_pair, hidden_dim, 1, out_gain=1.0)[:-1]  # 2 lop an + Tanh
+            self.actor = nn.Sequential(trunk, nn.Linear(hidden_dim, n_action_levels))
+            self.critic = nn.Sequential(trunk, nn.Linear(hidden_dim, 1))
+            nn.init.orthogonal_(self.actor[-1].weight, gain=0.01)
+            nn.init.orthogonal_(self.critic[-1].weight, gain=1.0)
+            for head in (self.actor[-1], self.critic[-1]):
+                nn.init.constant_(head.bias, 0.0)
+        else:
+            self.actor  = _mlp(obs_per_pair, hidden_dim, n_action_levels, out_gain=0.01)
+            self.critic = _mlp(obs_per_pair, hidden_dim, 1, out_gain=1.0)
 
     def forward(self, obs: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         return self.actor(obs), self.critic(obs).squeeze(-1)
@@ -139,13 +153,20 @@ class PPOAgent:
         self.hidden_dim      = int(cfg.get("hidden_dim", 128))
         self.use_value_norm  = bool(cfg.get("use_value_norm", True))
         self.clip_value_loss = bool(cfg.get("clip_value_loss", True))
+        self.shared_trunk    = bool(cfg.get("shared_trunk", False))
 
         self.network = SharedActorCriticNetwork(
-            obs_per_pair, n_action_levels, self.hidden_dim).to(self.device)
+            obs_per_pair, n_action_levels, self.hidden_dim,
+            shared_trunk=self.shared_trunk).to(self.device)
 
-        # [V2-9] Hai optimizer rieng -> cat gradient doc lap
-        self.opt_actor  = optim.Adam(self.network.actor.parameters(),  lr=self.lr_actor,  eps=1e-5)
-        self.opt_critic = optim.Adam(self.network.critic.parameters(), lr=self.lr_critic, eps=1e-5)
+        if self.shared_trunk:
+            # [P2-7] Nhu v1: MOT optimizer, MOT lan cat gradient cho toan mang.
+            self.opt_actor  = optim.Adam(self.network.parameters(), lr=self.lr_actor, eps=1e-5)
+            self.opt_critic = None
+        else:
+            # [V2-9] Hai optimizer rieng -> cat gradient doc lap
+            self.opt_actor  = optim.Adam(self.network.actor.parameters(),  lr=self.lr_actor,  eps=1e-5)
+            self.opt_critic = optim.Adam(self.network.critic.parameters(), lr=self.lr_critic, eps=1e-5)
 
         self.value_norm = ValueNormalizer() if self.use_value_norm else None
 
@@ -154,7 +175,7 @@ class PPOAgent:
         scale = float(np.clip(scale, 0.0, 1.0))
         for g in self.opt_actor.param_groups:
             g["lr"] = self.lr_actor * scale
-        for g in self.opt_critic.param_groups:
+        for g in (self.opt_critic.param_groups if self.opt_critic else []):
             g["lr"] = self.lr_critic * scale
 
     def set_ent_scale(self, progress: float):
@@ -226,18 +247,34 @@ class PPOAgent:
                     value_loss = F.mse_loss(new_value, target)
                 value_loss = self.vf_coef * value_loss
 
-                # ---- [V2-9] Hai buoc toi uu rieng ----------------------
-                self.opt_actor.zero_grad(set_to_none=True)
-                policy_loss.backward()
-                gn_a = nn.utils.clip_grad_norm_(self.network.actor.parameters(),
-                                                self.max_grad_norm).item()
-                self.opt_actor.step()
+                if self.shared_trunk:
+                    # [P2-7] Mot buoc toi uu chung. Van do rieng chuan gradient
+                    # cua tung loss (tren than chung) de thay su chenh lech.
+                    self.opt_actor.zero_grad(set_to_none=True)
+                    policy_loss.backward(retain_graph=True)
+                    gn_a = float(torch.norm(torch.stack([
+                        q.grad.norm() for q in self.network.parameters() if q.grad is not None])))
+                    self.opt_actor.zero_grad(set_to_none=True)
+                    value_loss.backward(retain_graph=True)
+                    gn_c = float(torch.norm(torch.stack([
+                        q.grad.norm() for q in self.network.parameters() if q.grad is not None])))
+                    self.opt_actor.zero_grad(set_to_none=True)
+                    (policy_loss + value_loss).backward()
+                    nn.utils.clip_grad_norm_(self.network.parameters(), self.max_grad_norm)
+                    self.opt_actor.step()
+                else:
+                    # ---- [V2-9] Hai buoc toi uu rieng ------------------
+                    self.opt_actor.zero_grad(set_to_none=True)
+                    policy_loss.backward()
+                    gn_a = nn.utils.clip_grad_norm_(self.network.actor.parameters(),
+                                                    self.max_grad_norm).item()
+                    self.opt_actor.step()
 
-                self.opt_critic.zero_grad(set_to_none=True)
-                value_loss.backward()
-                gn_c = nn.utils.clip_grad_norm_(self.network.critic.parameters(),
-                                                self.max_grad_norm).item()
-                self.opt_critic.step()
+                    self.opt_critic.zero_grad(set_to_none=True)
+                    value_loss.backward()
+                    gn_c = nn.utils.clip_grad_norm_(self.network.critic.parameters(),
+                                                    self.max_grad_norm).item()
+                    self.opt_critic.step()
 
                 with torch.no_grad():
                     approx_kl = ((ratio - 1.0) - log_ratio).mean().item()
@@ -274,7 +311,8 @@ class PPOAgent:
                     "value_norm": (self.value_norm.state_dict()
                                    if self.value_norm is not None else None),
                     "opt_actor": self.opt_actor.state_dict(),
-                    "opt_critic": self.opt_critic.state_dict()},
+                    "opt_critic": (self.opt_critic.state_dict()
+                                   if self.opt_critic else None)},
                    filepath)
 
     def load(self, filepath: str, load_optimizer: bool = False):
@@ -290,7 +328,7 @@ class PPOAgent:
             if load_optimizer:
                 if blob.get("opt_actor"):
                     self.opt_actor.load_state_dict(blob["opt_actor"])
-                if blob.get("opt_critic"):
+                if blob.get("opt_critic") and self.opt_critic:
                     self.opt_critic.load_state_dict(blob["opt_critic"])
         else:                                     # tuong thich checkpoint cu
             self.network.load_state_dict(blob)

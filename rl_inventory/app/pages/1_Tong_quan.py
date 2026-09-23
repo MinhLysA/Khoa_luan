@@ -38,7 +38,10 @@ ten_sku = meta.get("top_items", None)
 
 c1, c2, c3 = st.columns(3)
 ckpts = sorted((ROOT / "checkpoints").glob("*.pth"))
-ten_ckpt = c1.selectbox("Checkpoint IPPO", [p.name for p in ckpts] or ["(chưa có)"])
+_mac_dinh = policy_runner.default_checkpoint(ROOT / "checkpoints")
+_ten = [p.name for p in ckpts]
+ten_ckpt = c1.selectbox("Checkpoint IPPO", _ten or ["(chưa có)"],
+                        index=_ten.index(_mac_dinh.name) if _mac_dinh else 0)
 seed = c2.number_input("Seed", 0, 10**6, 1000)
 so_ngay = c3.number_input("Số ngày mô phỏng", 10, 365, 90, step=10)
 

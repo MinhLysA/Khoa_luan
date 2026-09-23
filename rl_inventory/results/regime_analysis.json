@@ -1,0 +1,865 @@
+{
+  "checkpoint": "checkpoints/best_model_seed42.pth",
+  "episodes": 30,
+  "volatility_thresholds": {
+    "q1": 0.20343338992374133,
+    "q2": 0.30825843634205363
+  },
+  "n_days_per_group": {
+    "Ổn định": 164,
+    "Trung bình": 163,
+    "Biến động": 164,
+    "Ngày có sự kiện": 43,
+    "Ngày SNAP": 240,
+    "Cuối tuần": 141,
+    "Mùa lễ (T11-T12)": 61,
+    "Ngày thường": 164
+  },
+  "B1_regimes": {
+    "IPPO": {
+      "Ổn định": {
+        "n_days": 163,
+        "fill_rate": 0.9082697988353442,
+        "cost_per_day": 3856.7158246042295
+      },
+      "Trung bình": {
+        "n_days": 157,
+        "fill_rate": 0.9032107104056465,
+        "cost_per_day": 3948.4379841144964
+      },
+      "Biến động": {
+        "n_days": 163,
+        "fill_rate": 0.8841502035153489,
+        "cost_per_day": 4619.956643936744
+      },
+      "Ngày có sự kiện": {
+        "n_days": 42,
+        "fill_rate": 0.8778380269215076,
+        "cost_per_day": 4356.635467376805
+      },
+      "Ngày SNAP": {
+        "n_days": 240,
+        "fill_rate": 0.8973373106278085,
+        "cost_per_day": 4210.208382763151
+      },
+      "Cuối tuần": {
+        "n_days": 138,
+        "fill_rate": 0.8954897140313989,
+        "cost_per_day": 4370.315416676396
+      },
+      "Mùa lễ (T11-T12)": {
+        "n_days": 61,
+        "fill_rate": 0.8732038401985606,
+        "cost_per_day": 4922.014317962707
+      },
+      "Ngày thường": {
+        "n_days": 160,
+        "fill_rate": 0.9022630040177105,
+        "cost_per_day": 3958.499871638697
+      },
+      "Toàn miền test": {
+        "n_days": 483,
+        "fill_rate": 0.8985359976166225,
+        "cost_per_day": 4142.673327261836
+      }
+    },
+    "EOQ": {
+      "Ổn định": {
+        "n_days": 163,
+        "fill_rate": 0.7677739666158647,
+        "cost_per_day": 4601.093565966676
+      },
+      "Trung bình": {
+        "n_days": 157,
+        "fill_rate": 0.7585346785852762,
+        "cost_per_day": 4724.121574478537
+      },
+      "Biến động": {
+        "n_days": 163,
+        "fill_rate": 0.716519566553812,
+        "cost_per_day": 5302.332337011428
+      },
+      "Ngày có sự kiện": {
+        "n_days": 42,
+        "fill_rate": 0.6880552404386988,
+        "cost_per_day": 5506.990660666359
+      },
+      "Ngày SNAP": {
+        "n_days": 240,
+        "fill_rate": 0.747560214764837,
+        "cost_per_day": 4915.17460856043
+      },
+      "Cuối tuần": {
+        "n_days": 138,
+        "fill_rate": 0.7075280321838422,
+        "cost_per_day": 5737.257664031343
+      },
+      "Mùa lễ (T11-T12)": {
+        "n_days": 61,
+        "fill_rate": 0.7547793744698281,
+        "cost_per_day": 4745.492551091851
+      },
+      "Ngày thường": {
+        "n_days": 160,
+        "fill_rate": 0.7731673440911084,
+        "cost_per_day": 4469.584214951493
+      },
+      "Toàn miền test": {
+        "n_days": 483,
+        "fill_rate": 0.7475917647103365,
+        "cost_per_day": 4876.619875644396
+      }
+    },
+    "(s,S)": {
+      "Ổn định": {
+        "n_days": 163,
+        "fill_rate": 0.8722205788350249,
+        "cost_per_day": 3764.1000331769337
+      },
+      "Trung bình": {
+        "n_days": 157,
+        "fill_rate": 0.8523581488846456,
+        "cost_per_day": 4004.763158924894
+      },
+      "Biến động": {
+        "n_days": 163,
+        "fill_rate": 0.7994327317009258,
+        "cost_per_day": 4724.564189008092
+      },
+      "Ngày có sự kiện": {
+        "n_days": 42,
+        "fill_rate": 0.7749068128105727,
+        "cost_per_day": 4817.076282063634
+      },
+      "Ngày SNAP": {
+        "n_days": 240,
+        "fill_rate": 0.8387334004276605,
+        "cost_per_day": 4222.563668566628
+      },
+      "Cuối tuần": {
+        "n_days": 138,
+        "fill_rate": 0.7939020069782438,
+        "cost_per_day": 4842.028843454031
+      },
+      "Mùa lễ (T11-T12)": {
+        "n_days": 61,
+        "fill_rate": 0.8265670049535964,
+        "cost_per_day": 4529.652342663274
+      },
+      "Ngày thường": {
+        "n_days": 160,
+        "fill_rate": 0.8744850137810378,
+        "cost_per_day": 3799.0458875008003
+      },
+      "Toàn miền test": {
+        "n_days": 483,
+        "fill_rate": 0.841318998669332,
+        "cost_per_day": 4165.307374390935
+      }
+    },
+    "Newsvendor": {
+      "Ổn định": {
+        "n_days": 163,
+        "fill_rate": 0.8722740114681802,
+        "cost_per_day": 3841.377648025686
+      },
+      "Trung bình": {
+        "n_days": 157,
+        "fill_rate": 0.853703957155336,
+        "cost_per_day": 4069.8512584286354
+      },
+      "Biến động": {
+        "n_days": 163,
+        "fill_rate": 0.8060661576008145,
+        "cost_per_day": 4791.546680561442
+      },
+      "Ngày có sự kiện": {
+        "n_days": 42,
+        "fill_rate": 0.7835301692160568,
+        "cost_per_day": 4835.219951582035
+      },
+      "Ngày SNAP": {
+        "n_days": 240,
+        "fill_rate": 0.8404042272496969,
+        "cost_per_day": 4312.75361546967
+      },
+      "Cuối tuần": {
+        "n_days": 138,
+        "fill_rate": 0.8002575082069652,
+        "cost_per_day": 4855.7288923133865
+      },
+      "Mùa lễ (T11-T12)": {
+        "n_days": 61,
+        "fill_rate": 0.8275617989928734,
+        "cost_per_day": 4737.690474871273
+      },
+      "Ngày thường": {
+        "n_days": 160,
+        "fill_rate": 0.8749981702561149,
+        "cost_per_day": 3881.268632691863
+      },
+      "Toàn miền test": {
+        "n_days": 483,
+        "fill_rate": 0.8439987101044156,
+        "cost_per_day": 4235.11103492598
+      }
+    },
+    "(s,S) (cùng mức PV)": {
+      "Ổn định": {
+        "n_days": 163,
+        "fill_rate": 0.9205623786302445,
+        "cost_per_day": 4534.244098664744
+      },
+      "Trung bình": {
+        "n_days": 157,
+        "fill_rate": 0.9089892879591466,
+        "cost_per_day": 4693.36554233926
+      },
+      "Biến động": {
+        "n_days": 163,
+        "fill_rate": 0.8690080146289934,
+        "cost_per_day": 5320.050021498193
+      },
+      "Ngày có sự kiện": {
+        "n_days": 42,
+        "fill_rate": 0.8483371604074764,
+        "cost_per_day": 5287.527632306362
+      },
+      "Ngày SNAP": {
+        "n_days": 240,
+        "fill_rate": 0.8970209771063864,
+        "cost_per_day": 4903.036457547864
+      },
+      "Cuối tuần": {
+        "n_days": 138,
+        "fill_rate": 0.8711834696961641,
+        "cost_per_day": 5079.228469845776
+      },
+      "Mùa lễ (T11-T12)": {
+        "n_days": 61,
+        "fill_rate": 0.8760006296405547,
+        "cost_per_day": 5648.250360843914
+      },
+      "Ngày thường": {
+        "n_days": 160,
+        "fill_rate": 0.9201635871413879,
+        "cost_per_day": 4675.4384413850075
+      },
+      "Toàn miền test": {
+        "n_days": 483,
+        "fill_rate": 0.8995044831147424,
+        "cost_per_day": 4850.017547548775
+      }
+    },
+    "Newsvendor (cùng mức PV)": {
+      "Ổn định": {
+        "n_days": 163,
+        "fill_rate": 0.923747360217945,
+        "cost_per_day": 4792.869180817033
+      },
+      "Trung bình": {
+        "n_days": 157,
+        "fill_rate": 0.9143491754410512,
+        "cost_per_day": 4927.7918969867005
+      },
+      "Biến động": {
+        "n_days": 163,
+        "fill_rate": 0.8789998596311489,
+        "cost_per_day": 5537.120494216063
+      },
+      "Ngày có sự kiện": {
+        "n_days": 42,
+        "fill_rate": 0.8627836767452872,
+        "cost_per_day": 5419.268783667461
+      },
+      "Ngày SNAP": {
+        "n_days": 240,
+        "fill_rate": 0.9022412633639154,
+        "cost_per_day": 5151.9092284197395
+      },
+      "Cuối tuần": {
+        "n_days": 138,
+        "fill_rate": 0.8823964615552284,
+        "cost_per_day": 5219.78289516532
+      },
+      "Mùa lễ (T11-T12)": {
+        "n_days": 61,
+        "fill_rate": 0.8806632568426586,
+        "cost_per_day": 5961.472151620401
+      },
+      "Ngày thường": {
+        "n_days": 160,
+        "fill_rate": 0.9237564959128625,
+        "cost_per_day": 4940.726429325827
+      },
+      "Toàn miền test": {
+        "n_days": 483,
+        "fill_rate": 0.9056847608535799,
+        "cost_per_day": 5086.731679375678
+      }
+    }
+  },
+  "B1_cost_gap_IPPO_vs_percent": {
+    "EOQ": {
+      "Ổn định": -16.178278722007576,
+      "Trung bình": -16.41963650035113,
+      "Biến động": -12.869349744669034,
+      "Ngày có sự kiện": -20.888998441670836,
+      "Ngày SNAP": -14.342648673548364,
+      "Cuối tuần": -23.825707810279006,
+      "Mùa lễ (T11-T12)": 3.7197775567099134,
+      "Ngày thường": -11.434717833554508,
+      "Toàn miền test": -15.050312862155923
+    },
+    "(s,S)": {
+      "Ổn định": 2.460502925293606,
+      "Trung bình": -1.4064545785903215,
+      "Biến động": -2.214120517501339,
+      "Ngày có sự kiện": -9.558512004496977,
+      "Ngày SNAP": -0.292601527727121,
+      "Cuối tuần": -9.742061479359975,
+      "Mùa lễ (T11-T12)": 8.662077034122628,
+      "Ngày thường": 4.197211322519556,
+      "Toàn miền test": -0.5433944027338211
+    },
+    "Newsvendor": {
+      "Ổn định": 0.3992884320141332,
+      "Trung bình": -2.9832361578987165,
+      "Biến động": -3.581099132787602,
+      "Ngày có sự kiện": -9.897884460222794,
+      "Ngày SNAP": -2.377720636270364,
+      "Cuối tuần": -9.996716999694922,
+      "Mùa lễ (T11-T12)": 3.890584327302249,
+      "Ngày thường": 1.9898452350429086,
+      "Toàn miền test": -2.182651337871233
+    },
+    "(s,S) (cùng mức PV)": {
+      "Ổn định": -14.942474629013358,
+      "Trung bình": -15.871927117219132,
+      "Biến động": -13.159526221227036,
+      "Ngày có sự kiện": -17.605433572429618,
+      "Ngày SNAP": -14.1305919461022,
+      "Cuối tuần": -13.957101110494152,
+      "Mùa lễ (T11-T12)": -12.857716929755558,
+      "Ngày thường": -15.334146278138816,
+      "Toàn miền test": -14.584364146155194
+    },
+    "Newsvendor (cùng mức PV)": {
+      "Ổn định": -19.532211727364924,
+      "Trung bình": -19.87409235911667,
+      "Biến động": -16.563913522152273,
+      "Ngày có sự kiện": -19.608426131090052,
+      "Ngày SNAP": -18.27867697011888,
+      "Cuối tuần": -16.27400019406401,
+      "Mùa lễ (T11-T12)": -17.43626082988842,
+      "Ngày thường": -19.880205304570097,
+      "Toàn miền test": -18.559232364104407
+    }
+  },
+  "B1_cost_gap_ci95_block_bootstrap": {
+    "EOQ": {
+      "Ổn định": {
+        "gap_percent": -16.178278722007576,
+        "ci95_low": -20.04875605126848,
+        "ci95_high": -11.530650192182039,
+        "n_blocks": 57,
+        "significant": true
+      },
+      "Trung bình": {
+        "gap_percent": -16.419636500351142,
+        "ci95_low": -21.257510909017192,
+        "ci95_high": -11.142621540549975,
+        "n_blocks": 59,
+        "significant": true
+      },
+      "Biến động": {
+        "gap_percent": -12.869349744669044,
+        "ci95_low": -22.66123688361566,
+        "ci95_high": -2.785455929884779,
+        "n_blocks": 60,
+        "significant": true
+      },
+      "Ngày có sự kiện": {
+        "gap_percent": -20.888998441670836,
+        "ci95_low": -29.048998056529374,
+        "ci95_high": -11.18098307674828,
+        "n_blocks": 33,
+        "significant": true
+      },
+      "Ngày SNAP": {
+        "gap_percent": -14.342648673548364,
+        "ci95_low": -20.382012100223424,
+        "ci95_high": -6.947936129277641,
+        "n_blocks": 48,
+        "significant": true
+      },
+      "Cuối tuần": {
+        "gap_percent": -23.825707810279006,
+        "ci95_low": -29.144798623691422,
+        "ci95_high": -17.089544364028473,
+        "n_blocks": 69,
+        "significant": true
+      },
+      "Mùa lễ (T11-T12)": {
+        "gap_percent": 3.7197775567099134,
+        "ci95_low": -14.38064091021419,
+        "ci95_high": 24.53800746627104,
+        "n_blocks": 9,
+        "significant": false
+      },
+      "Ngày thường": {
+        "gap_percent": -11.434717833554519,
+        "ci95_low": -18.01940126549126,
+        "ci95_high": -3.415597036168961,
+        "n_blocks": 43,
+        "significant": true
+      }
+    },
+    "(s,S)": {
+      "Ổn định": {
+        "gap_percent": 2.460502925293606,
+        "ci95_low": 0.10101951543243892,
+        "ci95_high": 4.858398207935453,
+        "n_blocks": 57,
+        "significant": true
+      },
+      "Trung bình": {
+        "gap_percent": -1.4064545785903326,
+        "ci95_low": -4.532890410535488,
+        "ci95_high": 1.9024996465341342,
+        "n_blocks": 59,
+        "significant": false
+      },
+      "Biến động": {
+        "gap_percent": -2.21412051750135,
+        "ci95_low": -8.4847327793466,
+        "ci95_high": 3.7069186401291905,
+        "n_blocks": 60,
+        "significant": false
+      },
+      "Ngày có sự kiện": {
+        "gap_percent": -9.558512004496977,
+        "ci95_low": -16.61350315707068,
+        "ci95_high": -1.8173386381540706,
+        "n_blocks": 33,
+        "significant": true
+      },
+      "Ngày SNAP": {
+        "gap_percent": -0.2926015277271321,
+        "ci95_low": -3.9574155702744767,
+        "ci95_high": 3.771424613622207,
+        "n_blocks": 48,
+        "significant": false
+      },
+      "Cuối tuần": {
+        "gap_percent": -9.742061479359975,
+        "ci95_low": -14.076041716473142,
+        "ci95_high": -4.710565632031545,
+        "n_blocks": 69,
+        "significant": true
+      },
+      "Mùa lễ (T11-T12)": {
+        "gap_percent": 8.662077034122628,
+        "ci95_low": -2.411166899520806,
+        "ci95_high": 18.668168071780595,
+        "n_blocks": 9,
+        "significant": false
+      },
+      "Ngày thường": {
+        "gap_percent": 4.197211322519534,
+        "ci95_low": 0.14025196154520694,
+        "ci95_high": 8.1660059141862,
+        "n_blocks": 43,
+        "significant": true
+      }
+    },
+    "Newsvendor": {
+      "Ổn định": {
+        "gap_percent": 0.3992884320141332,
+        "ci95_low": -1.6348538699982849,
+        "ci95_high": 2.380416593740156,
+        "n_blocks": 57,
+        "significant": false
+      },
+      "Trung bình": {
+        "gap_percent": -2.9832361578987165,
+        "ci95_low": -5.576419949854759,
+        "ci95_high": -0.27664990633615427,
+        "n_blocks": 59,
+        "significant": true
+      },
+      "Biến động": {
+        "gap_percent": -3.581099132787613,
+        "ci95_low": -8.623688696447305,
+        "ci95_high": 1.1027960776582852,
+        "n_blocks": 60,
+        "significant": false
+      },
+      "Ngày có sự kiện": {
+        "gap_percent": -9.897884460222794,
+        "ci95_low": -15.970134177340123,
+        "ci95_high": -3.412373277891176,
+        "n_blocks": 33,
+        "significant": true
+      },
+      "Ngày SNAP": {
+        "gap_percent": -2.377720636270364,
+        "ci95_low": -5.415554350327023,
+        "ci95_high": 0.7426181102291856,
+        "n_blocks": 48,
+        "significant": false
+      },
+      "Cuối tuần": {
+        "gap_percent": -9.996716999694922,
+        "ci95_low": -13.7636016934385,
+        "ci95_high": -5.8497624354385165,
+        "n_blocks": 69,
+        "significant": true
+      },
+      "Mùa lễ (T11-T12)": {
+        "gap_percent": 3.890584327302249,
+        "ci95_low": -4.576194685067916,
+        "ci95_high": 10.545440667847359,
+        "n_blocks": 9,
+        "significant": false
+      },
+      "Ngày thường": {
+        "gap_percent": 1.9898452350429086,
+        "ci95_low": -1.1508426510045033,
+        "ci95_high": 5.019600020398476,
+        "n_blocks": 43,
+        "significant": false
+      }
+    },
+    "(s,S) (cùng mức PV)": {
+      "Ổn định": {
+        "gap_percent": -14.942474629013358,
+        "ci95_low": -16.54793095716495,
+        "ci95_high": -13.429801244041531,
+        "n_blocks": 57,
+        "significant": true
+      },
+      "Trung bình": {
+        "gap_percent": -15.871927117219132,
+        "ci95_low": -17.879266402741894,
+        "ci95_high": -13.86836874762076,
+        "n_blocks": 59,
+        "significant": true
+      },
+      "Biến động": {
+        "gap_percent": -13.159526221227047,
+        "ci95_low": -16.062742562799055,
+        "ci95_high": -10.48657916809917,
+        "n_blocks": 60,
+        "significant": true
+      },
+      "Ngày có sự kiện": {
+        "gap_percent": -17.60543357242963,
+        "ci95_low": -21.73947912007738,
+        "ci95_high": -13.406560915309877,
+        "n_blocks": 33,
+        "significant": true
+      },
+      "Ngày SNAP": {
+        "gap_percent": -14.1305919461022,
+        "ci95_low": -16.35567232552073,
+        "ci95_high": -11.841430181431415,
+        "n_blocks": 48,
+        "significant": true
+      },
+      "Cuối tuần": {
+        "gap_percent": -13.957101110494152,
+        "ci95_low": -16.381313776595924,
+        "ci95_high": -11.553125703100116,
+        "n_blocks": 69,
+        "significant": true
+      },
+      "Mùa lễ (T11-T12)": {
+        "gap_percent": -12.857716929755558,
+        "ci95_low": -18.2347578882886,
+        "ci95_high": -8.084276087147071,
+        "n_blocks": 9,
+        "significant": true
+      },
+      "Ngày thường": {
+        "gap_percent": -15.334146278138805,
+        "ci95_low": -17.448935309508975,
+        "ci95_high": -13.21005914658028,
+        "n_blocks": 43,
+        "significant": true
+      }
+    },
+    "Newsvendor (cùng mức PV)": {
+      "Ổn định": {
+        "gap_percent": -19.532211727364924,
+        "ci95_low": -21.088015227079804,
+        "ci95_high": -18.076696355439452,
+        "n_blocks": 57,
+        "significant": true
+      },
+      "Trung bình": {
+        "gap_percent": -19.87409235911668,
+        "ci95_low": -22.01101763294407,
+        "ci95_high": -17.869926447404367,
+        "n_blocks": 59,
+        "significant": true
+      },
+      "Biến động": {
+        "gap_percent": -16.563913522152284,
+        "ci95_low": -18.65035294416206,
+        "ci95_high": -14.404420260777643,
+        "n_blocks": 60,
+        "significant": true
+      },
+      "Ngày có sự kiện": {
+        "gap_percent": -19.608426131090063,
+        "ci95_low": -22.826897018374453,
+        "ci95_high": -16.325510835259152,
+        "n_blocks": 33,
+        "significant": true
+      },
+      "Ngày SNAP": {
+        "gap_percent": -18.27867697011889,
+        "ci95_low": -20.354224327857786,
+        "ci95_high": -16.149977470666965,
+        "n_blocks": 48,
+        "significant": true
+      },
+      "Cuối tuần": {
+        "gap_percent": -16.274000194063998,
+        "ci95_low": -18.31754937755865,
+        "ci95_high": -14.442126603649886,
+        "n_blocks": 69,
+        "significant": true
+      },
+      "Mùa lễ (T11-T12)": {
+        "gap_percent": -17.43626082988843,
+        "ci95_low": -23.163824258452795,
+        "ci95_high": -12.721924525163228,
+        "n_blocks": 9,
+        "significant": true
+      },
+      "Ngày thường": {
+        "gap_percent": -19.880205304570097,
+        "ci95_low": -21.7404555577573,
+        "ci95_high": -18.0342047071022,
+        "n_blocks": 43,
+        "significant": true
+      }
+    }
+  },
+  "B2_shock": {
+    "start": 1650,
+    "len": 28,
+    "results": {
+      "1.5": {
+        "IPPO": {
+          "Trước sốc": {
+            "n_days": 28,
+            "fill_rate": 0.9056148414308671,
+            "cost_per_day": 3603.6608429656144
+          },
+          "Trong sốc": {
+            "n_days": 28,
+            "fill_rate": 0.8381881614103235,
+            "cost_per_day": 5442.28403557539
+          },
+          "Sau sốc": {
+            "n_days": 28,
+            "fill_rate": 0.9276313952422486,
+            "cost_per_day": 3962.548314479987
+          }
+        },
+        "EOQ": {
+          "Trước sốc": {
+            "n_days": 28,
+            "fill_rate": 0.7500270449332702,
+            "cost_per_day": 4979.4909015570365
+          },
+          "Trong sốc": {
+            "n_days": 28,
+            "fill_rate": 0.7036056146449863,
+            "cost_per_day": 7418.09372223275
+          },
+          "Sau sốc": {
+            "n_days": 28,
+            "fill_rate": 0.7843469724701806,
+            "cost_per_day": 4847.996451919419
+          }
+        },
+        "(s,S)": {
+          "Trước sốc": {
+            "n_days": 28,
+            "fill_rate": 0.8642215025939203,
+            "cost_per_day": 3817.6593790806473
+          },
+          "Trong sốc": {
+            "n_days": 28,
+            "fill_rate": 0.8013166837001218,
+            "cost_per_day": 6258.577202246586
+          },
+          "Sau sốc": {
+            "n_days": 28,
+            "fill_rate": 0.8839702467126342,
+            "cost_per_day": 4003.761801590948
+          }
+        },
+        "Newsvendor": {
+          "Trước sốc": {
+            "n_days": 28,
+            "fill_rate": 0.8674939947498163,
+            "cost_per_day": 3818.2439584916547
+          },
+          "Trong sốc": {
+            "n_days": 28,
+            "fill_rate": 0.8104842884604893,
+            "cost_per_day": 6255.118249942859
+          },
+          "Sau sốc": {
+            "n_days": 28,
+            "fill_rate": 0.8882775376479837,
+            "cost_per_day": 4084.1924755652744
+          }
+        },
+        "(s,S) (cùng mức PV)": {
+          "Trước sốc": {
+            "n_days": 28,
+            "fill_rate": 0.9250283083596386,
+            "cost_per_day": 4269.125047668389
+          },
+          "Trong sốc": {
+            "n_days": 28,
+            "fill_rate": 0.8359399470704871,
+            "cost_per_day": 7632.962666863913
+          },
+          "Sau sốc": {
+            "n_days": 28,
+            "fill_rate": 0.9188967195844893,
+            "cost_per_day": 5153.2669104542765
+          }
+        },
+        "Newsvendor (cùng mức PV)": {
+          "Trước sốc": {
+            "n_days": 28,
+            "fill_rate": 0.9305271096485003,
+            "cost_per_day": 4433.687073601001
+          },
+          "Trong sốc": {
+            "n_days": 28,
+            "fill_rate": 0.8410347959741684,
+            "cost_per_day": 8061.1971905220125
+          },
+          "Sau sốc": {
+            "n_days": 28,
+            "fill_rate": 0.922111134333615,
+            "cost_per_day": 5489.37045448167
+          }
+        }
+      },
+      "0.5": {
+        "IPPO": {
+          "Trước sốc": {
+            "n_days": 28,
+            "fill_rate": 0.9056148414308671,
+            "cost_per_day": 3603.6608429656144
+          },
+          "Trong sốc": {
+            "n_days": 28,
+            "fill_rate": 0.9755725264413899,
+            "cost_per_day": 3409.5597031525203
+          },
+          "Sau sốc": {
+            "n_days": 28,
+            "fill_rate": 0.9005361593260243,
+            "cost_per_day": 3793.132771402881
+          }
+        },
+        "EOQ": {
+          "Trước sốc": {
+            "n_days": 28,
+            "fill_rate": 0.7500270449332702,
+            "cost_per_day": 4979.4909015570365
+          },
+          "Trong sốc": {
+            "n_days": 28,
+            "fill_rate": 0.7568124157501909,
+            "cost_per_day": 3386.4067753919535
+          },
+          "Sau sốc": {
+            "n_days": 28,
+            "fill_rate": 0.6838105623108186,
+            "cost_per_day": 5445.263850743998
+          }
+        },
+        "(s,S)": {
+          "Trước sốc": {
+            "n_days": 28,
+            "fill_rate": 0.8642215025939203,
+            "cost_per_day": 3817.6593790806473
+          },
+          "Trong sốc": {
+            "n_days": 28,
+            "fill_rate": 0.8969414537699716,
+            "cost_per_day": 2518.8284744682765
+          },
+          "Sau sốc": {
+            "n_days": 28,
+            "fill_rate": 0.8031646122480229,
+            "cost_per_day": 4320.101284535016
+          }
+        },
+        "Newsvendor": {
+          "Trước sốc": {
+            "n_days": 28,
+            "fill_rate": 0.8674939947498163,
+            "cost_per_day": 3818.2439584916547
+          },
+          "Trong sốc": {
+            "n_days": 28,
+            "fill_rate": 0.886593658555296,
+            "cost_per_day": 2525.4210909014655
+          },
+          "Sau sốc": {
+            "n_days": 28,
+            "fill_rate": 0.8045036411345323,
+            "cost_per_day": 4360.764953085638
+          }
+        },
+        "(s,S) (cùng mức PV)": {
+          "Trước sốc": {
+            "n_days": 28,
+            "fill_rate": 0.9250283083596386,
+            "cost_per_day": 4269.125047668389
+          },
+          "Trong sốc": {
+            "n_days": 28,
+            "fill_rate": 0.9527363816597166,
+            "cost_per_day": 2999.653928170885
+          },
+          "Sau sốc": {
+            "n_days": 28,
+            "fill_rate": 0.8730405742339571,
+            "cost_per_day": 4582.04075152803
+          }
+        },
+        "Newsvendor (cùng mức PV)": {
+          "Trước sốc": {
+            "n_days": 28,
+            "fill_rate": 0.9305271096485003,
+            "cost_per_day": 4433.687073601001
+          },
+          "Trong sốc": {
+            "n_days": 28,
+            "fill_rate": 0.9542305716711115,
+            "cost_per_day": 3086.7903246902283
+          },
+          "Sau sốc": {
+            "n_days": 28,
+            "fill_rate": 0.8785977650590776,
+            "cost_per_day": 4754.146676058713
+          }
+        }
+      }
+    }
+  }
+}

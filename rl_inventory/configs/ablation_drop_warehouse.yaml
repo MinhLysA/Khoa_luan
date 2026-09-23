@@ -1,0 +1,107 @@
+# SINH TU DONG boi configs/make_configs.py - KHONG sua tay.
+# Tat 2 tin hieu cap kho (muc day, ty trong). Moi thu khac giong het config.yaml.
+seed: 42
+paths:
+  data_dir: data/processed
+  raw_dir: data/raw
+  log_dir: runs
+  checkpoint_dir: checkpoints
+  results_dir: results
+env:
+  n_warehouses: 10
+  n_skus: 30
+  episode_length: 365
+  lookback: 7
+  lead_time_min: 1
+  lead_time_max: 3
+  warehouse_capacity: auto
+  capacity_cover_days: 5.0
+  initial_cover_days: 3.0
+  cp_lk: 1.0
+  cp_th: 10.0
+  cp_dh: 5.0
+  pt_tk: 5.0
+  phi_dv: 3.0
+  muc_dv: 0.85
+  use_real_price_stockout: false
+  margin_ratio: 0.3
+  cp_th_min: 0.5
+  fill_rate_window: 30
+  obs_cover_days: 20.0
+  min_mean_demand: 0.05
+  include_price_signal: false
+  normalize_reward_per_pair: true
+  reward_scale: 1.0
+  service_penalty_mode: normalized
+  warm_start_history: false
+  obs_drop:
+  - warehouse
+  include_event_lookahead: false
+  sku_indices: null
+  reward_mode: local
+  test_full_horizon: true
+  split_day: 1050
+  val_day: 1450
+  use_relative_orders: true
+  order_multipliers:
+  - 0.0
+  - 0.5
+  - 1.0
+  - 2.0
+  - 3.0
+  - 5.0
+  order_levels:
+  - 0
+  - 10
+  - 20
+  - 30
+  - 40
+  - 50
+preprocess:
+  stores:
+  - CA_1
+  - CA_2
+  - CA_3
+  - CA_4
+  - TX_1
+  - TX_2
+  - TX_3
+  - WI_1
+  - WI_2
+  - WI_3
+  n_skus: 30
+  sku_selection: stratified
+  min_mean_demand: 0.2
+ppo:
+  n_steps: 1024
+  ppo_epochs: 4
+  mini_batch_size: 16384
+  lr_actor: 0.0003
+  lr_critic: 0.001
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_eps: 0.2
+  ent_coef: 0.02
+  ent_coef_end: 0.002
+  anneal_ent: true
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  hidden_dim: 128
+  anneal_lr: true
+  target_kl: 0.02
+  use_value_norm: true
+  clip_value_loss: true
+  eval_every_episodes: 25
+  eval_n_episodes: 2
+  min_fill_to_save: 0.85
+  normalize_adv_per_pair: true
+  shared_trunk: false
+  total_episodes: 4000
+eval:
+  n_episodes: 30
+  seed: 1000
+  log_cost_breakdown: true
+  compare_baselines:
+  - eoq
+  - s_S
+  - newsvendor

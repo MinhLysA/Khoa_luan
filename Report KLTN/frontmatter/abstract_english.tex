@@ -6,53 +6,37 @@
 \end{center}
 \vspace{0.2cm}
 
-Inventory control across a retail network of multiple warehouses and multiple
-stock-keeping units (SKUs) is a sequential decision-making problem under
-uncertainty that requires balancing several conflicting cost components at
-once: holding cost, stockout cost, fixed ordering cost, warehouse overflow
-penalty, and the requirement to sustain a target customer service level.
-Classical policies such as EOQ, $(s, S)$ and the Newsvendor model rest on
-restrictive assumptions --- deterministic or stationary demand, fixed lead
-times, and unconstrained storage capacity --- and therefore lose their
-optimality guarantees once demand is stochastic, lead times fluctuate, and
-multiple SKUs must share a finite warehouse capacity.
+Inventory control in a retail network with many warehouses and many products is
+a sequential decision problem under uncertainty: holding, stockout, ordering and
+overflow costs must be balanced while a customer service level is maintained.
+Classical policies such as EOQ, $(s, S)$ and the Newsvendor model assume
+stationary demand, fixed lead times and unconstrained storage, and lose their
+optimality when these assumptions are violated.
 
-This thesis addresses the problem through multi-agent reinforcement learning.
-A system of $N = 10$ warehouses and $M = 30$ representative SKUs is modelled as
-$300$ agents, one per warehouse--SKU pair, each issuing its own replenishment
-decisions from local observations. The agents are trained with Independent
-Multi-Agent Proximal Policy Optimization (IPPO) under full parameter sharing:
-a single set of Actor--Critic weights is shared across all $300$ agents, which
-keeps the number of learnable parameters constant as the system scales. The
-reward is designed with local decomposition, a 30-day rolling-window fill-rate
-penalty term, and a per-pair normalization mechanism that reduces the variance
-of the learning signal across SKUs whose cost scales differ by several orders
-of magnitude.
+This thesis models $10$ warehouses $\times$ $30$ products as $300$ agents, each
+choosing the replenishment quantity of one warehouse--product pair from local
+observations, with the products of a warehouse sharing a finite capacity. The
+agents are trained with Independent PPO under parameter sharing (PS-IPPO), using
+a local factored reward per pair, per-pair reward normalization, and an $85\%$
+service-level target implemented as a soft constraint.
 
-The simulation environment follows the Gymnasium interface, with demand and
-price parameters calibrated from the real-world M5 Walmart retail dataset (10
-stores, 30 representative SKUs, 1,941 days of sales data) and stochastic lead
-times drawn from one to three days. The proposed model is benchmarked against
-three classical inventory policies (EOQ, $(s, S)$, Newsvendor), each tuned by
-grid search on the same environment, under a unified evaluation protocol
-involving multiple random seeds and statistical significance testing, across
-four metric groups: total operational cost, fill rate, and the breakdown of
-individual cost components.
+The simulation uses the real demand of the M5 Walmart dataset ($1{,}941$ days),
+split into training, validation and test periods, with stochastic lead times of
+one to three days. PS-IPPO is compared with three classical policies tuned on
+the validation period, over several training seeds and with paired statistical
+tests.
 
-Experimental results show that, at the operating point each method chooses for
-itself, IPPO reaches the highest fill rate (about $90.5\%$, versus
-$75$--$84\%$ for the three classical policies) but a moderately higher total
-cost than $(s, S)$ and the Newsvendor policy, while still remaining cheaper
-than EOQ -- an incomplete comparison, since the four methods sit at four
-different points on the cost--service trade-off curve. When compared at a
-matched minimum service level, which removes this bias, IPPO achieves the
-lowest total operational cost among the methods that reach that service
-level -- $10.2\%$ cheaper than $(s, S)$ and $14.4\%$ cheaper than the
-Newsvendor policy -- while no EOQ configuration reaches that service level at
-all. The shared-parameter policy generalizes well to medium- and high-demand
-SKUs but does not fully close the service-level gap for the lowest-demand,
-most intermittent SKUs. The thesis also reports, in full honesty, the
-scenarios in which the proposed method does not outperform the classical
-baselines, together with the study's limitations and directions for future
-work.
+% UPDATE AFTER THE FINAL CAMPAIGN: figures below come from 3 seeds x 1,000 episodes.
+At a matched service level, PS-IPPO achieves a total operating cost $10.2\%$
+lower than $(s, S)$ and $14.4\%$ lower than the Newsvendor policy, while EOQ does
+not reach that service level. The advantage is concentrated in volatile demand
+periods (event days, weekends); under stable demand, $(s,S)$ attains a lower
+cost. Parameter sharing maintains performance for medium- and high-demand
+products but allocates a lower service level to low-demand products. The
+contribution is a PS-IPPO framework with shared warehouse capacity on real
+retail data, together with an evaluation protocol that separates operating cost,
+service level and the training signal.
 
+\vspace{0.3cm}
+\noindent\textbf{Keywords:} inventory management; multi-agent reinforcement
+learning; IPPO; parameter sharing; M5.

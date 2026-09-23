@@ -6,51 +6,37 @@
 \end{center}
 \vspace{0.2cm}
 
-Quản lý tồn kho trong mạng lưới bán lẻ gồm nhiều kho và nhiều mặt hàng là bài
-toán ra quyết định tuần tự dưới điều kiện bất định, đòi hỏi cân bằng đồng thời
-nhiều nhóm chi phí xung đột nhau: chi phí lưu kho, chi phí thiếu hàng, chi phí
-đặt hàng cố định, chi phí phạt tràn kho và yêu cầu duy trì mức phục vụ khách
-hàng. Các chính sách cổ điển như EOQ, $(s, S)$ và Newsvendor được xây dựng trên
-những giả định chặt --- nhu cầu xác định hoặc dừng, thời gian giao hàng cố định,
-không ràng buộc sức chứa --- nên khó giữ được tính tối ưu khi nhu cầu ngẫu nhiên,
-thời gian giao hàng biến động và các mặt hàng phải chia sẻ một dung lượng kho
-hữu hạn.
+Quản lý tồn kho trong mạng lưới bán lẻ nhiều kho, nhiều mặt hàng là bài toán ra
+quyết định tuần tự dưới bất định: phải cân bằng chi phí lưu kho, thiếu hàng, đặt
+hàng và tràn kho trong khi vẫn giữ mức phục vụ khách hàng. Các chính sách cổ điển
+như EOQ, $(s, S)$ và Newsvendor dựa trên giả định nhu cầu dừng, thời gian giao
+hàng cố định và không ràng buộc sức chứa, nên khó giữ tính tối ưu khi các giả
+định này bị vi phạm.
 
-Khóa luận đề xuất giải quyết bài toán trên bằng học tăng cường đa tác tử. Hệ
-thống gồm $N = 10$ kho và $M = 30$ mặt hàng đại diện được mô hình hóa thành
-$300$ tác tử tương ứng với $300$ cặp kho--mặt hàng, mỗi tác tử tự ra quyết định
-đặt hàng dựa trên quan sát cục bộ của mình. Các tác tử được huấn luyện bằng
-thuật toán Independent Multi-Agent Proximal Policy Optimization (IPPO) kết hợp
-cơ chế chia sẻ tham số (parameter sharing): toàn bộ $300$ tác tử dùng chung một
-bộ trọng số Actor--Critic duy nhất, cho phép mở rộng quy mô mà không làm bùng
-nổ số lượng tham số cần học. Hàm phần thưởng được thiết kế theo hướng phân rã
-cục bộ (local reward decomposition) kèm thành phần phạt dựa trên tỷ lệ đáp ứng
-nhu cầu tính trên cửa sổ trượt 30 ngày và cơ chế chuẩn hóa phần thưởng theo
-từng cặp, nhằm giảm phương sai của tín hiệu học giữa các mặt hàng có quy mô chi
-phí chênh lệch nhiều bậc độ lớn.
+Khóa luận mô hình hóa $10$ kho $\times$ $30$ mặt hàng thành $300$ tác tử, mỗi
+tác tử quyết định lượng đặt hàng cho một cặp kho--mặt hàng từ quan sát cục bộ,
+và các tác tử trong cùng kho chia sẻ một sức chứa hữu hạn. Các tác tử được huấn
+luyện bằng IPPO với chia sẻ tham số (PS-IPPO), dùng phần thưởng phân rã cục bộ
+theo từng cặp, chuẩn hóa theo quy mô chi phí của từng cặp, và mục tiêu mức phục
+vụ $85\%$ triển khai dưới dạng ràng buộc mềm.
 
-Môi trường mô phỏng được xây dựng theo chuẩn Gymnasium, với tham số nhu cầu và
-giá bán được hiệu chỉnh từ bộ dữ liệu bán lẻ thực tế M5 Walmart (10 cửa hàng,
-30 mặt hàng đại diện, 1.941 ngày doanh số) và thời gian giao hàng ngẫu nhiên
-trong khoảng từ một đến ba ngày. Hiệu năng của mô hình đề xuất được đối chứng
-với ba chính sách tồn kho cổ điển (EOQ, $(s, S)$, Newsvendor) đã được tinh
-chỉnh tham số bằng tìm kiếm lưới trên cùng môi trường, theo một giao thức đánh
-giá thống nhất gồm nhiều hạt giống ngẫu nhiên và kiểm định thống kê, trên bốn
-nhóm chỉ số: tổng chi phí vận hành, tỷ lệ đáp ứng nhu cầu, và cơ cấu các thành
-phần chi phí.
+Môi trường mô phỏng dùng nhu cầu thực tế của bộ dữ liệu M5 Walmart ($1.941$
+ngày), chia thành ba miền huấn luyện, validation và kiểm tra, với thời gian giao
+hàng ngẫu nhiên từ một đến ba ngày. PS-IPPO được so sánh với ba chính sách cổ
+điển đã tinh chỉnh trên miền validation, qua nhiều hạt giống huấn luyện và kiểm
+định thống kê theo cặp.
 
-Kết quả thực nghiệm cho thấy ở điểm vận hành mà mỗi phương pháp tự chọn, IPPO
-đạt tỷ lệ đáp ứng nhu cầu cao nhất (khoảng $90{,}5\%$, so với $75$--$84\%$ của
-ba chính sách cổ điển) nhưng tổng chi phí cao hơn $(s, S)$ và Newsvendor một
-khoảng vừa phải, dù vẫn rẻ hơn EOQ -- một so sánh chưa đầy đủ vì bốn phương
-pháp nằm ở bốn điểm khác nhau trên đường đánh đổi chi phí--mức phục vụ. Khi so
-sánh ở cùng một mức phục vụ tối thiểu -- loại bỏ được sai lệch nói trên -- IPPO
-đạt tổng chi phí vận hành thấp nhất trong số các phương pháp đạt được mức phục
-vụ đó: rẻ hơn $(s, S)$ $10{,}2\%$ và rẻ hơn Newsvendor $14{,}4\%$, trong khi
-EOQ không có cấu hình nào đạt được mức phục vụ này. Cơ chế chia sẻ tham số
-tổng quát hóa tốt cho các mặt hàng có nhu cầu từ trung bình trở lên, nhưng
-chưa bù đắp hoàn toàn cho các mặt hàng có nhu cầu thấp và gián đoạn nhất. Khóa
-luận đồng thời trình bày trung thực những kịch bản mà phương pháp đề xuất chưa
-vượt trội so với chính sách cổ điển, cùng những hạn chế và hướng nghiên cứu
-tiếp theo.
+% CAP NHAT SAU DOT CHAY CUOI: cac con so duoi day tu ban 3 hat giong x 1.000 episode.
+Kết quả cho thấy khi được so ở cùng mức phục vụ, PS-IPPO đạt tổng chi phí vận
+hành thấp hơn $(s, S)$ $10{,}2\%$ và thấp hơn Newsvendor $14{,}4\%$, còn EOQ không
+đạt được mức phục vụ đó. Ưu thế tập trung ở các giai đoạn nhu cầu biến động
+(ngày có sự kiện, cuối tuần); khi nhu cầu ổn định, $(s,S)$ đạt chi phí thấp hơn.
+Chia sẻ tham số duy trì hiệu năng tốt ở nhóm mặt hàng có nhu cầu trung bình và
+cao, nhưng phân bổ mức phục vụ thấp hơn cho nhóm nhu cầu thấp. Đóng góp của khóa
+luận là một khung PS-IPPO có ràng buộc sức chứa dùng chung trên dữ liệu bán lẻ
+thực tế, cùng một giao thức đánh giá tách biệt rõ chi phí vận hành, mức phục vụ
+và tín hiệu huấn luyện.
 
+\vspace{0.3cm}
+\noindent\textbf{Từ khóa:} quản lý tồn kho; học tăng cường đa tác tử; IPPO; chia
+sẻ tham số; M5.

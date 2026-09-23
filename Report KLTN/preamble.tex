@@ -41,7 +41,7 @@
 \usepackage{amsmath, amsfonts, amssymb}
 \usepackage{graphicx}
 \usepackage{tikz}
-\usetikzlibrary{calc}
+\usetikzlibrary{calc, arrows.meta, positioning, fit, backgrounds}
 \usepackage{float}
 \usepackage{longtable}
 \usepackage{booktabs}
@@ -160,7 +160,15 @@
 \usepackage{csquotes} 
 \DeclareQuoteAlias{english}{vietnamese}
 
-\usepackage[backend=biber, style=ieee]{biblatex}
+\usepackage[backend=biber, style=ieee, language=english, autolang=none]{biblatex}
+% biblatex khong co vietnamese.lbx -> cac chuoi (vol., no., et al., in Proc.)
+% bi in thang ten khoa noi bo (jourvol, andothers). Dung chuoi tieng Anh
+% cho danh muc tai lieu, dung quy uoc IEEE.
+\DeclareLanguageMapping{vietnamese}{english}
+\DefineBibliographyStrings{vietnamese}{%
+  url     = {\mkbibbrackets{Online}\adddot\space Available},
+  urlseen = {Accessed},
+}
 \addbibresource{backmatter/references.bib}
 \usepackage{xurl} 
 \let\parencite\cite 
@@ -181,15 +189,9 @@
     \noindent #1\par\vspace{6pt}
 }
 
-\defbibenvironment{bibliography}
-  {\list
-     {}
-     {\setlength{\leftmargin}{0pt}
-      \setlength{\itemindent}{1.27cm}
-      \setlength{\itemsep}{0.5\baselineskip}
-      \setlength{\parsep}{0pt}}}
-  {\endlist}
-  {\item}
+% Giu moi truong mac dinh cua style IEEE (nhan so [n] treo le trai); chi
+% tang khoang cach giua cac muc cho de doc.
+\setlength{\bibitemsep}{0.4\baselineskip}
 
 
 

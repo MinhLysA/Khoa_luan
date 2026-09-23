@@ -91,6 +91,8 @@ def main():
     ap.add_argument("--eval_episodes", type=int, default=10)
     ap.add_argument("--tolerance", type=float, default=0.005,
                     help="Cho phep baseline thap hon IPPO toi da bao nhieu fill rate")
+    ap.add_argument("--tune_mode", choices=["train", "val"], default="val",
+                    help="[P1-1] Mien dung de quet luoi baseline")
     args = ap.parse_args()
 
     cfg = yaml.safe_load(open(ROOT / args.config, encoding="utf-8"))
@@ -112,7 +114,8 @@ def main():
     if p.exists():
         price_series = np.load(str(p))
 
-    env_tr = MultiWarehouseInventoryEnv(env_cfg, demand, calf, price, price_series, mode="train")
+    env_tr = MultiWarehouseInventoryEnv(env_cfg, demand, calf, price, price_series,
+                                        mode=args.tune_mode)
     env_te = MultiWarehouseInventoryEnv(env_cfg, demand, calf, price, price_series, mode="test")
     base_seed = cfg["eval"].get("seed", 1000)
 

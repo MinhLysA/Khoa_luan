@@ -13,7 +13,7 @@ app/app.py
 
 Bảng điều khiển VẬN HÀNH dự án (sửa config, bấm chạy từng bước pipeline, xem
 đường học training) vẫn còn nguyên ở app/streamlit_app.py - không bị xóa, chỉ
-không còn là mặc định của `python run.py app` (xem README.md).
+không còn là mặc định của `python run.py app` (xem pham_vi_khoa_luan.md muc 6).
 """
 
 import sys

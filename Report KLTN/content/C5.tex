@@ -4,19 +4,24 @@
 \section{Tổng kết các kết quả đạt được}
 \label{sec:tongKet}
 
-Khóa luận đã hoàn thành bốn mục tiêu nghiên cứu đề ra:
+Khóa luận đã hoàn thành bốn mục tiêu nghiên cứu chính và thực hiện thêm một
+nhóm phân tích chuyên sâu (mục thứ năm dưới đây):
 
 \begin{enumerate}
     \item Xây dựng môi trường mô phỏng: phát triển thành công
-    \texttt{MultiWarehouseInventoryEnv} theo chuẩn Gymnasium
+    \path{MultiWarehouseInventoryEnv} theo chuẩn Gymnasium
     \parencite{towers2024gymnasium}, mô hình hóa đầy đủ hệ thống $10$ kho,
     $30$ mặt hàng ($300$ cặp tác tử), với nhu cầu ngẫu nhiên, thời gian giao
     hàng biến động $[1, 3]$ ngày, ràng buộc sức chứa dùng chung tính riêng cho
-    từng kho theo quy mô nhu cầu của kho đó, và năm nhóm chi phí vận hành. Tham số nhu cầu được hiệu chỉnh từ bộ dữ liệu M5 Walmart
+    từng kho theo quy mô nhu cầu của kho đó, bốn thành phần chi phí vận hành
+    (lưu kho, thiếu hàng, đặt hàng, tràn kho) và hình phạt mức phục vụ tách
+    riêng khỏi chi phí vận hành. Nhu cầu lấy từ bộ dữ liệu M5 Walmart
     \parencite{makridakis2022background}.
 
-    \item Thiết kế hàm phần thưởng: đề xuất hàm phần thưởng phân rã
-    cục bộ (dựa trên nguyên lý phần thưởng chênh lệch \parencite{wolpert2001}) kèm thành phần phạt fill rate ràng buộc theo tinh thần Lagrangian trên cửa sổ trượt $30$ ngày.
+    \item Thiết kế hàm phần thưởng: phần thưởng phân rã cục bộ (local
+    factored reward) theo từng cặp kho--mặt hàng, với động cơ giảm khó khăn gán
+    tín dụng \parencite{wolpert2001}, kèm hình phạt mức phục vụ dạng ràng buộc
+    mềm tính trên cửa sổ trượt $30$ ngày.
 
     \item Cài đặt và huấn luyện IPPO: triển khai thuật toán Independent
     Multi-Agent PPO \parencite{dewitt2020ippo} với cơ chế chia sẻ tham số
@@ -32,6 +37,14 @@ Khóa luận đã hoàn thành bốn mục tiêu nghiên cứu đề ra:
     \parencite{henderson2018, agarwal2021}, và bổ sung phép so sánh ở cùng mức
     phục vụ nhằm loại bỏ sai lệch do các phương pháp nằm ở những điểm khác
     nhau trên đường đánh đổi.
+
+    \item Phân tích theo giai đoạn và kiểm tra hành vi: tách kết quả theo giai
+    đoạn nhu cầu (ổn định, biến động, sự kiện, mùa lễ) và thử sốc cầu nhân tạo
+    (thực nghiệm B); kiểm tra bằng thực nghiệm tính hợp lý của hành vi đặt
+    hàng, dấu hiệu khai thác phần thưởng và tầm quan trọng của từng nhóm đặc
+    trưng trạng thái. Kết quả mô phỏng được đưa lên ứng dụng Streamlit cho
+    phép xem diễn biến theo từng ngày của từng cặp kho--mặt hàng (nhu cầu, tồn
+    kho, hàng đang về, lượng đặt, thiếu hàng, phần thưởng, cảnh báo thiếu hàng).
 \end{enumerate}
 
 \subsection{Trả lời các câu hỏi nghiên cứu}
@@ -44,7 +57,7 @@ trên $3$ hạt giống huấn luyện $\times$ $30$ episode đánh giá, IPPO �
 $(s, S)$ $4{,}89\%$ và Newsvendor $3{,}16\%$ (dù vẫn rẻ hơn EOQ $10{,}41\%$),
 khác biệt có ý nghĩa thống kê rất cao ($p = 5{,}45 \times 10^{-33}$ với kiểm
 định $t$ Welch; Cohen's $d = 4{,}06$) và nhất quán trên cả $3$ hạt giống độc
-lập. Nguyên nhân là IPPO tự đẩy mức phục vụ lên $90{,}5\%$ --- cao hơn hẳn
+lập. Nguyên nhân là IPPO dịch chuyển tới mức phục vụ $90{,}5\%$ --- cao hơn hẳn
 $75$--$84\%$ của ba chính sách cổ điển --- nên đây không phải là ưu thế Pareto
 mà là một điểm khác trên đường đánh đổi chi phí--mức phục vụ.
 
@@ -54,30 +67,45 @@ nhau --- kết luận đảo chiều: IPPO rẻ hơn $(s, S)$ $10{,}2\%$ và r�
 Newsvendor $14{,}4\%$, trong khi EOQ không có cấu hình nào đạt được mức phục vụ
 đó do cấu trúc lượng đặt hàng cố định. Nguyên nhân là các chính sách cổ điển
 chỉ có thể nâng mức phục vụ bằng cách tăng tham số an toàn áp dụng đồng loạt
-cho cả $300$ cặp --- khiến chi phí tăng vọt ở cả những mặt hàng vốn đã đạt mức
+cho cả $300$ cặp --- khiến chi phí tăng đáng kể ở cả những mặt hàng vốn đã đạt mức
 phục vụ tốt --- còn IPPO điều chỉnh theo từng trạng thái quan sát được. Khóa
 luận coi phép so sánh ở cùng mức phục vụ là căn cứ chính đáng để trả lời Câu
 hỏi 1, và ghi nhận rõ ràng rằng phép so sánh trực tiếp không kiểm soát mức
 phục vụ có thể dẫn tới kết luận ngược lại.
 
-Câu hỏi 2 (tổng quát hóa qua chia sẻ tham số). Bằng chứng hiện có
-mới chỉ là gián tiếp. Việc một bộ trọng số duy nhất điều khiển đồng thời $300$
-cặp trải trên dải nhu cầu từ dưới $0{,}1$ đến $143$ đơn vị mỗi ngày, mà vẫn đạt
-mức phục vụ $90{,}5\%$ trên toàn hệ thống, cho thấy mạng dùng chung phân biệt
-được các mặt hàng theo quy mô --- nhiều khả năng thông qua đặc trưng quy mô
-$\log(1 + \bar{D}^{(i)})$ trong vector quan sát và bảng mức đặt hàng tương đối.
-Tuy nhiên, kết luận đầy đủ đòi hỏi hai phân tích chưa hoàn tất: phân tách kết
-quả theo nhóm quy mô nhu cầu, và thí nghiệm giữ lại một tập mặt hàng chưa từng
-xuất hiện trong huấn luyện (Mục~\ref{subsec:tongQuatHoa}).
+Thực nghiệm B bổ sung sắc thái cho câu trả lời này. Khi nhu cầu ổn định,
+$(s,S)$ tinh chỉnh trực tiếp rẻ hơn IPPO vài phần trăm; ưu thế của IPPO tập
+trung ở giai đoạn biến động --- fill rate chỉ giảm $2{,}4$ điểm phần trăm từ
+ngày ổn định sang ngày biến động (so với $5$--$7$ điểm của $(s,S)$), rẻ hơn
+khoảng $10\%$ ở ngày có sự kiện và cuối tuần dù phục vụ tốt hơn, và tốn ít hơn
+khoảng $29\%$--$32\%$ chi phí khi chống đỡ một cú sốc tăng cầu $50\%$. Các
+chênh lệch ở ngày ổn định, ngày có sự kiện và cuối tuần đều có ý nghĩa thống kê
+theo bootstrap khối tuần. Mùa lễ cuối năm là giai đoạn IPPO yếu nhất, nhưng dữ
+liệu chỉ có $9$ tuần nên chưa đủ để kết luận chắc chắn. Ở cùng mức phục vụ, IPPO
+rẻ hơn $(s,S)$ ở cả tám nhóm ngày, và rẻ hơn ở cả $36$ bộ đơn giá chi phí trong
+phân tích độ nhạy. Kết luận hợp lý vì vậy không phải ``học
+tăng cường tốt hơn'' một cách chung chung, mà là: chính sách cổ điển đủ tốt khi
+nhu cầu ổn định, còn IPPO có giá trị khi nhu cầu biến động nhanh.
 
-Câu hỏi 3 (ảnh hưởng của cách phân rã phần thưởng). Chưa có câu trả
-lời định lượng. Khóa luận đã chuẩn bị sẵn cơ chế khảo sát loại trừ thông qua cờ
-cấu hình \texttt{normalize\_reward\_per\_pair}, cho phép huấn luyện lại với
-cùng hạt giống và so sánh trực tiếp đường cong học
-(Mục~\ref{subsec:ablationReward}). Về mặt lập luận thiết kế, phần thưởng thô
-của các cặp chênh lệch bốn bậc độ lớn nên một Critic dùng chung khó khớp được
-các mục tiêu trải rộng như vậy --- nhưng đây là giả thuyết cần kiểm chứng bằng
-thực nghiệm, không phải kết luận.
+Câu hỏi 2 (hiệu năng theo nhóm quy mô nhu cầu). Câu trả lời là có điều
+kiện. Một bộ trọng số duy nhất điều khiển được $300$ cặp có nhu cầu từ dưới
+$0{,}1$ đến $143$ đơn vị mỗi ngày, và ở nhóm nhu cầu trung bình và cao IPPO vượt
+$(s,S)$ trên cả fill rate lẫn chi phí. Tuy nhiên, ở nhóm bán chậm (dưới $2$ đơn
+vị mỗi ngày) IPPO phục vụ kém hơn $(s,S)$; phân tích phân bố cho thấy $39\%$ số
+cặp của IPPO dưới ngưỡng $85\%$. Nguyên nhân chủ yếu nằm ở cách định cỡ hình
+phạt mức phục vụ theo $\bar{D}^{(i)}$ chứ không phải ở khả năng biểu diễn của
+mạng dùng chung (Mục~\ref{subsec:tongQuatHoa}, \ref{subsec:kiemTraStateReward}).
+Khả năng áp dụng cho mặt hàng chưa từng gặp khi huấn luyện chưa được kiểm chứng.
+
+Câu hỏi 3 (thiết kế tín hiệu phần thưởng). Về khía cạnh chuẩn hóa, có bằng chứng
+sơ bộ ủng hộ. Một lần chạy loại trừ tắt chuẩn hóa phần thưởng theo cặp (dừng ở
+khoảng $625$ episode) cho tổng chi phí cao gấp khoảng $3{,}2$ lần và fill rate
+chỉ $80{,}7\%$, so với lần huấn luyện gốc ở cùng khoảng episode
+(Mục~\ref{subsec:ablationReward}). Đáng chú ý là Critic khi đó đạt explained
+variance gần $1$ nhưng chính sách vẫn kém. Điều này khớp với lập luận rằng
+return chênh nhau nhiều bậc độ lớn khiến tín hiệu học bị các cặp nhu cầu lớn chi
+phối. Kết luận định lượng đầy đủ chờ lần chạy $1.000$ episode trong đợt thực
+nghiệm bổ sung.
 
 \section{Những hạn chế còn tồn tại}
 \label{sec:hanChe}
@@ -95,19 +123,35 @@ thực nghiệm, không phải kết luận.
     đặc biệt đáng lưu ý vì Zhu và Wu \cite{zhu2026spatiotemporal} báo cáo mức
     suy giảm đáng kể khi loại bỏ cơ chế phối hợp trong khung của họ.
 
-    \item Số episode mỗi hạt giống huấn luyện: kết quả đã được kiểm
-    chứng lại trên $3$ hạt giống độc lập theo khuyến nghị của Henderson và
-    cộng sự \cite{henderson2018}, và cho kết luận nhất quán. Tuy nhiên, mỗi
-    hạt giống chỉ chạy $1.000$ episode (thay vì một cấu hình dài hơn) để giữ
-    thời gian huấn luyện cả $3$ hạt giống trong phạm vi hợp lý; chưa loại trừ
-    hoàn toàn khả năng huấn luyện dài hơn làm dịch chuyển thêm điểm vận hành
-    của IPPO trên đường đánh đổi chi phí--mức phục vụ.
+    \item Số episode mỗi hạt giống huấn luyện: kết quả chính được kiểm
+    chứng trên $3$ hạt giống độc lập theo khuyến nghị của Henderson và cộng sự
+    \cite{henderson2018}, mỗi hạt giống $1.000$ episode. Huấn luyện tiếp hạt
+    giống $42$ tới khoảng $4.083$ episode đã giảm thêm khoảng $5\%$ chi phí,
+    cho thấy $1.000$ episode chưa phải điểm bão hòa; kết quả dài hơn mới có trên
+    một hạt giống.
 
-    \item Chưa có thực nghiệm phân tách theo mức độ biến động của nhu
-    cầu: toàn bộ đánh giá được thực hiện trên các episode $365$ ngày, chưa tách
-    riêng các giai đoạn nhu cầu ổn định và giai đoạn biến động mạnh (dịp lễ,
-    ngày SNAP) --- vốn là nơi khả năng thích nghi của học tăng cường được kỳ
-    vọng thể hiện rõ nhất.
+    \item Mất cân bằng mức phục vụ giữa các mặt hàng: hình phạt mức phục
+    vụ tỷ lệ với nhu cầu trung bình nên chính sách phân bổ mức phục vụ thấp hơn cho
+    mặt hàng bán chậm mà vẫn đạt mục tiêu chung; $39\%$ số cặp có fill rate dưới $85\%$.
+
+    \item Giới hạn của thực nghiệm theo giai đoạn: miền test chỉ dài $491$
+    ngày nên các episode chồng lấn nhau. Bootstrap theo khối tuần cho khoảng tin
+    cậy của từng giai đoạn nhưng không loại bỏ hết tự tương quan, và mùa lễ chỉ
+    có $9$ tuần nên kết luận về mùa lễ chưa có ý nghĩa thống kê.
+
+    \item Kết quả chính và các phân tích bổ sung dùng hai checkpoint khác
+    nhau: các bảng chính dùng $3$ hạt giống $\times$ $1.000$ episode, còn thực
+    nghiệm B, phần kiểm tra hành vi và phân tích độ nhạy dùng checkpoint hạt
+    giống $42$ huấn luyện tiếp tới khoảng $4.083$ episode. Đợt thực nghiệm bổ
+    sung (Mục~\ref{subsec:dotBoSung}) thống nhất lại toàn bộ trên một cấu hình.
+
+    \item Hình phạt mức phục vụ tỷ lệ theo nhu cầu: mọi kết quả ở
+    Chương~\ref{chap:chapter4} dùng cách định cỡ cũ. Biến thể chuẩn
+    hóa~(\ref{eq:phatChuanHoa}) đã cài đặt nhưng chưa có kết quả huấn luyện.
+
+    \item Đặc trưng lịch gần như không được khai thác: $27/43$ chiều
+    quan sát chỉ đóng góp khoảng $3{,}5\%$ chi phí theo phân tích permutation
+    importance, và IPPO yếu nhất ở mùa lễ.
 
     \item Không gian hành động rời rạc thô: chỉ có $K = 6$ mức đặt
     hàng; trong thực tế, doanh nghiệp có thể cần quyết định lượng đặt chính xác
@@ -123,7 +167,57 @@ thực nghiệm, không phải kết luận.
 \section{Hướng phát triển trong tương lai}
 \label{sec:huongPhatTrien}
 
+\subsection{Đợt thực nghiệm bổ sung đã cài đặt}
+\label{subsec:dotBoSung}
+
+Các hạn chế nêu ở Mục~\ref{sec:hanChe} đều đã được chuyển thành thí nghiệm cụ
+thể. Toàn bộ mã nguồn đã được cài đặt và kiểm thử (tổng cộng $39$ kiểm thử đơn
+vị), và được gom vào một kịch bản duy nhất (\texttt{scripts/campaign.py}) có
+khả năng huấn luyện tiếp khi bị gián đoạn. Riêng phần huấn luyện (khoảng $25$
+giờ CPU) chưa hoàn tất tại thời điểm viết báo cáo. Mỗi thí nghiệm loại trừ chỉ
+khác cấu hình tham chiếu đúng một thay đổi (Bảng~\ref{tab:dotBoSung}); cấu hình
+tham chiếu dùng hình phạt mức phục vụ chuẩn hóa~(\ref{eq:phatChuanHoa}).
+
+\begin{table}[htbp]
+    \centering
+    \caption{Đợt thực nghiệm bổ sung: mã nguồn đã sẵn sàng, đang chờ huấn luyện}
+    \label{tab:dotBoSung}
+    \small
+    \begin{tabular}{|p{3.0cm}|p{5.6cm}|p{4.8cm}|}
+        \hline
+        \textbf{Lần chạy} & \textbf{Thay đổi so với tham chiếu} & \textbf{Trả lời câu hỏi} \\
+        \hline
+        Mô hình chính ($3$ hạt giống $\times$ $4.000$ episode) & Hình phạt mức phục vụ chuẩn hóa & Mặt hàng bán chậm còn bị phân bổ mức phục vụ thấp hơn không; kết luận ``không đắt hơn $(s,S)$'' có lặp lại trên $3$ hạt giống không \\ \hline
+        Tham chiếu $1.000$ episode & --- & Mốc so sánh cho các thí nghiệm loại trừ \\ \hline
+        Phần thưởng toàn cục & \texttt{reward\_mode: global} & Câu hỏi 3: cục bộ so với toàn cục \\ \hline
+        Tắt chuẩn hóa theo cặp & \texttt{normalize\_reward\_per\_pair: false} & Câu hỏi 3: có/không chuẩn hóa \\ \hline
+        Phạt SLA kiểu cũ & \texttt{service\_penalty\_mode: demand} & Tác động của việc định cỡ lại hình phạt \\ \hline
+        Actor--Critic chung thân & \texttt{shared\_trunk: true}, một optimizer & Vì sao phải tách hai mạng (Mục~\ref{subsec:ablationTrunk}) \\ \hline
+        Bỏ đặc trưng lịch / cấp kho & \texttt{obs\_drop} & Trạng thái có biến dư thừa không \\ \hline
+        Thêm sự kiện sắp tới & $2$ đặc trưng: số ngày tới sự kiện kế tiếp, có sự kiện trong $7$ ngày & Khắc phục điểm yếu mùa lễ \\ \hline
+        Warm-start & Lịch sử nhu cầu khởi tạo bằng dữ liệu thật & Ảnh hưởng của lịch sử rỗng đầu episode \\ \hline
+        Hold-out mặt hàng & Huấn luyện $24$ mặt hàng, đánh giá $6$ mặt hàng chưa gặp & Câu hỏi 2 (tổng quát hóa) \\
+        \hline
+    \end{tabular}
+\end{table}
+
+Giao thức đánh giá của đợt này cũng được củng cố: baseline tinh chỉnh trên miền
+val (cùng miền dùng để chọn checkpoint IPPO) thay vì miền train; báo cáo kiểm
+định $t$ theo cặp cùng hệ số $d_z$; đánh giá thêm trên các cửa sổ cố định trải
+đều miền test; và dùng khoảng tin cậy bootstrap theo khối tuần cho từng giai
+đoạn nhu cầu. Các công cụ phân tích này đã được áp dụng ngay cho kết quả hiện
+có ở Chương~\ref{chap:chapter4}.
+
+\subsection{Các hướng mở rộng khác}
+
 \begin{itemize}
+    \item Nhân tử Lagrange riêng cho từng cặp: thay vì cố định hệ số
+    $\phi_{dv}$, cập nhật một nhân tử cho mỗi cặp trong lúc huấn luyện để ràng
+    buộc mức phục vụ được thỏa mãn chặt ở từng mặt hàng.
+
+    \item Điều chuyển hàng liên kho: bổ sung hành động chuyển hàng giữa
+    các kho kèm chi phí điều chuyển vào hàm phần thưởng; khi đó không gian hành
+    động và bảng đặc tả tác tử cần được mở rộng tương ứng.
     \item Mở rộng sang cấu trúc đa cấp (multi-echelon): mô hình hóa
     quan hệ cung ứng giữa kho trung tâm và kho khu vực, cho phép tác tử học
     chiến lược điều phối liên kho.
@@ -147,7 +241,7 @@ thực nghiệm, không phải kết luận.
     \item Gán công theo độ trễ giao hàng: chi phí phát sinh ở ngày
     $t$ phần lớn là hệ quả của quyết định đặt hàng ở ngày $t - L$. Hiện việc
     gán công này được phó thác cho GAE với $\gamma = 0{,}99$; một cơ chế liên
-    kết phần thưởng trực tiếp với hành động sinh ra nó, theo hướng của Jeong và
+    kết phần thưởng trực tiếp với hành động sinh ra nó, theo hướng của Nam và
     cộng sự \cite{jeong2026alca}, có thể làm tín hiệu học sắc nét hơn.
 
     \item Tích hợp dự báo nhu cầu: nhúng mô hình dự báo chuỗi thời
@@ -164,35 +258,11 @@ thực nghiệm, không phải kết luận.
     \item Mở rộng quy mô: thử nghiệm với toàn bộ $3.049$ SKU gốc của
     M5 và đánh giá khả năng mở rộng của cơ chế chia sẻ tham số.
 
-    \item Tích hợp lớp điều phối ngôn ngữ (MCP). Model Context Protocol
-    (MCP) là giao thức chuẩn hóa cho phép các mô hình ngôn ngữ lớn (LLM) gọi
-    công cụ bên ngoài thông qua giao thức máy chủ--máy khách. Hệ thống IPPO
-    hiện tại và kiến trúc MCP có thể so sánh theo bốn khía cạnh:
-
-    \begin{table}[htbp]
-        \centering
-        \caption{So sánh kiến trúc IPPO và MCP theo các chiều điều phối}
-        \label{tab:soSanhMCP}
-        \begin{tabular}{|l|p{4.8cm}|p{4.8cm}|}
-            \hline
-            \textbf{Khía cạnh} & \textbf{IPPO (đề tài này)} & \textbf{Kiến trúc MCP} \\
-            \hline
-            Phân công nhiệm vụ & Không có: mỗi tác tử có task cố định (một cặp kho--SKU) & Host/LLM phân công tường minh cho từng server \\
-            \hline
-            Chọn hành động & Mạng chính sách $\pi_\theta(a \mid o)$ ánh xạ quan sát sang hành động & LLM suy luận và chọn tool phù hợp \\
-            \hline
-            Lấy ngữ cảnh & Vector quan sát $43$ chiều từ môi trường & Server cung cấp context qua giao thức chuẩn \\
-            \hline
-            Kết quả trả về & Phần thưởng và trạng thái kế tiếp từ môi trường & Tool result trả về LLM để tiếp tục suy luận \\
-            \hline
-        \end{tabular}
-    \end{table}
-
-    Hai kiến trúc phục vụ hai lớp bài toán khác nhau. IPPO phù hợp khi
-    hành động là số lượng đặt hàng và tín hiệu phản hồi là chi phí --- đây là
-    miền của học tăng cường. MCP phù hợp khi hệ thống cần giao tiếp ngôn ngữ
-    với người dùng, gọi nhiều công cụ đa dạng và tích hợp tri thức bên ngoài.
-    Nếu mở rộng hệ thống thành trợ lý vận hành kho có giao tiếp ngôn ngữ tự
-    nhiên, MCP là lớp điều phối khả dĩ để kết nối LLM với engine IPPO, nhưng
-    nằm ngoài phạm vi khóa luận này.
+    \item Lớp giao tiếp ngôn ngữ qua MCP: dùng Model Context Protocol để
+    một mô hình ngôn ngữ lớn gọi engine IPPO như một công cụ, cho phép người
+    quản lý kho đặt câu hỏi bằng ngôn ngữ tự nhiên (ví dụ mặt hàng nào sắp
+    thiếu) và nhận đề xuất đặt hàng. IPPO vẫn là nơi ra quyết định định lượng;
+    MCP chỉ lo giao tiếp và điều phối công cụ. Một prototype minh họa luồng
+    điều phối này được trình bày ở Phụ lục~\ref{app:mcp}; hướng này không
+    thuộc đóng góp chính của khóa luận.
 \end{itemize}

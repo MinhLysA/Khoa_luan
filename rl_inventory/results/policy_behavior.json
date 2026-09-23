@@ -1,0 +1,152 @@
+{
+  "checkpoint": "checkpoints/best_model_seed42.pth",
+  "episodes": 10,
+  "threshold": 0.85,
+  "behavior": {
+    "IPPO": {
+      "total_cost": 1519997.6566736698,
+      "fill_rate": 0.8979933623492643,
+      "overflow_cost_share": 0.014837303557782268,
+      "bins": [
+        {
+          "cover_days": "[0, 1)",
+          "share": 0.02445296803652968,
+          "mean_action": 2.928854197789065,
+          "p_order": 0.7561995817149686
+        },
+        {
+          "cover_days": "[1, 2)",
+          "share": 0.013312328767123289,
+          "mean_action": 3.0128284283460247,
+          "p_order": 0.9899156204980448
+        },
+        {
+          "cover_days": "[2, 3)",
+          "share": 0.07846666666666667,
+          "mean_action": 1.323785803237858,
+          "p_order": 0.5108995472585282
+        },
+        {
+          "cover_days": "[3, 5)",
+          "share": 0.24833972602739726,
+          "mean_action": 0.9315895150258153,
+          "p_order": 0.38160275362958385
+        },
+        {
+          "cover_days": "[5, 8)",
+          "share": 0.32040091324200914,
+          "mean_action": 0.3269020832917663,
+          "p_order": 0.12205598579405369
+        },
+        {
+          "cover_days": "[8, inf)",
+          "share": 0.31502739726027396,
+          "mean_action": 0.24111550781986058,
+          "p_order": 0.06640286414169964
+        }
+      ],
+      "spearman_cover_action": -0.41956279720246425,
+      "share_max_action": 0.013991780821917809,
+      "pairs_fill_below_threshold": 0.39,
+      "pairs_fill_within_3pp_above_threshold": 0.13666666666666666,
+      "pairs_fill_quantiles": {
+        "0.1": 0.684634281714164,
+        "0.25": 0.8080058321684096,
+        "0.5": 0.8748794770172351,
+        "0.75": 0.9214060625868319,
+        "0.9": 0.9514388802885476
+      }
+    },
+    "(s,S) (cùng mức PV)": {
+      "total_cost": 1768421.8850209774,
+      "fill_rate": 0.8998629893590003,
+      "overflow_cost_share": 0.0886994041782143,
+      "bins": [
+        {
+          "cover_days": "[0, 1)",
+          "share": 0.007650228310502283,
+          "mean_action": 3.751104213919064,
+          "p_order": 0.9935537782022204
+        },
+        {
+          "cover_days": "[1, 2)",
+          "share": 0.02053972602739726,
+          "mean_action": 1.8209061402338713,
+          "p_order": 0.7767551465030457
+        },
+        {
+          "cover_days": "[2, 3)",
+          "share": 0.0504,
+          "mean_action": 1.4012647677031238,
+          "p_order": 0.685148945422918
+        },
+        {
+          "cover_days": "[3, 5)",
+          "share": 0.20496347031963472,
+          "mean_action": 0.6948203265979014,
+          "p_order": 0.3445362799919799
+        },
+        {
+          "cover_days": "[5, 8)",
+          "share": 0.22593333333333335,
+          "mean_action": 0.6352421411739027,
+          "p_order": 0.2811513478336439
+        },
+        {
+          "cover_days": "[8, inf)",
+          "share": 0.49051324200913243,
+          "mean_action": 0.6768718628516958,
+          "p_order": 0.20818935343094178
+        }
+      ],
+      "spearman_cover_action": -0.18446916683140607,
+      "share_max_action": 0.03990958904109589,
+      "pairs_fill_below_threshold": 0.06333333333333334,
+      "pairs_fill_within_3pp_above_threshold": 0.06666666666666667,
+      "pairs_fill_quantiles": {
+        "0.1": 0.8676836894851682,
+        "0.25": 0.9000001865676888,
+        "0.5": 0.9219779092191165,
+        "0.75": 0.9424228095911992,
+        "0.9": 0.9585634636146352
+      }
+    }
+  },
+  "permutation_importance": {
+    "Tồn kho & vị thế tồn kho": {
+      "n_features": 2,
+      "delta_cost_percent": 93.68291070015505,
+      "delta_fill_pp": -20.411308103470706
+    },
+    "Lịch sử cầu 7 ngày": {
+      "n_features": 7,
+      "delta_cost_percent": 49.88369867236961,
+      "delta_fill_pp": -12.203256781491334
+    },
+    "Hàng đang về (pipeline)": {
+      "n_features": 3,
+      "delta_cost_percent": 7.756682501740042,
+      "delta_fill_pp": -0.3898756207095899
+    },
+    "Fill rate 30 ngày": {
+      "n_features": 1,
+      "delta_cost_percent": 16.733462956171884,
+      "delta_fill_pp": -0.1842299326470953
+    },
+    "Đặc trưng quy mô": {
+      "n_features": 1,
+      "delta_cost_percent": 97.89002768350234,
+      "delta_fill_pp": 0.08056941727241362
+    },
+    "Tín hiệu cấp kho": {
+      "n_features": 2,
+      "delta_cost_percent": 2.7722252544669423,
+      "delta_fill_pp": 0.4453731706376085
+    },
+    "Lịch (thứ, SNAP, sự kiện, tháng)": {
+      "n_features": 27,
+      "delta_cost_percent": 3.451888542182524,
+      "delta_fill_pp": -0.779082591986624
+    }
+  }
+}

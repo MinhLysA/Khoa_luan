@@ -1,22 +1,31 @@
 \babel@toc {vietnamese}{}\relax 
 \addvspace {10\p@ }
 \contentsline {table}{\numberline {1.1}{\ignorespaces Phân loại dạng nhu cầu của $30.490$ chuỗi cửa hàng--mặt hàng trong bộ dữ liệu M5 theo tiêu chí của Syntetos và cộng sự \blx@tocontentsinit {0}\cite {syntetos2005categorization}}}{2}{table.caption.4}%
-\contentsline {table}{\numberline {1.2}{\ignorespaces Các nhóm chi phí trong bài toán tồn kho đang xét}}{3}{table.caption.5}%
+\contentsline {table}{\numberline {1.2}{\ignorespaces Bốn thành phần chi phí vận hành và mục tiêu mức phục vụ trong bài toán tồn kho đang xét}}{3}{table.caption.5}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {2.1}{\ignorespaces Đối chiếu khóa luận với hai công trình gần nhất cùng bối cảnh}}{17}{table.caption.6}%
+\contentsline {table}{\numberline {2.1}{\ignorespaces Đối chiếu khóa luận với hai công trình gần nhất cùng bối cảnh}}{18}{table.caption.6}%
 \contentsline {table}{\numberline {2.2}{\ignorespaces So sánh tổng quan các công trình nghiên cứu liên quan}}{18}{table.caption.7}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {3.1}{\ignorespaces Đối chiếu biến trạng thái và biểu diễn trong vector quan sát}}{21}{table.caption.8}%
-\contentsline {table}{\numberline {3.2}{\ignorespaces Nhu cầu và sức chứa của từng kho trong cấu hình thực nghiệm}}{23}{table.caption.9}%
-\contentsline {table}{\numberline {3.3}{\ignorespaces Đặc tả tác tử trong hệ thống đề xuất}}{25}{table.caption.10}%
-\contentsline {table}{\numberline {3.4}{\ignorespaces Tham số chi phí trong môi trường mô phỏng}}{26}{table.caption.11}%
-\contentsline {table}{\numberline {3.5}{\ignorespaces Siêu tham số huấn luyện}}{29}{table.caption.12}%
+\contentsline {table}{\numberline {3.1}{\ignorespaces Đối chiếu biến trạng thái và biểu diễn trong vector quan sát}}{24}{table.caption.9}%
+\contentsline {table}{\numberline {3.2}{\ignorespaces Ánh xạ các thành phần MDP vào bài toán tồn kho đa kho}}{26}{table.caption.10}%
+\contentsline {table}{\numberline {3.3}{\ignorespaces Nhu cầu và sức chứa của từng kho trong cấu hình thực nghiệm}}{27}{table.caption.12}%
+\contentsline {table}{\numberline {3.4}{\ignorespaces Đặc tả tác tử trong hệ thống đề xuất}}{30}{table.caption.14}%
+\contentsline {table}{\numberline {3.5}{\ignorespaces Tham số chi phí trong môi trường mô phỏng}}{33}{table.caption.15}%
+\contentsline {table}{\numberline {3.6}{\ignorespaces Siêu tham số huấn luyện}}{36}{table.caption.16}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {4.1}{\ignorespaces Đặc trưng nhu cầu của tập thực nghiệm so với bộ dữ liệu gốc}}{32}{table.caption.13}%
-\contentsline {table}{\numberline {4.2}{\ignorespaces Cấu hình môi trường mô phỏng}}{32}{table.caption.14}%
-\contentsline {table}{\numberline {4.3}{\ignorespaces Tham số tối ưu của các chính sách đối chứng sau tìm kiếm lưới}}{33}{table.caption.15}%
-\contentsline {table}{\numberline {4.4}{\ignorespaces Kết quả trên miền đánh giá (trung bình $\pm $ độ lệch chuẩn; IPPO trên $90$ lần đánh giá gộp $3$ hạt giống, baseline trên $30$ episode). Chi phí tính bằng đơn vị tiền của mô hình.}}{36}{table.caption.17}%
-\contentsline {table}{\numberline {4.5}{\ignorespaces So sánh ở cùng mức phục vụ: cấu hình rẻ nhất của mỗi chính sách đối chứng đạt fill rate $\ge 90{,}07\%$ (hạt giống $42$)}}{39}{table.caption.19}%
-\contentsline {table}{\numberline {4.6}{\ignorespaces Hiệu năng theo nhóm quy mô nhu cầu trên miền đánh giá (hạt giống $42$). Chi phí cục bộ (gồm thành phần định hướng mức phục vụ) tính trung bình cho mỗi cặp trong một episode.}}{40}{table.caption.21}%
+\contentsline {table}{\numberline {4.1}{\ignorespaces Đặc trưng nhu cầu của tập thực nghiệm so với bộ dữ liệu gốc}}{38}{table.caption.17}%
+\contentsline {table}{\numberline {4.2}{\ignorespaces Ba miền dữ liệu và vai trò của từng miền}}{38}{table.caption.18}%
+\contentsline {table}{\numberline {4.3}{\ignorespaces Cấu hình môi trường mô phỏng}}{39}{table.caption.19}%
+\contentsline {table}{\numberline {4.4}{\ignorespaces Tham số tối ưu của các chính sách đối chứng sau tìm kiếm lưới}}{40}{table.caption.20}%
+\contentsline {table}{\numberline {4.5}{\ignorespaces Kết quả trên miền đánh giá (trung bình $\pm $ độ lệch chuẩn; IPPO trên $90$ lần đánh giá gộp $3$ hạt giống, baseline trên $30$ episode). Chi phí tính bằng đơn vị tiền của mô hình.}}{43}{table.caption.22}%
+\contentsline {table}{\numberline {4.6}{\ignorespaces So sánh ở cùng mức phục vụ: cấu hình rẻ nhất của mỗi chính sách đối chứng đạt fill rate $\ge 90{,}07\%$ (hạt giống $42$)}}{46}{table.caption.24}%
+\contentsline {table}{\numberline {4.7}{\ignorespaces Hiệu năng theo nhóm quy mô nhu cầu trên miền đánh giá (hạt giống $42$). Chi phí cục bộ (gồm thành phần định hướng mức phục vụ) tính trung bình cho mỗi cặp trong một episode.}}{47}{table.caption.26}%
+\contentsline {table}{\numberline {4.8}{\ignorespaces Thực nghiệm B1: fill rate và chi phí vận hành trung bình mỗi ngày theo giai đoạn nhu cầu ($30$ episode, miền test). Cột cuối là chênh lệch chi phí của IPPO so với $(s,S)$ cùng mức phục vụ (âm là IPPO rẻ hơn).}}{51}{table.caption.27}%
+\contentsline {table}{\numberline {4.9}{\ignorespaces Chênh lệch chi phí mỗi ngày của IPPO và khoảng tin cậy $95\%$ (bootstrap theo khối $7$ ngày). Dấu $^{*}$: khoảng tin cậy không chứa $0$.}}{52}{table.caption.29}%
+\contentsline {table}{\numberline {4.10}{\ignorespaces Thực nghiệm B2: fill rate (và chi phí mỗi ngày) trước, trong và sau sốc cầu $28$ ngày}}{53}{table.caption.30}%
+\contentsline {table}{\numberline {4.11}{\ignorespaces Tầm quan trọng của các nhóm đặc trưng trạng thái (xáo trộn nhóm đặc trưng giữa các cặp ở mỗi bước; riêng nhóm lịch được thay bằng lịch của một ngày ngẫu nhiên)}}{56}{table.caption.33}%
+\contentsline {table}{\numberline {4.12}{\ignorespaces Chênh lệch tổng chi phí của IPPO theo đơn giá ($c_{dh} = 5$). Mỗi ô: so với $(s,S)$ trực tiếp / so với $(s,S)$ cùng mức phục vụ; âm là IPPO rẻ hơn.}}{56}{table.caption.34}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {5.1}{\ignorespaces So sánh kiến trúc IPPO và MCP theo các chiều điều phối}}{48}{table.caption.22}%
+\contentsline {table}{\numberline {5.1}{\ignorespaces Đợt thực nghiệm bổ sung: mã nguồn đã sẵn sàng, đang chờ huấn luyện}}{64}{table.caption.35}%
+\contentsline {table}{\numberline {5.3}{\ignorespaces So sánh kiến trúc IPPO và MCP theo các chiều điều phối}}{70}{table.caption.38}%
+\contentsline {table}{\numberline {5.4}{\ignorespaces Công cụ của prototype MCP}}{71}{table.caption.39}%

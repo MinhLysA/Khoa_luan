@@ -39,6 +39,7 @@ def main():
     ap.add_argument("--config", type=str, default="config.yaml")
     ap.add_argument("--checkpoint", type=str, default="checkpoints/best_model.pth")
     ap.add_argument("--episodes", type=int, default=30)
+    ap.add_argument("--tag", type=str, default="")
     args = ap.parse_args()
 
     cfg = yaml.safe_load(open(ROOT / args.config, encoding="utf-8"))
@@ -123,7 +124,8 @@ def main():
 
     out = {"n_pairs": n_pairs, "episodes": args.episodes, "groups": rows,
            "fill_rate_all_pairs_std": float(fill_pair.std())}
-    out_path = ROOT / paths["results_dir"] / "scale_group_analysis.json"
+    sfx = f"_{args.tag}" if args.tag else ""
+    out_path = ROOT / paths["results_dir"] / f"scale_group_analysis{sfx}.json"
     out_path.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nDa luu {out_path}")
 
@@ -149,10 +151,49 @@ def main():
     axes[1].tick_params(axis="x", rotation=12)
 
     plt.tight_layout()
-    fig_path = ROOT / paths["results_dir"] / "scale_group_analysis.png"
+    fig_path = ROOT / paths["results_dir"] / f"scale_group_analysis{sfx}.png"
     plt.savefig(fig_path, dpi=140)
     plt.close()
     print(f"Da luu {fig_path}")
+
+    bang_4_nhom(cfg, env, args, ROOT / paths["results_dir"])
+
+
+NHOM_4 = [("Rất thấp (<0,5)", 0.0, 0.5), ("Thấp (0,5-2)", 0.5, 2.0),
+          ("Trung bình (2-10)", 2.0, 10.0), ("Cao (>=10)", 10.0, np.inf)]
+
+
+def bang_4_nhom(cfg, env, args, results_dir):
+    """Bang theo 4 nhom quy mo cau (nguong co dinh) cho IPPO va (s,S) tinh
+    chinh truc tiep - dung cho Bang 'Hieu nang theo nhom quy mo' o Chuong 4.
+    fill = fill rate GOP cua nhom (tong thieu / tong cau); cost_per_pair = chi
+    phi cuc bo (gom phat muc phuc vu) trung binh moi cap moi episode."""
+    from common import make_policies
+    pols = make_policies(cfg, env, args.checkpoint, include_iso=False)
+    base_seed = cfg["eval"].get("seed", 1000)
+    md = env.mean_demand
+    out = {}
+    for name in ["IPPO", "(s,S)"]:
+        cost = np.zeros(env.n_pairs); dem = np.zeros(env.n_pairs); st = np.zeros(env.n_pairs)
+        for i in range(args.episodes):
+            obs, _ = env.reset(seed=base_seed + i)
+            while True:
+                obs, _, te, tr, info = env.step(pols[name](obs, env))
+                cost += -info["local_rewards"]; dem += info["demand_pairs"]
+                st += info["stockout_pairs"]
+                if te or tr:
+                    break
+        out[name] = {}
+        for ten, lo, hi in NHOM_4:
+            m = (md >= lo) & (md < hi)
+            out[name][ten] = {"n_pairs": int(m.sum()),
+                              "fill": float(1 - st[m].sum() / max(dem[m].sum(), 1e-9)),
+                              "cost_per_pair": float(cost[m].mean() / args.episodes)}
+        print(name, {k: f"{v['fill']:.1%}" for k, v in out[name].items()})
+    suffix = f"_{args.tag}" if args.tag else ""
+    path = results_dir / f"scale_group_v2{suffix}.json"
+    path.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(f"Da luu {path}")
 
 
 if __name__ == "__main__":

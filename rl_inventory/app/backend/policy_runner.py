@@ -46,6 +46,19 @@ def load_ippo(checkpoint_path: str, env: MultiWarehouseInventoryEnv,
     return action_fn, agent
 
 
+# Thu tu uu tien checkpoint mac dinh: mo hinh chinh moi -> 3 seed ban truoc -> ban cu.
+DEFAULT_CHECKPOINTS = ["best_model_main_s42.pth", "best_model_seed42.pth", "best_model.pth"]
+
+
+def default_checkpoint(checkpoint_dir: Path) -> Optional[Path]:
+    """Checkpoint IPPO mac dinh cho app/MCP (khong lay theo thu tu ten file,
+    vi best_model.pth la ban chay thu cu)."""
+    for name in DEFAULT_CHECKPOINTS:
+        if (checkpoint_dir / name).exists():
+            return checkpoint_dir / name
+    return None
+
+
 def load_baseline_params(results_dir: Path) -> dict:
     p = results_dir / "baseline_params.json"
     return json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}

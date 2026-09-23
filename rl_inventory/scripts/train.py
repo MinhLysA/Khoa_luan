@@ -21,7 +21,7 @@ PHIEN BAN v3:
   [V3-2] Nap them price_per_pair.npy (neu co) de dua vao chi phi thieu hang
          theo gia that.
 
-PHIEN BAN P0 (xem README_CLAUDE_CODE_KLTN.md):
+PHIEN BAN P0 (xem pham_vi_khoa_luan.md muc 9):
   [P0-4] "fill_rate" ghi nhat ky (ca train lan eval) nay la TRUE EPISODE FILL
          RATE = 1 - tong_thieu_hang/tong_cau CUA CA EPISODE, khong con la
          trung binh cong cua tin hieu fill rate cua so truot 30 ngay tai
@@ -290,6 +290,7 @@ def train():
                 "cost_overflow": 0.0, "cost_service_penalty": 0.0}
     last_metrics = {}
     last_eval = (float("nan"), float("nan"), float("nan"))
+    last_ckpt_ep = last_latest_ep = episode_count
 
     while episode_count < total_episodes:
         buffer.reset()
@@ -427,8 +428,16 @@ def train():
         if last_metrics.get("approx_kl", 0) > 0.05:
             print("  [!] approx_kl > 0.05 -> policy nhay qua manh, giam lr_actor.")
 
-        if episode_count % 200 == 0 and episode_count > 0:
+        # Moi lan cap nhat PPO ung voi ~2,8 episode nen episode_count co the
+        # nhay qua dung moc 200 -> so sanh theo khoang cach tu lan luu truoc.
+        if episode_count // 200 > last_ckpt_ep // 200:
             agent.save(str(checkpoint_dir / f"checkpoint_ep{episode_count}{suffix}.pth"))
+            last_ckpt_ep = episode_count
+        # Checkpoint "moi nhat" moi ~25 episode: khi Colab ngat giua chung,
+        # --resume chi mat toi da ~25 episode thay vi toi da 200.
+        if episode_count - last_latest_ep >= 25:
+            agent.save(str(checkpoint_dir / f"checkpoint_latest{suffix}.pth"))
+            last_latest_ep = episode_count
 
     agent.save(str(checkpoint_dir / f"final_model{suffix}.pth"))
     if not (checkpoint_dir / f"best_model{suffix}.pth").exists():

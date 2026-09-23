@@ -61,6 +61,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", type=str, default="config.yaml")
     ap.add_argument("--episodes", type=int, default=3)
+    # [P1-1] Tinh chinh tren mien VAL (mac dinh) - cung mien IPPO dung de chon
+    # checkpoint - thay vi mien train. "train" giu lai de tai lap ket qua cu.
+    ap.add_argument("--tune_mode", choices=["train", "val"], default="val")
     args = ap.parse_args()
 
     cfg = yaml.safe_load(open(ROOT / args.config, encoding="utf-8"))
@@ -74,55 +77,52 @@ def main():
     if p.exists():
         calendar_features = np.load(str(p))
 
-    # Tinh chinh tren mien HUAN LUYEN, khong dung mien danh gia
+    # Tinh chinh tren mien train/val, KHONG BAO GIO tren mien test
     env = MultiWarehouseInventoryEnv(config=env_cfg, demand_data=demand_data,
-                                     calendar_features=calendar_features, mode="train")
+                                     calendar_features=calendar_features,
+                                     mode=args.tune_mode)
+    print(f"Tinh chinh baseline tren mien {args.tune_mode.upper()}")
     LT = env.tg_giao_tb
     seed = 7777
 
-    results = {}
-
-    # -- EOQ -----------------------------------------------------------------
-    print("\n[EOQ] tim kiem luoi tren (q_factor, lead_time)")
-    best = (float("inf"), None)
-    for qf, lt in itertools.product([0.5, 0.75, 1.0, 1.5, 2.0], [1.0, LT, 3.0]):
-        pol = EOQPolicy(env.n_pairs, ordering_cost=env.cp_dh, holding_cost=env.cp_lk,
-                        lead_time=lt, q_factor=qf)
-        c, f = danh_gia(env, pol, args.episodes, seed)
-        print(f"   q_factor={qf:<5} lead_time={lt:<4} -> cost={c:>13,.0f}  fill={f:6.1%}")
-        if c < best[0]:
-            best = (c, dict(q_factor=qf, lead_time=lt))
-    results["EOQ"] = best[1]
-    print(f"   => tot nhat: {best[1]}  cost={best[0]:,.0f}")
-
-    # -- (s,S) ---------------------------------------------------------------
-    print("\n[(s,S)] tim kiem luoi tren (service_level, q_factor, lead_time)")
-    best = (float("inf"), None)
-    for sl, qf, lt in itertools.product([0.70, 0.80, 0.90, 0.95, 0.99],
-                                        [0.5, 1.0, 1.5], [1.0, LT, 3.0]):
-        pol = SsPolicy(env.n_pairs, service_level=sl, lead_time=lt, q_factor=qf,
-                       ordering_cost=env.cp_dh, holding_cost=env.cp_lk)
-        c, f = danh_gia(env, pol, args.episodes, seed)
-        if c < best[0]:
-            best = (c, dict(service_level=sl, q_factor=qf, lead_time=lt))
-    print(f"   => tot nhat: {best[1]}  cost={best[0]:,.0f}")
-    results["(s,S)"] = best[1]
-
-    # -- Newsvendor ----------------------------------------------------------
-    print("\n[Newsvendor] tim kiem luoi tren (critical_ratio, lead_time)")
-    best = (float("inf"), None)
-    cr_ly_thuyet = env.cp_th / (env.cp_th + env.cp_lk)
-    for cr, lt in itertools.product([0.60, 0.75, 0.85, cr_ly_thuyet, 0.95],
-                                    [1.0, LT, 3.0]):
-        pol = NewsvendorPolicy(env.n_pairs, holding_cost=env.cp_lk,
-                               stockout_cost=env.cp_th, lead_time=lt, cr_override=cr)
-        c, f = danh_gia(env, pol, args.episodes, seed)
-        if c < best[0]:
-            best = (c, dict(cr_override=float(cr), lead_time=lt))
-    print(f"   => tot nhat: {best[1]}  cost={best[0]:,.0f}")
-    print(f"   (critical ratio ly thuyet p/(p+h) = {cr_ly_thuyet:.4f})")
-    results["Newsvendor"] = best[1]
-
+    # [P3-3] Cung tieu chi voi viec chon checkpoint IPPO: chi phi THAP NHAT
+    # trong so cac cau hinh dat fill rate >= muc_dv (85%) tren mien tinh chinh.
+    # Neu khong cau hinh nao dat, lay cau hinh co fill rate cao nhat.
+    luoi = {
+        "EOQ": (EOQPolicy, [dict(q_factor=qf, lead_time=lt, ordering_cost=env.cp_dh,
+                                 holding_cost=env.cp_lk)
+                            for qf, lt in itertools.product([0.5, 1.0, 1.5, 2.0, 3.0],
+                                                            [1.0, LT, 3.0, 4.0, 5.0])]),
+        "(s,S)": (SsPolicy, [dict(service_level=sl, q_factor=qf, lead_time=lt,
+                                  ordering_cost=env.cp_dh, holding_cost=env.cp_lk)
+                             for sl, qf, lt in itertools.product(
+                                 [0.70, 0.80, 0.90, 0.95, 0.99], [0.5, 1.0, 1.5],
+                                 [1.0, LT, 3.0, 4.0])]),
+        "Newsvendor": (NewsvendorPolicy, [dict(cr_override=float(cr), lead_time=lt,
+                                               holding_cost=env.cp_lk, stockout_cost=env.cp_th)
+                                          for cr, lt in itertools.product(
+                                              [0.60, 0.75, 0.85, 0.90, 0.95, 0.99],
+                                              [1.0, LT, 3.0, 4.0])]),
+    }
+    an = {"ordering_cost", "holding_cost", "stockout_cost"}
+    results, chi_tiet = {}, {}
+    for ten, (cls, grid) in luoi.items():
+        print(f"\n[{ten}] quet {len(grid)} cau hinh")
+        ung_vien = []
+        for kw in grid:
+            c, f = danh_gia(env, cls(env.n_pairs, **kw), args.episodes, seed)
+            ung_vien.append((c, f, {k: v for k, v in kw.items() if k not in an}))
+        dat = [u for u in ung_vien if u[1] >= env.muc_dv]
+        c, f, kw = min(dat, key=lambda u: u[0]) if dat else max(ung_vien, key=lambda u: u[1])
+        results[ten] = kw
+        chi_tiet[ten] = {"cost": c, "fill": f, "feasible": bool(dat),
+                         "n_feasible": len(dat), "n_grid": len(grid)}
+        print(f"   => {kw}  cost={c:,.0f}  fill={f:.1%}  "
+              f"({'dat' if dat else 'KHONG dat'} fill >= {env.muc_dv:.0%}; "
+              f"{len(dat)}/{len(grid)} cau hinh dat)")
+    (ROOT / paths["results_dir"] / "baseline_tuning.json").write_text(
+        json.dumps({"tune_mode": args.tune_mode, "muc_dv": env.muc_dv,
+                    "chon": chi_tiet}, indent=2, ensure_ascii=False), encoding="utf-8")
     out = ROOT / paths["results_dir"] / "baseline_params.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(results, indent=2), encoding="utf-8")

@@ -1,10 +1,10 @@
 # ============================================================
 # config.yaml - Cau hinh du an IPPO Inventory  (PHIEN BAN v2 + v3)
 # Cac thay doi so voi ban cu duoc danh dau [V2-n]; xem
-# BAO_CAO_SUA_LOI.md de biet ly do tung thay doi.
+# pham_vi_khoa_luan.md muc 9 de biet ly do tung thay doi.
 # [V3-1] Chia 3 mien du lieu train/val/test (thay vi 2 mien train/test).
 # [V3-2] Chi phi thieu hang co the lay tu gia ban that cua M5 (sell_prices.csv)
-#        thay vi hang so cp_th dung chung. Xem README.md muc "Chi phi thieu
+#        thay vi hang so cp_th dung chung. Xem pham_vi_khoa_luan.md muc 3.5 "Chi phi thieu
 #        hang theo gia that" de biet chi tiet + gia dinh kinh te.
 # ============================================================
 
@@ -45,9 +45,8 @@ env:
   # cua Walmart, nen goi ket qua bang tien "that" (USD) la mot khang dinh
   # qua muc dua tren mot gia dinh (margin_ratio) khong kiem chung duoc. Thi
   # nghiem chinh dung hang so cp_th chung cho moi cap, bao cao bang "don vi
-  # chi phi mo phong chuan hoa" thay vi USD. Tin hieu gia (price_series) VAN
-  # duoc dua vao quan sat (chi bao giam gia, xem obs) du co bat co nay hay
-  # khong - chi rieng CONG THUC CHI PHI THIEU HANG la quay ve hang so.
+  # chi phi mo phong chuan hoa" thay vi USD. Tin hieu gia trong quan sat la
+  # mot co RIENG (include_price_signal, dang tat -> quan sat 43 chieu).
   # Doi true de bat lai lam ablation rieng (khong dung cho ket qua chinh).
   use_real_price_stockout: false
   margin_ratio: 0.3
@@ -74,6 +73,28 @@ env:
   # khong hoi tu, rat dang dua vao Chuong 4.
   normalize_reward_per_pair: true
   reward_scale: 1.0
+
+  # [P2-2] Cach dinh co phat muc phuc vu (SLA 85%) cho tung cap:
+  #   "demand"     : phi*cp_th*mean_demand*hut  (ban cu - ket qua 3 seed x 1000
+  #                  episode dau tien). SKU ban cham bi phat rat nhe -> tac tu hy
+  #                  sinh chung (39% cap duoi 85%, xem policy_behavior.json).
+  #   "normalized" : phi*(cp_th*mean_demand + cp_dh)*hut -> sau chuan hoa theo
+  #                  cap, MOI cap chiu cung muc phat phi*hut. CAU HINH CHINH MOI.
+  service_penalty_mode: normalized
+  # [P2-3] Khoi tao lich su cau bang du lieu that truoc start_day (khong de 0).
+  warm_start_history: false
+  # [P2-5] Tat nhom dac trung (dat = 0), vd [calendar] hoac [warehouse] - ablation.
+  obs_drop: []
+  # [P2-4] Them 2 dac trung lich co tinh du bao (so ngay toi su kien ke tiep).
+  include_event_lookahead: false
+  # [P2-1] Chi dung tap con SKU (thi nghiem hold-out). null = ca 30 SKU.
+  sku_indices: null
+  # [P3-1] "local": moi tac tu nhan phan thuong cuc bo cua cap minh (chinh).
+  #        "global": moi tac tu nhan cung phan thuong cua ca mang (ablation RQ3).
+  reward_mode: local
+  # [P3-2] Danh gia cuoi tren TOAN BO mien test [1450, 1941) = 491 ngay, nhu
+  # cau co dinh, chi lap hat giong thoi gian giao hang (khong chong lan cua so).
+  test_full_horizon: true
 
   # [V3-1] 3 mien rieng biet, khong chong lan: train [0,split_day),
   # val [split_day,val_day) dung de chon best_model trong luc train,
@@ -123,7 +144,10 @@ ppo:
   # khop voi rang buoc that su cua bai toan (fill rate >= 85%).
   min_fill_to_save:    0.85
   normalize_adv_per_pair: true
-  total_episodes: 5000
+  # [P2-7] true = Actor/Critic dung chung than mang + 1 optimizer (kien truc v1)
+  # - CHI dung cho ablation, khong dung cho ket qua chinh.
+  shared_trunk: false
+  total_episodes: 4000
 
 eval:
   n_episodes: 30

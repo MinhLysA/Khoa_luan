@@ -2,8 +2,14 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Mô hình khái niệm của bài toán bổ sung hàng đa kho}}{21}{figure.caption.8}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Vòng tương tác học tăng cường của một tác tử trong môi trường kho. Cả $300$ tác tử chạy vòng này đồng thời mỗi ngày với cùng $\theta , \phi $.}}{27}{figure.caption.11}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Kiến trúc đa tác tử: $300$ tác tử (kho $w$, mặt hàng $j$) dùng chung một chính sách, tương tác gián tiếp qua sức chứa kho}}{29}{figure.caption.13}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {4.1}{\ignorespaces Diễn biến huấn luyện qua $1.000$ episode (hạt giống $42$): (a) phần thưởng tích lũy; (b) tỷ lệ đáp ứng nhu cầu; (c) entropy của chính sách; (d) explained variance của Critic}}{35}{figure.caption.16}%
-\contentsline {figure}{\numberline {4.2}{\ignorespaces So sánh bốn phương pháp trên miền đánh giá: (a) tổng chi phí vận hành; (b) tỷ lệ đáp ứng nhu cầu; (c) cơ cấu chi phí thành phần}}{37}{figure.caption.18}%
-\contentsline {figure}{\numberline {4.3}{\ignorespaces Đường đánh đổi chi phí --- mức phục vụ. Dấu chữ thập xám: cấu hình tối thiểu chi phí; dấu tròn: cấu hình ở cùng mức phục vụ với IPPO}}{40}{figure.caption.20}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Diễn biến huấn luyện qua $1.000$ episode (hạt giống $42$): (a) phần thưởng tích lũy; (b) tỷ lệ đáp ứng nhu cầu; (c) entropy của chính sách; (d) explained variance của Critic}}{42}{figure.caption.21}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces So sánh bốn phương pháp trên miền đánh giá: (a) tổng chi phí vận hành; (b) tỷ lệ đáp ứng nhu cầu; (c) cơ cấu chi phí thành phần}}{44}{figure.caption.23}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Đường đánh đổi chi phí --- mức phục vụ. Dấu chữ thập xám: cấu hình tối thiểu chi phí; dấu tròn: cấu hình ở cùng mức phục vụ với IPPO}}{46}{figure.caption.25}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Thực nghiệm B1: (a) fill rate của các chính sách theo giai đoạn nhu cầu; (b) chênh lệch chi phí mỗi ngày của IPPO so với hai baseline ở cùng mức phục vụ}}{51}{figure.caption.28}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces Thực nghiệm B2: fill rate theo ngày (trung bình trượt $7$ ngày) quanh cú sốc cầu; vùng tô đỏ là $28$ ngày bị sốc}}{53}{figure.caption.31}%
+\contentsline {figure}{\numberline {4.6}{\ignorespaces (a) Xác suất đặt hàng theo số ngày tồn kho; (b) phân bố fill rate của $300$ cặp; (c) mức tăng chi phí khi xáo trộn từng nhóm đặc trưng trạng thái}}{55}{figure.caption.32}%
 \addvspace {10\p@ }

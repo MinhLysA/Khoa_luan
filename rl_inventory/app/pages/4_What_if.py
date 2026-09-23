@@ -56,7 +56,8 @@ c1, c2 = st.columns(2)
 seed = c1.number_input("Seed", 0, 10**6, 1000)
 so_ngay = c2.number_input("Số ngày", 10, 365, 90, step=10)
 ckpts = sorted((ROOT / "checkpoints").glob("*.pth"))
-ten_ckpt = ckpts[0].name if ckpts else None
+_mac_dinh = policy_runner.default_checkpoint(ROOT / "checkpoints")
+ten_ckpt = _mac_dinh.name if _mac_dinh else None
 
 if st.button("▶️ Chạy so sánh what-if", type="primary"):
     overrides = {"lead_time_min": int(lead_min), "lead_time_max": int(lead_max),

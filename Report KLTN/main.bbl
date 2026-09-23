@@ -100,43 +100,19 @@
       \verb 10.1016/j.ijforecast.2021.07.007
       \endverb
     \endentry
-    \entry{m5dataset}{misc}{}{}
-      \name{author}{5}{}{%
-        {{hash=39eccf9cf29d265d6a211cd4508a49d6}{%
-           family={Howard},
-           familyi={H\bibinitperiod},
-           given={Addison},
-           giveni={A\bibinitperiod}}}%
-        {{hash=c0efcabd0648dc8dcce1be116d9aa99f}{%
-           family={Vandeput},
-           familyi={V\bibinitperiod},
-           given={Nicolas},
-           giveni={N\bibinitperiod}}}%
-        {{hash=8896718ddcea95d576c297b04748900a}{%
-           family={{Makridakis, Spyros}},
-           familyi={M\bibinitperiod}}}%
-        {{hash=0c0bc746da3924f3c88623dc1928aaed}{%
-           family={{Assimakopoulos, Vassilios}},
-           familyi={A\bibinitperiod}}}%
-        {{hash=8077945a12a2e8927029ffec0d5ff474}{%
-           family={{inversion}},
-           familyi={i\bibinitperiod}}}%
+    \entry{m5dataset}{online}{}{}
+      \list{organization}{1}{%
+        {Kaggle}%
       }
-      \strng{namehash}{e96d2a6f03701abe22234748538c5749}
-      \strng{fullhash}{6b530106f05cd865a879db1bcc5fba5b}
-      \strng{fullhashraw}{6b530106f05cd865a879db1bcc5fba5b}
-      \strng{bibnamehash}{6b530106f05cd865a879db1bcc5fba5b}
-      \strng{authorbibnamehash}{6b530106f05cd865a879db1bcc5fba5b}
-      \strng{authornamehash}{e96d2a6f03701abe22234748538c5749}
-      \strng{authorfullhash}{6b530106f05cd865a879db1bcc5fba5b}
-      \strng{authorfullhashraw}{6b530106f05cd865a879db1bcc5fba5b}
       \field{sortinit}{4}
       \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
-      \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
-      \field{howpublished}{Kaggle competition}
       \field{title}{{M5} Forecasting -- Accuracy}
+      \field{urlday}{1}
+      \field{urlmonth}{9}
+      \field{urlyear}{2026}
       \field{year}{2020}
+      \field{urldateera}{ce}
       \verb{urlraw}
       \verb https://www.kaggle.com/competitions/m5-forecasting-accuracy
       \endverb
@@ -803,7 +779,6 @@
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{eprinttype}{arXiv}
-      \field{howpublished}{arXiv preprint arXiv:2011.09533}
       \field{title}{Is independent learning all you need in the {StarCraft} multi-agent challenge?}
       \field{year}{2020}
       \verb{eprint}
@@ -899,30 +874,54 @@
       \field{pages}{11\bibrangedash 23}
       \range{pages}{13}
       \verb{doi}
-      \verb 10.1504/IJSPM.2026.10077092
+      \verb 10.1504/IJSPM.2026.152575
       \endverb
       \keyw{anh}
     \endentry
-    \entry{jeong2026alca}{misc}{}{}
-      \name{author}{1}{}{%
-        {{hash=4fb36b7ad29d06ce63d2a0c6a8d9fb6c}{%
-           family={{Nhóm tác giả}},
-           familyi={N\bibinitperiod}}}%
+    \entry{jeong2026alca}{online}{}{}
+      \name{author}{5}{}{%
+        {{hash=35ac2101108f60aa0ec111a6f60f7e22}{%
+           family={Nam},
+           familyi={N\bibinitperiod},
+           given={Huijung},
+           giveni={H\bibinitperiod}}}%
+        {{hash=4b89eb9681bc3884e3b7c6ee99fea5a6}{%
+           family={Im},
+           familyi={I\bibinitperiod},
+           given={Seongil},
+           giveni={S\bibinitperiod}}}%
+        {{hash=56f3627b548e09572712e4c06940e6cd}{%
+           family={Lee},
+           familyi={L\bibinitperiod},
+           given={Junseo},
+           giveni={J\bibinitperiod}}}%
+        {{hash=44241979cbf0424459276d26ea21ef90}{%
+           family={Shin},
+           familyi={S\bibinitperiod},
+           given={Changhwan},
+           giveni={C\bibinitperiod}}}%
+        {{hash=6fa56e2049f2884e2309a4617ffd6652}{%
+           family={Ju},
+           familyi={J\bibinitperiod},
+           given={Hyunsu},
+           giveni={H\bibinitperiod}}}%
       }
-      \strng{namehash}{4fb36b7ad29d06ce63d2a0c6a8d9fb6c}
-      \strng{fullhash}{4fb36b7ad29d06ce63d2a0c6a8d9fb6c}
-      \strng{fullhashraw}{4fb36b7ad29d06ce63d2a0c6a8d9fb6c}
-      \strng{bibnamehash}{4fb36b7ad29d06ce63d2a0c6a8d9fb6c}
-      \strng{authorbibnamehash}{4fb36b7ad29d06ce63d2a0c6a8d9fb6c}
-      \strng{authornamehash}{4fb36b7ad29d06ce63d2a0c6a8d9fb6c}
-      \strng{authorfullhash}{4fb36b7ad29d06ce63d2a0c6a8d9fb6c}
-      \strng{authorfullhashraw}{4fb36b7ad29d06ce63d2a0c6a8d9fb6c}
+      \list{organization}{1}{%
+        {SSRN}%
+      }
+      \strng{namehash}{550621e89cb540566a1b76cf2478eb6b}
+      \strng{fullhash}{043bc0be54077f0893c0020753fe3289}
+      \strng{fullhashraw}{043bc0be54077f0893c0020753fe3289}
+      \strng{bibnamehash}{043bc0be54077f0893c0020753fe3289}
+      \strng{authorbibnamehash}{043bc0be54077f0893c0020753fe3289}
+      \strng{authornamehash}{550621e89cb540566a1b76cf2478eb6b}
+      \strng{authorfullhash}{043bc0be54077f0893c0020753fe3289}
+      \strng{authorfullhashraw}{043bc0be54077f0893c0020753fe3289}
       \field{sortinit}{2}
       \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
-      \field{howpublished}{SSRN}
-      \field{note}{Preprint, chưa qua phản biện}
+      \field{note}{Preprint, not peer reviewed}
       \field{title}{Action-Linked Credit Assignment for Event-Driven Warehouse Management via Multi-Agentic Reinforcement Learning}
       \field{year}{2026}
       \verb{urlraw}
@@ -981,7 +980,6 @@
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{eprinttype}{arXiv}
-      \field{howpublished}{arXiv preprint arXiv:2407.17032}
       \field{title}{Gymnasium: A standard interface for reinforcement learning environments}
       \field{year}{2024}
       \verb{eprint}
@@ -1066,7 +1064,6 @@
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{eprinttype}{arXiv}
-      \field{howpublished}{arXiv preprint arXiv:1707.06347}
       \field{title}{Proximal policy optimization algorithms}
       \field{year}{2017}
       \verb{eprint}
@@ -1376,7 +1373,6 @@
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{eprinttype}{arXiv}
-      \field{howpublished}{arXiv preprint arXiv:1606.01540}
       \field{title}{{OpenAI} {Gym}}
       \field{year}{2016}
       \verb{eprint}
@@ -1613,7 +1609,6 @@
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{eprinttype}{arXiv}
-      \field{howpublished}{arXiv preprint arXiv:2008.06319}
       \field{title}{{OR-Gym}: A Reinforcement Learning Library for Operations Research Problems}
       \field{year}{2020}
       \verb{eprint}
@@ -1622,71 +1617,71 @@
     \endentry
     \entry{ding2022cdppo}{misc}{}{}
       \name{author}{10}{}{%
-        {{hash=cbe0a6f73ec354a3a7a58628e107120b}{%
+        {{hash=b47a9d8c61517fa2a5f6c63a88b4e8b5}{%
            family={Ding},
            familyi={D\bibinitperiod},
-           given={Jing},
-           giveni={J\bibinitperiod}}}%
-        {{hash=ddff828f4050dbaf1291d74c67950e27}{%
+           given={Yuandong},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=283da9b881ea5f19e871beb6dfbb2ae9}{%
            family={Feng},
            familyi={F\bibinitperiod},
-           given={Ji-Rong},
-           giveni={J\bibinithyphendelim R\bibinitperiod}}}%
-        {{hash=cbfcdac976b6346411aa419778164cd9}{%
+           given={Mingxiao},
+           giveni={M\bibinitperiod}}}%
+        {{hash=e96e9876aea6cedb7061fc7a2232d2fb}{%
            family={Liu},
            familyi={L\bibinitperiod},
-           given={Xihan},
-           giveni={X\bibinitperiod}}}%
-        {{hash=b4e3e3950abd8d89bd6dd1087a0c875b}{%
+           given={Guozi},
+           giveni={G\bibinitperiod}}}%
+        {{hash=e3dafe978a62db8ea9fec63a537b07dc}{%
            family={Jiang},
            familyi={J\bibinitperiod},
-           given={Yong},
-           giveni={Y\bibinitperiod}}}%
-        {{hash=f1b39ffdbb4faee02f90cc5243bde6c7}{%
+           given={Wei},
+           giveni={W\bibinitperiod}}}%
+        {{hash=c5046a7ac8127ffdec0dc30f6f4dc475}{%
            family={Zhang},
            familyi={Z\bibinitperiod},
-           given={Dennis\bibnamedelima J.},
-           giveni={D\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
-        {{hash=78076a5eca0d411a7a302e58a496fe25}{%
+           given={Chuheng},
+           giveni={C\bibinitperiod}}}%
+        {{hash=1a85fb4271591180033cc6d2d2310539}{%
            family={Zhao},
            familyi={Z\bibinitperiod},
-           given={Xi},
-           giveni={X\bibinitperiod}}}%
-        {{hash=40226b14583db22a9d279d3166a3d2d9}{%
+           given={Li},
+           giveni={L\bibinitperiod}}}%
+        {{hash=d369dc9fb63d777180c9182aac13f944}{%
            family={Song},
            familyi={S\bibinitperiod},
-           given={Xinyang},
-           giveni={X\bibinitperiod}}}%
-        {{hash=d448928126c2773aaa5ce5cbd143b1a9}{%
+           given={Lei},
+           giveni={L\bibinitperiod}}}%
+        {{hash=a307506ce468d37b147a16a6d304758c}{%
            family={Li},
            familyi={L\bibinitperiod},
-           given={Ziyue},
-           giveni={Z\bibinitperiod}}}%
-        {{hash=d53a3a9a480ceecf96118b556f76b990}{%
+           given={Houqiang},
+           giveni={H\bibinitperiod}}}%
+        {{hash=f792da9ce32f6a141cc0114fcfcba0a2}{%
            family={Jin},
            familyi={J\bibinitperiod},
-           given={Bo},
-           giveni={B\bibinitperiod}}}%
+           given={Yan},
+           giveni={Y\bibinitperiod}}}%
         {{hash=9856bacbe78d7b7b8450e13766f6bce7}{%
            family={Bian},
            familyi={B\bibinitperiod},
            given={Jiang},
            giveni={J\bibinitperiod}}}%
       }
-      \strng{namehash}{11a5289bd15ff7740fa7ca28a954fd0f}
-      \strng{fullhash}{a7ce751f3ed3696c38abe6d573eb6e4e}
-      \strng{fullhashraw}{a7ce751f3ed3696c38abe6d573eb6e4e}
-      \strng{bibnamehash}{11a5289bd15ff7740fa7ca28a954fd0f}
-      \strng{authorbibnamehash}{11a5289bd15ff7740fa7ca28a954fd0f}
-      \strng{authornamehash}{11a5289bd15ff7740fa7ca28a954fd0f}
-      \strng{authorfullhash}{a7ce751f3ed3696c38abe6d573eb6e4e}
-      \strng{authorfullhashraw}{a7ce751f3ed3696c38abe6d573eb6e4e}
+      \strng{namehash}{44327f4d0142b6530ac39d883df98de3}
+      \strng{fullhash}{01056b053f8b8a6674444251d39347d4}
+      \strng{fullhashraw}{01056b053f8b8a6674444251d39347d4}
+      \strng{bibnamehash}{44327f4d0142b6530ac39d883df98de3}
+      \strng{authorbibnamehash}{44327f4d0142b6530ac39d883df98de3}
+      \strng{authornamehash}{44327f4d0142b6530ac39d883df98de3}
+      \strng{authorfullhash}{01056b053f8b8a6674444251d39347d4}
+      \strng{authorfullhashraw}{01056b053f8b8a6674444251d39347d4}
       \field{sortinit}{7}
       \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{eprinttype}{arXiv}
-      \field{howpublished}{arXiv preprint arXiv:2212.07684 (NeurIPS 2022 RL4RealLife Workshop)}
+      \field{note}{Presented at the RL4RealLife Workshop, NeurIPS 2022}
       \field{title}{Multi-Agent Reinforcement Learning with Shared Resources for Inventory Management}
       \field{year}{2022}
       \verb{eprint}
@@ -1695,133 +1690,156 @@
     \endentry
     \entry{yang2023mabim}{misc}{}{}
       \name{author}{7}{}{%
-        {{hash=ed6836107eecebc280c25e56fbaa4f59}{%
+        {{hash=dcea83081110fc6681b618e6d25b4a93}{%
            family={Yang},
            familyi={Y\bibinitperiod},
-           given={Yining},
-           giveni={Y\bibinitperiod}}}%
-        {{hash=cbfcdac976b6346411aa419778164cd9}{%
+           given={Xianliang},
+           giveni={X\bibinitperiod}}}%
+        {{hash=e97e9a0acd9e43cf42a4e53dc233a4b2}{%
            family={Liu},
            familyi={L\bibinitperiod},
-           given={Xihan},
-           giveni={X\bibinitperiod}}}%
-        {{hash=b4e3e3950abd8d89bd6dd1087a0c875b}{%
+           given={Zhihao},
+           giveni={Z\bibinitperiod}}}%
+        {{hash=e3dafe978a62db8ea9fec63a537b07dc}{%
            family={Jiang},
            familyi={J\bibinitperiod},
-           given={Yong},
-           giveni={Y\bibinitperiod}}}%
-        {{hash=f1b39ffdbb4faee02f90cc5243bde6c7}{%
+           given={Wei},
+           giveni={W\bibinitperiod}}}%
+        {{hash=c5046a7ac8127ffdec0dc30f6f4dc475}{%
            family={Zhang},
            familyi={Z\bibinitperiod},
-           given={Dennis\bibnamedelima J.},
-           giveni={D\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
-        {{hash=78076a5eca0d411a7a302e58a496fe25}{%
+           given={Chuheng},
+           giveni={C\bibinitperiod}}}%
+        {{hash=1a85fb4271591180033cc6d2d2310539}{%
            family={Zhao},
            familyi={Z\bibinitperiod},
-           given={Xi},
-           giveni={X\bibinitperiod}}}%
-        {{hash=40226b14583db22a9d279d3166a3d2d9}{%
+           given={Li},
+           giveni={L\bibinitperiod}}}%
+        {{hash=d369dc9fb63d777180c9182aac13f944}{%
            family={Song},
            familyi={S\bibinitperiod},
-           given={Xinyang},
-           giveni={X\bibinitperiod}}}%
+           given={Lei},
+           giveni={L\bibinitperiod}}}%
         {{hash=9856bacbe78d7b7b8450e13766f6bce7}{%
            family={Bian},
            familyi={B\bibinitperiod},
            given={Jiang},
            giveni={J\bibinitperiod}}}%
       }
-      \strng{namehash}{6077c4b4cd4e610d738f995741452351}
-      \strng{fullhash}{716be99d6e693544270f2b9206497b4b}
-      \strng{fullhashraw}{716be99d6e693544270f2b9206497b4b}
-      \strng{bibnamehash}{6077c4b4cd4e610d738f995741452351}
-      \strng{authorbibnamehash}{6077c4b4cd4e610d738f995741452351}
-      \strng{authornamehash}{6077c4b4cd4e610d738f995741452351}
-      \strng{authorfullhash}{716be99d6e693544270f2b9206497b4b}
-      \strng{authorfullhashraw}{716be99d6e693544270f2b9206497b4b}
+      \strng{namehash}{16fdd3f0f6a875328aa4aa5a360fea85}
+      \strng{fullhash}{0b377816a4df315e690b4ab28e634da4}
+      \strng{fullhashraw}{0b377816a4df315e690b4ab28e634da4}
+      \strng{bibnamehash}{16fdd3f0f6a875328aa4aa5a360fea85}
+      \strng{authorbibnamehash}{16fdd3f0f6a875328aa4aa5a360fea85}
+      \strng{authornamehash}{16fdd3f0f6a875328aa4aa5a360fea85}
+      \strng{authorfullhash}{0b377816a4df315e690b4ab28e634da4}
+      \strng{authorfullhashraw}{0b377816a4df315e690b4ab28e634da4}
       \field{sortinit}{7}
       \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{eprinttype}{arXiv}
-      \field{howpublished}{arXiv preprint arXiv:2306.07542}
       \field{title}{A Versatile Multi-Agent Reinforcement Learning Benchmark for Inventory Management}
       \field{year}{2023}
+      \verb{doi}
+      \verb 10.48550/arXiv.2306.07542
+      \endverb
       \verb{eprint}
       \verb 2306.07542
       \endverb
     \endentry
     \entry{kotecha2024decentralized}{article}{}{}
-      \name{author}{2}{}{%
-        {{hash=262d21c5089bef2fbe660b93f992d4ec}{%
+      \name{author}{5}{}{%
+        {{hash=6944b0d0624a161aa09b3ad703d0531d}{%
+           family={Mousa},
+           familyi={M\bibinitperiod},
+           given={Marwan},
+           giveni={M\bibinitperiod}}}%
+        {{hash=6550528bebb3bd1cf605ff3d964ec879}{%
+           family={{van de Berg}},
+           familyi={v\bibinitperiod},
+           given={Damien},
+           giveni={D\bibinitperiod}}}%
+        {{hash=e5f51bb39ee0a0758b4a9fb8f3491e20}{%
            family={Kotecha},
            familyi={K\bibinitperiod},
-           given={P.},
-           giveni={P\bibinitperiod}}}%
-        {{hash=d0f2b78dde5204f3a846e1f105b79908}{%
+           given={Niki},
+           giveni={N\bibinitperiod}}}%
+        {{hash=dd78af5cedfe1ac92dd08bfd5a57e783}{%
            family={{del Rio Chanona}},
            familyi={d\bibinitperiod},
-           given={E.\bibnamedelimi A.},
+           given={Ehecatl\bibnamedelima Antonio},
            giveni={E\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+        {{hash=5f09af84a3d323338d806b2eefd18f6c}{%
+           family={Mowbray},
+           familyi={M\bibinitperiod},
+           given={Max},
+           giveni={M\bibinitperiod}}}%
       }
-      \strng{namehash}{14c26d756d9fc7c12666e275984a8bd1}
-      \strng{fullhash}{14c26d756d9fc7c12666e275984a8bd1}
-      \strng{fullhashraw}{14c26d756d9fc7c12666e275984a8bd1}
-      \strng{bibnamehash}{14c26d756d9fc7c12666e275984a8bd1}
-      \strng{authorbibnamehash}{14c26d756d9fc7c12666e275984a8bd1}
-      \strng{authornamehash}{14c26d756d9fc7c12666e275984a8bd1}
-      \strng{authorfullhash}{14c26d756d9fc7c12666e275984a8bd1}
-      \strng{authorfullhashraw}{14c26d756d9fc7c12666e275984a8bd1}
+      \strng{namehash}{1296ae11ab294379ed602d9e88865543}
+      \strng{fullhash}{232d673b20e609d997795c8abc0cbddd}
+      \strng{fullhashraw}{232d673b20e609d997795c8abc0cbddd}
+      \strng{bibnamehash}{232d673b20e609d997795c8abc0cbddd}
+      \strng{authorbibnamehash}{232d673b20e609d997795c8abc0cbddd}
+      \strng{authornamehash}{1296ae11ab294379ed602d9e88865543}
+      \strng{authorfullhash}{232d673b20e609d997795c8abc0cbddd}
+      \strng{authorfullhashraw}{232d673b20e609d997795c8abc0cbddd}
       \field{sortinit}{7}
       \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
-      \field{eprinttype}{arXiv}
       \field{journaltitle}{Computers \& Chemical Engineering}
       \field{title}{An analysis of multi-agent reinforcement learning for decentralized inventory control systems}
+      \field{volume}{188}
       \field{year}{2024}
-      \verb{eprint}
-      \verb 2307.11432
+      \field{pages}{108783}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1016/j.compchemeng.2024.108783
       \endverb
     \endentry
     \entry{liu2025happo}{article}{}{}
       \name{author}{4}{}{%
-        {{hash=cbfcdac976b6346411aa419778164cd9}{%
+        {{hash=f97972f1c282afa2650238c3f2bcfbd6}{%
            family={Liu},
            familyi={L\bibinitperiod},
-           given={Xihan},
+           given={Xiaotian},
            giveni={X\bibinitperiod}}}%
-        {{hash=423c4bce1c44941767bcf539752b10bb}{%
+        {{hash=9471ed19878cd2ace776371a2dba8dc6}{%
            family={Hu},
            familyi={H\bibinitperiod},
-           given={Yujing},
-           giveni={Y\bibinitperiod}}}%
-        {{hash=a3e5d83afe4d5650167cf87be618c456}{%
+           given={Ming},
+           giveni={M\bibinitperiod}}}%
+        {{hash=301f9815a07dcfa59a902c9c7505cfde}{%
            family={Peng},
            familyi={P\bibinitperiod},
-           given={Zihang},
-           giveni={Z\bibinitperiod}}}%
-        {{hash=ed6836107eecebc280c25e56fbaa4f59}{%
+           given={Yijie},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=616d3b0b19e3536f5c65dfab2a48a659}{%
            family={Yang},
            familyi={Y\bibinitperiod},
-           given={Yining},
+           given={Yaodong},
            giveni={Y\bibinitperiod}}}%
       }
-      \strng{namehash}{20c70b74329309dc6254159a35a073ba}
-      \strng{fullhash}{ff8a5ece76fb6a9b03e7bd6fd986a715}
-      \strng{fullhashraw}{ff8a5ece76fb6a9b03e7bd6fd986a715}
-      \strng{bibnamehash}{ff8a5ece76fb6a9b03e7bd6fd986a715}
-      \strng{authorbibnamehash}{ff8a5ece76fb6a9b03e7bd6fd986a715}
-      \strng{authornamehash}{20c70b74329309dc6254159a35a073ba}
-      \strng{authorfullhash}{ff8a5ece76fb6a9b03e7bd6fd986a715}
-      \strng{authorfullhashraw}{ff8a5ece76fb6a9b03e7bd6fd986a715}
+      \strng{namehash}{5dce42f16c75da1252bf519585cfb4c9}
+      \strng{fullhash}{2d6abaad2ba4573f81d126eeac790254}
+      \strng{fullhashraw}{2d6abaad2ba4573f81d126eeac790254}
+      \strng{bibnamehash}{2d6abaad2ba4573f81d126eeac790254}
+      \strng{authorbibnamehash}{2d6abaad2ba4573f81d126eeac790254}
+      \strng{authornamehash}{5dce42f16c75da1252bf519585cfb4c9}
+      \strng{authorfullhash}{2d6abaad2ba4573f81d126eeac790254}
+      \strng{authorfullhashraw}{2d6abaad2ba4573f81d126eeac790254}
       \field{sortinit}{7}
       \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{Production and Operations Management}
+      \field{number}{7}
       \field{title}{Multi-Agent Deep Reinforcement Learning for Multi-Echelon Inventory Management}
+      \field{volume}{34}
       \field{year}{2025}
+      \field{pages}{1836\bibrangedash 1856}
+      \range{pages}{21}
       \verb{doi}
       \verb 10.1177/10591478241305863
       \endverb

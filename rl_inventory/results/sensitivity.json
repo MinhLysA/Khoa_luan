@@ -1,0 +1,1054 @@
+{
+  "checkpoint": "checkpoints/best_model_seed42.pth",
+  "episodes": 10,
+  "physical_totals": {
+    "IPPO": {
+      "holding_units": 1024603.2188720703,
+      "stockout_units": 34880.52710285187,
+      "orders": 24807.3,
+      "overflow_units": 4510.5333237886425,
+      "demand": 341943.7
+    },
+    "EOQ": {
+      "holding_units": 793485.3380004882,
+      "stockout_units": 86232.87871112823,
+      "orders": 18503.2,
+      "overflow_units": 5815.889704072475,
+      "demand": 341943.7
+    },
+    "(s,S)": {
+      "holding_units": 811461.6170837402,
+      "stockout_units": 54173.446064567564,
+      "orders": 29741.6,
+      "overflow_units": 3599.7976427078247,
+      "demand": 341943.7
+    },
+    "Newsvendor": {
+      "holding_units": 810085.2373840332,
+      "stockout_units": 53194.075598526004,
+      "orders": 36802.4,
+      "overflow_units": 3182.637910157442,
+      "demand": 341943.7
+    },
+    "(s,S) (cùng mức PV)": {
+      "holding_units": 1107997.71796875,
+      "stockout_units": 34241.219925522804,
+      "orders": 32230.8,
+      "overflow_units": 31371.59354894161,
+      "demand": 341943.7
+    },
+    "Newsvendor (cùng mức PV)": {
+      "holding_units": 1149516.1435546875,
+      "stockout_units": 32006.83756380081,
+      "orders": 38959.4,
+      "overflow_units": 38015.921453619005,
+      "demand": 341943.7
+    }
+  },
+  "grid": [
+    {
+      "c_lk": 0.5,
+      "c_th": 5.0,
+      "c_dh": 2.0,
+      "ratio_th_lk": 10.0,
+      "ranking": [
+        "(s,S)",
+        "IPPO",
+        "Newsvendor",
+        "EOQ",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)"
+      ],
+      "costs": {
+        "IPPO": 758871.5115692377,
+        "EOQ": 893992.9110762477,
+        "(s,S)": 754080.227078247,
+        "Newsvendor": 760530.9862354338,
+        "(s,S) (cùng mức PV)": 946524.5263566971,
+        "Newsvendor (cùng mức PV)": 1002790.6668644429
+      },
+      "gap_vs_EOQ": -15.11437035270693,
+      "gap_vs_(s,S)": 0.6353812656718194,
+      "gap_vs_Newsvendor": -0.2181994811822796,
+      "gap_vs_(s,S) (cùng mức PV)": -19.82547832223235,
+      "gap_vs_Newsvendor (cùng mức PV)": -24.32403525033786
+    },
+    {
+      "c_lk": 0.5,
+      "c_th": 5.0,
+      "c_dh": 5.0,
+      "ratio_th_lk": 10.0,
+      "ranking": [
+        "IPPO",
+        "(s,S)",
+        "Newsvendor",
+        "EOQ",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)"
+      ],
+      "costs": {
+        "IPPO": 833293.4115692377,
+        "EOQ": 949502.5110762477,
+        "(s,S)": 843305.027078247,
+        "Newsvendor": 870938.1862354338,
+        "(s,S) (cùng mức PV)": 1043216.9263566971,
+        "Newsvendor (cùng mức PV)": 1119668.8668644428
+      },
+      "gap_vs_EOQ": -12.238945990283757,
+      "gap_vs_(s,S)": -1.1871879317138734,
+      "gap_vs_Newsvendor": -4.322324507197561,
+      "gap_vs_(s,S) (cùng mức PV)": -20.122709810757257,
+      "gap_vs_Newsvendor (cùng mức PV)": -25.5767989778246
+    },
+    {
+      "c_lk": 0.5,
+      "c_th": 5.0,
+      "c_dh": 10.0,
+      "ratio_th_lk": 10.0,
+      "ranking": [
+        "IPPO",
+        "(s,S)",
+        "EOQ",
+        "Newsvendor",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)"
+      ],
+      "costs": {
+        "IPPO": 957329.9115692377,
+        "EOQ": 1042018.5110762477,
+        "(s,S)": 992013.027078247,
+        "Newsvendor": 1054950.186235434,
+        "(s,S) (cùng mức PV)": 1204370.926356697,
+        "Newsvendor (cùng mức PV)": 1314465.8668644428
+      },
+      "gap_vs_EOQ": -8.127360369014891,
+      "gap_vs_(s,S)": -3.496235892300803,
+      "gap_vs_Newsvendor": -9.253543526500707,
+      "gap_vs_(s,S) (cùng mức PV)": -20.512037394889216,
+      "gap_vs_Newsvendor (cùng mức PV)": -27.169663686066304
+    },
+    {
+      "c_lk": 0.5,
+      "c_th": 10.0,
+      "c_dh": 2.0,
+      "ratio_th_lk": 20.0,
+      "ranking": [
+        "IPPO",
+        "(s,S)",
+        "Newsvendor",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)",
+        "EOQ"
+      ],
+      "costs": {
+        "IPPO": 933274.147083497,
+        "EOQ": 1325157.3046318889,
+        "(s,S)": 1024947.4574010848,
+        "Newsvendor": 1026501.3642280638,
+        "(s,S) (cùng mức PV)": 1117730.625984311,
+        "Newsvendor (cùng mức PV)": 1162824.854683447
+      },
+      "gap_vs_EOQ": -29.572576491758596,
+      "gap_vs_(s,S)": -8.94419608104008,
+      "gap_vs_Newsvendor": -9.082035386740506,
+      "gap_vs_(s,S) (cùng mức PV)": -16.50276682169065,
+      "gap_vs_Newsvendor (cùng mức PV)": -19.740780967606675
+    },
+    {
+      "c_lk": 0.5,
+      "c_th": 10.0,
+      "c_dh": 5.0,
+      "ratio_th_lk": 20.0,
+      "ranking": [
+        "IPPO",
+        "(s,S)",
+        "Newsvendor",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)",
+        "EOQ"
+      ],
+      "costs": {
+        "IPPO": 1007696.047083497,
+        "EOQ": 1380666.904631889,
+        "(s,S)": 1114172.257401085,
+        "Newsvendor": 1136908.564228064,
+        "(s,S) (cùng mức PV)": 1214423.025984311,
+        "Newsvendor (cùng mức PV)": 1279703.054683447
+      },
+      "gap_vs_EOQ": -27.013818923097364,
+      "gap_vs_(s,S)": -9.556530384803697,
+      "gap_vs_Newsvendor": -11.365251455582037,
+      "gap_vs_(s,S) (cùng mức PV)": -17.022649807982525,
+      "gap_vs_Newsvendor (cùng mức PV)": -21.255478495926127
+    },
+    {
+      "c_lk": 0.5,
+      "c_th": 10.0,
+      "c_dh": 10.0,
+      "ratio_th_lk": 20.0,
+      "ranking": [
+        "IPPO",
+        "(s,S)",
+        "Newsvendor",
+        "(s,S) (cùng mức PV)",
+        "EOQ",
+        "Newsvendor (cùng mức PV)"
+      ],
+      "costs": {
+        "IPPO": 1131732.547083497,
+        "EOQ": 1473182.904631889,
+        "(s,S)": 1262880.257401085,
+        "Newsvendor": 1320920.564228064,
+        "(s,S) (cùng mức PV)": 1375577.025984311,
+        "Newsvendor (cùng mức PV)": 1474500.054683447
+      },
+      "gap_vs_EOQ": -23.177730102272108,
+      "gap_vs_(s,S)": -10.384809608749467,
+      "gap_vs_Newsvendor": -14.322437114538145,
+      "gap_vs_(s,S) (cùng mức PV)": -17.72670481511772,
+      "gap_vs_Newsvendor (cùng mức PV)": -23.246354349816343
+    },
+    {
+      "c_lk": 0.5,
+      "c_th": 20.0,
+      "c_dh": 2.0,
+      "ratio_th_lk": 40.0,
+      "ranking": [
+        "IPPO",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)",
+        "Newsvendor",
+        "(s,S)",
+        "EOQ"
+      ],
+      "costs": {
+        "IPPO": 1282079.4181120158,
+        "EOQ": 2187486.091743171,
+        "(s,S)": 1566681.9180467606,
+        "Newsvendor": 1558442.120213324,
+        "(s,S) (cùng mức PV)": 1460142.8252395391,
+        "Newsvendor (cùng mức PV)": 1482893.230321455
+      },
+      "gap_vs_EOQ": -41.39028252790635,
+      "gap_vs_(s,S)": -18.165940173074123,
+      "gap_vs_Newsvendor": -17.733266992519347,
+      "gap_vs_(s,S) (cùng mức PV)": -12.194930800575055,
+      "gap_vs_Newsvendor (cùng mức PV)": -13.542027713344385
+    },
+    {
+      "c_lk": 0.5,
+      "c_th": 20.0,
+      "c_dh": 5.0,
+      "ratio_th_lk": 40.0,
+      "ranking": [
+        "IPPO",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)",
+        "(s,S)",
+        "Newsvendor",
+        "EOQ"
+      ],
+      "costs": {
+        "IPPO": 1356501.3181120157,
+        "EOQ": 2242995.6917431713,
+        "(s,S)": 1655906.7180467607,
+        "Newsvendor": 1668849.320213324,
+        "(s,S) (cùng mức PV)": 1556835.225239539,
+        "Newsvendor (cùng mức PV)": 1599771.430321455
+      },
+      "gap_vs_EOQ": -39.522785393413116,
+      "gap_vs_(s,S)": -18.08105472800492,
+      "gap_vs_Newsvendor": -18.716369316157422,
+      "gap_vs_(s,S) (cùng mức PV)": -12.86802250358251,
+      "gap_vs_Newsvendor (cùng mức PV)": -15.206554361366297
+    },
+    {
+      "c_lk": 0.5,
+      "c_th": 20.0,
+      "c_dh": 10.0,
+      "ratio_th_lk": 40.0,
+      "ranking": [
+        "IPPO",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)",
+        "(s,S)",
+        "Newsvendor",
+        "EOQ"
+      ],
+      "costs": {
+        "IPPO": 1480537.8181120157,
+        "EOQ": 2335511.6917431713,
+        "(s,S)": 1804614.7180467607,
+        "Newsvendor": 1852861.320213324,
+        "(s,S) (cùng mức PV)": 1717989.225239539,
+        "Newsvendor (cùng mức PV)": 1794568.430321455
+      },
+      "gap_vs_EOQ": -36.607561274635415,
+      "gap_vs_(s,S)": -17.95823211979076,
+      "gap_vs_Newsvendor": -20.0945153336377,
+      "gap_vs_(s,S) (cùng mức PV)": -13.821472430621062,
+      "gap_vs_Newsvendor (cùng mức PV)": -17.49894887837674
+    },
+    {
+      "c_lk": 0.5,
+      "c_th": 40.0,
+      "c_dh": 2.0,
+      "ratio_th_lk": 80.0,
+      "ranking": [
+        "IPPO",
+        "Newsvendor (cùng mức PV)",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor",
+        "(s,S)",
+        "EOQ"
+      ],
+      "costs": {
+        "IPPO": 1979689.9601690532,
+        "EOQ": 3912143.665965736,
+        "(s,S)": 2650150.839338112,
+        "Newsvendor": 2622323.6321838438,
+        "(s,S) (cùng mức PV)": 2144967.223749995,
+        "Newsvendor (cùng mức PV)": 2123029.981597471
+      },
+      "gap_vs_EOQ": -49.3962868135019,
+      "gap_vs_(s,S)": -25.29897050450569,
+      "gap_vs_Newsvendor": -24.50626856760666,
+      "gap_vs_(s,S) (cùng mức PV)": -7.705351473482736,
+      "gap_vs_Newsvendor (cùng mức PV)": -6.751672028699374
+    },
+    {
+      "c_lk": 0.5,
+      "c_th": 40.0,
+      "c_dh": 5.0,
+      "ratio_th_lk": 80.0,
+      "ranking": [
+        "IPPO",
+        "Newsvendor (cùng mức PV)",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor",
+        "(s,S)",
+        "EOQ"
+      ],
+      "costs": {
+        "IPPO": 2054111.860169053,
+        "EOQ": 3967653.265965736,
+        "(s,S)": 2739375.639338112,
+        "Newsvendor": 2732730.832183844,
+        "(s,S) (cùng mức PV)": 2241659.623749995,
+        "Newsvendor (cùng mức PV)": 2239908.1815974712
+      },
+      "gap_vs_EOQ": -48.228544117272364,
+      "gap_vs_(s,S)": -25.01532719092999,
+      "gap_vs_Newsvendor": -24.832997235680065,
+      "gap_vs_(s,S) (cùng mức PV)": -8.366469270977007,
+      "gap_vs_Newsvendor (cùng mức PV)": -8.294818642785206
+    },
+    {
+      "c_lk": 0.5,
+      "c_th": 40.0,
+      "c_dh": 10.0,
+      "ratio_th_lk": 80.0,
+      "ranking": [
+        "IPPO",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)",
+        "(s,S)",
+        "Newsvendor",
+        "EOQ"
+      ],
+      "costs": {
+        "IPPO": 2178148.360169053,
+        "EOQ": 4060169.265965736,
+        "(s,S)": 2888083.639338112,
+        "Newsvendor": 2916742.832183844,
+        "(s,S) (cùng mức PV)": 2402813.623749995,
+        "Newsvendor (cùng mức PV)": 2434705.1815974712
+      },
+      "gap_vs_EOQ": -46.35326220442765,
+      "gap_vs_(s,S)": -24.581534603054678,
+      "gap_vs_Newsvendor": -25.322577769456124,
+      "gap_vs_(s,S) (cùng mức PV)": -9.350091133173866,
+      "gap_vs_Newsvendor (cùng mức PV)": -10.537490262376847
+    },
+    {
+      "c_lk": 1.0,
+      "c_th": 5.0,
+      "c_dh": 2.0,
+      "ratio_th_lk": 5.0,
+      "ranking": [
+        "(s,S)",
+        "Newsvendor",
+        "IPPO",
+        "EOQ",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)"
+      ],
+      "costs": {
+        "IPPO": 1271173.121005273,
+        "EOQ": 1290735.5800764917,
+        "(s,S)": 1159811.035620117,
+        "Newsvendor": 1165573.6049274504,
+        "(s,S) (cùng mức PV)": 1500523.3853410722,
+        "Newsvendor (cùng mức PV)": 1577548.7386417866
+      },
+      "gap_vs_EOQ": -1.5156054712661904,
+      "gap_vs_(s,S)": 9.601743901808435,
+      "gap_vs_Newsvendor": 9.059875380791205,
+      "gap_vs_(s,S) (cùng mức PV)": -15.284684435868856,
+      "gap_vs_Newsvendor (cùng mức PV)": -19.420992209742572
+    },
+    {
+      "c_lk": 1.0,
+      "c_th": 5.0,
+      "c_dh": 5.0,
+      "ratio_th_lk": 5.0,
+      "ranking": [
+        "(s,S)",
+        "Newsvendor",
+        "IPPO",
+        "EOQ",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)"
+      ],
+      "costs": {
+        "IPPO": 1345595.0210052729,
+        "EOQ": 1346245.1800764918,
+        "(s,S)": 1249035.8356201171,
+        "Newsvendor": 1275980.8049274504,
+        "(s,S) (cùng mức PV)": 1597215.7853410721,
+        "Newsvendor (cùng mức PV)": 1694426.9386417866
+      },
+      "gap_vs_EOQ": -0.04829425433352519,
+      "gap_vs_(s,S)": 7.730697761543115,
+      "gap_vs_Newsvendor": 5.455741638823519,
+      "gap_vs_(s,S) (cùng mức PV)": -15.75371134226975,
+      "gap_vs_Newsvendor (cùng mức PV)": -20.587014387066414
+    },
+    {
+      "c_lk": 1.0,
+      "c_th": 5.0,
+      "c_dh": 10.0,
+      "ratio_th_lk": 5.0,
+      "ranking": [
+        "(s,S)",
+        "EOQ",
+        "Newsvendor",
+        "IPPO",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)"
+      ],
+      "costs": {
+        "IPPO": 1469631.5210052729,
+        "EOQ": 1438761.1800764918,
+        "(s,S)": 1397743.8356201171,
+        "Newsvendor": 1459992.8049274504,
+        "(s,S) (cùng mức PV)": 1758369.7853410721,
+        "Newsvendor (cùng mức PV)": 1889223.9386417866
+      },
+      "gap_vs_EOQ": 2.14561953410084,
+      "gap_vs_(s,S)": 5.143123049672571,
+      "gap_vs_Newsvendor": 0.6601892862274417,
+      "gap_vs_(s,S) (cùng mức PV)": -16.42079309727177,
+      "gap_vs_Newsvendor (cùng mức PV)": -22.2097766735991
+    },
+    {
+      "c_lk": 1.0,
+      "c_th": 10.0,
+      "c_dh": 2.0,
+      "ratio_th_lk": 10.0,
+      "ranking": [
+        "(s,S)",
+        "Newsvendor",
+        "IPPO",
+        "(s,S) (cùng mức PV)",
+        "EOQ",
+        "Newsvendor (cùng mức PV)"
+      ],
+      "costs": {
+        "IPPO": 1445575.7565195323,
+        "EOQ": 1721899.9736321329,
+        "(s,S)": 1430678.265942955,
+        "Newsvendor": 1431543.9829200804,
+        "(s,S) (cùng mức PV)": 1671729.4849686862,
+        "Newsvendor (cùng mức PV)": 1737582.9264607907
+      },
+      "gap_vs_EOQ": -16.047634667751876,
+      "gap_vs_(s,S)": 1.0412886622526818,
+      "gap_vs_Newsvendor": 0.980184595574185,
+      "gap_vs_(s,S) (cùng mức PV)": -13.528129430186498,
+      "gap_vs_Newsvendor (cùng mức PV)": -16.805365976749986
+    },
+    {
+      "c_lk": 1.0,
+      "c_th": 10.0,
+      "c_dh": 5.0,
+      "ratio_th_lk": 10.0,
+      "ranking": [
+        "(s,S)",
+        "IPPO",
+        "Newsvendor",
+        "(s,S) (cùng mức PV)",
+        "EOQ",
+        "Newsvendor (cùng mức PV)"
+      ],
+      "costs": {
+        "IPPO": 1519997.6565195322,
+        "EOQ": 1777409.573632133,
+        "(s,S)": 1519903.065942955,
+        "Newsvendor": 1541951.1829200804,
+        "(s,S) (cùng mức PV)": 1768421.8849686862,
+        "Newsvendor (cùng mức PV)": 1854461.1264607906
+      },
+      "gap_vs_EOQ": -14.482419861539286,
+      "gap_vs_(s,S)": 0.0062234611335920675,
+      "gap_vs_Newsvendor": -1.4237497687166423,
+      "gap_vs_(s,S) (cùng mức PV)": -14.047792020711892,
+      "gap_vs_Newsvendor (cùng mức PV)": -18.03561504573442
+    },
+    {
+      "c_lk": 1.0,
+      "c_th": 10.0,
+      "c_dh": 10.0,
+      "ratio_th_lk": 10.0,
+      "ranking": [
+        "IPPO",
+        "(s,S)",
+        "Newsvendor",
+        "EOQ",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)"
+      ],
+      "costs": {
+        "IPPO": 1644034.1565195322,
+        "EOQ": 1869925.573632133,
+        "(s,S)": 1668611.065942955,
+        "Newsvendor": 1725963.1829200804,
+        "(s,S) (cùng mức PV)": 1929575.8849686862,
+        "Newsvendor (cùng mức PV)": 2049258.1264607906
+      },
+      "gap_vs_EOQ": -12.080235721565668,
+      "gap_vs_(s,S)": -1.4728962263913847,
+      "gap_vs_Newsvendor": -4.7468582882478465,
+      "gap_vs_(s,S) (cùng mức PV)": -14.798160086551238,
+      "gap_vs_Newsvendor (cùng mức PV)": -19.774178992331628
+    },
+    {
+      "c_lk": 1.0,
+      "c_th": 20.0,
+      "c_dh": 2.0,
+      "ratio_th_lk": 20.0,
+      "ranking": [
+        "IPPO",
+        "Newsvendor",
+        "(s,S)",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)",
+        "EOQ"
+      ],
+      "costs": {
+        "IPPO": 1794381.027548051,
+        "EOQ": 2584228.7607434154,
+        "(s,S)": 1972412.7265886306,
+        "Newsvendor": 1963484.7389053404,
+        "(s,S) (cùng mức PV)": 2014141.6842239143,
+        "Newsvendor (cùng mức PV)": 2057651.3020987988
+      },
+      "gap_vs_EOQ": -30.56415690413359,
+      "gap_vs_(s,S)": -9.026087524211668,
+      "gap_vs_Newsvendor": -8.612428098196789,
+      "gap_vs_(s,S) (cùng mức PV)": -10.91088369786365,
+      "gap_vs_Newsvendor (cùng mức PV)": -12.79469822132705
+    },
+    {
+      "c_lk": 1.0,
+      "c_th": 20.0,
+      "c_dh": 5.0,
+      "ratio_th_lk": 20.0,
+      "ranking": [
+        "IPPO",
+        "(s,S)",
+        "Newsvendor",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)",
+        "EOQ"
+      ],
+      "costs": {
+        "IPPO": 1868802.9275480509,
+        "EOQ": 2639738.3607434155,
+        "(s,S)": 2061637.5265886306,
+        "Newsvendor": 2073891.9389053404,
+        "(s,S) (cùng mức PV)": 2110834.084223914,
+        "Newsvendor (cùng mức PV)": 2174529.5020987988
+      },
+      "gap_vs_EOQ": -29.204994125942473,
+      "gap_vs_(s,S)": -9.353467646645974,
+      "gap_vs_Newsvendor": -9.889088602443842,
+      "gap_vs_(s,S) (cùng mức PV)": -11.466138361360134,
+      "gap_vs_Newsvendor (cùng mức PV)": -14.059435581612878
+    },
+    {
+      "c_lk": 1.0,
+      "c_th": 20.0,
+      "c_dh": 10.0,
+      "ratio_th_lk": 20.0,
+      "ranking": [
+        "IPPO",
+        "(s,S)",
+        "Newsvendor",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)",
+        "EOQ"
+      ],
+      "costs": {
+        "IPPO": 1992839.4275480509,
+        "EOQ": 2732254.3607434155,
+        "(s,S)": 2210345.526588631,
+        "Newsvendor": 2257903.9389053406,
+        "(s,S) (cùng mức PV)": 2271988.084223914,
+        "Newsvendor (cùng mức PV)": 2369326.5020987988
+      },
+      "gap_vs_EOQ": -27.062448643843616,
+      "gap_vs_(s,S)": -9.840366423446522,
+      "gap_vs_Newsvendor": -11.73940603893876,
+      "gap_vs_(s,S) (cùng mức PV)": -12.286537003173459,
+      "gap_vs_Newsvendor (cùng mức PV)": -15.890046146753
+    },
+    {
+      "c_lk": 1.0,
+      "c_th": 40.0,
+      "c_dh": 2.0,
+      "ratio_th_lk": 40.0,
+      "ranking": [
+        "IPPO",
+        "Newsvendor (cùng mức PV)",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor",
+        "(s,S)",
+        "EOQ"
+      ],
+      "costs": {
+        "IPPO": 2491991.5696050883,
+        "EOQ": 4308886.334965981,
+        "(s,S)": 3055881.6478799824,
+        "Newsvendor": 3027366.2508758605,
+        "(s,S) (cùng mức PV)": 2698966.08273437,
+        "Newsvendor (cùng mức PV)": 2697788.053374815
+      },
+      "gap_vs_EOQ": -42.166226354523616,
+      "gap_vs_(s,S)": -18.45261509607523,
+      "gap_vs_Newsvendor": -17.684503192036328,
+      "gap_vs_(s,S) (cùng mức PV)": -7.668659285988221,
+      "gap_vs_Newsvendor (cùng mức PV)": -7.628341430020202
+    },
+    {
+      "c_lk": 1.0,
+      "c_th": 40.0,
+      "c_dh": 5.0,
+      "ratio_th_lk": 40.0,
+      "ranking": [
+        "IPPO",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)",
+        "Newsvendor",
+        "(s,S)",
+        "EOQ"
+      ],
+      "costs": {
+        "IPPO": 2566413.4696050882,
+        "EOQ": 4364395.93496598,
+        "(s,S)": 3145106.447879982,
+        "Newsvendor": 3137773.4508758606,
+        "(s,S) (cùng mức PV)": 2795658.48273437,
+        "Newsvendor (cùng mức PV)": 2814666.253374815
+      },
+      "gap_vs_EOQ": -41.196593804794354,
+      "gap_vs_(s,S)": -18.39978989153047,
+      "gap_vs_Newsvendor": -18.20908966870397,
+      "gap_vs_(s,S) (cùng mức PV)": -8.200036397330713,
+      "gap_vs_Newsvendor (cùng mức PV)": -8.819972295900769
+    },
+    {
+      "c_lk": 1.0,
+      "c_th": 40.0,
+      "c_dh": 10.0,
+      "ratio_th_lk": 40.0,
+      "ranking": [
+        "IPPO",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)",
+        "(s,S)",
+        "Newsvendor",
+        "EOQ"
+      ],
+      "costs": {
+        "IPPO": 2690449.9696050882,
+        "EOQ": 4456911.93496598,
+        "(s,S)": 3293814.447879982,
+        "Newsvendor": 3321785.4508758606,
+        "(s,S) (cùng mức PV)": 2956812.48273437,
+        "Newsvendor (cùng mức PV)": 3009463.253374815
+      },
+      "gap_vs_EOQ": -39.63421290652842,
+      "gap_vs_(s,S)": -18.31810770832101,
+      "gap_vs_Newsvendor": -19.005907835026104,
+      "gap_vs_(s,S) (cùng mức PV)": -9.008434409846577,
+      "gap_vs_Newsvendor (cùng mức PV)": -10.600338230147354
+    },
+    {
+      "c_lk": 2.0,
+      "c_th": 5.0,
+      "c_dh": 2.0,
+      "ratio_th_lk": 2.5,
+      "ranking": [
+        "(s,S)",
+        "Newsvendor",
+        "EOQ",
+        "IPPO",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)"
+      ],
+      "costs": {
+        "IPPO": 2295776.3398773433,
+        "EOQ": 2084220.91807698,
+        "(s,S)": 1971272.6527038573,
+        "Newsvendor": 1975658.8423114836,
+        "(s,S) (cùng mức PV)": 2608521.1033098223,
+        "Newsvendor (cùng mức PV)": 2727064.882196474
+      },
+      "gap_vs_EOQ": 10.150335790485986,
+      "gap_vs_(s,S)": 16.461633895665663,
+      "gap_vs_Newsvendor": 16.203075688479096,
+      "gap_vs_(s,S) (cùng mức PV)": -11.989351477189613,
+      "gap_vs_Newsvendor (cùng mức PV)": -15.815118486354296
+    },
+    {
+      "c_lk": 2.0,
+      "c_th": 5.0,
+      "c_dh": 5.0,
+      "ratio_th_lk": 2.5,
+      "ranking": [
+        "(s,S)",
+        "Newsvendor",
+        "EOQ",
+        "IPPO",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)"
+      ],
+      "costs": {
+        "IPPO": 2370198.239877343,
+        "EOQ": 2139730.51807698,
+        "(s,S)": 2060497.4527038573,
+        "Newsvendor": 2086066.0423114835,
+        "(s,S) (cùng mức PV)": 2705213.503309822,
+        "Newsvendor (cùng mức PV)": 2843943.082196474
+      },
+      "gap_vs_EOQ": 10.770876045058664,
+      "gap_vs_(s,S)": 15.030389227954899,
+      "gap_vs_Newsvendor": 13.62047949599068,
+      "gap_vs_(s,S) (cùng mức PV)": -12.384060002014207,
+      "gap_vs_Newsvendor (cùng mức PV)": -16.65802825959659
+    },
+    {
+      "c_lk": 2.0,
+      "c_th": 5.0,
+      "c_dh": 10.0,
+      "ratio_th_lk": 2.5,
+      "ranking": [
+        "(s,S)",
+        "EOQ",
+        "Newsvendor",
+        "IPPO",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)"
+      ],
+      "costs": {
+        "IPPO": 2494234.739877343,
+        "EOQ": 2232246.51807698,
+        "(s,S)": 2209205.4527038573,
+        "Newsvendor": 2270078.0423114835,
+        "(s,S) (cùng mức PV)": 2866367.503309822,
+        "Newsvendor (cùng mức PV)": 3038740.082196474
+      },
+      "gap_vs_EOQ": 11.736527291172983,
+      "gap_vs_(s,S)": 12.901891348522486,
+      "gap_vs_Newsvendor": 9.874404905375611,
+      "gap_vs_(s,S) (cùng mức PV)": -12.982730337361614,
+      "gap_vs_Newsvendor (cùng mức PV)": -17.918786325599434
+    },
+    {
+      "c_lk": 2.0,
+      "c_th": 10.0,
+      "c_dh": 2.0,
+      "ratio_th_lk": 5.0,
+      "ranking": [
+        "Newsvendor",
+        "(s,S)",
+        "IPPO",
+        "EOQ",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)"
+      ],
+      "costs": {
+        "IPPO": 2470178.9753916026,
+        "EOQ": 2515385.311632621,
+        "(s,S)": 2242139.8830266953,
+        "Newsvendor": 2241629.2203041133,
+        "(s,S) (cùng mức PV)": 2779727.2029374363,
+        "Newsvendor (cùng mức PV)": 2887099.070015478
+      },
+      "gap_vs_EOQ": -1.7971932980588634,
+      "gap_vs_(s,S)": 10.170600598615387,
+      "gap_vs_Newsvendor": 10.195698424045464,
+      "gap_vs_(s,S) (cùng mức PV)": -11.135921079547773,
+      "gap_vs_Newsvendor (cùng mức PV)": -14.44079626341469
+    },
+    {
+      "c_lk": 2.0,
+      "c_th": 10.0,
+      "c_dh": 5.0,
+      "ratio_th_lk": 5.0,
+      "ranking": [
+        "(s,S)",
+        "Newsvendor",
+        "IPPO",
+        "EOQ",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)"
+      ],
+      "costs": {
+        "IPPO": 2544600.8753916025,
+        "EOQ": 2570894.911632621,
+        "(s,S)": 2331364.683026695,
+        "Newsvendor": 2352036.4203041135,
+        "(s,S) (cùng mức PV)": 2876419.602937436,
+        "Newsvendor (cùng mức PV)": 3003977.270015478
+      },
+      "gap_vs_EOQ": -1.0227581112726591,
+      "gap_vs_(s,S)": 9.14641085186525,
+      "gap_vs_Newsvendor": 8.187137470540984,
+      "gap_vs_(s,S) (cùng mức PV)": -11.535824856949805,
+      "gap_vs_Newsvendor (cùng mức PV)": -15.292272654962824
+    },
+    {
+      "c_lk": 2.0,
+      "c_th": 10.0,
+      "c_dh": 10.0,
+      "ratio_th_lk": 5.0,
+      "ranking": [
+        "(s,S)",
+        "Newsvendor",
+        "EOQ",
+        "IPPO",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)"
+      ],
+      "costs": {
+        "IPPO": 2668637.3753916025,
+        "EOQ": 2663410.911632621,
+        "(s,S)": 2480072.683026695,
+        "Newsvendor": 2536048.4203041135,
+        "(s,S) (cùng mức PV)": 3037573.602937436,
+        "Newsvendor (cùng mức PV)": 3198774.270015478
+      },
+      "gap_vs_EOQ": 0.19623197217351063,
+      "gap_vs_(s,S)": 7.6031921828509486,
+      "gap_vs_Newsvendor": 5.228171277249882,
+      "gap_vs_(s,S) (cùng mức PV)": -12.14575433461299,
+      "gap_vs_Newsvendor (cùng mức PV)": -16.573126137509863
+    },
+    {
+      "c_lk": 2.0,
+      "c_th": 20.0,
+      "c_dh": 2.0,
+      "ratio_th_lk": 10.0,
+      "ranking": [
+        "Newsvendor",
+        "(s,S)",
+        "IPPO",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)",
+        "EOQ"
+      ],
+      "costs": {
+        "IPPO": 2818984.2464201213,
+        "EOQ": 3377714.0987439035,
+        "(s,S)": 2783874.343672371,
+        "Newsvendor": 2773569.9762893734,
+        "(s,S) (cùng mức PV)": 3122139.4021926643,
+        "Newsvendor (cùng mức PV)": 3207167.445653486
+      },
+      "gap_vs_EOQ": -16.54165616123524,
+      "gap_vs_(s,S)": 1.2611884881784885,
+      "gap_vs_Newsvendor": 1.6373940632103956,
+      "gap_vs_(s,S) (cùng mức PV)": -9.709853299940374,
+      "gap_vs_Newsvendor (cùng mức PV)": -12.10361497524709
+    },
+    {
+      "c_lk": 2.0,
+      "c_th": 20.0,
+      "c_dh": 5.0,
+      "ratio_th_lk": 10.0,
+      "ranking": [
+        "(s,S)",
+        "Newsvendor",
+        "IPPO",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)",
+        "EOQ"
+      ],
+      "costs": {
+        "IPPO": 2893406.146420121,
+        "EOQ": 3433223.6987439035,
+        "(s,S)": 2873099.143672371,
+        "Newsvendor": 2883977.1762893735,
+        "(s,S) (cùng mức PV)": 3218831.8021926642,
+        "Newsvendor (cùng mức PV)": 3324045.6456534863
+      },
+      "gap_vs_EOQ": -15.723343413983848,
+      "gap_vs_(s,S)": 0.7067978420610244,
+      "gap_vs_Newsvendor": 0.3269432992836441,
+      "gap_vs_(s,S) (cùng mức PV)": -10.110054695957194,
+      "gap_vs_Newsvendor (cùng mức PV)": -12.955282361915465
+    },
+    {
+      "c_lk": 2.0,
+      "c_th": 20.0,
+      "c_dh": 10.0,
+      "ratio_th_lk": 10.0,
+      "ranking": [
+        "IPPO",
+        "(s,S)",
+        "Newsvendor",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor (cùng mức PV)",
+        "EOQ"
+      ],
+      "costs": {
+        "IPPO": 3017442.646420121,
+        "EOQ": 3525739.6987439035,
+        "(s,S)": 3021807.143672371,
+        "Newsvendor": 3067989.1762893735,
+        "(s,S) (cùng mức PV)": 3379985.8021926642,
+        "Newsvendor (cùng mức PV)": 3518842.6456534863
+      },
+      "gap_vs_EOQ": -14.416749271220187,
+      "gap_vs_(s,S)": -0.1444333488121119,
+      "gap_vs_Newsvendor": -1.6475458994411052,
+      "gap_vs_(s,S) (cùng mức PV)": -10.726173924676075,
+      "gap_vs_Newsvendor (cùng mức PV)": -14.249003144619154
+    },
+    {
+      "c_lk": 2.0,
+      "c_th": 40.0,
+      "c_dh": 2.0,
+      "ratio_th_lk": 20.0,
+      "ranking": [
+        "IPPO",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor",
+        "Newsvendor (cùng mức PV)",
+        "(s,S)",
+        "EOQ"
+      ],
+      "costs": {
+        "IPPO": 3516594.7884771586,
+        "EOQ": 5102371.672966469,
+        "(s,S)": 3867343.2649637223,
+        "Newsvendor": 3837451.4882598934,
+        "(s,S) (cùng mức PV)": 3806963.8007031204,
+        "Newsvendor (cùng mức PV)": 3847304.1969295023
+      },
+      "gap_vs_EOQ": -31.07921151434574,
+      "gap_vs_(s,S)": -9.069494287310276,
+      "gap_vs_Newsvendor": -8.361192337267266,
+      "gap_vs_(s,S) (cùng mức PV)": -7.627312142351672,
+      "gap_vs_Newsvendor (cùng mức PV)": -8.595873669575694
+    },
+    {
+      "c_lk": 2.0,
+      "c_th": 40.0,
+      "c_dh": 5.0,
+      "ratio_th_lk": 20.0,
+      "ranking": [
+        "IPPO",
+        "(s,S) (cùng mức PV)",
+        "Newsvendor",
+        "(s,S)",
+        "Newsvendor (cùng mức PV)",
+        "EOQ"
+      ],
+      "costs": {
+        "IPPO": 3591016.6884771585,
+        "EOQ": 5157881.272966469,
+        "(s,S)": 3956568.064963722,
+        "Newsvendor": 3947858.6882598936,
+        "(s,S) (cùng mức PV)": 3903656.2007031203,
+        "Newsvendor (cùng mức PV)": 3964182.3969295025
+      },
+      "gap_vs_EOQ": -30.37806613931915,
+      "gap_vs_(s,S)": -9.239102436366542,
+      "gap_vs_Newsvendor": -9.03887469032031,
+      "gap_vs_(s,S) (cùng mức PV)": -8.008889516695906,
+      "gap_vs_Newsvendor (cùng mức PV)": -9.413434375304808
+    },
+    {
+      "c_lk": 2.0,
+      "c_th": 40.0,
+      "c_dh": 10.0,
+      "ratio_th_lk": 20.0,
+      "ranking": [
+        "IPPO",
+        "(s,S) (cùng mức PV)",
+        "(s,S)",
+        "Newsvendor",
+        "Newsvendor (cùng mức PV)",
+        "EOQ"
+      ],
+      "costs": {
+        "IPPO": 3715053.1884771585,
+        "EOQ": 5250397.272966469,
+        "(s,S)": 4105276.064963722,
+        "Newsvendor": 4131870.6882598936,
+        "(s,S) (cùng mức PV)": 4064810.2007031203,
+        "Newsvendor (cùng mức PV)": 4158979.3969295025
+      },
+      "gap_vs_EOQ": -29.242436422755535,
+      "gap_vs_(s,S)": -9.50539915736488,
+      "gap_vs_Newsvendor": -10.087864099112808,
+      "gap_vs_(s,S) (cùng mức PV)": -8.604510295842637,
+      "gap_vs_Newsvendor (cùng mức PV)": -10.673921798701059
+    }
+  ],
+  "summary": {
+    "EOQ": {
+      "ippo_cheaper_in": 31,
+      "of": 36,
+      "gap_min": -49.3962868135019,
+      "gap_max": 11.736527291172983
+    },
+    "(s,S)": {
+      "ippo_cheaper_in": 22,
+      "of": 36,
+      "gap_min": -25.29897050450569,
+      "gap_max": 16.461633895665663
+    },
+    "Newsvendor": {
+      "ippo_cheaper_in": 24,
+      "of": 36,
+      "gap_min": -25.322577769456124,
+      "gap_max": 16.203075688479096
+    },
+    "(s,S) (cùng mức PV)": {
+      "ippo_cheaper_in": 36,
+      "of": 36,
+      "gap_min": -20.512037394889216,
+      "gap_max": -7.627312142351672
+    },
+    "Newsvendor (cùng mức PV)": {
+      "ippo_cheaper_in": 36,
+      "of": 36,
+      "gap_min": -27.169663686066304,
+      "gap_max": -6.751672028699374
+    }
+  }
+}

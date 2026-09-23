@@ -186,9 +186,9 @@ def section_stat(cfg):
     lines += [
         f"  Baseline tot nhat  : {st['best_baseline']}",
         f"  Chenh lech chi phi : {st['gap_percent']:+.2f}%",
-        f"  Welch t-test       : t={st['t_stat']:.3f}, p={st['p_ttest']:.3e}",
+        f"  Paired t-test      : p={st.get('p_paired', float('nan')):.3e}",
         f"  Wilcoxon           : p={st['p_wilcoxon']:.3e}",
-        f"  Cohen's d          : {st['cohen_d']:.3f}",
+        f"  Hieu ung d_z       : {st.get('d_z', float('nan')):.3f}",
         f"  So episode / mien  : {st['n_episodes']} / {st['mode']}",
         "",
     ]

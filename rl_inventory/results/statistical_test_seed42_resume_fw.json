@@ -1,0 +1,14 @@
+{
+  "best_baseline": "(s,S)",
+  "gap_percent": -0.15898780452534603,
+  "t_stat": -0.4105839574910949,
+  "p_ttest": 0.6832932053699252,
+  "p_wilcoxon": 0.5291051845997572,
+  "cohen_d": -0.10601232197219165,
+  "t_paired": -0.6710951430380852,
+  "p_paired": 0.5074704093675007,
+  "cohen_dz_paired": -0.12252464935803221,
+  "fixed_windows": true,
+  "n_episodes": 30,
+  "mode": "test"
+}

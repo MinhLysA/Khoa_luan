@@ -133,7 +133,7 @@ def test_tran_kho_chi_tu_choi_hang_moi_khong_dung_ton_kho_cu():
     """[P0-1] Tran kho CHI duoc tu choi tu phan hang MOI VE vuot dung luong
     con trong, KHONG duoc "an" vao ton kho cu dang nam hop le trong suc chua.
 
-    Kich ban tu README_CLAUDE_CODE_KLTN.md muc P0.2: 1 kho 2 SKU, suc chua
+    Kich ban P0 (pham_vi_khoa_luan.md muc 9): 1 kho 2 SKU, suc chua
     = 100. Ton kho cu (SKU0=90, SKU1=0). Hang moi ve = 20, toan bo o SKU1
     (SKU0=0, SKU1=20). Tong sau nhap = 110 -> vuot 10.
     Ky vong: CHI 10/20 (50%) hang MOI cua SKU1 bi tu choi; SKU0 (ton kho cu)
@@ -432,3 +432,141 @@ def test_tin_hieu_giam_gia_phan_anh_dung_muc_giam():
     env.current_step = 6   # gia binh thuong tro lai
     obs2 = env._get_observation()
     assert np.allclose(obs2[:, i_gia], 0.0, atol=1e-4)
+
+
+# --------------------------------------------------------------------------- #
+# Script phan tich hau nghiem (scripts/policy_behavior.py, regime_analysis.py)
+# --------------------------------------------------------------------------- #
+sys.path.insert(0, str(ROOT / "scripts"))
+
+
+def test_nhom_dac_trung_phu_kin_vector_quan_sat():
+    """obs_groups phai phu DUNG moi chieu quan sat, khong trung, khong sot -
+    neu _get_observation doi bo cuc ma quen sua, permutation importance se
+    xao tron nham cot."""
+    from policy_behavior import obs_groups
+    for kw in [{}, {"include_price_signal": True}]:
+        env = make_env(price_per_pair=np.ones(12, np.float32),
+                       price_series=np.ones((200, 12), np.float32), **kw)
+        cols = sorted(c for g in obs_groups(env).values() for c in g)
+        assert cols == list(range(env.obs_per_pair))
+
+
+def test_gan_nhan_giai_doan_chia_ba_khong_chong_lan():
+    from regime_analysis import label_days
+    rng = np.random.default_rng(1)
+    demand = rng.poisson(5.0, size=(300, 3, 4)).astype(np.float32)
+    groups, dev, _ = label_days(demand, None, 100, 300)
+    vol = [groups[g] for g in ["Ổn định", "Trung bình", "Biến động"]]
+    assert (sum(m.astype(int) for m in vol)[100:300] == 1).all()   # moi ngay test dung 1 nhom
+    assert not any(m[:100].any() for m in vol)                     # khong gan nhan ngoai mien
+    assert dev[groups["Biến động"]].min() > dev[groups["Ổn định"]].max()
+
+
+# --------------------------------------------------------------------------- #
+# [P2-*] Cac tuy chon cho ablation / hold-out
+# --------------------------------------------------------------------------- #
+def test_sku_indices_cat_dung_tap_con():
+    env = make_env(sku_indices=[1, 3])
+    full = make_env()
+    assert env.n_skus == 2 and env.n_pairs == 6
+    # cau trung binh cua cap (kho 0, SKU 1) phai giong ban day du
+    assert np.isclose(env.mean_demand[0], full.mean_demand[1])
+    env.reset(seed=0)
+    env.step(np.zeros(env.n_pairs, dtype=int))
+
+
+def test_phat_sla_normalized_bang_nhau_sau_chuan_hoa():
+    """Che do normalized: phat SLA chia reward_norm_pair phai nhu nhau o moi cap."""
+    env = make_env(service_penalty_mode="normalized")
+    env.reset(seed=0)
+    fr = np.full(env.n_pairs, 0.5, dtype=np.float32)
+    z = np.zeros(env.n_pairs, dtype=np.float32)
+    _, local, _ = env._calculate_reward(z, z, z, z, fr)
+    per_norm = -local / env.reward_norm_pair
+    assert np.allclose(per_norm, per_norm[0])
+    # che do cu thi SKU cau nho bi phat nhe hon han
+    env2 = make_env(service_penalty_mode="demand")
+    _, local2, _ = env2._calculate_reward(z, z, z, z, fr)
+    assert np.ptp(-local2 / env2.reward_norm_pair) > 0.1
+
+
+def test_obs_drop_dat_nhom_bang_0_va_giu_kich_thuoc():
+    env = make_env(obs_drop=["warehouse"])
+    obs, _ = env.reset(seed=0)
+    obs, *_ = env.step(np.full(env.n_pairs, 3))
+    assert obs.shape[1] == make_env().obs_per_pair
+    assert (obs[:, env.obs_groups["warehouse"]] == 0).all()
+    with pytest.raises(ValueError):
+        make_env(obs_drop=["khong_ton_tai"])
+
+
+def test_warm_start_nap_lich_su_cau_that():
+    env = make_env(warm_start_history=True)
+    env.reset(seed=0)
+    s0 = env.start_day
+    kv = env.demand_data.reshape(env.demand_data.shape[0], -1)
+    assert s0 >= env.lookback
+    assert np.allclose(env.demand_history, kv[s0 - env.lookback:s0])
+
+
+def test_reset_start_day_co_dinh():
+    env = make_env()
+    env.reset(seed=0, options={"start_day": 7})
+    assert env.start_day == 7
+
+
+def test_shared_trunk_cap_nhat_duoc():
+    from agents.ppo_agent import PPOAgent
+    from agents.rollout_buffer import RolloutBuffer
+    env = make_env()
+    ag = PPOAgent(env.obs_per_pair, env.n_pairs, env.n_action_levels,
+                  config={"shared_trunk": True, "n_steps": 8, "mini_batch_size": 32})
+    buf = RolloutBuffer(buffer_size=8, obs_per_pair=env.obs_per_pair, n_pairs=env.n_pairs)
+    obs, _ = env.reset(seed=0)
+    for _ in range(8):
+        a, lp, v = ag.select_action(obs)
+        nobs, r, te, tr, info = env.step(a)
+        buf.add(obs, a, lp, info["local_scaled_rewards"], v)
+        obs = nobs
+    buf.compute_gae(last_values=ag.select_action(obs)[2], gamma=ag.gamma,
+                    gae_lambda=ag.gae_lambda)
+    before = [q.clone() for q in ag.network.parameters()]
+    m = ag.update(buf)
+    assert any(not torch_equal(b, q) for b, q in zip(before, ag.network.parameters()))
+    assert m["grad_norm_actor"] > 0 and m["grad_norm_critic"] > 0
+
+
+def torch_equal(a, b):
+    return bool((a == b).all())
+
+
+# --------------------------------------------------------------------------- #
+# [P3-*] Giao thuc danh gia cuoi va ablation RQ3
+# --------------------------------------------------------------------------- #
+def test_reward_global_moi_cap_nhan_cung_tin_hieu():
+    env = make_env(reward_mode="global")
+    env.reset(seed=0)
+    *_, info = env.step(np.full(env.n_pairs, 2))
+    r = info["local_scaled_rewards"]
+    assert np.allclose(r, r[0])
+    expect = info["local_rewards"].sum() / env.reward_norm_pair.sum()
+    assert np.isclose(r[0], expect, rtol=1e-5)
+
+
+def test_test_full_horizon_chay_tron_mien_test():
+    env = make_env(mode="test", test_full_horizon=True, split_day=100, val_day=150)
+    for seed in (0, 1):
+        env.reset(seed=seed)
+        assert env.start_day == 150 and env.episode_length == 200 - 150
+    # mien train khong bi anh huong
+    assert make_env(test_full_horizon=True).episode_length == CFG["episode_length"]
+
+
+def test_paired_test_dau_va_khoang_tin_cay():
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from evaluate import paired_test
+    a = np.array([90.0, 95, 100, 105, 110])
+    r = paired_test(a, a + 10)
+    assert r["mean_diff"] == -10 and r["n_ippo_cheaper"] == 5
+    assert r["ci95_low"] <= -10 <= r["ci95_high"]

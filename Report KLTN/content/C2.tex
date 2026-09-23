@@ -31,19 +31,20 @@ ngẫu nhiên) và $L_t$ là thời gian giao hàng. Chi phí vận hành mỗi 
     chi phí phát sinh khi tổng lượng hàng tồn và hàng nhập vượt quá sức chứa
     $W$ của kho, trong đó $q_t$ là lượng hàng nhập kho trong kỳ.
 
-    \item Phạt vi phạm mức phục vụ dựa trên tỷ lệ đáp ứng nhu cầu
-    (fill rate) trên cửa sổ trượt, phản ánh yêu cầu kinh doanh về chất lượng
-    dịch vụ khách hàng.
 \end{itemize}
 
-Tổng chi phí vận hành của một cặp kho--mặt hàng trong kỳ $t$ được tính:
+Tổng chi phí vận hành của một cặp kho--mặt hàng trong kỳ $t$ gồm bốn thành
+phần trên:
 \begin{equation}
-    C_t = C_{\text{hold}} + C_{\text{stock}} + C_{\text{order}} + C_{\text{over}}
-    + \phi_{dv} \cdot \max\bigl(\tau - \text{FR}_t^{(w)},\; 0\bigr)
+    C_t = C_{\text{hold}} + C_{\text{stock}} + C_{\text{order}} + C_{\text{over}}.
     \label{eq:tongchiphi}
 \end{equation}
-trong đó $\text{FR}_t^{(w)}$ là tỷ lệ đáp ứng trên cửa sổ trượt $w$ ngày,
-$\tau$ là ngưỡng mức phục vụ mục tiêu và $\phi_{dv}$ là hệ số phạt.
+Bên cạnh chi phí, doanh nghiệp đặt một mục tiêu mức phục vụ: tỷ lệ đáp ứng nhu
+cầu (fill rate) $\text{FR}_t^{(w)}$ trên cửa sổ trượt $w$ ngày không thấp hơn
+ngưỡng $\tau$. Mục tiêu này là một \emph{ràng buộc} chứ không phải một khoản chi
+phí; trong khóa luận, nó được đưa vào tín hiệu huấn luyện dưới dạng hình phạt
+$P_t = \phi_{dv} \cdot \max\bigl(\tau - \text{FR}_t^{(w)},\; 0\bigr)$ (ràng buộc
+mềm, Mục~\ref{subsec:fillRate}), và không được cộng vào chi phí vận hành báo cáo.
 
 \subsection{Các chính sách đặt hàng lại cổ điển}
 \label{subsec:chinhSachCoDien}
@@ -102,7 +103,7 @@ Một quan sát thực nghiệm liên quan: với bộ tham số chi phí $c_{th
 $c_{lk} = 1{,}0$ sử dụng trong thực nghiệm, tỷ số tới hạn lý thuyết của Newsvendor
 là $c_{th}/(c_{th}+c_{lk}) = 10/11 \approx 0{,}909$. Tuy nhiên, tìm kiếm lưới
 trên môi trường mô phỏng cho tham số tối ưu $CR^* = 0{,}85$ --- thấp hơn nhưng
-không lệch quá xa lý thuyết. Chênh lệch còn lại không phải lỗi cài đặt mà phản
+không lệch quá xa lý thuyết. Chênh lệch còn lại không xuất phát từ sai lệch triển khai mà phản
 ánh sự khác biệt khái niệm
 căn bản: tỷ số tới hạn cổ điển tối ưu cho mức phục vụ chu kỳ $\alpha$ trong bài
 toán \textit{một kỳ} không có hàng đang vận chuyển, còn môi trường thực nghiệm
@@ -203,6 +204,22 @@ một phần trạng thái toàn cục thông qua hàm quan sát $o_i = O(s, i)$
 tác tử đã được chứng minh thuộc lớp NEXP-đầy đủ \parencite{bernstein2002},
 nên các lời giải chính xác không khả thi ở quy mô lớn.
 
+Trong Dec-POMDP chuẩn, mọi tác tử cùng theo đuổi một mục tiêu hợp tác duy
+nhất. Khóa luận giữ nguyên mục tiêu hợp tác đó ở cấp toàn mạng lưới:
+\begin{equation}
+    R_t^{\text{team}} = \sum_{i=1}^{300} r_{i,t},
+    \qquad
+    \max_{\theta}\; \mathbb{E}\Bigl[\sum_{t} \gamma^{t} R_t^{\text{team}}\Bigr],
+    \label{eq:mucTieuDoi}
+\end{equation}
+nhưng tín hiệu dùng để \emph{huấn luyện} được phân rã thành các phần thưởng cục
+bộ $r_{i,t}$ của từng cặp kho--mặt hàng (Mục~\ref{subsec:rewardDecomposition}).
+Nói cách khác, hệ thống có mục tiêu hợp tác ở cấp toàn mạng lưới, còn phần
+thưởng cục bộ là một cách phân rã tín hiệu học nhằm giảm phương sai và giảm khó
+khăn gán tín dụng. Vì các cặp trong cùng kho tương tác qua sức chứa chung, tối
+ưu riêng từng $r_{i,t}$ không tự động bảo đảm tối ưu $R^{\text{team}}$; việc
+phân rã này có thật sự có lợi hay không là nội dung của Câu hỏi nghiên cứu 3.
+
 Bài toán tồn kho đa kho đa mặt hàng được mô hình hóa tự nhiên dưới dạng Dec-POMDP
 vì bốn đặc điểm cấu trúc phù hợp với lớp bài toán này:
 \begin{enumerate}
@@ -210,9 +227,9 @@ vì bốn đặc điểm cấu trúc phù hợp với lớp bài toán này:
     tồn kho $1$--$3$ ngày sau. Không phải bài toán một bước.
     \item \textbf{Trạng thái thay đổi theo hành động}. Đặt hàng làm đổi tồn
     kho, thay đổi luôn bài toán của ngày mai.
-    \item \textbf{Không có nhãn đúng}. Không ai biết lượng đặt tối ưu cho ngày
-    $t$ là bao nhiêu; chỉ biết chi phí sau khi thực hiện. Đây là lý do không
-    dùng học có giám sát.
+    \item \textbf{Không có nhãn hành động}. Không tồn tại nhãn hành động tối
+    ưu quan sát trực tiếp cho từng ngày; chỉ quan sát được chi phí sau khi hành
+    động được thực hiện. Đây là lý do không dùng học có giám sát.
     \item \textbf{Mục tiêu dài hạn}. Tối thiểu chi phí cả năm, không phải
     chỉ hôm nay. Tích trữ hôm nay tốn tiền nhưng tránh mất doanh thu ngày mai.
 \end{enumerate}
@@ -295,9 +312,21 @@ $K = 6$ hành động --- không gian cố định và có thể giải quyết 
 Trong hệ đa tác tử, việc sử dụng phần thưởng toàn cục (tổng chi phí của toàn bộ
 hệ thống) cho mọi tác tử gây ra vấn đề gán tín dụng (credit assignment): tác tử
 khó phân biệt được đóng góp cá nhân trong tín hiệu tổng hợp
-\parencite{wolpert2001}. Khóa luận áp dụng phân rã cục bộ: mỗi tác tử nhận
-phần thưởng riêng dựa trên chi phí và tỷ lệ đáp ứng của chính cặp kho--mặt
-hàng mà nó quản lý.
+\parencite{wolpert2001}. Wolpert và Tumer đề xuất \emph{phần thưởng chênh lệch}
+(difference reward) $D_i = G(z) - G(z_{-i})$, trong đó $G(z_{-i})$ là giá trị
+của hệ thống khi loại bỏ đóng góp của tác tử $i$ --- một đại lượng phản thực
+(counterfactual) phải được tính thêm.
+
+Khóa luận \emph{không} cài đặt phần thưởng chênh lệch theo đúng nghĩa này. Thay
+vào đó, khóa luận dùng \emph{phần thưởng phân rã cục bộ} (local factored
+reward): mỗi tác tử nhận $r_{i,t} = -(C_{i,t} + P_{i,t})$, gồm chi phí vận hành
+$C_{i,t}$ và hình phạt mức phục vụ $P_{i,t}$ của chính cặp kho--mặt hàng mà nó
+quản lý, với $\sum_i r_{i,t} = R_t^{\text{team}}$ (công thức~\ref{eq:mucTieuDoi}).
+Cách phân rã này dựa trên cùng động cơ giảm khó khăn gán tín dụng như phân tích
+của Wolpert và Tumer. Nó khả thi ở đây vì phần lớn chi phí của một cặp (lưu kho,
+thiếu hàng, đặt hàng) do chính quyết định của cặp đó gây ra; riêng phần tràn kho
+--- đại lượng thực sự ghép nối giữa các cặp --- được phân bổ theo tỷ trọng hàng
+mới về của từng cặp (Mục~\ref{subsec:sucChua}).
 
 Khung lý thuyết định hình phần thưởng bảo toàn thế năng (Potential-Based Reward Shaping -- PBRS) do Ng và cộng sự \cite{ng1999} chứng minh khẳng định rằng: một hàm biến đổi phần thưởng $F(s,a,s')$ bảo toàn tập chính sách tối ưu của MDP gốc khi và chỉ khi nó có dạng chênh lệch thế năng $F(s,a,s') = \gamma\Phi(s') - \Phi(s)$. Khung lý thuyết này sau đó được mở rộng sang hệ đa tác tử bởi Devlin và Kudenko \cite{devlin2011potential} cũng như ứng dụng trong tồn kho bởi De Moor và cộng sự \cite{demoor2022reward}.
 
@@ -313,7 +342,7 @@ Gijsbrechts và cộng sự \cite{gijsbrechts2022} đánh giá hệ thống kh�
 
 Hubbs và cộng sự \cite{hubbs2020orgym} giới thiệu bộ thư viện OR-Gym đóng vai trò là môi trường benchmark chuẩn cho các bài toán Vận trù học bằng RL, bao gồm cả mô hình Newsvendor và quản lý tồn kho đa cấp lost-sales.
 
-Nghiên cứu của Ding và cộng sự \cite{ding2022cdppo} (CD-PPO) phát biểu chính xác bài toán tồn kho đơn cửa hàng nhiều SKU dưới dạng tài nguyên kho dùng chung làm ghép nối các tác tử vốn độc lập. Họ so sánh trực tiếp IPPO và MAPPO có chia sẻ tham số (parameter sharing), chứng minh hiệu quả vượt trội khi quản lý tài nguyên kho chung.
+Nghiên cứu của Ding và cộng sự \cite{ding2022cdppo} (CD-PPO) phát biểu chính xác bài toán tồn kho đơn cửa hàng nhiều SKU dưới dạng tài nguyên kho dùng chung làm ghép nối các tác tử vốn độc lập. Họ so sánh trực tiếp IPPO và MAPPO có chia sẻ tham số (parameter sharing), báo cáo hiệu quả cao hơn các phương pháp đối chứng khi quản lý tài nguyên kho chung.
 
 Yang và cộng sự \cite{yang2023mabim} phát triển MABIM --- bộ benchmark MARL đa dạng cho tồn kho. MABIM coi mỗi SKU tại mỗi điểm lưu trữ là một tác tử độc lập, sử dụng dữ liệu nhu cầu thực tế của hơn 2.000 SKU với 51 tác vụ thử nghiệm (bao gồm nhóm tác vụ mở rộng quy mô scaling up), thử nghiệm các thuật toán MARL bao gồm IPPO dưới ràng buộc sức chứa dùng chung.
 
@@ -355,7 +384,7 @@ hành động}: phần thưởng chỉ được tính khi lô hàng thực nhậ
 giao hàng, rồi được quy ngược về đúng cặp trạng thái--hành động đã phát lệnh
 đặt. Đây là một cách xử lý trực diện độ trễ giữa quyết định và hệ quả của nó.
 Khảo sát loại trừ của công trình cho thấy khi bỏ cơ chế này, tỷ lệ thiếu hàng
-tăng vọt. Cần lưu ý rằng biến thể đối chứng của họ sử dụng trạng thái
+tăng đáng kể. Cần lưu ý rằng biến thể đối chứng của họ sử dụng trạng thái
 dự đoán tại thời điểm ra quyết định, chứ không phải ước lượng lợi thế
 tổng quát như khóa luận sử dụng; do đó con số của họ không thể chuyển trực tiếp
 sang bối cảnh này. Hạn chế của công trình là chỉ xét một kho duy nhất, trên dữ

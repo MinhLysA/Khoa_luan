@@ -1,0 +1,69 @@
+% =====================================================================
+%  phuluc_mcp.tex  —  PHỤ LỤC B: PROTOTYPE ĐIỀU PHỐI BẰNG MCP
+% =====================================================================
+
+\chapter*{PHỤ LỤC B. PROTOTYPE ĐIỀU PHỐI BẰNG MCP}
+\addcontentsline{toc}{chapter}{PHỤ LỤC B. PROTOTYPE ĐIỀU PHỐI BẰNG MCP}
+\label{app:mcp}
+
+Model Context Protocol (MCP) là giao thức chuẩn hóa cho phép mô hình ngôn ngữ
+lớn (LLM) gọi công cụ bên ngoài theo mô hình máy chủ--máy khách. Phụ lục này mô
+tả một prototype dùng MCP làm lớp giao tiếp phía trên engine IPPO của khóa luận.
+Prototype không tham gia trả lời các câu hỏi nghiên cứu.
+
+\section*{B.1. So sánh hai kiến trúc điều phối}
+
+\begin{table}[htbp]
+    \centering
+    \caption{So sánh kiến trúc IPPO và MCP theo các chiều điều phối}
+    \label{tab:soSanhMCP}
+    \small
+    \begin{tabular}{lp{5.0cm}p{5.0cm}}
+        \toprule
+        \textbf{Khía cạnh} & \textbf{IPPO (đề tài này)} & \textbf{Kiến trúc MCP} \\
+        \midrule
+        Phân công nhiệm vụ & Không có: mỗi tác tử có nhiệm vụ cố định (một cặp kho--mặt hàng) & Host/LLM phân công tường minh cho từng máy chủ \\
+        Chọn hành động & Mạng chính sách $\pi_\theta(a \mid o)$ ánh xạ quan sát sang hành động & LLM suy luận và chọn công cụ phù hợp \\
+        Lấy ngữ cảnh & Vector quan sát $43$ chiều từ môi trường & Máy chủ cung cấp ngữ cảnh qua giao thức chuẩn \\
+        Kết quả trả về & Phần thưởng và trạng thái kế tiếp từ môi trường & Kết quả công cụ trả về LLM để tiếp tục suy luận \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Hai kiến trúc phục vụ hai lớp bài toán khác nhau. IPPO phù hợp khi hành động là
+lượng đặt hàng và tín hiệu phản hồi là chi phí. MCP phù hợp khi hệ thống cần
+giao tiếp ngôn ngữ với người dùng và gọi nhiều công cụ đa dạng.
+
+\section*{B.2. Luồng điều phối và công cụ}
+
+Theo luồng ngữ cảnh $\rightarrow$ nhiệm vụ $\rightarrow$ chọn công cụ
+$\rightarrow$ thực thi $\rightarrow$ trả kết quả: người quản lý kho đặt câu hỏi
+(ví dụ ``tuần tới kho CA\_3 có mặt hàng nào sắp thiếu không?''); LLM nhận nhiệm
+vụ và chọn công cụ; máy chủ MCP lấy ngữ cảnh từ môi trường mô phỏng (tồn kho,
+hàng đang về, lịch) và gọi chính sách IPPO hoặc baseline; kết quả trả về LLM để
+tổng hợp câu trả lời. IPPO vẫn là nơi ra quyết định định lượng.
+
+Prototype (\texttt{app/mcp\_server.py}, Python MCP SDK) cung cấp năm công cụ và
+một tài nguyên (Bảng~\ref{tab:congCuMCP}), tái sử dụng phần lõi mô phỏng của ứng
+dụng Streamlit. Prototype đã được kiểm chứng bằng một client MCP chuẩn qua giao
+thức stdio: client liệt kê được đủ công cụ và gọi thành công. Prototype chưa
+được đánh giá với người dùng thật và chưa xử lý xác thực.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Công cụ của prototype MCP}
+    \label{tab:congCuMCP}
+    \small
+    \begin{tabular}{lp{9.2cm}}
+        \toprule
+        \textbf{Công cụ / tài nguyên} & \textbf{Chức năng} \\
+        \midrule
+        \texttt{danh\_sach\_kho\_va\_mat\_hang} & Liệt kê $10$ kho, $30$ mặt hàng và chỉ số tương ứng \\
+        \texttt{canh\_bao\_thieu\_hang} & Mô phỏng tới một ngày, trả về các cặp có tồn kho cộng hàng đang về dưới ngưỡng số ngày cầu \\
+        \texttt{de\_xuat\_dat\_hang} & Tình trạng một cặp và lượng đặt đề xuất của IPPO cùng ba baseline \\
+        \texttt{mo\_phong} & Chạy một chính sách trên toàn mạng, trả về chi phí, fill rate, số ngày--cặp thiếu hàng \\
+        \texttt{what\_if} & So sánh các chính sách khi thay đổi nhu cầu, sức chứa hoặc thời gian giao \\
+        \texttt{ket-qua://tong-hop} & Tài nguyên chứa kết quả đánh giá chính thức để LLM trích dẫn \\
+        \bottomrule
+    \end{tabular}
+\end{table}

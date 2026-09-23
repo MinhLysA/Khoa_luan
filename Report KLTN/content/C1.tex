@@ -21,8 +21,8 @@ trong cuộc thi dự báo M5 do Makridakis và cộng sự \cite{makridakis2022
 nhận doanh số bán hàng theo ngày của $3.049$ mặt hàng tại $10$ cửa hàng của
 Walmart thuộc ba bang California, Texas và Wisconsin, trải trên $1.941$ ngày từ
 ngày 29 tháng 01 năm 2011 đến ngày 22 tháng 05 năm
-2016\footnote{Các thống kê được tính từ hai tệp \texttt{calendar.csv} và
-\texttt{sales\_train\_evaluation.csv} trong bộ dữ liệu M5 \parencite{m5dataset}.}.
+2016\footnote{Các thống kê được tính từ hai tệp \path{calendar.csv} và
+\path{sales_train_evaluation.csv} trong bộ dữ liệu M5 \parencite{m5dataset}.}.
 Tổ hợp cửa hàng và mặt hàng tạo thành $30.490$ chuỗi thời gian nhu cầu ở cấp
 độ chi tiết nhất.
 
@@ -95,18 +95,20 @@ làm tăng chi phí lưu kho và nguy cơ vượt sức chứa \parencite{zipkin
 
 \begin{table}[htbp]
     \centering
-    \caption{Các nhóm chi phí trong bài toán tồn kho đang xét}
+    \caption{Bốn thành phần chi phí vận hành và mục tiêu mức phục vụ trong bài
+    toán tồn kho đang xét}
     \label{tab:chiphi}
-    \begin{tabular}{|l|l|c|}
-        \hline
-        \textbf{Thành phần chi phí} & \textbf{Ký hiệu} & \textbf{Chiều tác động} \\
-        \hline
-        Chi phí lưu kho          & $c_{lk}$    & Tăng khi mức tồn kho cao \\ \hline
-        Chi phí thiếu hàng       & $c_{th}$    & Tăng khi xảy ra hết hàng \\ \hline
-        Chi phí đặt hàng cố định & $c_{dh}$    & Tăng theo tần suất đặt hàng \\ \hline
-        Phạt tràn kho            & $p_{tk}$    & Tăng khi vượt sức chứa kho \\ \hline
-        Phạt vi phạm mức phục vụ & $\phi_{dv}$ & Tăng khi tỷ lệ đáp ứng dưới ngưỡng \\
-        \hline
+    \begin{tabular}{llp{6.2cm}}
+        \toprule
+        \textbf{Thành phần} & \textbf{Ký hiệu} & \textbf{Chiều tác động} \\
+        \midrule
+        Chi phí lưu kho          & $c_{lk}$    & Tăng khi mức tồn kho cao \\
+        Chi phí thiếu hàng       & $c_{th}$    & Tăng khi xảy ra hết hàng \\
+        Chi phí đặt hàng cố định & $c_{dh}$    & Tăng theo tần suất đặt hàng \\
+        Phạt tràn kho            & $p_{tk}$    & Tăng khi hàng về vượt sức chứa kho \\
+        \midrule
+        Mục tiêu mức phục vụ     & $\tau = 85\%$ & Ràng buộc nghiệp vụ, không phải chi phí; khi huấn luyện được đưa vào dưới dạng hình phạt với hệ số $\phi_{dv}$ \\
+        \bottomrule
     \end{tabular}
 \end{table}
 
@@ -171,7 +173,7 @@ công trình gần đây nhất cùng bối cảnh cũng để lại những kho
 Zhu và Wu \cite{zhu2026spatiotemporal} cũng sử dụng bộ dữ liệu M5 và học tăng
 cường đa tác tử, nhưng giả định nguồn cung không giới hạn và không đưa sức chứa
 kho vào hàm mục tiêu, nên sự ràng buộc giữa các mặt hàng trong cùng một kho
-không được mô hình hóa. Ở chiều ngược lại, khung làm việc của Jeong và cộng sự
+không được mô hình hóa. Ở chiều ngược lại, khung làm việc của Nam và cộng sự
 \cite{jeong2026alca} có xét ràng buộc sức chứa nhưng chỉ trên một kho duy nhất
 và trên dữ liệu tổng hợp, đồng thời hàm phần thưởng không quy về đơn vị tiền tệ
 nên khó diễn giải về mặt kinh tế.
@@ -194,12 +196,14 @@ Khóa luận đặt ra bốn mục tiêu cụ thể:
 \begin{itemize}
     \item Xây dựng môi trường mô phỏng tồn kho đa kho -- đa mặt hàng theo chuẩn
     Gymnasium \parencite{towers2024gymnasium}, mô hình hóa đầy đủ nhu cầu ngẫu
-    nhiên, thời gian giao hàng biến động, ràng buộc sức chứa và năm nhóm chi phí
-    vận hành; tham số nhu cầu được hiệu chỉnh từ bộ dữ liệu M5 Walmart.
+    nhiên, thời gian giao hàng biến động, ràng buộc sức chứa, bốn thành phần
+    chi phí vận hành (lưu kho, thiếu hàng, đặt hàng, tràn kho) và mục tiêu mức
+    phục vụ; nhu cầu lấy từ bộ dữ liệu M5 Walmart.
 
-    \item Thiết kế hàm phần thưởng phân rã cục bộ kèm thành phần phạt dựa trên
-    tỷ lệ đáp ứng nhu cầu tính trên cửa sổ trượt, bảo đảm tín hiệu học phản ánh
-    đúng đóng góp của từng tác tử \parencite{wolpert2001}.
+    \item Thiết kế tín hiệu phần thưởng phân rã cục bộ (local factored reward)
+    cho từng cặp kho--mặt hàng, kèm thành phần phạt mức phục vụ tính trên cửa
+    sổ trượt, nhằm giảm khó khăn của bài toán gán tín dụng giữa các tác tử
+    \parencite{wolpert2001}.
 
     \item Cài đặt và huấn luyện thuật toán Independent Multi-Agent PPO
     \parencite{schulman2017ppo, dewitt2020ippo} với cơ chế chia sẻ tham số cho
@@ -217,20 +221,26 @@ Khóa luận đặt ra bốn mục tiêu cụ thể:
 Khóa luận hướng tới trả lời ba câu hỏi:
 
 \begin{enumerate}
-    \item Câu hỏi 1: Tác tử IPPO có học được chính sách đặt hàng lại
-    cho tổng chi phí vận hành thấp hơn các chính sách tối ưu hóa cổ điển
-    (EOQ, $(s, S)$, Newsvendor) trong môi trường đa kho -- đa mặt hàng với nhu
-    cầu ngẫu nhiên và thời gian giao hàng biến động hay không, và mức cải thiện
-    đó có ý nghĩa thống kê hay không?
+    \item Câu hỏi 1: Trong cùng điều kiện mức phục vụ --- tức khi mọi
+    chính sách đều phải đạt tỷ lệ đáp ứng nhu cầu tối thiểu $85\%$ --- PS-IPPO
+    (IPPO với chia sẻ tham số) có đạt tổng chi phí vận hành thấp hơn các chính
+    sách tồn kho cổ điển (EOQ, $(s, S)$, Newsvendor) hay không, và khác biệt đó
+    có ý nghĩa thống kê hay không?
 
-    \item Câu hỏi 2: Cơ chế chia sẻ tham số giữa $300$ tác tử có đủ để
-    học một chính sách tổng quát hóa được cho các mặt hàng có quy mô nhu cầu
-    khác biệt đáng kể hay không?
+    \item Câu hỏi 2: Cơ chế chia sẻ tham số có duy trì được hiệu năng
+    trên các cặp kho--mặt hàng có quy mô nhu cầu khác nhau hay không; và, như
+    một câu hỏi mở rộng, chính sách học được có áp dụng được cho những mặt hàng
+    không xuất hiện trong huấn luyện hay không?
 
-    \item Câu hỏi 3: Hàm phần thưởng phân rã cục bộ kèm tỷ lệ đáp ứng
-    theo cửa sổ trượt có cải thiện quá trình học so với hàm phần thưởng toàn
-    cục dùng chung hay không?
+    \item Câu hỏi 3: Thiết kế tín hiệu phần thưởng --- phần thưởng phân rã
+    cục bộ theo từng cặp so với phần thưởng toàn cục của cả mạng lưới, và chuẩn
+    hóa phần thưởng theo từng cặp so với không chuẩn hóa --- ảnh hưởng như thế
+    nào đến độ ổn định huấn luyện và hiệu năng của PS-IPPO?
 \end{enumerate}
+
+Câu hỏi 1 là câu hỏi chính. Mức $85\%$ là mục tiêu nghiệp vụ được đặt trước
+khi thực nghiệm; phép so sánh ở một mức phục vụ cao hơn (bằng đúng mức IPPO đạt
+được) chỉ được dùng như phân tích bổ sung.
 
 \section{Đối tượng và phạm vi nghiên cứu}
 \label{sec:phamvi}
@@ -256,8 +266,8 @@ lại trong hệ thống tồn kho đa kho -- đa mặt hàng, và thuật toán
 
     \item Nguồn dữ liệu: bộ dữ liệu bán lẻ M5 Walmart
     \cite{makridakis2022background}, cụ thể là hai tệp
-    \texttt{sales\_train\_evaluation.csv} chứa $30.490$ chuỗi doanh số theo
-    ngày trên $1.941$ ngày, và \texttt{calendar.csv} chứa thông tin lịch, ngày
+    \path{sales_train_evaluation.csv} chứa $30.490$ chuỗi doanh số theo
+    ngày trên $1.941$ ngày, và \path{calendar.csv} chứa thông tin lịch, ngày
     lễ và các sự kiện trợ cấp thực phẩm SNAP. Khóa luận đồng thời hỗ trợ sinh
     dữ liệu giả lập theo phân phối Poisson phục vụ thử nghiệm đối chứng.
 

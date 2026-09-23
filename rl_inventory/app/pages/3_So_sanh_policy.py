@@ -38,7 +38,10 @@ c1, c2, c3 = st.columns(3)
 seed = c1.number_input("Seed", 0, 10**6, 1000)
 so_ngay = c2.number_input("Số ngày", 10, 365, 120, step=10)
 ckpts = sorted((ROOT / "checkpoints").glob("*.pth"))
-ten_ckpt = c3.selectbox("Checkpoint IPPO", [p.name for p in ckpts] or ["(chưa có)"])
+_mac_dinh = policy_runner.default_checkpoint(ROOT / "checkpoints")
+_ten = [p.name for p in ckpts]
+ten_ckpt = c3.selectbox("Checkpoint IPPO", _ten or ["(chưa có)"],
+                        index=_ten.index(_mac_dinh.name) if _mac_dinh else 0)
 
 if st.button("▶️ Chạy so sánh", type="primary"):
     def env_factory():
@@ -90,6 +93,45 @@ st.line_chart(pd.DataFrame(duong_ton_kho), height=300)
 
 st.subheader("Chi phí lũy kế theo thời gian")
 st.line_chart(pd.DataFrame(duong_chi_phi), height=300)
+
+st.subheader("Chi tiết từng ngày cho một cặp kho - SKU")
+st.caption("Mỗi ngày: cầu xuất hiện → tác tử đọc trạng thái → quyết định đặt "
+          "hàng → kho cập nhật → tính reward → sang ngày kế tiếp.")
+c1, c2, c3 = st.columns(3)
+ten_cs = c1.selectbox("Chính sách", list(ket_qua))
+kq = ket_qua[ten_cs]
+n_kho, n_sku = kq["inventory_matrix"].shape[1:]
+kho = c2.number_input("Kho", 0, n_kho - 1, 0)
+sku = c3.number_input("SKU", 0, n_sku - 1, 0)
+
+chi_tiet = pd.DataFrame({
+    "Cầu": kq["demand_matrix"][:, kho, sku],
+    "Tồn kho cuối ngày": kq["inventory_matrix"][:, kho, sku],
+    "Hàng đang về": kq["incoming_matrix"][:, kho, sku],
+    "Đặt hàng": kq["order_matrix"][:, kho, sku],
+    "Thiếu hàng": kq["stockout_matrix"][:, kho, sku],
+    "Chi phí": kq["cost_matrix"][:, kho, sku],
+    "Reward": kq["reward_matrix"][:, kho, sku],
+})
+chi_tiet.index.name = "Ngày"
+chi_tiet["Cảnh báo"] = np.where(
+    chi_tiet["Thiếu hàng"] > 0, "⛔ Thiếu hàng",
+    np.where(chi_tiet["Tồn kho cuối ngày"] + chi_tiet["Hàng đang về"]
+             < chi_tiet["Cầu"].rolling(7, min_periods=1).mean() * 2,
+             "⚠️ Sắp hết (< 2 ngày cầu)", ""))
+
+k1, k2, k3, k4 = st.columns(4)
+k1.metric("Số ngày thiếu hàng", int((chi_tiet["Thiếu hàng"] > 0).sum()))
+k4.metric("Tổng chi phí của cặp", f"{chi_tiet['Chi phí'].sum():,.0f}")
+k2.metric("Fill rate của cặp",
+          f"{100 * (1 - chi_tiet['Thiếu hàng'].sum() / max(chi_tiet['Cầu'].sum(), 1e-6)):.1f}%")
+k3.metric("Tổng reward", f"{chi_tiet['Reward'].sum():,.0f}")
+st.line_chart(chi_tiet[["Cầu", "Tồn kho cuối ngày", "Hàng đang về", "Đặt hàng"]], height=280)
+st.dataframe(chi_tiet.style.format({c: "{:,.1f}" for c in chi_tiet.columns if c != "Cảnh báo"}),
+             width="stretch", height=320)
+st.caption("Chi phí = lưu kho + thiếu hàng + đặt hàng + tràn kho của riêng cặp này. "
+          "Reward = −(chi phí + phạt mức phục vụ), nên luôn ≤ 0. Reward càng gần 0 thì càng tốt; "
+          "đừng đọc reward âm là mô hình xấu.")
 
 with st.expander("❓ Ví dụ đọc trang này"):
     st.markdown(

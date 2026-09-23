@@ -3,3 +3,8 @@ data/raw/*.csv
 *.csv.gz
 checkpoints/*.pt
 logs/
+__pycache__/
+*.pyc
+rl_inventory/checkpoints/lock_*.json
+rl_inventory/checkpoints/checkpoint_latest_*.pth
+.pytest_cache/

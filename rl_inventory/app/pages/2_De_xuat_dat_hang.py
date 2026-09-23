@@ -61,8 +61,8 @@ if "dx" not in st.session_state:
 env2 = st.session_state["dx"]["env"]
 obs2 = simulator.current_obs(env2)
 
-ckpts = sorted((ROOT / "checkpoints").glob("*.pth"))
-ckpt_path = str(ckpts[0]) if ckpts else None
+ckpt = policy_runner.default_checkpoint(ROOT / "checkpoints")
+ckpt_path = str(ckpt) if ckpt else None
 policies = policy_runner.load_all_policies(env2, ckpt_path, cfg["ppo"], ROOT / "results")
 
 st.subheader(f"Đề xuất cho tình huống: tồn kho {float(env2.inventory[0]):.0f} đv, "

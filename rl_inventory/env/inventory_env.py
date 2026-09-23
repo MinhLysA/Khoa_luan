@@ -78,7 +78,7 @@ PHIEN BAN v3:
          (dung price_series.npy, doc tu sell_prices.csv theo tung ngay).
 
 PHIEN BAN P0 (sua truoc khi huan luyen lai lan cuoi, xem
-README_CLAUDE_CODE_KLTN.md):
+pham_vi_khoa_luan.md muc 9):
   [P0-1] SUA LOI TRAN KHO: chi tu choi hang MOI VE vuot dung luong con
          trong, khong con phan bo phan vuot theo ty trong tren CA ton kho cu
          lan hang moi. Ban [V2-5] tinh tong (ton_cu + hang_moi) roi tru theo
@@ -112,6 +112,21 @@ class MultiWarehouseInventoryEnv(gym.Env):
         self.config = config or {}
         self.n_warehouses = int(self.config.get("n_warehouses", 10))
         self.n_skus       = int(self.config.get("n_skus", 50))
+        # [P2-1] Chi dung mot TAP CON SKU (thi nghiem hold-out: huan luyen tren
+        # 24 SKU, danh gia tren 6 SKU chua tung gap). Cat moi mang du lieu theo
+        # truc SKU; suc chua/cau trung binh tu dong tinh lai tren tap con.
+        self.sku_indices = self.config.get("sku_indices")
+        if self.sku_indices is not None:
+            idx = list(self.sku_indices)
+            W = self.n_warehouses
+            if demand_data is not None:
+                demand_data = demand_data[:, :, idx]
+            if price_per_pair is not None:
+                price_per_pair = np.asarray(price_per_pair).reshape(W, -1)[:, idx]
+            if price_series is not None:
+                price_series = np.asarray(price_series).reshape(
+                    price_series.shape[0], W, -1)[:, :, idx]
+            self.n_skus = len(idx)
         self.n_pairs      = self.n_warehouses * self.n_skus
         self.mode         = mode                      # "train" | "test"
 
@@ -224,6 +239,22 @@ class MultiWarehouseInventoryEnv(gym.Env):
         self.reward_norm_pair = (self.cp_th_pair * self.mean_demand + self.cp_dh).astype(np.float32)
         self.normalize_reward_per_pair = bool(
             self.config.get("normalize_reward_per_pair", True))
+        # [P2-2] "demand" (mac dinh cu): phat SLA = phi*cp_th*mean_demand*hut
+        #   -> SKU ban cham bi phat rat nhe, tac tu hy sinh chung.
+        # "normalized": phat = phi*(cp_th*mean_demand + cp_dh)*hut, tuc sau khi
+        #   chia reward_norm_pair moi cap chiu CUNG muc phat phi*hut.
+        self.service_penalty_mode = str(self.config.get("service_penalty_mode", "demand"))
+        self.sla_scale = (self.cp_th * self.mean_demand
+                          + (self.cp_dh if self.service_penalty_mode == "normalized" else 0.0)
+                          ).astype(np.float32)
+        # [P2-3] Khoi tao lich su cau / cua so fill rate bang du lieu THAT truoc
+        # start_day thay vi toan 0 (tac tu khong con "mu" o dau episode).
+        self.warm_start_history = bool(self.config.get("warm_start_history", False))
+        # [P3-1] "local" (mac dinh): moi cap nhan phan thuong cua rieng no.
+        # "global": moi cap nhan phan thuong cua toan mang luoi (team reward).
+        self.reward_mode = str(self.config.get("reward_mode", "local"))
+        if self.reward_mode not in ("local", "global"):
+            raise ValueError(f"reward_mode khong hop le: {self.reward_mode}")
         self.reward_scale = float(self.config.get("reward_scale", 1.0))
 
         # -- Khong gian hanh dong & quan sat ---------------------------------
@@ -234,14 +265,55 @@ class MultiWarehouseInventoryEnv(gym.Env):
         #     + [V2-4] muc su dung kho(1) + ty trong trong kho(1)
         #     + [V3-4] tin hieu giam gia (0 hoac 1)
         #     + day_of_week(7) + calendar(cal_dim)
+        # [P2-4] 2 dac trung lich CO TINH DU BAO: so ngay toi su kien ke tiep
+        # (chuan hoa /30) va co su kien trong 7 ngay toi hay khong.
+        self.event_lookahead_dim = 2 if (
+            self.config.get("include_event_lookahead", False)
+            and calendar_features is not None) else 0
+        if self.event_lookahead_dim:
+            co_su_kien = calendar_features[:, 4:8].sum(axis=1) > 0
+            T_cal = len(co_su_kien)
+            gap = np.full(T_cal, 60.0, dtype=np.float32)
+            nxt = None
+            for t in range(T_cal - 1, -1, -1):
+                if co_su_kien[t]:
+                    nxt = t
+                gap[t] = 60.0 if nxt is None else float(nxt - t)
+            self.event_gap = gap
         self.obs_per_pair = (1 + 1 + self.lookback + self.lead_time_max
                              + 1 + 1 + 1 + 1 + self.price_signal_dim
-                             + 7 + self.calendar_dim)
+                             + self.event_lookahead_dim + 7 + self.calendar_dim)
+        # Vi tri tung nhom dac trung trong vector quan sat (dung cho obs_drop
+        # va cho permutation importance o scripts/policy_behavior.py).
+        L, LT, c = self.lookback, self.lead_time_max, 0
+        self.obs_groups = {}
+        for ten, n in [("inventory", 2), ("demand_history", L), ("pipeline", LT),
+                       ("fill_rate", 1), ("scale", 1), ("warehouse", 2),
+                       ("price", self.price_signal_dim),
+                       ("event_lookahead", self.event_lookahead_dim)]:
+            if n:
+                self.obs_groups[ten] = list(range(c, c + n))
+            c += n
+        self.obs_groups["calendar"] = list(range(c, self.obs_per_pair))
+        # [P2-5] Tat (dat = 0) mot so nhom dac trung - ablation "bo dac trung"
+        # ma khong doi kich thuoc mang.
+        self.obs_drop = list(self.config.get("obs_drop", []) or [])
+        bad = [g for g in self.obs_drop if g not in self.obs_groups]
+        if bad:
+            raise ValueError(f"obs_drop khong hop le: {bad}; chon trong {list(self.obs_groups)}")
+        self._drop_cols = sorted(c for g in self.obs_drop for c in self.obs_groups[g])
         self.observation_space = spaces.Box(
             low=0.0, high=1.0, shape=(self.n_pairs, self.obs_per_pair), dtype=np.float32)
 
         self.scale_feat = np.clip(
             np.log1p(self.mean_demand) / np.log1p(150.0), 0.0, 1.0).astype(np.float32)
+
+        # [P3-2] Danh gia cuoi tren TOAN BO quy dao test [val_day, T): mot chuoi
+        # nhu cau co dinh, chi lap lai hat giong ngau nhien cua thoi gian giao
+        # hang -> cac lan danh gia khong chong lan cua so, so sanh theo cap.
+        self.test_full_horizon = bool(self.config.get("test_full_horizon", False))
+        if self.test_full_horizon and mode == "test" and demand_data is not None:
+            self.do_dai_tap = self.episode_length = int(demand_data.shape[0] - self.val_day)
 
         self.current_step = 0
         self.inventory = None
@@ -311,6 +383,17 @@ class MultiWarehouseInventoryEnv(gym.Env):
             self.start_day = int(self.np_random.integers(lo, hi))
         else:
             self.start_day = 0
+        # [P2-6] Cho phep co dinh ngay bat dau (danh gia tren cua so co dinh).
+        if options and options.get("start_day") is not None:
+            self.start_day = int(options["start_day"])
+
+        if self.warm_start_history and self.demand_data is not None:
+            L, W, s0 = self.lookback, self.cua_so_dv, self.start_day
+            flat = self.demand_data.reshape(self.demand_data.shape[0], -1)
+            if s0 >= L:
+                self.demand_history = flat[s0 - L:s0].astype(np.float32).copy()
+            if s0 >= W:
+                self.demand_fr_window = flat[s0 - W:s0].astype(np.float32).copy()
 
         self.current_step = 0
         return self._get_observation(), {}
@@ -396,6 +479,13 @@ class MultiWarehouseInventoryEnv(gym.Env):
             local_scaled = local_rewards / (self.reward_norm_pair * self.reward_scale)
         else:
             local_scaled = local_rewards / (100.0 * self.reward_scale)
+        # [P3-1] RQ3: phan thuong TOAN CUC - moi tac tu nhan cung mot tin hieu
+        # la tong chi phi cua ca mang luoi (chuan hoa bang tong mau so cac cap
+        # de giu cung thang do trung binh voi phan thuong cuc bo).
+        if self.reward_mode == "global":
+            mau = (self.reward_norm_pair.sum() if self.normalize_reward_per_pair
+                   else 100.0 * self.n_pairs) * self.reward_scale
+            local_scaled = np.full(self.n_pairs, local_rewards.sum() / mau, dtype=np.float32)
         scaled_reward = float(local_scaled.mean())
 
         self.current_step += 1
@@ -487,7 +577,14 @@ class MultiWarehouseInventoryEnv(gym.Env):
             gia_hom_nay = self.price_series[day_idx]
             ty_le_gia = gia_hom_nay / np.maximum(self.price_per_pair, 1e-6)
             obs[:, c] = np.clip(1.0 - ty_le_gia, 0.0, 1.0);                c += 1
+        if self.event_lookahead_dim:
+            d = min(self.start_day + self.current_step, len(self.event_gap) - 1)
+            obs[:, c] = min(self.event_gap[d] / 30.0, 1.0)
+            obs[:, c + 1] = float(self.event_gap[d] <= 7)
+            c += 2
         obs[:, c:] = global_ctx[None, :]
+        if self._drop_cols:
+            obs[:, self._drop_cols] = 0.0
 
         return np.clip(obs, 0.0, 1.0)
 
@@ -513,7 +610,7 @@ class MultiWarehouseInventoryEnv(gym.Env):
         phi_tran   = self.pt_tk * tran
 
         shortfall   = np.maximum(0.0, self.muc_dv - fill_rate)
-        phi_phat_dv = self.phi_dv * self.cp_th * shortfall * self.mean_demand
+        phi_phat_dv = self.phi_dv * shortfall * self.sla_scale
 
         R_local = -(chi_phi_lk + chi_phi_th + chi_phi_dh + phi_tran + phi_phat_dv)
 

@@ -393,8 +393,9 @@ with tab4:
             c[1].metric("Chênh lệch chi phí", f"{gap:+.1f}%",
                         delta=f"{'IPPO tốt hơn' if gap < 0 else 'IPPO kém hơn'}",
                         delta_color="normal" if gap < 0 else "inverse")
-            c[2].metric("p (Welch t-test)", f"{stat.get('p_ttest', float('nan')):.2e}")
-            c[3].metric("Cohen's d", f"{stat.get('cohen_d', float('nan')):.2f}")
+            c[2].metric("p (paired t-test)",
+                        f"{stat.get('p_paired', stat.get('p_ttest', float('nan'))):.2e}")
+            c[3].metric("Hiệu ứng d_z", f"{stat.get('d_z', float('nan')):.2f}")
 
         c1, c2 = st.columns(2)
         c1.markdown("**Tổng chi phí vận hành**")

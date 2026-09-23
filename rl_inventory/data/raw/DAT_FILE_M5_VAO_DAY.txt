@@ -1,9 +1,0 @@
-Đặt 2 file gốc của bộ M5 Walmart (tải từ Kaggle "M5 Forecasting - Accuracy") vào thư mục này:
-
-    sales_train_evaluation.csv
-    calendar.csv
-
-Hai file này bị lược khỏi gói tải về vì nặng ~130 MB. Bạn đã có sẵn chúng
-trong bản cũ, chỉ cần copy sang là chạy được ngay.
-
-Sau khi copy xong:   python run.py data

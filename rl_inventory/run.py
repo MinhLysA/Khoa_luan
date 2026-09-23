@@ -11,6 +11,8 @@ run.py — mot cua duy nhat de chay ca du an.
     python run.py iso          # buoc 5: so sanh O CUNG MUC PHUC VU (quan trong)
     python run.py summary      # buoc 6: xuat TONG_HOP_SO_LIEU.txt tu ket qua hien co
     python run.py multiseed    # train + eval 3 SEED (do tin cay thong ke), roi xuat summary
+    python run.py regime       # thuc nghiem B: hieu nang theo giai doan nhu cau + soc cau
+    python run.py behavior     # kiem tra hanh vi policy, reward hacking, tam quan trong state
     python run.py test         # chay unit test moi truong
     python run.py check        # kiem tra nhanh moi thu da san sang chua
 
@@ -44,12 +46,14 @@ def main():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("lenh", choices=["app", "all", "data", "baseline", "train",
                                      "eval", "iso", "summary", "multiseed",
-                                     "test", "check"])
+                                     "regime", "behavior", "test", "check"])
     ap.add_argument("--episodes", type=int, default=None)
     ap.add_argument("--quick", action="store_true",
                     help="Ban rut gon: 60 episode, 5 episode danh gia")
     ap.add_argument("--n_skus", type=int, default=None)
     ap.add_argument("--n_warehouses", type=int, default=None)
+    ap.add_argument("--checkpoint", default="checkpoints/best_model_seed42.pth",
+                    help="Checkpoint IPPO cho lenh regime/behavior")
     a = ap.parse_args()
 
     import yaml
@@ -106,6 +110,12 @@ def main():
                "--episodes", str(cfg["eval"]["n_episodes"]), "--tag", tag])
         sh(cmd_summary)
         print("\nXong da hat giong. Xem muc 'DA HAT GIONG' trong TONG_HOP_SO_LIEU.txt.")
+    elif a.lenh == "regime":
+        sh([PY, "scripts/regime_analysis.py", "--checkpoint", a.checkpoint]
+           + (["--episodes", "5"] if a.quick else []))
+    elif a.lenh == "behavior":
+        sh([PY, "scripts/policy_behavior.py", "--checkpoint", a.checkpoint]
+           + (["--episodes", "3"] if a.quick else []))
     elif a.lenh == "test":
         sh([PY, "-m", "pytest", "tests/", "-q"])
     elif a.lenh == "all":
