@@ -153,6 +153,9 @@ def train():
         device = "cuda" if torch.cuda.is_available() else "cpu"
     else:
         device = args.device
+    if device.startswith("cuda") and not torch.cuda.is_available():
+        print("[!] Yeu cau GPU nhung may khong co CUDA -> chay tren CPU.")
+        device = "cpu"
 
     agent = PPOAgent(obs_per_pair=env.obs_per_pair, n_pairs=env.n_pairs,
                      n_action_levels=env.n_action_levels, config=ppo_cfg, device=device)

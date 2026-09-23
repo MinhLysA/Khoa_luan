@@ -246,6 +246,11 @@ quả → (12) tùy chọn đẩy lên GitHub. Kết quả lưu ở `MyDrive/KLT
 bước ở `logs/buocN_*.log`. Phụ lục của notebook có chế độ chạy nhiều phiên song
 song (`campaign.py train auto`).
 
+**Runtime: GPU T4.** Cập nhật PPO (khoảng 68% thời gian huấn luyện, đo trên máy
+local) chạy trên GPU; mô phỏng kho chạy trên CPU. Ước lượng Bước 8–9 khoảng 6–8 giờ
+trên T4, so với khoảng 25 giờ nếu chỉ dùng CPU. `train.py` tự dùng `cuda` khi có
+(tự quay về CPU nếu không có). Checkpoint GPU và CPU dùng lẫn cho nhau được.
+
 **Chuẩn bị dữ liệu cho Colab:** tải `sales_train_evaluation.csv`, `calendar.csv`,
 `sell_prices.csv` từ Kaggle (M5 Forecasting – Accuracy) và upload vào
 `MyDrive/KLTN_data/`. Tiền xử lý từ 3 file này cho ra dữ liệu **trùng khớp hoàn
