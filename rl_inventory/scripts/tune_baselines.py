@@ -29,7 +29,8 @@ if str(ROOT) not in sys.path:
 
 from env.inventory_env import MultiWarehouseInventoryEnv
 from baselines.traditional_policies import (
-    EOQPolicy, SsPolicy, NewsvendorPolicy, build_env_state)
+    EOQPolicy, SsPolicy, NewsvendorPolicy, build_env_state,
+    demand_group_index, expand_group_params, DEMAND_GROUP_NAMES, DEMAND_GROUP_EDGES)
 
 
 def danh_gia(env, policy, n_episodes, base_seed):
@@ -64,6 +65,9 @@ def main():
     # [P1-1] Tinh chinh tren mien VAL (mac dinh) - cung mien IPPO dung de chon
     # checkpoint - thay vi mien train. "train" giu lai de tai lap ket qua cu.
     ap.add_argument("--tune_mode", choices=["train", "val"], default="val")
+    ap.add_argument("--per_group", action="store_true",
+                    help="[P4-1] Tinh chinh them mot bo tham so rieng cho moi nhom quy mo cau")
+    ap.add_argument("--passes", type=int, default=1, help="So vong tim kiem theo toa do")
     args = ap.parse_args()
 
     cfg = yaml.safe_load(open(ROOT / args.config, encoding="utf-8"))
@@ -127,6 +131,53 @@ def main():
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(results, indent=2), encoding="utf-8")
     print(f"\nDa luu tham so baseline da tinh chinh vao {out}")
+
+    if args.per_group:
+        tune_theo_nhom(env, luoi, an, results, args, seed, paths)
+
+
+def tune_theo_nhom(env, luoi, an, results, args, seed, paths):
+    """[P4-1] Baseline MANH HON: moi nhom quy mo cau (4 nhom) co bo tham so
+    rieng, thay vi mot bo chung cho ca 300 cap. Tim kiem theo toa do: xuat
+    phat tu bo tham so chung, lan luot toi uu tham so cua tung nhom (giu cac
+    nhom khac), cung tieu chi: chi phi thap nhat trong so cau hinh dat fill
+    rate toan he thong >= muc_dv."""
+    gi = demand_group_index(env.mean_demand)
+    print(f"\n=== TINH CHINH THEO NHOM QUY MO CAU ({args.passes} vong) ===")
+    print("  So cap moi nhom:", {DEMAND_GROUP_NAMES[g]: int((gi == g).sum()) for g in range(4)})
+    out, chi_tiet = {}, {}
+    for ten, (cls, grid) in luoi.items():
+        co_dinh = {k: v for k, v in grid[0].items() if k in an}
+        ung_vien = [{k: v for k, v in kw.items() if k not in an} for kw in grid]
+        cur = {str(g): dict(results[ten]) for g in range(4)}
+
+        def chay(ts):
+            kw = {**co_dinh, **expand_group_params(ts, gi)}
+            return danh_gia(env, cls(env.n_pairs, **kw), args.episodes, seed)
+
+        best_c, best_f = chay(cur)
+        for _ in range(args.passes):
+            for g in map(str, range(4)):
+                for cand in ung_vien:
+                    if cand == cur[g]:
+                        continue
+                    thu = {**cur, g: cand}
+                    c, f = chay(thu)
+                    kha_thi_moi, kha_thi_cu = f >= env.muc_dv, best_f >= env.muc_dv
+                    tot_hon = ((kha_thi_moi and (not kha_thi_cu or c < best_c))
+                               or (not kha_thi_moi and not kha_thi_cu and f > best_f))
+                    if tot_hon:
+                        cur, best_c, best_f = thu, c, f
+        out[ten] = cur
+        chi_tiet[ten] = {"cost": best_c, "fill": best_f, "feasible": bool(best_f >= env.muc_dv)}
+        print(f"[{ten} theo nhom] cost={best_c:,.0f}  fill={best_f:.1%}")
+        for g in range(4):
+            print(f"   {DEMAND_GROUP_NAMES[g]:<18}: {cur[str(g)]}")
+    (ROOT / paths["results_dir"] / "baseline_params_group.json").write_text(
+        json.dumps({"groups": DEMAND_GROUP_NAMES, "edges": DEMAND_GROUP_EDGES,
+                    "params": out, "chon": chi_tiet}, indent=2, ensure_ascii=False),
+        encoding="utf-8")
+    print("Da luu results/baseline_params_group.json")
 
 
 if __name__ == "__main__":

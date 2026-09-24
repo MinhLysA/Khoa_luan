@@ -570,3 +570,24 @@ def test_paired_test_dau_va_khoang_tin_cay():
     r = paired_test(a, a + 10)
     assert r["mean_diff"] == -10 and r["n_ippo_cheaper"] == 5
     assert r["ci95_low"] <= -10 <= r["ci95_high"]
+
+
+# --------------------------------------------------------------------------- #
+# [P4-1] Baseline tinh chinh theo nhom quy mo cau
+# --------------------------------------------------------------------------- #
+def test_tham_so_baseline_theo_nhom_trai_dung_tung_cap():
+    from baselines.traditional_policies import (demand_group_index, expand_group_params,
+                                                SsPolicy, NewsvendorPolicy)
+    md = np.array([0.1, 1.0, 5.0, 20.0, 0.3])
+    gi = demand_group_index(md)
+    assert gi.tolist() == [0, 1, 2, 3, 0]
+    p = {str(g): {"service_level": 0.7 + 0.05 * g, "q_factor": 1.0, "lead_time": 3.0}
+         for g in range(4)}
+    kw = expand_group_params(p, gi)
+    assert np.allclose(kw["service_level"], [0.7, 0.75, 0.8, 0.85, 0.7])
+    s = SsPolicy(5, **kw)
+    assert s.z.shape == (5,) and s.z[0] == s.z[4] and s.z[3] > s.z[0]
+    n = NewsvendorPolicy(5, cr_override=np.array([0.6, 0.7, 0.8, 0.9, 0.6]))
+    assert n.z_cr.shape == (5,)
+    # tham so vo huong van chay nhu cu
+    assert np.ndim(NewsvendorPolicy(5, cr_override=0.9).z_cr) == 0

@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999998 (MiKTeX 26.5) (preloaded format=xelatex 2026.8.16)  23 SEP 2026 23:56
+This is XeTeX, Version 3.141592653-2.6-0.999998 (MiKTeX 26.5) (preloaded format=xelatex 2026.8.16)  24 SEP 2026 19:59
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1655,40 +1655,39 @@ Chương 4.
 File: media/duong_cong_hoc.png Graphic file (type bmp)
 <media/duong_cong_hoc.png>
  [41] [42]
-Overfull \hbox (18.26pt too wide) in paragraph at lines 294--314
+Overfull \hbox (18.26pt too wide) in paragraph at lines 305--325
  [][] 
  []
 
 [43]
 File: media/so_sanh_baseline.png Graphic file (type bmp)
 <media/so_sanh_baseline.png>
- [44]
-Overfull \hbox (18.71994pt too wide) in paragraph at lines 414--427
+ [44] [45]
+Overfull \hbox (18.71994pt too wide) in paragraph at lines 425--438
  [][] 
  []
 
-[45]
 File: media/danh_doi_chi_phi_dich_vu.png Graphic file (type bmp)
 <media/danh_doi_chi_phi_dich_vu.png>
- [46] [47] [48] [49] [50]
-Overfull \hbox (9.38397pt too wide) in paragraph at lines 648--668
+[46] [47] [48] [49] [50]
+Overfull \hbox (9.38397pt too wide) in paragraph at lines 659--679
  [][] 
  []
 
 File: media/hinh_theo_giai_doan_nhu_cau.png Graphic file (type bmp)
 <media/hinh_theo_giai_doan_nhu_cau.png>
-[51]
+[51] [52]
 File: media/hinh_soc_cau.png Graphic file (type bmp)
 <media/hinh_soc_cau.png>
- [52] [53]
+ [53]
 File: media/hinh_hanh_vi_chinh_sach.png Graphic file (type bmp)
 <media/hinh_hanh_vi_chinh_sach.png>
  [54] [55]
-Overfull \hbox (10.8224pt too wide) in paragraph at lines 912--921
+Overfull \hbox (10.8224pt too wide) in paragraph at lines 923--932
  [][] 
  []
 
-[56] [57] [58]) [59]
+[56] [57]) [58] [59]
 \openout2 = `content/C5.aux'.
 
  (content/C5.tex
@@ -1709,22 +1708,33 @@ Underfull \hbox (badness 10000) in paragraph at lines 193--193
  []
 
 
+Underfull \hbox (badness 4024) in paragraph at lines 193--193
+\TU/TimesNewRoman(0)/m/n/11.86258 theo cặp ($\OT1/cmr/m/n/12 3$ \TU/TimesNewRom
+an(0)/m/n/11.86258 hạt
+ []
+
+
 Underfull \hbox (badness 10000) in paragraph at lines 193--193
 []|\TU/lmtt/m/n/11.86258 normalize_reward_per_pair:
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 194--194
+[]|\TU/TimesNewRoman(0)/m/n/11.86258 Baseline theo
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 196--196
 []|\TU/lmtt/m/n/11.86258 service_penalty_mode:
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 195--195
+Underfull \hbox (badness 10000) in paragraph at lines 197--197
 []|\TU/TimesNewRoman(0)/m/n/11.86258 Actor–Critic
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 199--199
+Underfull \hbox (badness 10000) in paragraph at lines 201--201
 []|\TU/TimesNewRoman(0)/m/n/11.86258 Hold-out mặt
  []
 

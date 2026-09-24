@@ -396,7 +396,14 @@ chí** với IPPO (chi phí thấp nhất trong số cấu hình đạt fill rat
 - **Độ nhạy:** so thẳng, IPPO chỉ rẻ hơn (s,S) ở 22/36 bộ đơn giá; ở cùng mức phục
   vụ thì rẻ hơn ở 36/36.
 
-**Bằng chứng.** §4.2 (baseline), §4.4.2, §4.4.4, Bảng 4.6, Bảng 4.12.
+**Đối thủ mạnh hơn (đợt cuối).** Ngoài bộ tham số chung, mỗi baseline còn có phiên bản
+**tham số riêng cho từng nhóm quy mô cầu** (4 nhóm), tinh chỉnh trên val cùng tiêu chí.
+Chạy thử cho thấy phiên bản này rẻ hơn rõ (EOQ −15%, Newsvendor −1,5%) và Newsvendor
+theo nhóm có thể rẻ hơn IPPO — nhóm báo cáo trung thực kết quả này. Độ bền của kết
+luận khi sức chứa, lead time, mức nhu cầu thay đổi được kiểm tra bằng `robustness.py`.
+
+**Bằng chứng.** §4.2 (baseline), §4.4.2, §4.4.4, Bảng 4.6, Bảng 4.12;
+`results/baseline_params_group.json`, `results/robustness_main.json`.
 
 ---
 
@@ -513,6 +520,6 @@ Kèm KPI của cặp (số ngày thiếu hàng, fill rate, tổng chi phí, tổ
 | "Local reward có phải difference reward?" | Không. Difference reward cần tính phản thực G(z) − G(z₋ᵢ); nhóm dùng local factored reward (Σ r_i = R_team) và kiểm chứng bằng thí nghiệm reward toàn cục (RQ3). |
 | "Phạt 85% có phải chi phí không?" | Không. Là ràng buộc mềm trong huấn luyện; chi phí báo cáo chỉ gồm 4 thành phần. Tính khả thi kiểm tra khi chọn checkpoint (FR_val ≥ 85%). |
 | "Có rò rỉ dữ liệu test không?" | Không. 3 miền: train [0,1050) để học; validation [1050,1450) để chọn checkpoint và tune baseline; test [1450,1941) chỉ để báo cáo. |
-| "Baseline có bị làm yếu đi không?" | Baseline được tune trên validation theo đúng tiêu chí của IPPO, dùng cùng thông tin quan sát và cùng 6 mức đặt (ràng buộc lô chuẩn chung). |
+| "Baseline có bị làm yếu đi không?" | Baseline được tune trên validation theo đúng tiêu chí của IPPO, dùng cùng thông tin quan sát và cùng 6 mức đặt (ràng buộc lô chuẩn chung). Có thêm phiên bản tham số riêng theo nhóm quy mô cầu — đối thủ mạnh hơn. |
 | "Kết quả có phụ thuộc may rủi một lần chạy?" | Đánh giá 3 hạt giống huấn luyện; kiểm định theo cặp (cùng hạt giống môi trường) với khoảng tin cậy 95%, paired t-test, Wilcoxon, d_z. |
 | "Tại sao 30 SKU, không phải toàn bộ 3.049?" | Chọn phân tầng theo quy mô cầu, loại mặt hàng cửa hàng không kinh doanh; vẫn giữ tính gián đoạn (57% ngày bằng 0). Mở rộng quy mô là hướng phát triển. |

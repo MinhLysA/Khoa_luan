@@ -23,7 +23,7 @@
 \contentsline {table}{\numberline {4.8}{\ignorespaces Thực nghiệm B1: fill rate và chi phí vận hành trung bình mỗi ngày theo giai đoạn nhu cầu ($30$ episode, miền test). Cột cuối là chênh lệch chi phí của IPPO so với $(s,S)$ cùng mức phục vụ (âm là IPPO rẻ hơn).}}{51}{table.caption.27}%
 \contentsline {table}{\numberline {4.9}{\ignorespaces Chênh lệch chi phí mỗi ngày của IPPO và khoảng tin cậy $95\%$ (bootstrap theo khối $7$ ngày). Dấu $^{*}$: khoảng tin cậy không chứa $0$.}}{52}{table.caption.29}%
 \contentsline {table}{\numberline {4.10}{\ignorespaces Thực nghiệm B2: fill rate (và chi phí mỗi ngày) trước, trong và sau sốc cầu $28$ ngày}}{53}{table.caption.30}%
-\contentsline {table}{\numberline {4.11}{\ignorespaces Tầm quan trọng của các nhóm đặc trưng trạng thái (xáo trộn nhóm đặc trưng giữa các cặp ở mỗi bước; riêng nhóm lịch được thay bằng lịch của một ngày ngẫu nhiên)}}{56}{table.caption.33}%
+\contentsline {table}{\numberline {4.11}{\ignorespaces Tầm quan trọng của các nhóm đặc trưng trạng thái (xáo trộn nhóm đặc trưng giữa các cặp ở mỗi bước; riêng nhóm lịch được thay bằng lịch của một ngày ngẫu nhiên)}}{55}{table.caption.33}%
 \contentsline {table}{\numberline {4.12}{\ignorespaces Chênh lệch tổng chi phí của IPPO theo đơn giá ($c_{dh} = 5$). Mỗi ô: so với $(s,S)$ trực tiếp / so với $(s,S)$ cùng mức phục vụ; âm là IPPO rẻ hơn.}}{56}{table.caption.34}%
 \addvspace {10\p@ }
 \contentsline {table}{\numberline {5.1}{\ignorespaces Đợt thực nghiệm bổ sung: mã nguồn đã sẵn sàng, đang chờ huấn luyện}}{64}{table.caption.35}%

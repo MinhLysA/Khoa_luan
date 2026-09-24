@@ -86,7 +86,7 @@
 \contentsline {subsection}{\numberline {4.5.4}Thực nghiệm B: hiệu năng theo giai đoạn nhu cầu}{50}{subsection.4.5.4}%
 \contentsline {paragraph}{Thiết kế.}{50}{subsection.4.5.4}%
 \contentsline {paragraph}{Kết quả B1 --- giai đoạn tự nhiên.}{51}{figure.caption.28}%
-\contentsline {paragraph}{Kết quả B2 --- sốc cầu.}{52}{figure.caption.31}%
+\contentsline {paragraph}{Kết quả B2 --- sốc cầu.}{53}{figure.caption.31}%
 \contentsline {paragraph}{Kết luận thực nghiệm B.}{54}{figure.caption.31}%
 \contentsline {subsection}{\numberline {4.5.5}Kiểm tra trạng thái và phần thưởng bằng thực nghiệm}{54}{subsection.4.5.5}%
 \contentsline {paragraph}{Hành vi có hợp lý về nghiệp vụ không?}{54}{figure.caption.32}%

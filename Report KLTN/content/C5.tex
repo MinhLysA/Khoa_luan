@@ -189,8 +189,10 @@ tham chiếu dùng hình phạt mức phục vụ chuẩn hóa~(\ref{eq:phatChua
         \hline
         Mô hình chính ($3$ hạt giống $\times$ $4.000$ episode) & Hình phạt mức phục vụ chuẩn hóa & Mặt hàng bán chậm còn bị phân bổ mức phục vụ thấp hơn không; kết luận ``không đắt hơn $(s,S)$'' có lặp lại trên $3$ hạt giống không \\ \hline
         Tham chiếu $1.000$ episode & --- & Mốc so sánh cho các thí nghiệm loại trừ \\ \hline
-        Phần thưởng toàn cục & \texttt{reward\_mode: global} & Câu hỏi 3: cục bộ so với toàn cục \\ \hline
-        Tắt chuẩn hóa theo cặp & \texttt{normalize\_reward\_per\_pair: false} & Câu hỏi 3: có/không chuẩn hóa \\ \hline
+        Phần thưởng toàn cục ($3$ hạt giống) & \texttt{reward\_mode: global} & Câu hỏi 3: cục bộ so với toàn cục \\ \hline
+        Tắt chuẩn hóa theo cặp ($3$ hạt giống) & \texttt{normalize\_reward\_per\_pair: false} & Câu hỏi 3: có/không chuẩn hóa \\ \hline
+        Baseline theo nhóm quy mô cầu & Mỗi nhóm cầu một bộ tham số (s,S), Newsvendor, EOQ & So sánh với đối thủ mạnh hơn \\ \hline
+        Độ bền theo điều kiện vận hành & Sức chứa 4/6 ngày, lead time 2--3 hoặc luôn 3 ngày, nhu cầu $\pm 20\%$ (không huấn luyện lại) & Kết luận có đứng vững khi môi trường thay đổi \\ \hline
         Phạt SLA kiểu cũ & \texttt{service\_penalty\_mode: demand} & Tác động của việc định cỡ lại hình phạt \\ \hline
         Actor--Critic chung thân & \texttt{shared\_trunk: true}, một optimizer & Vì sao phải tách hai mạng (Mục~\ref{subsec:ablationTrunk}) \\ \hline
         Bỏ đặc trưng lịch / cấp kho & \texttt{obs\_drop} & Trạng thái có biến dư thừa không \\ \hline
@@ -211,6 +213,13 @@ có ở Chương~\ref{chap:chapter4}.
 \subsection{Các hướng mở rộng khác}
 
 \begin{itemize}
+    \item Lead time dài hơn $3$ ngày và mục tiêu mức phục vụ khác $85\%$
+    (chẳng hạn $80\%$ hoặc $90\%$): phân tích độ bền hiện tại chỉ đánh giá được
+    các thay đổi mà chính sách đã học vẫn nhận làm đầu vào (sức chứa, lead time
+    trong khoảng $1$--$3$ ngày, mức nhu cầu). Số chiều quan sát phụ thuộc lead
+    time tối đa, còn hệ số phạt được hiệu chỉnh cho mục tiêu $85\%$, nên hai
+    trường hợp này đòi hỏi huấn luyện lại cho từng cấu hình.
+
     \item Nhân tử Lagrange riêng cho từng cặp: thay vì cố định hệ số
     $\phi_{dv}$, cập nhật một nhân tử cho mỗi cặp trong lúc huấn luyện để ràng
     buộc mức phục vụ được thỏa mãn chặt ở từng mặt hàng.

@@ -139,6 +139,17 @@ lịch sử nhu cầu gần nhất. Thứ ba, cả bốn phương pháp chịu c
 hóa: lượng đặt hàng mong muốn được làm tròn về mức gần nhất trong sáu mức của
 công thức (\ref{eq:orderTable}).
 
+Mỗi chính sách cổ điển được đánh giá ở hai phiên bản. Phiên bản thứ nhất dùng
+\emph{một bộ tham số chung} cho cả $300$ cặp. Phiên bản thứ hai dùng \emph{một bộ
+tham số riêng cho mỗi nhóm quy mô nhu cầu} (bốn nhóm: dưới $0{,}5$; $0{,}5$--$2$;
+$2$--$10$; từ $10$ đơn vị mỗi ngày trở lên), được tìm bằng tìm kiếm theo tọa độ:
+xuất phát từ bộ tham số chung, lần lượt tối ưu tham số của từng nhóm trong khi
+giữ nguyên các nhóm khác, với cùng tiêu chí chi phí thấp nhất trong số cấu hình
+đạt fill rate $\ge 85\%$. Phiên bản theo nhóm là đối thủ mạnh hơn và sát với cách
+doanh nghiệp đặt chính sách theo nhóm hàng; nó được đưa vào để tránh so sánh IPPO
+--- vốn điều chỉnh theo trạng thái của từng cặp --- với một đối thủ bị giới hạn ở
+một bộ tham số duy nhất.
+
 Ràng buộc thứ ba được giữ cho mọi phương pháp vì nó mô phỏng một ràng buộc vận
 hành chung: đơn bổ sung hàng được đặt theo một số lô chuẩn tỷ lệ với nhu cầu
 trung bình của mặt hàng, chứ không theo số lượng tùy ý. Nếu chỉ IPPO bị giới

@@ -137,7 +137,8 @@ class NewsvendorPolicy(BasePolicy):
         self.p = stockout_cost
         self.lead_time = lead_time
         cr = cr_override if cr_override is not None else self.p / (self.p + self.h)
-        self.critical_ratio = float(np.clip(cr, 0.01, 0.999))
+        # Cho phep CR la mang theo tung cap (baseline tinh chinh theo nhom quy mo cau)
+        self.critical_ratio = np.clip(np.asarray(cr, dtype=float), 0.01, 0.999)
         self.z_cr = stats.norm.ppf(self.critical_ratio)
 
     def get_action(self, env_state: Dict[str, Any]) -> np.ndarray:
@@ -164,6 +165,28 @@ def build_env_state(env) -> Dict[str, Any]:
         "mean_demand":     env.mean_demand.copy(),
         "qty_to_action":   env.qty_to_action,
     }
+
+
+# --------------------------------------------------------------------------- #
+# Baseline tinh chinh THEO NHOM QUY MO CAU: moi nhom co bo tham so rieng.
+# Moi tham so (service_level, q_factor, lead_time, cr_override) deu nhan duoc
+# mang (n_pairs,), nen chi can "trai" tham so cua nhom ra tung cap.
+# --------------------------------------------------------------------------- #
+DEMAND_GROUP_EDGES = [0.5, 2.0, 10.0]       # nguong cau TB/ngay (mien train)
+DEMAND_GROUP_NAMES = ["Rất thấp (<0,5)", "Thấp (0,5-2)", "Trung bình (2-10)", "Cao (>=10)"]
+
+
+def demand_group_index(mean_demand) -> np.ndarray:
+    """Chi so nhom (0..3) cua tung cap theo cau trung binh."""
+    return np.digitize(np.asarray(mean_demand), DEMAND_GROUP_EDGES)
+
+
+def expand_group_params(params_by_group: Dict[str, Dict[str, float]],
+                        group_idx: np.ndarray) -> Dict[str, np.ndarray]:
+    """{'0': {...}, '1': {...}, ...} -> {ten_tham_so: mang (n_pairs,)}."""
+    keys = set().union(*[p.keys() for p in params_by_group.values()])
+    return {k: np.array([params_by_group[str(g)][k] for g in group_idx], dtype=float)
+            for k in keys}
 
 
 POLICY_REGISTRY = {

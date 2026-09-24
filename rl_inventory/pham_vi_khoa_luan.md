@@ -1,11 +1,5 @@
 # Khóa luận: Tối ưu hóa chính sách đặt hàng lại trong quản lý tồn kho đa kho bằng PS-IPPO
 
-*Tài liệu tổng hợp duy nhất của dự án — chốt ngày 24/09/2026.*
-Gộp và thay thế: `README_CLAUDE_CODE_KLTN.md` (kế hoạch P0/P1/P2),
-`BAO_CAO_SUA_LOI.md` (chẩn đoán bản v2), `Report KLTN/CHANGELOG_HIEUCHINH.md`
-(nhật ký sửa báo cáo) và bản phạm vi cũ. `README.md` chỉ còn là trang dẫn tới
-tài liệu này.
-
 **Mục lục**
 1. [Trạng thái hiện tại](#1-trạng-thái-hiện-tại)
 2. [Đề tài, câu hỏi nghiên cứu, phạm vi](#2-đề-tài-câu-hỏi-nghiên-cứu-phạm-vi)
@@ -26,8 +20,8 @@ tài liệu này.
 
 | Hạng mục | Trạng thái |
 |---|---|
-| Code | **Sẵn sàng cho đợt train cuối.** 42/42 test pass. Protocol cuối đã cài đặt: 3 miền, tune baseline trên val theo ràng buộc 85%, đánh giá trên toàn bộ quỹ đạo test, kiểm định theo cặp, reward toàn cục cho RQ3. |
-| Đợt thực nghiệm cuối | **Chưa chạy.** 12 lần chạy (khoảng 25 giờ CPU), chạy bằng `scripts/campaign.py` hoặc notebook Colab. Xem mục 7. |
+| Code | **Sẵn sàng cho đợt train cuối.** 43/43 test pass. Protocol cuối đã cài đặt: 3 miền, tune baseline trên val theo ràng buộc 85% (bộ tham số chung **và** theo nhóm quy mô cầu), RQ3 lặp 3 seed, độ bền theo điều kiện vận hành, đánh giá trên toàn bộ quỹ đạo test, kiểm định theo cặp, reward toàn cục cho RQ3. |
+| Đợt thực nghiệm cuối | **Chưa chạy.** 3 lần chạy chính + 16 ablation (khoảng 8–10 giờ GPU T4), chạy bằng `scripts/campaign.py` hoặc notebook Colab. Xem mục 7. |
 | Số liệu trong báo cáo | Hiện đang là **bản cũ** (3 seed × 1.000 episode, phạt SLA kiểu cũ, 30 cửa sổ 365 ngày chồng lấn). Phải thay toàn bộ sau đợt cuối. |
 | Báo cáo LaTeX | Khung logic đã chốt (RQ, methodology, thuật ngữ, trích dẫn). Biên dịch sạch, 91 trang. Xem mục 10. |
 | Git | Chưa commit các thay đổi gần nhất. Colab `git pull` từ GitHub nên phải push trước khi chạy. |
@@ -279,9 +273,9 @@ kho/mặt hàng), nên kết quả tái lập được.
 | Lần chạy | Config | Episode | Trả lời |
 |---|---|---|---|
 | `main_s42`, `main_s1`, `main_s2` | `config.yaml` | 4.000 | RQ1, RQ2; mặt hàng bán chậm còn bị phân bổ mức phục vụ thấp không |
-| `abl_ref` | `config.yaml` | 1.000 | mốc cho mọi ablation (cùng lịch lr/entropy) |
-| `abl_global` | `ablation_global_reward` | 1.000 | RQ3: cục bộ vs toàn cục |
-| `abl_q3` | `ablation_q3_no_reward_norm` | 1.000 | RQ3: có/không chuẩn hóa |
+| `abl_ref` (+`_s1`, `_s2`) | `config.yaml` | 1.000 | mốc cho mọi ablation (cùng lịch lr/entropy) |
+| `abl_global` (+`_s1`, `_s2`) | `ablation_global_reward` | 1.000 | RQ3: cục bộ vs toàn cục (3 seed) |
+| `abl_q3` (+`_s1`, `_s2`) | `ablation_q3_no_reward_norm` | 1.000 | RQ3: có/không chuẩn hóa (3 seed) |
 | `abl_reward_cu` | `ablation_reward_demand_scaled` | 1.000 | tác động của việc định cỡ lại phạt SLA |
 | `abl_trunk` | `ablation_shared_trunk` | 1.000 | vì sao phải tách Actor/Critic |
 | `abl_nocal`, `abl_nowh` | `ablation_drop_*` | 1.000 | state có biến dư thừa không |
@@ -289,9 +283,22 @@ kho/mặt hàng), nên kết quả tái lập được.
 | `abl_warm` | `ablation_warm_start` | 1.000 | ảnh hưởng lịch sử rỗng đầu episode |
 | `holdout` | `holdout_train` → `holdout_eval` | 1.000 | RQ2 mở rộng: 6 SKU chưa gặp (3, 8, 9, 10, 23, 25) |
 
-`campaign.py eval` chạy lần lượt: tune baseline (val) → eval 3 seed → iso-service
-→ regime → behavior → quy mô → độ nhạy → eval ablation → hold-out → tổng hợp đa
-hạt giống.
+`campaign.py eval` chạy lần lượt: tune baseline (val, chung + theo nhóm cầu) → eval 3 seed
+→ iso-service → regime → behavior → quy mô → độ nhạy → **độ bền** (`robustness.py`)
+→ eval ablation → hold-out → tổng hợp đa hạt giống (`results/multiseed_main.json`)
+→ **tổng hợp RQ3 theo seed** (`results/rq3_multiseed.json`: chi phí, fill, độ ổn định
+huấn luyện, kiểm định theo cặp với `abl_ref` cùng seed).
+
+**Ba mở rộng của đợt cuối:**
+- *Baseline theo nhóm quy mô cầu* (`tune_baselines.py --per_group` →
+  `results/baseline_params_group.json`): 4 nhóm (<0,5; 0,5–2; 2–10; ≥10), tìm theo
+  tọa độ từ bộ tham số chung. Chạy thử 1 episode: EOQ 1,886M → 1,603M, (s,S)
+  1,629M → 1,610M, Newsvendor 1,626M → 1,601M, fill ~85%. **Rủi ro:** Newsvendor
+  theo nhóm có thể rẻ hơn IPPO → kết luận RQ1 phải viết theo số liệu thật.
+- *RQ3 × 3 seed*: kết luận cục bộ/toàn cục/chuẩn hóa không dựa vào một lần khởi tạo.
+- *Độ bền zero-shot* (`scripts/robustness.py`): sức chứa 4/6 ngày, lead time luôn 3
+  hoặc 2–3 ngày, nhu cầu ±20%. Chạy thử: IPPO tốt hơn khi lead time dài và cầu +20%,
+  kém hơn khi cầu −20% (+6,2% so với (s,S)).
 
 ---
 
@@ -411,14 +418,14 @@ nghiệm A/B theo giai đoạn; không mặc định RL thắng.
 tác giả SSRN → commit.
 
 **Chưa làm (có thể bổ sung nếu còn thời gian):**
-- Độ nhạy theo lead time (2–5 ngày), sức chứa (4/5/6 ngày), mục tiêu mức phục vụ
-  (80/85/90%) — hiện mới có độ nhạy theo đơn giá chi phí.
 - Val trên toàn quỹ đạo cố định (hiện val vẫn rút cửa sổ 365 ngày trong miền 400
   ngày).
 - File `run_metadata.json` lưu config snapshot cho mỗi lần chạy.
 - `run.py multiseed` vẫn mặc định 1.000 episode; đợt cuối dùng `campaign.py`.
 
-**Hướng phát triển (ngoài phạm vi):** nhân tử Lagrange riêng từng cặp;
+**Hướng phát triển (ngoài phạm vi):** lead time > 3 ngày và mục tiêu mức phục vụ
+80/90% (cần huấn luyện lại: số chiều quan sát phụ thuộc lead time tối đa, hệ số phạt
+hiệu chỉnh cho 85%); nhân tử Lagrange riêng từng cặp;
 chuyển hàng liên kho, multi-echelon; MAPPO/critic tập trung; communication giữa
 tác tử; action liên tục; dự báo LSTM/Transformer; 3.049 SKU; triển khai thực tế;
 lớp giao tiếp ngôn ngữ qua MCP.

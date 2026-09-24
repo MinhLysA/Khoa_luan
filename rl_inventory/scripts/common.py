@@ -18,7 +18,8 @@ if str(ROOT) not in sys.path:
 
 from env.inventory_env import MultiWarehouseInventoryEnv
 from agents.ppo_agent import PPOAgent
-from baselines.traditional_policies import POLICY_REGISTRY, build_env_state
+from baselines.traditional_policies import (POLICY_REGISTRY, build_env_state,
+                                            demand_group_index, expand_group_params)
 
 
 def load_config(path="config.yaml"):
@@ -54,7 +55,7 @@ def load_agent(cfg, env, checkpoint):
     return agent
 
 
-def make_policies(cfg, env, checkpoint, include_iso=True):
+def make_policies(cfg, env, checkpoint, include_iso=True, include_group=True):
     """dict ten -> action_fn(obs, env). Gom IPPO, 3 baseline tinh chinh truc
     tiep (baseline_params.json) va - neu co iso_service.json - cac baseline
     duoc chinh de dat CUNG MUC PHUC VU voi IPPO (so sanh chi phi cong bang)."""
@@ -79,6 +80,14 @@ def make_policies(cfg, env, checkpoint, include_iso=True):
     tuned = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
     for name in defaults:
         pols[name] = build(name, tuned.get(name, {}))
+
+    # [P4-1] Baseline tinh chinh theo nhom quy mo cau (manh hon bo tham so chung)
+    p = results / "baseline_params_group.json"
+    if include_group and p.exists():
+        gi = demand_group_index(env.mean_demand)
+        for name, by_group in json.loads(p.read_text(encoding="utf-8"))["params"].items():
+            if name in defaults:
+                pols[f"{name} theo nhóm"] = build(name, expand_group_params(by_group, gi))
 
     p = results / "iso_service.json"
     if include_iso and p.exists():

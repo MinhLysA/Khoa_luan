@@ -35,7 +35,8 @@ if str(ROOT) not in sys.path:
 from env.inventory_env import MultiWarehouseInventoryEnv
 from agents.ppo_agent import PPOAgent
 from baselines.traditional_policies import (
-    EOQPolicy, SsPolicy, NewsvendorPolicy, build_env_state)
+    EOQPolicy, SsPolicy, NewsvendorPolicy, build_env_state,
+    demand_group_index, expand_group_params)
 
 import matplotlib
 matplotlib.use("Agg")
@@ -239,6 +240,19 @@ def main():
         all_dfs.append(evaluate_policy(env, pol, n_episodes, name=name,
                                        base_seed=base_seed, traces=traces,
                                        start_days=start_days))
+
+    # [P4-1] Baseline tinh chinh THEO NHOM quy mo cau (neu da chay
+    # tune_baselines.py --per_group): moi nhom mot bo tham so rieng.
+    group_path = results_dir / "baseline_params_group.json"
+    if group_path.exists():
+        by_name = json.loads(group_path.read_text(encoding="utf-8"))["params"]
+        gi = demand_group_index(env.mean_demand)
+        for name, cls, kw in specs:
+            if name in by_name:
+                pol = cls(n_pairs=env.n_pairs, **{**kw, **expand_group_params(by_name[name], gi)})
+                all_dfs.append(evaluate_policy(env, pol, n_episodes, name=f"{name} theo nhóm",
+                                               base_seed=base_seed, traces=traces,
+                                               start_days=start_days))
 
     df_all = pd.concat(all_dfs, ignore_index=True)
     df_all.to_csv(results_dir / f"all_episodes{suffix}.csv", index=False)

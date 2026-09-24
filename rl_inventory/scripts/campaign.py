@@ -40,6 +40,12 @@ ABLATIONS = {
     "abl_warm":      ("configs/ablation_warm_start.yaml", 42, 1000, "Warm-start lich su cau"),
     "holdout":       ("configs/holdout_train.yaml", 42, 1000, "Hold-out: train 24 SKU"),
 }
+# [P4-2] RQ3 lap lai tren 3 hat giong (42 o tren + 1, 2): moc, toan cuc, khong chuan hoa
+RQ3_CFG = {"abl_ref": "config.yaml", "abl_global": "configs/ablation_global_reward.yaml",
+           "abl_q3": "configs/ablation_q3_no_reward_norm.yaml"}
+for _base, _cfg in RQ3_CFG.items():
+    for _s in (1, 2):
+        ABLATIONS[f"{_base}_s{_s}"] = (_cfg, _s, 1000, f"RQ3 {_base}, seed {_s}")
 RUNS = {**MAIN, **ABLATIONS}
 
 
@@ -91,6 +97,8 @@ def train(tag):
 # tu lay lan chay chua xong va chua co phien nao dang chay, theo thu tu uu tien.
 # ---------------------------------------------------------------------------
 PRIORITY = ["main_s42", "abl_ref", "abl_global", "abl_q3", "main_s1", "main_s2",
+            "abl_ref_s1", "abl_global_s1", "abl_q3_s1",
+            "abl_ref_s2", "abl_global_s2", "abl_q3_s2",
             "abl_reward_cu", "holdout", "abl_trunk", "abl_nocal", "abl_nowh",
             "abl_event", "abl_warm"]
 STALE_MIN = 20          # khoa khong co dau hieu song qua 20 phut = phien da chet
@@ -172,7 +180,7 @@ def evaluate_all(n_eval=30):
     main = ck("main_s42")
 
     # 1. Baseline tinh chinh tren mien VAL
-    sh([PY, "scripts/tune_baselines.py", "--episodes", 3])
+    sh([PY, "scripts/tune_baselines.py", "--episodes", 3, "--per_group"])
     # 2. Danh gia 3 seed mo hinh chinh (+ cua so co dinh cho seed 42)
     for s in (42, 1, 2):
         if ck(f"main_s{s}"):
@@ -187,6 +195,7 @@ def evaluate_all(n_eval=30):
         sh([PY, "scripts/policy_behavior.py", "--checkpoint", main, "--tag", "main"])
         sh([PY, "scripts/analyze_scale_groups.py", "--checkpoint", main, "--tag", "main"])
         sh([PY, "scripts/sensitivity.py", "--checkpoint", main, "--tag", "main"])
+        sh([PY, "scripts/robustness.py", "--checkpoint", main, "--tag", "main"])
     # 8. Ablation: danh gia tren mien test voi DUNG config da train
     for tag, (cfg, *_rest) in ABLATIONS.items():
         if tag == "holdout" or not ck(tag):
@@ -197,7 +206,7 @@ def evaluate_all(n_eval=30):
         if ck(tag):
             sh([PY, "scripts/policy_behavior.py", "--config", RUNS[tag][0],
                 "--checkpoint", ck(tag), "--tag", tag])
-    cmp = [t for t in ABLATIONS if t != "holdout" and ck(t)]
+    cmp = [t for t in ABLATIONS if t != "holdout" and not re.search(r"_s[12]$", t) and ck(t)]
     if "abl_ref" in cmp and len(cmp) > 1:
         sh([PY, "scripts/plot_learning_curve.py", "--compare", *cmp, "--max_episode", 1000])
     # 9. Hold-out: 6 SKU chua gap (so voi mo hinh cung 1000 episode da thay ca 30 SKU)
@@ -207,7 +216,71 @@ def evaluate_all(n_eval=30):
             sh([PY, "scripts/evaluate.py", "--config", "configs/holdout_eval.yaml",
                 "--checkpoint", ck(tag), "--episodes", n_eval, "--tag", out])
     tong_hop_da_hat_giong()
+    tong_hop_rq3()
     print("\nXONG. Ket qua trong results/*_main*, *_abl_*, *holdout*.")
+
+
+def tong_hop_rq3():
+    """[P4-2] RQ3 tren 3 hat giong: moi bien the (toan cuc, khong chuan hoa) so
+    voi moc abl_ref CUNG hat giong. Hieu nang: kiem dinh theo cap tren 30 lan
+    danh gia test. On dinh huan luyen: tu train_log (episode dau tien dat fill
+    >= 85% tren val, chi phi / entropy / explained variance 100 episode cuoi)."""
+    import numpy as np
+    import pandas as pd
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from evaluate import paired_test
+
+    def tag(base, s):
+        return base if s == 42 else f"{base}_s{s}"
+
+    def ippo_costs(t):
+        p = ROOT / "results" / f"all_episodes_{t}.csv"
+        if not p.exists():
+            return None
+        d = pd.read_csv(p)
+        return d[d.policy == "IPPO"].sort_values("episode")
+
+    def on_dinh(t):
+        p = ROOT / "results" / f"train_log_{t}.csv"
+        if not p.exists():
+            return {}
+        d = pd.read_csv(p)
+        ev = d.dropna(subset=["eval_fill"])
+        dat = ev[ev.eval_fill >= 0.85]
+        cuoi = d.tail(100)
+        return {"episode_dat_85_val": int(dat.episode.iloc[0]) if len(dat) else None,
+                "cost_100_ep_cuoi": float(cuoi.cost_total.mean()),
+                "entropy_cuoi": float(cuoi.entropy.dropna().mean()),
+                "explained_var_cuoi": float(cuoi.explained_variance.dropna().mean())}
+
+    out = {}
+    for base in RQ3_CFG:
+        out[base] = {"seeds": {}}
+        for s in (42, 1, 2):
+            t = tag(base, s)
+            e = ippo_costs(t)
+            if e is None:
+                continue
+            row = {"cost": float(e.total_cost.mean()), "fill": float(e.fill_rate.mean()),
+                   **on_dinh(t)}
+            ref = ippo_costs(tag("abl_ref", s))
+            if base != "abl_ref" and ref is not None:
+                row["so_voi_ref"] = paired_test(e.total_cost.values, ref.total_cost.values)
+            out[base]["seeds"][s] = row
+        g = [r["so_voi_ref"]["gap_percent"] for r in out[base]["seeds"].values() if "so_voi_ref" in r]
+        if g:
+            out[base]["gap_vs_ref_mean"] = float(np.mean(g))
+            out[base]["n_seeds_ref_re_hon_co_y_nghia"] = int(sum(
+                r["so_voi_ref"]["gap_percent"] > 0 and r["so_voi_ref"]["p_paired"] < 0.05
+                for r in out[base]["seeds"].values() if "so_voi_ref" in r))
+            out[base]["n_seeds"] = len(g)
+    (ROOT / "results" / "rq3_multiseed.json").write_text(
+        json.dumps(out, indent=2, ensure_ascii=False, default=float), encoding="utf-8")
+    print("Da luu results/rq3_multiseed.json")
+    for base, v in out.items():
+        if "gap_vs_ref_mean" in v:
+            print(f"  {base:<11}: chi phi so voi abl_ref {v['gap_vs_ref_mean']:+.1f}% (TB 3 seed); "
+                  f"abl_ref re hon co y nghia o {v['n_seeds_ref_re_hon_co_y_nghia']}/{v['n_seeds']} seed")
 
 
 def tong_hop_da_hat_giong():
@@ -255,6 +328,7 @@ def main():
         evaluate_all(a.n_eval)
     elif a.lenh == "tonghop":
         tong_hop_da_hat_giong()
+        tong_hop_rq3()
     elif a.ten == "auto":
         train_auto()
     else:
