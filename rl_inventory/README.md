@@ -55,7 +55,14 @@ từ checkpoint trên Drive (lưu khoảng mỗi 25 episode). Không cần chạ
 Hết hạn mức GPU: có thể chuyển runtime sang CPU chạy tiếp, checkpoint dùng lẫn được.
 
 ### Lấy kết quả về máy
-Tải thư mục `MyDrive/KLTN_final` từ Google Drive.
+Tải thư mục `MyDrive/KLTN_final` từ Google Drive. **Mọi số liệu nằm trong một file:
+`results/KET_QUA.txt`**, tự dựng lại mỗi khi train xong, đánh giá xong hoặc chạy
+`campaign.py tonghop` (chạy tay: `python scripts/ket_qua.py`):
+- Phần 1: RQ1 (3 seed so với từng baseline), RQ3 (từng seed so với `abl_ref`).
+- Phần 2: từng mô hình — huấn luyện (mô hình được chọn, episode đạt 85%, đã hội tụ chưa,
+  cơ cấu chi phí) và đánh giá trên test (bảng chi phí/fill, kiểm định theo cặp, kết luận).
+
+`logs/phien_ban_code.txt` ghi commit code của từng phiên chạy.
 
 ---
 

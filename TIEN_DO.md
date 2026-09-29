@@ -83,7 +83,11 @@ Cập nhật: 29/09/2026 · Chú thích: ✅ xong · 🟡 đang triển khai / c
 
 **Kiểm tra trước khi train (29/09):**
 - Chạy thử nhanh trên Colab T4 (commit `c6a92a6`): code, GPU, 44 chiều, lưu Drive đều chạy; ~1 giây/episode. Bước tune baseline của notebook test lỗi (IPython không thay `{TUNE_EPISODES}`) → **đã sửa**, cần push `Khoa_luan_Colab_test_nhanh.ipynb`.
-- Máy local: 44/44 test pass, config ablation đồng bộ, cả 2 notebook thay biến đúng ở mọi dòng `!`. Chạy thử 26 episode: `main_s42`, `main_s1`, `main_s2`, `abl_ref` train OK (dừng giữa chừng, chưa chạy thử 15 lần còn lại và `campaign.py eval`).
+- Máy local: 44/44 test pass, config ablation đồng bộ, cả 2 notebook thay biến đúng ở mọi dòng `!`.
+- **Chạy thử toàn bộ pipeline (26 episode/lần):** 19/19 lần train OK (44 chiều; `abl_event` 46 chiều). `campaign.py eval --n_eval 2` chạy trọn 34/34 lệnh, không lỗi, sinh đủ `multiseed_main.json`, `rq3_multiseed.json`, hold-out. Số liệu chạy thử vô nghĩa (mô hình 26 episode chưa đặt hàng).
+- Colab test nhanh lần 2 (commit `6437894`): tune baseline OK, 6 baseline fill ≥ 85%; IPPO 300 ep chưa hội tụ (tràn kho ~32% chi phí).
+- Đã sửa thêm: `evaluate.py` dừng hẳn khi thiếu `baseline_params.json`; notebook chính ghi commit mỗi phiên vào `logs/phien_ban_code.txt`; `.gitignore` cho checkpoints/results/runs/pyc/LaTeX build.
+- Mọi số liệu gộp vào **một file `results/KET_QUA.txt`** (RQ1, RQ3, từng mô hình: huấn luyện + đánh giá test), tự dựng lại sau mỗi lần train/đánh giá (`scripts/ket_qua.py`).
 
 Chạy: `python scripts/campaign.py train main` → `train ablations` → `eval` (≈ 8–10 giờ GPU T4).
 

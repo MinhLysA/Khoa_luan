@@ -217,7 +217,10 @@ def evaluate_all(n_eval=30):
                 "--checkpoint", ck(tag), "--episodes", n_eval, "--tag", out])
     tong_hop_da_hat_giong()
     tong_hop_rq3()
-    print("\nXONG. Ket qua trong results/*_main*, *_abl_*, *holdout*.")
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from ket_qua import ghi_ket_qua
+    print("Da luu", ghi_ket_qua(ROOT))
+    print("\nXONG. So lieu tong: results/KET_QUA.txt")
 
 
 def tong_hop_rq3():
@@ -329,6 +332,9 @@ def main():
     elif a.lenh == "tonghop":
         tong_hop_da_hat_giong()
         tong_hop_rq3()
+        sys.path.insert(0, str(ROOT / "scripts"))
+        from ket_qua import ghi_ket_qua
+        print("Da luu", ghi_ket_qua(ROOT))
     elif a.ten == "auto":
         train_auto()
     else:

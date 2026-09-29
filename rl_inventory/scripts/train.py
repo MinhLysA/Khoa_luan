@@ -66,6 +66,7 @@ if str(ROOT) not in sys.path:
 from env.inventory_env import MultiWarehouseInventoryEnv
 from agents.ppo_agent import PPOAgent
 from agents.rollout_buffer import RolloutBuffer
+from ket_qua import dinh_dang_train, ghi_ket_qua
 
 try:
     from torch.utils.tensorboard import SummaryWriter
@@ -387,6 +388,10 @@ def train():
                     "best_feasible_found": best_feasible_found,
                     "fallback_best_fill": (None if fallback_best_fill == -float("inf")
                                            else fallback_best_fill),
+                    # thong tin lan chay cho results/KET_QUA.txt
+                    "config": args.config, "seed": seed, "total_episodes": total_episodes,
+                    "device": device, "obs_per_pair": int(env.obs_per_pair),
+                    "n_pairs": int(env.n_pairs),
                 }), encoding="utf-8")
 
                 if episode_count % 10 == 0:
@@ -461,6 +466,9 @@ def train():
               f"Can xem xet tang so episode, giam min_fill_to_save, hoac tang phi_dv.")
     print(f"  checkpoint : {checkpoint_dir / f'best_model{suffix}.pth'}")
     print(f"  nhat ky    : {log_path}")
+    print("\n".join(dinh_dang_train(log_path, json.loads(state_path.read_text(encoding="utf-8")),
+                                     min_fill_to_save)))
+    print(f"  so lieu tong: {ghi_ket_qua(ROOT)}")
 
 
 if __name__ == "__main__":

@@ -8,3 +8,28 @@ __pycache__/
 rl_inventory/checkpoints/lock_*.json
 rl_inventory/checkpoints/checkpoint_latest_*.pth
 .pytest_cache/
+
+# Dau ra sinh ra khi chay (ket qua that nam tren Google Drive, khong dua len git)
+rl_inventory/checkpoints/*
+!rl_inventory/checkpoints/.gitkeep
+rl_inventory/results/*
+!rl_inventory/results/.gitkeep
+rl_inventory/runs/
+TONG_HOP_SO_LIEU.txt
+
+# File trung gian khi bien dich LaTeX (giu main.pdf)
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.lot
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*.xdv
+Report KLTN/*.log
+texput.log

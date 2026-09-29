@@ -26,6 +26,7 @@ import argparse
 import numpy as np
 import pandas as pd
 from pathlib import Path
+from datetime import datetime
 from scipy import stats
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -33,6 +34,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from env.inventory_env import MultiWarehouseInventoryEnv
+from ket_qua import dinh_dang_danh_gia, ghi_ket_qua
 from agents.ppo_agent import PPOAgent
 from baselines.traditional_policies import (
     EOQPolicy, SsPolicy, NewsvendorPolicy, build_env_state,
@@ -198,8 +200,10 @@ def main():
         tuned = json.loads(params_path.read_text(encoding="utf-8"))
         print(f"Da nap tham so baseline da tinh chinh tu {params_path.name}")
     else:
-        print("CANH BAO: chua co baseline_params.json -> chay "
-              "scripts/tune_baselines.py truoc de so sanh cong bang.")
+        # Dung han: baseline tham so mac dinh khong dat fill 85% -> bang so sanh
+        # sai ma khong ai de y (da xay ra o lan chay thu Colab 29/09).
+        sys.exit(f"LOI: chua co {params_path} -> chay scripts/tune_baselines.py "
+                 "--tune_mode val --per_group truoc khi danh gia.")
 
     all_dfs, traces = [], {}
     start_days = None
@@ -265,16 +269,6 @@ def main():
     summary = summary.reset_index()
     summary.to_csv(results_dir / f"baseline_comparison{suffix}.csv", index=False)
 
-    print()
-    print(f"{'Policy':<12}{'Tong CP':>15}{'Luu kho':>14}{'Thieu hang':>14}"
-          f"{'Dat hang':>13}{'Tran kho':>12}{'FillRate':>10}")
-    print("-" * 90)
-    for _, r in summary.iterrows():
-        print(f"{r['policy']:<12}{r['total_cost_mean']:>15,.0f}"
-              f"{r['holding_cost_mean']:>14,.0f}{r['stockout_cost_mean']:>14,.0f}"
-              f"{r['ordering_cost_mean']:>13,.0f}{r['overflow_cost_mean']:>12,.0f}"
-              f"{r['fill_rate_mean']:>9.1%}")
-
     stat_out = {}
     if "IPPO" in df_all.policy.values:
         ppo_cost = df_all[df_all.policy == "IPPO"].sort_values("episode").total_cost.values
@@ -290,25 +284,26 @@ def main():
         stat_out = {"best_baseline": best_name, **per[best_name],
                     "per_baseline": per, "fixed_windows": bool(args.fixed_windows),
                     "n_episodes": int(n_episodes), "mode": args.mode}
-        print()
-        for name, r in per.items():
-            print(f"IPPO - {name:<11s}: {r['gap_percent']:+6.2f}%  "
-                  f"Delta={r['mean_diff']:+,.0f} [{r['ci95_low']:+,.0f}; {r['ci95_high']:+,.0f}]  "
-                  f"p_t={r['p_paired']:.2e}  p_W={r['p_wilcoxon']:.2e}  d_z={r['d_z']:+.2f}  "
-                  f"IPPO re hon {r['n_ippo_cheaper']}/{r['n']}")
         json.dump(stat_out, open(results_dir / f"statistical_test{suffix}.json", "w"), indent=2)
 
     # [V2-24] xuat summary.json cho app
     json.dump({"summary": summary.to_dict(orient="records"),
                "stat": stat_out,
                "capacity_per_warehouse": [float(x) for x in env.suc_chua_kho],
-               "n_pairs": int(env.n_pairs), "mode": args.mode},
+               "n_pairs": int(env.n_pairs), "mode": args.mode,
+               "meta": {"checkpoint": args.checkpoint, "config": args.config,
+                        "n_episodes": int(n_episodes),
+                        "thoi_diem": datetime.now().strftime("%Y-%m-%d %H:%M")}},
               open(results_dir / f"summary{suffix}.json", "w"), indent=2)
     # [V2-23] dien bien theo ngay
     json.dump(traces, open(results_dir / f"episode_traces{suffix}.json", "w"))
 
     _plot(summary, results_dir, suffix)
-    print(f"\nDa luu ket qua vao {results_dir}")
+
+    print()
+    print("\n".join(dinh_dang_danh_gia(json.loads(
+        (results_dir / f"summary{suffix}.json").read_text(encoding="utf-8")))))
+    print(f"\nDa luu ket qua vao {results_dir}; so lieu tong: {ghi_ket_qua(ROOT).name}")
 
 
 def _plot(summary, results_dir, suffix=""):
