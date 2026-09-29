@@ -145,7 +145,7 @@ def evaluate_policy(env, policy, n_episodes, is_ppo=False, name="", base_seed=10
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, default="config.yaml")
-    parser.add_argument("--checkpoint", type=str, default="checkpoints/best_model.pth")
+    parser.add_argument("--checkpoint", type=str, default="checkpoints/best_model_main_s42.pth")
     parser.add_argument("--episodes", type=int, default=None)
     parser.add_argument("--mode", type=str, default="test", choices=["train", "test"])
     parser.add_argument("--tag", type=str, default="",

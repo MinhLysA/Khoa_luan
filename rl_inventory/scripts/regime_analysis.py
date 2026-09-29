@@ -24,7 +24,7 @@ chinh o CUNG MUC PHUC VU voi IPPO (tu iso_service.json) - chi so sanh chi phi
 giua cac chinh sach co fill rate tuong duong moi cong bang.
 
 Cach dung:
-    python scripts/regime_analysis.py --checkpoint checkpoints/best_model_seed42.pth
+    python scripts/regime_analysis.py --checkpoint checkpoints/best_model_main_s42.pth
     python scripts/regime_analysis.py --episodes 10 --shock_factors 1.5 0.5
 """
 import argparse
@@ -128,7 +128,7 @@ def label_days(demand, cal, lo, hi):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="config.yaml")
-    ap.add_argument("--checkpoint", default="checkpoints/best_model_seed42.pth")
+    ap.add_argument("--checkpoint", default="checkpoints/best_model_main_s42.pth")
     ap.add_argument("--episodes", type=int, default=30)
     ap.add_argument("--shock_factors", type=float, nargs="*", default=[1.5, 0.5])
     ap.add_argument("--shock_start", type=int, default=1650,

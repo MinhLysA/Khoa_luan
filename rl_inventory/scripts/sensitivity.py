@@ -14,7 +14,7 @@ chinh sach DA CO xep hang the nao", khong phai "IPPO huan luyen voi don gia
 moi se ra sao".
 
 Cach dung:
-    python scripts/sensitivity.py --checkpoint checkpoints/best_model_seed42.pth
+    python scripts/sensitivity.py --checkpoint checkpoints/best_model_main_s42.pth
 """
 import argparse
 import itertools
@@ -50,7 +50,7 @@ def cost(t, c_lk, c_th, c_dh, p_tk):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="config.yaml")
-    ap.add_argument("--checkpoint", default="checkpoints/best_model_seed42.pth")
+    ap.add_argument("--checkpoint", default="checkpoints/best_model_main_s42.pth")
     ap.add_argument("--episodes", type=int, default=10)
     ap.add_argument("--tag", default="")
     a = ap.parse_args()

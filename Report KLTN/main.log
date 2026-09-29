@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999998 (MiKTeX 26.5) (preloaded format=xelatex 2026.8.16)  24 SEP 2026 19:59
+This is XeTeX, Version 3.141592653-2.6-0.999998 (MiKTeX 26.5) (preloaded format=xelatex 2026.8.16)  29 SEP 2026 20:55
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1589,57 +1589,57 @@ Chương 3.
 
 
 
-] [21] [22]
-Overfull \hbox (0.57388pt too wide) in paragraph at lines 190--208
+] [21] [22] [23]
+Overfull \hbox (0.57388pt too wide) in paragraph at lines 199--218
  [][] 
  []
 
-[23] [24] [25]
-Underfull \hbox (badness 1168) in paragraph at lines 270--270
+[24] [25]
+Underfull \hbox (badness 1168) in paragraph at lines 280--280
 []|\TU/TimesNewRoman(0)/m/n/11.86258 Trạng thái / quan
  []
 
 [26] [27] [28]
-LaTeX Font Info:    Calculating math sizes for size <8.66673> on input line 449
+LaTeX Font Info:    Calculating math sizes for size <8.66673> on input line 459
 .
 
 
 LaTeX Font Warning: Font shape `OML/cmm/m/it' in size <4.33336> not available
-(Font)              size <5> substituted on input line 449.
+(Font)              size <5> substituted on input line 459.
 
 
 LaTeX Font Warning: Font shape `OMS/cmsy/m/n' in size <4.33336> not available
-(Font)              size <5> substituted on input line 449.
+(Font)              size <5> substituted on input line 459.
 
 
 LaTeX Font Warning: Font shape `OT1/cmr/m/n' in size <4.33336> not available
-(Font)              size <5> substituted on input line 449.
+(Font)              size <5> substituted on input line 459.
 
-LaTeX Font Info:    Calculating math sizes for size <18.72003> on input line 44
+LaTeX Font Info:    Calculating math sizes for size <18.72003> on input line 45
 9.
 
 LaTeX Font Warning: Font shape `OML/cmm/m/it' in size <18.72003> not available
-(Font)              size <17.28> substituted on input line 449.
+(Font)              size <17.28> substituted on input line 459.
 
 
 LaTeX Font Warning: Font shape `OML/cmm/m/it' in size <13.10396> not available
-(Font)              size <12> substituted on input line 449.
+(Font)              size <12> substituted on input line 459.
 
 
 LaTeX Font Warning: Font shape `OMS/cmsy/m/n' in size <18.72003> not available
-(Font)              size <17.28> substituted on input line 449.
+(Font)              size <17.28> substituted on input line 459.
 
 
 LaTeX Font Warning: Font shape `OMS/cmsy/m/n' in size <13.10396> not available
-(Font)              size <12> substituted on input line 449.
+(Font)              size <12> substituted on input line 459.
 
 
 LaTeX Font Warning: Font shape `OT1/cmr/m/n' in size <18.72003> not available
-(Font)              size <17.28> substituted on input line 449.
+(Font)              size <17.28> substituted on input line 459.
 
 
 LaTeX Font Warning: Font shape `OT1/cmr/m/n' in size <13.10396> not available
-(Font)              size <12> substituted on input line 449.
+(Font)              size <12> substituted on input line 459.
 
 [29] [30] [31] [32] [33] [34]) [35] [36]
 \openout2 = `content/C4.aux'.
@@ -1655,7 +1655,7 @@ Chương 4.
 File: media/duong_cong_hoc.png Graphic file (type bmp)
 <media/duong_cong_hoc.png>
  [41] [42]
-Overfull \hbox (18.26pt too wide) in paragraph at lines 305--325
+Overfull \hbox (18.26pt too wide) in paragraph at lines 307--327
  [][] 
  []
 
@@ -1663,14 +1663,14 @@ Overfull \hbox (18.26pt too wide) in paragraph at lines 305--325
 File: media/so_sanh_baseline.png Graphic file (type bmp)
 <media/so_sanh_baseline.png>
  [44] [45]
-Overfull \hbox (18.71994pt too wide) in paragraph at lines 425--438
+Overfull \hbox (18.71994pt too wide) in paragraph at lines 427--440
  [][] 
  []
 
 File: media/danh_doi_chi_phi_dich_vu.png Graphic file (type bmp)
 <media/danh_doi_chi_phi_dich_vu.png>
 [46] [47] [48] [49] [50]
-Overfull \hbox (9.38397pt too wide) in paragraph at lines 659--679
+Overfull \hbox (9.38397pt too wide) in paragraph at lines 661--681
  [][] 
  []
 
@@ -1683,7 +1683,7 @@ File: media/hinh_soc_cau.png Graphic file (type bmp)
 File: media/hinh_hanh_vi_chinh_sach.png Graphic file (type bmp)
 <media/hinh_hanh_vi_chinh_sach.png>
  [54] [55]
-Overfull \hbox (10.8224pt too wide) in paragraph at lines 923--932
+Overfull \hbox (10.8224pt too wide) in paragraph at lines 925--934
  [][] 
  []
 

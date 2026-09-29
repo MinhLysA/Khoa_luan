@@ -13,7 +13,7 @@ tinh fill rate va chi phi cuc bo trung binh MOI CAP MOI NGAY (info["local_reward
 Chuong 3), de so sanh cong bang giua cac nhom co quy mo chi phi khac nhau.
 
 Cach dung:
-    python scripts/analyze_scale_groups.py --checkpoint checkpoints/best_model.pth
+    python scripts/analyze_scale_groups.py --checkpoint checkpoints/best_model_main_s42.pth
 """
 import sys
 import json
@@ -37,7 +37,7 @@ import matplotlib.pyplot as plt
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", type=str, default="config.yaml")
-    ap.add_argument("--checkpoint", type=str, default="checkpoints/best_model.pth")
+    ap.add_argument("--checkpoint", type=str, default="checkpoints/best_model_main_s42.pth")
     ap.add_argument("--episodes", type=int, default=30)
     ap.add_argument("--tag", type=str, default="")
     args = ap.parse_args()

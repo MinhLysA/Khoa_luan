@@ -12,6 +12,7 @@ cốt lõi: PyTorch (cài đặt mạng Actor--Critic và thuật toán PPO), Gy
 \parencite{towers2024gymnasium} (giao diện môi trường mô phỏng), NumPy và
 Pandas (xử lý dữ liệu M5 và tính toán thống kê), SciPy (kiểm định thống kê).
 
+% VIET LAI THEO SO LIEU CUOI: dot cuoi train tren GPU T4 (khong phai CPU), 3 x 4.000 episode; bo so sanh thoi gian voi Zhu & Wu (khac bai toan, phan cung, quy mo -> khong phai bang chung).
 Toàn bộ quá trình huấn luyện được thực hiện trên CPU, không sử dụng GPU. Kết
 quả báo cáo trong chương này dựa trên $3$ lần huấn luyện độc lập (Mục
 \ref{subsec:daHatGiong}), mỗi lần $1.000$ episode và mất khoảng $38$--$40$
@@ -183,6 +184,7 @@ lệch quá xa lý thuyết. Chênh lệch còn lại không xuất phát từ s
 một khác biệt khái niệm: tỷ số tới hạn cổ điển tối ưu
 cho \textit{mức phục vụ chu kỳ} $\alpha$ trong bài toán một kỳ không có hàng
 đang về, trong khi môi trường ở đây là nhiều kỳ, có lượng hàng trên đường vận
+% VIET LAI THEO SO LIEU CUOI: chi giu neu so lieu cuoi thuc su cho thay dieu nay; dung 'phu hop voi' Zipkin, khong dung nguon lam bang chung.
 chuyển và ràng buộc sức chứa. Kết quả thực nghiệm này ủng hộ nhận định của
 Zipkin \cite{zipkin2008} rằng các chính sách cổ điển mất tính tối ưu đã được
 chứng minh trong bối cảnh mất đơn hàng.
@@ -1023,6 +1025,7 @@ không mô hình hóa: Zhu và Wu \cite{zhu2026spatiotemporal} giả định ngu
 không giới hạn, còn Nam và cộng sự \cite{jeong2026alca} chỉ xét một kho duy
 nhất.
 
+% VIET LAI THEO SO LIEU CUOI: 'du de vuot cac chinh sach co dien' MAU THUAN so lieu so bo (IPPO dat hon (s,S) 4,5-5,5% o 1.000 ep; -0,5%, p=0,050 o ~4.000 ep). Ket luan phai theo bang/hinh cua khoa luan (CI 95%, p); Gijsbrechts chi de dat boi canh.
 Về hiệu quả tính toán, việc đạt kết quả trên sau khoảng $40$ phút huấn luyện
 mỗi hạt giống trên CPU cho thấy không nhất thiết phải ghép một mô-đun dự báo
 học sâu vào trước khâu ra quyết định. Tác tử học trực tiếp từ lịch sử nhu cầu thô đã đủ để vượt các chính

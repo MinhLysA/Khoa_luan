@@ -52,7 +52,7 @@ def main():
                     help="Ban rut gon: 60 episode, 5 episode danh gia")
     ap.add_argument("--n_skus", type=int, default=None)
     ap.add_argument("--n_warehouses", type=int, default=None)
-    ap.add_argument("--checkpoint", default="checkpoints/best_model_seed42.pth",
+    ap.add_argument("--checkpoint", default="checkpoints/best_model_main_s42.pth",
                     help="Checkpoint IPPO cho lenh regime/behavior")
     a = ap.parse_args()
 

@@ -16,7 +16,7 @@ Kiem tra STATE va REWARD bang thuc nghiem (khong huan luyen lai):
    muc tang chi phi / giam fill rate. Nhom tang it ~ gan nhu khong duoc dung.
 
 Cach dung:
-    python scripts/policy_behavior.py --checkpoint checkpoints/best_model_seed42.pth
+    python scripts/policy_behavior.py --checkpoint checkpoints/best_model_main_s42.pth
 """
 import argparse
 import json
@@ -110,7 +110,7 @@ def action_profile(r, n_levels):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="config.yaml")
-    ap.add_argument("--checkpoint", default="checkpoints/best_model_seed42.pth")
+    ap.add_argument("--checkpoint", default="checkpoints/best_model_main_s42.pth")
     ap.add_argument("--episodes", type=int, default=10)
     ap.add_argument("--threshold", type=float, default=None,
                     help="Nguong fill rate de kiem tra don cuc (mac dinh env.muc_dv)")

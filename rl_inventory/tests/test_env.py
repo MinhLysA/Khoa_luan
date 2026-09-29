@@ -591,3 +591,17 @@ def test_tham_so_baseline_theo_nhom_trai_dung_tung_cap():
     assert n.z_cr.shape == (5,)
     # tham so vo huong van chay nhu cu
     assert np.ndim(NewsvendorPolicy(5, cr_override=0.9).z_cr) == 0
+
+
+def test_config_ablation_dong_bo_voi_config_chinh():
+    """configs/*.yaml phai dung bang config.yaml + dung MOT thay doi. Neu fail:
+    chay `python configs/make_configs.py` sau khi sua config.yaml."""
+    import copy, yaml
+    sys.path.insert(0, str(ROOT / "configs"))
+    from make_configs import ABLATIONS
+    base = yaml.safe_load(open(ROOT / "config.yaml", encoding="utf-8"))
+    for name, (_, fn) in ABLATIONS.items():
+        cfg = copy.deepcopy(base)
+        fn(cfg)
+        assert yaml.safe_load(open(ROOT / "configs" / f"{name}.yaml", encoding="utf-8")) == cfg, \
+            f"configs/{name}.yaml lech voi config.yaml - chay python configs/make_configs.py"

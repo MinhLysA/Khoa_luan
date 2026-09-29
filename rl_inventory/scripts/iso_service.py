@@ -17,7 +17,7 @@ Script nay lam dung viec ma mot phan bien se yeu cau:
 Ket qua luu vao results/iso_service.json (app Streamlit doc file nay).
 
 Cach dung:
-    python scripts/iso_service.py --checkpoint checkpoints/best_model.pth
+    python scripts/iso_service.py --checkpoint checkpoints/best_model_main_s42.pth
 """
 
 import sys
@@ -86,7 +86,7 @@ def chay(env, policy, n, seed, is_ppo=False):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", type=str, default="config.yaml")
-    ap.add_argument("--checkpoint", type=str, default="checkpoints/best_model.pth")
+    ap.add_argument("--checkpoint", type=str, default="checkpoints/best_model_main_s42.pth")
     ap.add_argument("--tune_episodes", type=int, default=2)
     ap.add_argument("--eval_episodes", type=int, default=10)
     ap.add_argument("--tolerance", type=float, default=0.005,

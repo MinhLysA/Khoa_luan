@@ -65,7 +65,7 @@ sẻ tham số). Code: `agents/ppo_agent.py` (`SharedActorCriticNetwork`, dòng 
 |---|---|
 | Có bao nhiêu agent? | **300** = 10 kho × 30 mặt hàng. |
 | Mỗi agent đại diện cho gì? | **Một cặp (kho, mặt hàng)** — không phải một kho, không phải một mặt hàng, mà là giao điểm của cả hai. Ví dụ: tác tử (CA_3, FOODS_3_090). |
-| Agent nhận dữ liệu gì? | Vector quan sát **43 chiều** (xem câu 7). |
+| Agent nhận dữ liệu gì? | Vector quan sát **44 chiều** (xem câu 7). |
 | Nhiệm vụ? | Mỗi ngày quyết định **đặt thêm bao nhiêu** cho đúng cặp của mình, để giảm chi phí vận hành của cặp đó trong khi giữ fill rate ≥ 85%. |
 | Action? | Chọn **1 trong 6 mức đặt**: q = ⌈m × cầu TB × lead time TB⌉, m ∈ {0; 0,5; 1; 2; 3; 5}. Toàn hệ thống: `MultiDiscrete([6]*300)`. |
 | Policy riêng không? | **Dùng chung một hàm π_θ**, áp lên quan sát riêng → quyết định riêng (xem câu 1). |
@@ -153,7 +153,7 @@ không xử lý được:
 4. **Mục tiêu dài hạn:** tối thiểu chi phí cả kỳ; tích trữ hôm nay tốn chi phí
    nhưng tránh thiếu hàng ngày mai.
 
-Quy hoạch động không khả thi vì trạng thái liên tục 43 chiều × 300 tác tử và nhu
+Quy hoạch động không khả thi vì trạng thái liên tục 44 chiều × 300 tác tử và nhu
 cầu M5 không có phân phối dạng đóng.
 
 **Bằng chứng.** Báo cáo §2.3.1, Bảng 3.2 (ánh xạ MDP).
@@ -162,7 +162,7 @@ cầu M5 không có phân phối dạng đóng.
 
 ### 7. State cụ thể gồm những biến nào?
 
-**Trả lời ngắn.** Quan sát của mỗi tác tử là vector **43 chiều**, mọi giá trị chuẩn hóa về [0, 1]:
+**Trả lời ngắn.** Quan sát của mỗi tác tử là vector **44 chiều**, mọi giá trị chuẩn hóa về [0, 1]:
 
 | Biến | Số chiều | Có trong quan sát? | Ghi chú |
 |---|---|---|---|
@@ -174,12 +174,13 @@ cầu M5 không có phân phối dạng đóng.
 | Quy mô mặt hàng | 1 | Có | log(1 + cầu TB) |
 | Mức đầy kho (warehouse capacity) | 1 | Có | tín hiệu cấp kho |
 | Tỷ trọng tồn kho của cặp trong kho | 1 | Có | tín hiệu cấp kho |
+| Tín hiệu giảm giá | 1 | Có | `clip(1 − giá hôm nay / giá TB của cặp, 0, 1)`; giảm giá thường đi trước cầu tăng |
 | Ngày trong tuần | 7 | Có | one-hot |
 | Lịch: SNAP, loại sự kiện, tháng | 20 | Có | |
 | Nhu cầu hiện tại | — | **Không** | quyết định diễn ra trước khi nhu cầu hôm đó phát sinh; đưa vào là rò rỉ tương lai |
 | Lead time của từng đơn | — | **Gián tiếp** | nhà cung cấp không cam kết ngày giao; thể hiện qua pipeline |
 | Thông tin kho khác | — | **Không** | các kho độc lập về nguồn cung |
-| Giá bán | — | **Không** | cờ `include_price_signal: false` |
+| Giá bán tuyệt đối | — | **Không** | chỉ đưa mức giảm giá tương đối (dòng trên), vì giá tuyệt đối chênh nhiều giữa mặt hàng |
 
 **Có biến dư thừa không:** kiểm tra bằng thực nghiệm ở câu 17.
 
@@ -297,7 +298,7 @@ thực nghiệm cuối sẽ vẽ lại với 3 seed × 4.000 episode.
 | Thành phần | Trong đề tài |
 |---|---|
 | **Environment** | Mô phỏng 10 kho × 30 mặt hàng trên nhu cầu thật M5; 1 bước = 1 ngày; 1 episode = 365 ngày |
-| **S** — trạng thái | Vector 43 chiều của từng cặp (câu 7) |
+| **S** — trạng thái | Vector 44 chiều của từng cặp (câu 7) |
 | **A** — hành động | Chọn 1 trong 6 mức đặt (câu 8) |
 | **P** — chuyển trạng thái | (1) đổi hành động thành lượng đặt → (2) nhận hàng đến hạn, **kiểm tra sức chứa**, chỉ từ chối hàng mới về vượt chỗ trống → (3) ghi đơn mới, lead time ngẫu nhiên 1–3 ngày → (4) nhu cầu thật phát sinh, bán min(tồn, cầu), thiếu thì mất đơn → (5) cập nhật lịch sử và fill rate → trạng thái mới. Hai nguồn ngẫu nhiên: lead time và nhu cầu. |
 | **R** — phần thưởng | −(chi phí vận hành + phạt mức phục vụ) của riêng cặp (câu 9) |

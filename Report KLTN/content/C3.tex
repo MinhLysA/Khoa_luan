@@ -167,12 +167,21 @@ tại kỳ $t$ bao gồm:
     $I_t^{(i)} / \sum_{j \in w(i)} I_t^{(j)}$.
     \item Đặc trưng quy mô $\log(1 + \bar{D}^{(i)})$ chuẩn hóa, cho phép mạng
     dùng chung phân biệt các mặt hàng có quy mô nhu cầu khác nhau.
+    \item Tín hiệu giảm giá
+    $g_t^{(i)} = \mathrm{clip}\bigl(1 - p_t^{(i)} / \bar{p}^{(i)}, 0, 1\bigr)$,
+    trong đó $p_t^{(i)}$ là giá bán của cặp $i$ tại ngày $t$ (trích từ
+    \path{sell_prices.csv}) và $\bar{p}^{(i)}$ là giá bán trung bình của chính
+    cặp đó, chỉ ước lượng trên miền huấn luyện. $g_t^{(i)} = 0$ khi giá bình
+    thường hoặc tăng, tiến gần $1$ khi giảm giá càng sâu. Giá bán trong M5 thay
+    đổi theo tuần do khuyến mãi, và đợt giảm giá thường đi trước hoặc trùng với
+    thời điểm nhu cầu tăng đột biến, nên đặc trưng này đóng vai trò chỉ báo sớm
+    (leading indicator) của nhu cầu.
     \item Bối cảnh thời gian: thứ trong tuần (one-hot $7$ chiều) và vector đặc
     trưng lịch $20$ chiều trích từ \path{calendar.csv} (ba cờ SNAP, một cờ
     không có sự kiện, bốn loại sự kiện, mười hai tháng).
 \end{itemize}
 
-Tổng cộng vector quan sát của mỗi tác tử có $d = 43$ chiều. Hai thành phần
+Tổng cộng vector quan sát của mỗi tác tử có $d = 44$ chiều. Hai thành phần
 $u_t^{(w(i))}$ và tỷ trọng tồn kho giữ vai trò đặc biệt: hàm phần thưởng có
 thành phần phạt tràn kho phụ thuộc vào tổng tồn kho của cả kho, nên
 nếu quan sát không chứa thông tin ở cấp kho thì tác tử bị phạt vì một đại lượng
@@ -181,7 +190,7 @@ kênh ghép nối duy nhất giữa các tác tử trong thiết kế phi tập 
 luận (Mục~\ref{subsec:phoiHop}).
 
 Bảng~\ref{tab:doiChieuState} đối chiếu các biến trạng thái đặc trưng của bài
-toán tồn kho với cách biểu diễn trong vector quan sát $43$ chiều.
+toán tồn kho với cách biểu diễn trong vector quan sát $44$ chiều.
 
 \begin{table}[htbp]
     \centering
@@ -201,6 +210,7 @@ toán tồn kho với cách biểu diễn trong vector quan sát $43$ chiều.
         Mức sử dụng sức chứa kho & Có (1 chiều) & $u_t^{(w(i))} = \sum_{j \in w(i)} I_t^{(j)} / W_{w(i)}$ \\ \hline
         Tỷ trọng tồn kho trong kho & Có (1 chiều) & Thông tin về mức độ chiếm dụng kho \\ \hline
         Đặc trưng quy mô & Có (1 chiều) & $\log(1 + \bar{D}^{(i)})$, giúp mạng dùng chung phân biệt SKU \\ \hline
+        Giá bán / khuyến mãi & Có (1 chiều) & Mức giảm giá so với giá trung bình của cặp, $g_t^{(i)} \in [0, 1]$ \\ \hline
         Ngày trong tuần & Có (7 chiều) & One-hot encoding \\ \hline
         Đặc trưng lịch & Có (20 chiều) & SNAP, loại sự kiện, tháng \\
         \hline
@@ -267,7 +277,7 @@ $s_t \rightarrow a_t \rightarrow r_t, s_{t+1}$ của một tác tử.
         \textbf{Thành phần} & \textbf{Nội dung cụ thể trong đề tài} \\
         \hline
         Môi trường & Mô phỏng $10$ kho $\times$ $30$ mặt hàng trên nhu cầu M5 (\path{MultiWarehouseInventoryEnv}), một bước là một ngày, một episode là $365$ ngày \\ \hline
-        Trạng thái / quan sát $S$ & Vector $o_i^t \in [0,1]^{43}$ của từng cặp: tồn kho, vị thế tồn kho, cầu $7$ ngày, hàng đang về, fill rate $30$ ngày, quy mô, mức đầy kho, tỷ trọng trong kho, lịch (Bảng~\ref{tab:doiChieuState}) \\ \hline
+        Trạng thái / quan sát $S$ & Vector $o_i^t \in [0,1]^{44}$ của từng cặp: tồn kho, vị thế tồn kho, cầu $7$ ngày, hàng đang về, fill rate $30$ ngày, quy mô, mức đầy kho, tỷ trọng trong kho, tín hiệu giảm giá, lịch (Bảng~\ref{tab:doiChieuState}) \\ \hline
         Hành động $A$ & $a_i^t \in \{0,\dots,5\}$ $\mapsto$ lượng đặt $q_i = m_k \bar{D}^{(i)} \bar{L}$, với $m = (0;\,0{,}5;\,1;\,2;\,3;\,5)$ \\ \hline
         Chuyển trạng thái $P$ & Sáu bước ở trên; hai nguồn ngẫu nhiên là thời gian giao $L \sim \mathcal{U}\{1,2,3\}$ và nhu cầu thực tế $D_t^{(i)}$ \\ \hline
         Phần thưởng $R$ & $r_i^t = -$(chi phí lưu kho + thiếu hàng + đặt hàng + tràn kho + phạt mức phục vụ) của riêng cặp $i$, công thức~(\ref{eq:localReward}) \\ \hline
@@ -445,7 +455,7 @@ tử trong kho đó, chứ không do một tác tử tổng hợp nào.
         \draw[mui] (10.8,-1.7) -- node[nhan, right]{hàng về} (10.8,-0.95);
         % Chu thich
         \node[font=\footnotesize, text width=13.4cm, align=justify, anchor=north] at (6.5,-2.6)
-            {Mỗi tác tử $A_{w,j}$: vai trò --- quyết định lượng đặt cho mặt hàng $j$ tại kho $w$; đầu vào --- quan sát $o_i^t$ $43$ chiều; đầu ra --- mức đặt $a_i^t \in \{0,\dots,5\}$. Không có coordinator và không trao đổi thông điệp trực tiếp; phối hợp gián tiếp qua (1) mức đầy kho $u_t^{(w)}$ do môi trường phát lại cho $30$ tác tử cùng kho, (2) phạt tràn kho khi cùng tranh sức chứa, (3) trọng số dùng chung khi huấn luyện.};
+            {Mỗi tác tử $A_{w,j}$: vai trò --- quyết định lượng đặt cho mặt hàng $j$ tại kho $w$; đầu vào --- quan sát $o_i^t$ $44$ chiều; đầu ra --- mức đặt $a_i^t \in \{0,\dots,5\}$. Không có coordinator và không trao đổi thông điệp trực tiếp; phối hợp gián tiếp qua (1) mức đầy kho $u_t^{(w)}$ do môi trường phát lại cho $30$ tác tử cùng kho, (2) phạt tràn kho khi cùng tranh sức chứa, (3) trọng số dùng chung khi huấn luyện.};
     \end{tikzpicture}}
     \caption{Kiến trúc đa tác tử: $300$ tác tử (kho $w$, mặt hàng $j$) dùng chung một chính sách, tương tác gián tiếp qua sức chứa kho}
     \label{fig:kienTrucDaTacTu}
@@ -479,7 +489,7 @@ nhất mô tả đầy đủ hệ thống.
         \hline
         Tác tử & Cặp (kho $w$, mặt hàng $j$); tổng cộng $300$ tác tử đồng nhất \\ \hline
         Vai trò & Quyết định lượng đặt hàng lại hằng ngày cho đúng một mặt hàng tại đúng một kho \\ \hline
-        Đầu vào & Vector quan sát cục bộ $o_i^t \in \mathbb{R}^{43}$ \\ \hline
+        Đầu vào & Vector quan sát cục bộ $o_i^t \in \mathbb{R}^{44}$ \\ \hline
         Quan sát & Tồn kho, vị thế tồn kho, nhu cầu $7$ ngày gần nhất, hàng đang về theo từng ngày còn lại, fill rate cửa sổ $30$ ngày, đặc trưng quy mô, tỷ lệ sử dụng kho, tỷ trọng tồn kho trong kho, thứ trong tuần, đặc trưng lịch \\ \hline
         Nhiệm vụ & Tác vụ con của bài toán tổng ``tối thiểu tổng chi phí vận hành toàn hệ thống dưới ràng buộc sức chứa và mức phục vụ'' \\ \hline
         Hành động & $a_i^t \in \{0, \ldots, 5\}$, ánh xạ sang lượng đặt hàng theo (\ref{eq:orderTable}) \\ \hline

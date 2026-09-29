@@ -46,7 +46,7 @@ env:
   # qua muc dua tren mot gia dinh (margin_ratio) khong kiem chung duoc. Thi
   # nghiem chinh dung hang so cp_th chung cho moi cap, bao cao bang "don vi
   # chi phi mo phong chuan hoa" thay vi USD. Tin hieu gia trong quan sat la
-  # mot co RIENG (include_price_signal, dang tat -> quan sat 43 chieu).
+  # mot co RIENG (include_price_signal, dang BAT -> quan sat 44 chieu).
   # Doi true de bat lai lam ablation rieng (khong dung cho ket qua chinh).
   use_real_price_stockout: false
   margin_ratio: 0.3
@@ -63,9 +63,9 @@ env:
   # tao ra o buoc tien xu ly, MA KHONG co dong flag nao trong config phan
   # anh dieu do. Chuong 3 cua bao cao mo ta kien truc quan sat 43 chieu
   # (Bang doi chieu bien trang thai, Muc 3.1.2) KHONG bao gom tin hieu
-  # giam gia nay. Dat false de giu dung kien truc 43 chieu da tai lieu
-  # hoa; doi true CHI KHI da cap nhat lai Chuong 3 (them dac trung, sua
-  # cong thuc obs_per_pair, sua bang doi chieu) cho khop.
+  # giam gia nay. [29/09/2026] DA BAT (44 chieu) va da cap nhat Chuong 3
+  # (them dac trung, sua obs_per_pair, bang doi chieu). Sua co nay thi phai
+  # chay lai configs/make_configs.py va sua lai Chuong 3 cho khop.
   include_price_signal: true
 
   # [V2-2] Chuan hoa phan thuong theo tung cap (cp_th*mean_demand + cp_dh).

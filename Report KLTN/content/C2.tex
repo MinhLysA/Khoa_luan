@@ -234,7 +234,7 @@ vì bốn đặc điểm cấu trúc phù hợp với lớp bài toán này:
     chỉ hôm nay. Tích trữ hôm nay tốn tiền nhưng tránh mất doanh thu ngày mai.
 \end{enumerate}
 
-Quy hoạch động không khả dụng vì không gian trạng thái liên tục $43$ chiều
+Quy hoạch động không khả dụng vì không gian trạng thái liên tục $44$ chiều
 $\times\,300$ tác tử và phân phối nhu cầu M5 không có dạng đóng --- đây
 là ``lời nguyền số chiều'' mà các phương pháp bảng tra (tabular) không vượt qua
 được \parencite{bellman1957}.
@@ -303,7 +303,7 @@ số. Lợi ích:
 Chẩn đáng lưu ý: chia sẻ tham số không tương đương với việc gộp $300$ tác tử
 thành một tác tử duy nhất. Nếu gộp, không gian hành động sẽ là $6^{300}$,
 không thể học được trên thực tế. Với kiến trúc chia sẻ tham số hiện tại,
-mạng nhận batch $(300, 43)$ và forward một lần, nhưng mỗi tác tử chỉ xử lý
+mạng nhận batch $(300, 44)$ và forward một lần, nhưng mỗi tác tử chỉ xử lý
 $K = 6$ hành động --- không gian cố định và có thể giải quyết được.
 
 \subsection{Phần thưởng phân rã cục bộ và bài toán gán tín dụng}

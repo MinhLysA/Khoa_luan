@@ -29,7 +29,7 @@ env:
   fill_rate_window: 30
   obs_cover_days: 20.0
   min_mean_demand: 0.05
-  include_price_signal: false
+  include_price_signal: true
   normalize_reward_per_pair: false
   reward_scale: 1.0
   service_penalty_mode: normalized

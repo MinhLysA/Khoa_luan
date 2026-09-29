@@ -46,7 +46,7 @@
 \contentsline {subsection}{\numberline {3.1.2}Mô tả mạng lưới}{21}{subsection.3.1.2}%
 \contentsline {subsection}{\numberline {3.1.3}Thiết lập bài toán dưới dạng MDP đa tác tử}{22}{subsection.3.1.3}%
 \contentsline {paragraph}{Phân rã nhiệm vụ và thiết kế tác tử.}{22}{subsection.3.1.3}%
-\contentsline {paragraph}{Ghi chú về thời gian giao hàng.}{23}{table.caption.9}%
+\contentsline {paragraph}{Ghi chú về thời gian giao hàng.}{24}{table.caption.9}%
 \contentsline {paragraph}{Tổng hợp các thành phần MDP.}{26}{Item.21}%
 \contentsline {subsection}{\numberline {3.1.4}Ràng buộc sức chứa kho và cơ chế từ chối nhập hàng}{26}{subsection.3.1.4}%
 \contentsline {subsection}{\numberline {3.1.5}Cơ chế phối hợp giữa các tác tử}{28}{subsection.3.1.5}%
