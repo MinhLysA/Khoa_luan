@@ -81,6 +81,10 @@ Cập nhật: 29/09/2026 · Chú thích: ✅ xong · 🟡 đang triển khai / c
 
 ## 3. Đang triển khai — chờ train full 🟡
 
+**Kiểm tra trước khi train (29/09):**
+- Chạy thử nhanh trên Colab T4 (commit `c6a92a6`): code, GPU, 44 chiều, lưu Drive đều chạy; ~1 giây/episode. Bước tune baseline của notebook test lỗi (IPython không thay `{TUNE_EPISODES}`) → **đã sửa**, cần push `Khoa_luan_Colab_test_nhanh.ipynb`.
+- Máy local: 44/44 test pass, config ablation đồng bộ, cả 2 notebook thay biến đúng ở mọi dòng `!`. Chạy thử 26 episode: `main_s42`, `main_s1`, `main_s2`, `abl_ref` train OK (dừng giữa chừng, chưa chạy thử 15 lần còn lại và `campaign.py eval`).
+
 Chạy: `python scripts/campaign.py train main` → `train ablations` → `eval` (≈ 8–10 giờ GPU T4).
 
 | Lần chạy | Episode | Phục vụ | Tiến độ |
