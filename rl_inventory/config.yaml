@@ -66,7 +66,7 @@ env:
   # giam gia nay. Dat false de giu dung kien truc 43 chieu da tai lieu
   # hoa; doi true CHI KHI da cap nhat lai Chuong 3 (them dac trung, sua
   # cong thuc obs_per_pair, sua bang doi chieu) cho khop.
-  include_price_signal: false
+  include_price_signal: true
 
   # [V2-2] Chuan hoa phan thuong theo tung cap (cp_th*mean_demand + cp_dh).
   # Dat false de chay ablation "khong chuan hoa" - se thay lai hien tuong
