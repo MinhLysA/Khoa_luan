@@ -2,7 +2,8 @@
 """
 run.py — mot cua duy nhat de chay ca du an.
 
-    python run.py app          # mo bang dieu khien Streamlit (khuyen dung)
+    python run.py app          # mo demo Streamlit (chi inference, doc app/demo_data/)
+    python run.py demo_data    # dong goi du lieu rut gon cho demo vao app/demo_data/
     python run.py all          # chay tron bo: du lieu -> baseline -> train -> danh gia
     python run.py data         # buoc 1: tien xu ly M5
     python run.py baseline     # buoc 2: tim kiem luoi tham so baseline
@@ -44,7 +45,7 @@ def sh(cmd):
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("lenh", choices=["app", "all", "data", "baseline", "train",
+    ap.add_argument("lenh", choices=["app", "demo_data", "all", "data", "baseline", "train",
                                      "eval", "iso", "summary", "multiseed",
                                      "regime", "behavior", "test", "check"])
     ap.add_argument("--episodes", type=int, default=None)
@@ -78,11 +79,11 @@ def main():
     cmd_summary = [PY, "scripts/generate_summary.py"]
 
     if a.lenh == "app":
-        # [V3-8] app/app.py = demo 4 trang (tong quan, de xuat, so sanh,
-        # what-if). Bang dieu khien VAN HANH du an cu (sua config, chay tung
-        # buoc, xem duong hoc) van con o app/streamlit_app.py, chay rieng
-        # bang: streamlit run app/streamlit_app.py
-        sh([PY, "-m", "streamlit", "run", "app/app.py"])
+        # Demo 5 trang, CHI INFERENCE: nap app/demo_data/best_model.pth, khong
+        # co duong code nao goi huan luyen. Can `python run.py demo_data` truoc.
+        sh([PY, "-m", "streamlit", "run", "app/streamlit_app.py"])
+    elif a.lenh == "demo_data":
+        sh([PY, "scripts/build_demo_data.py"])
     elif a.lenh == "data":
         sh(cmd_data)
     elif a.lenh == "baseline":

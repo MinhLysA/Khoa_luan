@@ -72,7 +72,8 @@ Tải thư mục `MyDrive/KLTN_final` từ Google Drive. **Mọi số liệu n�
 pip install -r requirements.txt
 python run.py check                  # kiểm tra môi trường đã sẵn sàng
 python run.py test                   # 44 test
-python run.py app                    # demo Streamlit 4 trang
+python run.py demo_data              # dong goi app/demo_data/ (mot lan)
+python run.py app                    # demo Streamlit 5 trang, chi inference
 python app/mcp_server.py --selftest  # thử MCP không cần LLM
 ```
 

@@ -343,8 +343,8 @@ Ngoài ra có **Hình 3.1 — mô hình khái niệm** (câu 23).
 |---|---|
 | **Agent** | Tác tử replenishment của cặp (kho w, mặt hàng j); 300 tác tử đồng nhất về vai trò |
 | **Role** | Người phụ trách bổ sung hàng cho đúng một mặt hàng tại đúng một kho |
-| **Input** | Vector quan sát cục bộ o_i^t ∈ [0,1]⁴³ |
-| **State** | Tồn kho, vị thế tồn kho, cầu 7 ngày, hàng đang về theo ngày, fill rate 30 ngày, quy mô, mức đầy kho, tỷ trọng trong kho, thứ trong tuần, lịch |
+| **Input** | Vector quan sát cục bộ o_i^t ∈ [0,1]⁴⁴ |
+| **State** | Tồn kho, vị thế tồn kho, cầu 7 ngày, hàng đang về theo ngày, fill rate 30 ngày, quy mô, mức đầy kho, tỷ trọng trong kho, tín hiệu giảm giá, thứ trong tuần, lịch |
 | **Task** | Task con của task tổng "tối thiểu chi phí vận hành toàn mạng dưới ràng buộc sức chứa và mức phục vụ 85%" |
 | **Action** | a_i^t ∈ {0,…,5} → lượng đặt q_i |
 | **Policy** | π_θ(a \| o) — Actor dùng chung trọng số θ cho 300 tác tử |
