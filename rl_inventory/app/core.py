@@ -24,7 +24,8 @@ if str(ROOT) not in sys.path:
 from env.inventory_env import MultiWarehouseInventoryEnv
 from scripts.common import make_policies
 
-TEAL, ORANGE, GREY, INK, PAPER = "#0F6E63", "#C2571A", "#7E8C86", "#16201C", "#F3F4F1"
+TEAL, ORANGE, GREY, INK, PAPER = "#0F6E63", "#C2571A", "#A7B0AB", "#16201C", "#F3F4F1"
+MUTED, BORDER, TEAL_SOFT = "#56625D", "#DCE1DB", "#DCEDE9"   # MUTED: chữ phụ; GREY: chỉ cho nét vẽ
 CATEGORIES = ["FOODS", "HOBBIES", "HOUSEHOLD"]
 COST_PARTS = [("holding_cost", "Lưu kho"), ("stockout_cost", "Thiếu hàng"),
               ("ordering_cost", "Đặt hàng"), ("overflow_cost", "Tràn kho")]
@@ -110,6 +111,61 @@ def rollout(policy: str) -> dict:
     return {k[len(pre):]: v for k, v in arr.items() if k.startswith(pre)}
 
 
+SOC_NGAY_M5 = 1650   # ngày bắt đầu sốc mặc định (--shock_start) của scripts/regime_analysis.py
+SOC_CUA_SO = 28      # số ngày trước / sau sốc dùng để so sánh
+
+
+@st.cache_data(show_spinner=False, max_entries=64)
+def shock_rollout(policy: str, start: int, length: int, factor: float, kho=None, nganh=None) -> dict:
+    """Chạy lại `policy` (deterministic, toàn miền test, hạt giống meta) với nhu cầu các ngày
+    [start, start + length) nhân `factor` trên các cặp thuộc `kho` / `nganh` (None = toàn
+    mạng). Chỉ suy luận. factor = 1 cho đúng lượt không sốc. Trả về mảng theo ngày, cộng
+    toàn mạng: demand, stockout, order, overflow, cost (lưu kho + thiếu + đặt + tràn)."""
+    meta, arr = load_demo()
+    P = pairs(meta)
+    m = np.ones(len(P), bool)
+    if kho:
+        m &= P["Kho"].isin(kho).to_numpy()
+    if nganh:
+        m &= P["Ngành"].isin(nganh).to_numpy()
+    dem = arr["demand"].copy()
+    dem[start:start + length] *= np.where(m, factor, 1.0).reshape(dem.shape[1:]).astype(dem.dtype)
+    env = make_env(meta, {**arr, "demand": dem})
+    act = load_policies()[policy]
+    obs, _ = env.reset(seed=meta["seed"])
+    rec = []
+    while True:
+        obs, _, te, tr, i = env.step(act(obs, env))
+        rec.append((i["demand"], i["stockout"], i["order_qty"], i["overflow"],
+                    i["cost_holding"] + i["cost_stockout"] + i["cost_ordering"] + i["cost_overflow"]))
+        if te or tr:
+            break
+    return dict(zip(("demand", "stockout", "order", "overflow", "cost"), np.array(rec).T))
+
+
+def shock_metrics(s: dict, b: dict, start: int, length: int, muc_dv: float, pad: int = SOC_CUA_SO) -> dict:
+    """Chỉ số kịch bản sốc của một chính sách; s, b = mảng theo ngày có sốc / không sốc.
+    Fill rate `pad` ngày trước, trong, `pad` ngày sau sốc (cắt ở mép miền test); thiếu hàng
+    và chi phí tăng thêm trên [start, end + pad); ve_lai = số ngày từ lúc sốc bắt đầu tới
+    khi fill rate trượt 7 ngày về lại >= muc_dv sau lần đầu xuống dưới (None: không xuống
+    dưới mục tiêu, inf: chưa về lại trong cửa sổ)."""
+    end = start + length
+    hi = min(end + pad, len(s["demand"]))
+
+    def fr(a, z):
+        d = s["demand"][a:z].sum()
+        return 1 - s["stockout"][a:z].sum() / d if d > 0 else float("nan")
+
+    roll = np.array([fr(max(k - 6, 0), k + 1) for k in range(start, hi)])
+    duoi = np.flatnonzero(roll < muc_dv)
+    lai = np.flatnonzero(roll[duoi[0]:] >= muc_dv) if len(duoi) else []
+    w = slice(start, hi)
+    return {"truoc": fr(max(start - pad, 0), start), "trong": fr(start, end), "sau": fr(end, hi),
+            "thieu_them": float(s["stockout"][w].sum() - b["stockout"][w].sum()),
+            "chi_phi_them": float(s["cost"][w].sum() - b["cost"][w].sum()),
+            "ve_lai": None if not len(duoi) else int(duoi[0] + lai[0]) if len(lai) else float("inf")}
+
+
 def test_dates(meta) -> list:
     start = date.fromisoformat(meta["test_start"])
     return [start + timedelta(days=i) for i in range(meta["n_days_total"] - meta["val_day"])]
@@ -184,16 +240,28 @@ CSS = f"""
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 .stApp *:not([data-testid="stIconMaterial"]) {{ font-family: 'IBM Plex Sans', sans-serif; }}
 .stApp {{ background: {PAPER}; color: {INK}; }}
-[data-testid="stSidebar"] {{ background: {INK}; }}
-[data-testid="stSidebar"] * {{ color: {PAPER} !important; }}
-[data-testid="stSidebarNav"] a[aria-current="page"] {{ background: {TEAL}; }}
-.stApp .num, .stApp code {{ font-family: 'IBM Plex Mono', monospace; }}
-.kpi {{ background: #fff; border: 1px solid #dfe3dd; border-radius: 6px; padding: 14px 16px; height: 100%; }}
-.kpi .lab {{ color: {GREY}; font-size: .85rem; }}
-.kpi .num {{ font-size: 1.6rem; font-weight: 500; margin: 4px 0; color: {INK}; }}
-.kpi .note {{ font-size: .85rem; color: {GREY}; }}
-.kpi .warn {{ color: {ORANGE}; }} .kpi .good {{ color: {TEAL}; }}
-.box {{ background: #fff; border: 1px solid #dfe3dd; border-radius: 6px; padding: 10px 14px; text-align: center; }}
+.stApp code {{ font-family: 'IBM Plex Mono', monospace; }}
+[data-testid="stMainBlockContainer"] {{ padding-top: 4.5rem; max-width: 1280px; }}
+.stApp h1 {{ font-size: 28px; font-weight: 600; padding: 0 0 .25rem; }}
+.stApp h2, .stApp h3 {{ font-size: 19px; font-weight: 600; }}
+.stApp [data-testid="stCaptionContainer"], .stApp .mota {{ color: {MUTED}; }}
+.eyebrow {{ color: {TEAL}; font-size: 12px; font-weight: 600; letter-spacing: .08em;
+  text-transform: uppercase; margin-bottom: .25rem; }}
+.mota {{ font-size: .95rem; margin: 0 0 .75rem; }}
+[class*="st-key-the_"] {{ background: #FFFFFF; border-radius: 10px; }}
+[data-testid="stAlert"] {{ background: {TEAL_SOFT}; color: {INK}; border: 1px solid {BORDER}; }}
+[data-testid="stAlert"] * {{ color: {INK}; }}
+[data-testid="stColumn"] > div, [data-testid="stColumn"] [data-testid="stElementContainer"]:has(.kpi),
+[data-testid="stColumn"] [data-testid="stMarkdown"]:has(.kpi) {{ height: 100%; }}
+.kpi {{ background: #fff; border: 1px solid {BORDER}; border-radius: 10px; padding: 14px 16px; height: 100%; }}
+.kpi .lab {{ color: {MUTED}; font-size: .85rem; }}
+.kpi .num {{ font-size: 2rem; font-weight: 600; margin: 4px 0; color: {INK};
+  font-variant-numeric: tabular-nums; }}
+.kpi .note {{ font-size: .85rem; color: {MUTED}; }}
+.kpi .warn, .kpi .good {{ display: inline-block; padding: 2px 10px; border-radius: 999px; font-weight: 500; }}
+.kpi .warn {{ background: #F6E3D6; color: #A84A14; }}
+.kpi .good {{ background: {TEAL_SOFT}; color: #0A4F47; }}
+.box {{ background: #fff; border: 1px solid {BORDER}; border-radius: 10px; padding: 10px 14px; text-align: center; }}
 </style>
 """
 
@@ -201,6 +269,19 @@ CSS = f"""
 def kpi(label: str, value: str, note: str = "", tone: str = "") -> str:
     return (f'<div class="kpi"><div class="lab">{label}</div><div class="num">{value}</div>'
             f'<div class="note {tone}">{note}</div></div>')
+
+
+def tieu_de(nhan: str, tieu_de: str, mo_ta: str = None):
+    """Nhãn nhỏ (eyebrow) + tiêu đề trang + mô tả một dòng."""
+    st.markdown(f'<div class="eyebrow">{nhan}</div>', unsafe_allow_html=True)
+    st.title(tieu_de)
+    if mo_ta:
+        st.markdown(f'<div class="mota">{mo_ta}</div>', unsafe_allow_html=True)
+
+
+def nguon(*parts):
+    """Một dòng nguồn số liệu ở cuối trang."""
+    st.caption("Nguồn số liệu: " + " · ".join(parts))
 
 
 def num(x, d: int = 0) -> str:
@@ -213,14 +294,18 @@ def pct(x, d: int = 1) -> str:
 
 
 def style_fig(fig, height: int = 380):
-    fig.update_layout(height=height, margin=dict(l=70, r=20, t=50, b=50),
-                      paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="#fff",
+    fig.update_layout(height=height, margin=dict(l=70, r=20, t=50, b=50), separators=",.",
+                      paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
                       font=dict(family="IBM Plex Sans, sans-serif", color=INK, size=13),
                       hoverlabel=dict(font_family="IBM Plex Mono, monospace"),
-                      legend=dict(orientation="h", y=1.08, x=0))
-    fig.update_xaxes(gridcolor="#e6e9e4", zerolinecolor="#e6e9e4", automargin=True)
-    fig.update_yaxes(gridcolor="#e6e9e4", zerolinecolor="#e6e9e4", automargin=True)
+                      legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0))
+    fig.update_xaxes(showgrid=False, zerolinecolor="#EEF0EC", automargin=True)
+    fig.update_yaxes(gridcolor="#EEF0EC", zerolinecolor="#EEF0EC", automargin=True)
     return fig
+
+
+def chart(fig, height: int = 380):
+    st.plotly_chart(style_fig(fig, height), theme=None, config={"displayModeBar": False})
 
 
 def policy_color(name: str) -> str:

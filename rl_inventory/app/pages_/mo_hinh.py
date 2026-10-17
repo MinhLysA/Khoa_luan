@@ -1,4 +1,4 @@
-"""Trang 5 - Về mô hình (tĩnh, để thuyết trình). Số lấy từ cấu hình đã đóng gói và results/."""
+"""Trang 6 - Về mô hình (tĩnh, để thuyết trình). Số lấy từ cấu hình đã đóng gói và results/."""
 import plotly.graph_objects as go
 import streamlit as st
 
@@ -10,7 +10,8 @@ ppo = meta["ppo"]
 n, d, h, k = env.n_pairs, env.obs_per_pair, int(ppo["hidden_dim"]), env.n_action_levels
 mau = int(ppo["n_steps"]) * n
 
-st.title("Về mô hình IPPO trong mô phỏng")
+core.tieu_de("Về mô hình · IPPO", "Về mô hình IPPO trong mô phỏng",
+             "Một mạng dùng chung cho mọi cặp (kho, SKU).")
 
 st.subheader("Một mạng dùng chung cho mọi cặp")
 o = [(f"{n} cặp (kho, SKU)", f"{env.n_warehouses} kho × {env.n_skus} SKU"),
@@ -20,7 +21,7 @@ o = [(f"{n} cặp (kho, SKU)", f"{env.n_warehouses} kho × {env.n_skus} SKU"),
      (f"{n} hành động", f"mỗi cặp chọn 1 trong {k} mức đặt hàng")]
 cols = st.columns([3, 1, 3, 1, 3, 1, 3])
 for i, (ten, mo_ta) in enumerate(o):
-    cols[2 * i].markdown(f'<div class="box"><b>{ten}</b><br><span style="color:{core.GREY}">'
+    cols[2 * i].markdown(f'<div class="box"><b>{ten}</b><br><span style="color:{core.MUTED}">'
                          f'{mo_ta}</span></div>', unsafe_allow_html=True)
     if i < len(o) - 1:
         cols[2 * i + 1].markdown('<div style="text-align:center;font-size:1.6rem">→</div>',
@@ -45,17 +46,18 @@ st.markdown(f"""
 5. **Đánh giá** trên miền validation mỗi {ppo['eval_every_episodes']} episode để chọn best_model.
 """)
 
-st.subheader("Đường cong phần thưởng khi huấn luyện")
-log = core.read_results(f"train_log_{meta['results_tag']}.csv")
-if log is None:
-    core.no_data(f"results/train_log_{meta['results_tag']}.csv")
-else:
-    fig = go.Figure([
-        go.Scatter(x=log["episode"], y=log["reward_raw"], name="Từng episode",
-                   line=dict(color=core.GREY, width=1), opacity=0.5),
-        go.Scatter(x=log["episode"], y=log["reward_smooth"], name="Trung bình trượt",
-                   line=dict(color=core.TEAL, width=2.5))])
-    fig.update_xaxes(title="Episode")
-    fig.update_yaxes(title="Tổng phần thưởng (âm chi phí)")
-    st.plotly_chart(core.style_fig(fig, 420), theme=None)
-    st.caption(f"Chỉ đọc results/train_log_{meta['results_tag']}.csv; trang này không huấn luyện.")
+with st.container(border=True, key="the_reward"):
+    st.subheader("Đường cong phần thưởng khi huấn luyện")
+    log = core.read_results(f"train_log_{meta['results_tag']}.csv")
+    if log is None:
+        core.no_data(f"results/train_log_{meta['results_tag']}.csv")
+    else:
+        fig = go.Figure([
+            go.Scatter(x=log["episode"], y=log["reward_raw"], name="Từng episode",
+                       line=dict(color=core.GREY, width=1), opacity=0.5),
+            go.Scatter(x=log["episode"], y=log["reward_smooth"], name="Trung bình trượt",
+                       line=dict(color=core.TEAL, width=2.5))])
+        fig.update_xaxes(title="Episode")
+        fig.update_yaxes(title="Tổng phần thưởng (âm chi phí)")
+        core.chart(fig, 420)
+core.nguon(f"results/train_log_{meta['results_tag']}.csv (chỉ đọc)", "cấu hình PPO trong app/demo_data/meta.json")

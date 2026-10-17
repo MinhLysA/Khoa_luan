@@ -17,10 +17,10 @@ FMT = {"Tồn kho": "%.1f", "Hàng đang về": "%.1f", "Nhu cầu TB 7 ngày": 
 COLCFG = {c: st.column_config.NumberColumn(c, format=f) for c, f in FMT.items()}
 COLCFG["Chọn"] = st.column_config.CheckboxColumn("Chọn", width="small")
 
-st.title("Mô phỏng đơn đặt hàng đề xuất")
-st.caption(f"Miền test {dates[0]:%d/%m/%Y} – {dates[-1]:%d/%m/%Y}. Bấm “Sinh đơn nháp”: "
-           "mô phỏng chạy từ đầu miền test tới ngày đã chọn rồi lấy hành động "
-           "deterministic của chính sách cho mọi cặp (kho, SKU).")
+core.tieu_de(f"Đơn đặt hàng · {len(store_of)} kho × {len(meta['skus'])} SKU",
+             "Mô phỏng đơn đặt hàng đề xuất",
+             f"Miền test {dates[0]:%d/%m/%Y} – {dates[-1]:%d/%m/%Y}; mô phỏng chạy tới ngày đã chọn "
+             f"rồi lấy hành động deterministic của chính sách.")
 
 with st.form("loc"):
     c1, c2, c3, c4 = st.columns([1.1, 2.2, 2, 1.2])
@@ -55,36 +55,36 @@ if don is None:
     st.stop()
 
 df = don["df"]
-st.subheader(f"Đơn nháp · {don['cs']} · ngày {don['ngay']:%d/%m/%Y}")
+the = st.container(border=True, key="the_don_nhap")
+the.subheader(f"Đơn nháp · {don['cs']} · ngày {don['ngay']:%d/%m/%Y}")
 if df.empty:
     st.info("Chính sách không đề xuất đặt hàng cho kho và ngành hàng đã chọn trong ngày này.")
     st.stop()
 
-gom = st.toggle("Gom phiếu theo kho × ngành hàng "
-                "(ngành hàng là giả định thay cho nhà cung cấp vì M5 không có dữ liệu nhà cung cấp)")
-if gom:
-    view = (df.groupby(["Kho", "Ngành"], as_index=False)
-              .agg(**{"Số dòng": ("SKU", "size"),
-                      "Số lượng đề xuất": ("Số lượng đề xuất", "sum"),
-                      "Thành tiền ($)": ("Thành tiền ($)", "sum"),
-                      "Chi phí đặt hàng": ("Chi phí đặt hàng", "sum"),
-                      "Trạng thái": ("Trạng thái",
-                                     lambda x: x.iloc[0] if x.nunique() == 1 else "Hỗn hợp")}))
-    view.insert(0, "Phiếu", "PH-" + view["Kho"] + "-" + view["Ngành"])
-else:
-    view = df[LINE_COLS].copy()
-view.insert(0, "Chọn", False)
+with the:
+    gom = st.toggle("Gom phiếu theo kho × ngành hàng "
+                    "(ngành hàng là giả định thay cho nhà cung cấp vì M5 không có dữ liệu nhà cung cấp)")
+    if gom:
+        view = (df.groupby(["Kho", "Ngành"], as_index=False)
+                  .agg(**{"Số dòng": ("SKU", "size"),
+                          "Số lượng đề xuất": ("Số lượng đề xuất", "sum"),
+                          "Thành tiền ($)": ("Thành tiền ($)", "sum"),
+                          "Chi phí đặt hàng": ("Chi phí đặt hàng", "sum"),
+                          "Trạng thái": ("Trạng thái",
+                                         lambda x: x.iloc[0] if x.nunique() == 1 else "Hỗn hợp")}))
+        view.insert(0, "Phiếu", "PH-" + view["Kho"] + "-" + view["Ngành"])
+    else:
+        view = df[LINE_COLS].copy()
+    view.insert(0, "Chọn", False)
 
-ed = st.data_editor(view, hide_index=True, column_config=COLCFG,
-                    disabled=[c for c in view.columns if c != "Chọn"],
-                    key=f"ed_{gom}_{st.session_state.get('ver', 0)}")
-st.dataframe(
-    [{"": "Tổng", "Số dòng": len(df), "Số lượng đề xuất": int(df["Số lượng đề xuất"].sum()),
-      "Thành tiền ($)": df["Thành tiền ($)"].sum(), "Chi phí đặt hàng": df["Chi phí đặt hàng"].sum()}],
-    hide_index=True, column_config=COLCFG)
-st.caption("Gom phiếu là lớp trình bày; chi phí đặt hàng trong mô phỏng vẫn tính theo từng cặp.")
-st.caption(f"Đơn giá: giá bán lẻ trong sell_prices của M5 tại tuần chứa ngày đã chọn (M5 không có "
-           f"giá nhập). Chi phí đặt hàng: cp_dh = {core.num(cp_dh)} cho mỗi cặp có đặt hàng (config).")
+    ed = st.data_editor(view, hide_index=True, column_config=COLCFG,
+                        disabled=[c for c in view.columns if c != "Chọn"],
+                        key=f"ed_{gom}_{st.session_state.get('ver', 0)}")
+    st.dataframe(
+        [{"": "Tổng", "Số dòng": len(df), "Số lượng đề xuất": int(df["Số lượng đề xuất"].sum()),
+          "Thành tiền ($)": df["Thành tiền ($)"].sum(), "Chi phí đặt hàng": df["Chi phí đặt hàng"].sum()}],
+        hide_index=True, column_config=COLCFG)
+    st.caption("Gom phiếu chỉ là lớp trình bày; chi phí đặt hàng vẫn tính theo từng cặp.")
 
 picked = ed[ed["Chọn"]]
 b1, b2, b3 = st.columns([1, 1, 5])
@@ -102,10 +102,11 @@ dem = df["Trạng thái"].value_counts()
 b3.markdown(" · ".join(f"{k}: <span class='num'>{dem.get(k, 0)}</span>"
                        for k in ("Nháp", "Đã duyệt", "Từ chối")), unsafe_allow_html=True)
 
-st.caption("Phạm vi dừng ở bước gửi yêu cầu sang phòng mua hàng; hỏi báo giá và gửi nhà "
-           "cung cấp là hướng phát triển.")
+st.caption("Phạm vi dừng ở bước gửi yêu cầu sang phòng mua hàng.")
 duyet = df[df["Trạng thái"] == "Đã duyệt"].assign(Ngày=f"{don['ngay']:%Y-%m-%d}",
                                                    **{"Chính sách": don["cs"]})
 st.download_button("Tải đơn đã duyệt (CSV)", disabled=duyet.empty,
                    data=duyet[["Ngày", "Chính sách"] + LINE_COLS].to_csv(index=False).encode("utf-8-sig"),
                    file_name=f"don_da_duyet_{don['ngay']:%Y%m%d}.csv", mime="text/csv")
+core.nguon("đơn giá = giá bán lẻ sell_prices M5 tại tuần chứa ngày đã chọn (M5 không có giá nhập)",
+           f"chi phí đặt hàng cp_dh = {core.num(cp_dh)} mỗi cặp có đặt hàng (config)")
