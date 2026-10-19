@@ -107,7 +107,7 @@ ppo:
   min_fill_to_save: 0.85
   normalize_adv_per_pair: true
   shared_trunk: false
-  total_episodes: 4000
+  total_episodes: 10000
 eval:
   n_episodes: 30
   seed: 1000

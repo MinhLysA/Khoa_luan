@@ -41,7 +41,7 @@ Notebook: `Khoa_luan_Colab.ipynb`. Code **không** chép lên Drive; Drive chỉ
 | 5 | Kiểm tra dữ liệu, ba miền | shape `(1941, 10, 30)` |
 | 6 | Chạy test | `44 passed` — nếu có `failed` thì dừng |
 | 7 | Tune baseline trên val (~5–10 phút) | — |
-| 8 | Train chính 3 seed × 4.000 ep (8.0 chạy thử 30 ep đo tốc độ) | `device=cuda`, ~1 giây/episode |
+| 8 | Train chính 3 seed × 10.000 ep (8.0 chạy thử 30 ep đo tốc độ) | `device=cuda`, ~1 giây/episode |
 | 9 | Train 16 ablation × 1.000 ep; cuối bước chạy `status` | mọi dòng `XONG` |
 | 10 | Đánh giá trên test (~30–40 phút) | — |
 | 11 | Xem nhanh kết quả | — |
@@ -84,7 +84,7 @@ file CSV M5 vào `data/raw/` rồi `python run.py data`.
 
 ```bash
 python scripts/campaign.py status             # tiến độ từng lần chạy
-python scripts/campaign.py train main         # 3 seed × 4.000 episode (tự resume)
+python scripts/campaign.py train main         # 3 seed × 10.000 episode (tự resume)
 python scripts/campaign.py train ablations    # 16 lần × 1.000 episode
 python scripts/campaign.py train <ten>        # một lần chạy, vd main_s42, abl_ref
 python scripts/campaign.py eval               # toàn bộ pipeline đánh giá

@@ -22,6 +22,8 @@ import sys
 import time
 from pathlib import Path
 
+import yaml
+
 ROOT = Path(__file__).resolve().parent.parent
 PY = sys.executable
 
@@ -29,8 +31,12 @@ PY = sys.executable
 # chi chay seed nay). Them/bot seed chi can sua dong nay.
 SEEDS = (42, 1, 2)
 
+# So episode mo hinh chinh = ppo.total_episodes trong config.yaml (mot nguon duy nhat)
+MAIN_EPISODES = int(yaml.safe_load(open(ROOT / "config.yaml", encoding="utf-8"))
+                    ["ppo"]["total_episodes"])
+
 # ten lan chay -> (config, seed, so episode, mo ta)
-MAIN = {f"main_s{s}": ("config.yaml", s, 4000, f"Mo hinh chinh, seed {s}")
+MAIN = {f"main_s{s}": ("config.yaml", s, MAIN_EPISODES, f"Mo hinh chinh, seed {s}")
         for s in SEEDS}
 ABLATIONS = {
     "abl_ref":       ("config.yaml", 42, 1000, "Tham chieu 1000 episode (cung lich lr/entropy voi ablation)"),

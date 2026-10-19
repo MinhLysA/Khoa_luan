@@ -169,7 +169,7 @@ theo từng cặp; chuẩn hóa advantage theo cặp.
 
 | n_steps | epochs | minibatch | lr actor / critic | γ / λ | clip | target KL | entropy | episode |
 |---|---|---|---|---|---|---|---|---|
-| 1024 | 4 | 16.384 | 3e-4 / 1e-3 | 0,99 / 0,95 | 0,2 | 0,02 | 0,02 → 0,002 | 4.000 (chính), 1.000 (ablation) |
+| 1024 | 4 | 16.384 | 3e-4 / 1e-3 | 0,99 / 0,95 | 0,2 | 0,02 | 0,02 → 0,002 | 10.000 (chính), 1.000 (ablation) |
 
 Đánh giá tất định trên val mỗi 25 episode (2 episode). Lưu checkpoint mỗi 200
 episode; `--resume` train tiếp đúng từ trạng thái đã lưu.
@@ -197,7 +197,7 @@ Mỗi ablation chỉ khác `abl_ref` **đúng một thay đổi**, cùng ngân s
 
 | Lần chạy | Config | Episode | Trả lời |
 |---|---|---|---|
-| `main_s42`, `main_s1`, `main_s2` | `config.yaml` | 4.000 | RQ1, RQ2; mặt hàng bán chậm còn bị phân bổ mức phục vụ thấp không |
+| `main_s42`, `main_s1`, `main_s2` | `config.yaml` | 10.000 | RQ1, RQ2; mặt hàng bán chậm còn bị phân bổ mức phục vụ thấp không |
 | `abl_ref` (+`_s1`, `_s2`) | `config.yaml` | 1.000 | mốc cho mọi ablation (cùng lịch lr/entropy) |
 | `abl_global` (+`_s1`, `_s2`) | `ablation_global_reward` | 1.000 | RQ3: cục bộ vs toàn cục (3 seed) |
 | `abl_q3` (+`_s1`, `_s2`) | `ablation_q3_no_reward_norm` | 1.000 | RQ3: có/không chuẩn hóa (3 seed) |

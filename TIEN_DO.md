@@ -93,9 +93,9 @@ Chạy: `python scripts/campaign.py train main` → `train ablations` → `eval`
 
 | Lần chạy | Episode | Phục vụ | Tiến độ |
 |---|---|---|---|
-| `main_s42` | 4.000 | RQ1, RQ2 | ⬜ 0/4000 |
-| `main_s1` | 4.000 | RQ1, RQ2 | ⬜ 0/4000 |
-| `main_s2` | 4.000 | RQ1, RQ2 | ⬜ 0/4000 |
+| `main_s42` | 10.000 | RQ1, RQ2 | ⬜ 0/10000 |
+| `main_s1` | 10.000 | RQ1, RQ2 | ⬜ 0/10000 |
+| `main_s2` | 10.000 | RQ1, RQ2 | ⬜ 0/10000 |
 | `abl_ref`, `abl_ref_s1`, `abl_ref_s2` | 1.000 | mốc ablation | ⬜ 0/1000 × 3 |
 | `abl_global`, `_s1`, `_s2` | 1.000 | RQ3 local vs global | ⬜ 0/1000 × 3 |
 | `abl_q3`, `_s1`, `_s2` | 1.000 | RQ3 chuẩn hóa | ⬜ 0/1000 × 3 |
@@ -198,7 +198,7 @@ Lead time > 3 ngày, mục tiêu 80/90%, Lagrange theo cặp, chuyển hàng li�
 | RQ1–RQ3 viết lại; RQ3 có thí nghiệm local vs global thật | ✅ |
 | 3 miền + bảng vai trò; baseline tune trên val | ✅ |
 | Đánh giá trọn quỹ đạo test, kiểm định theo cặp | ✅ protocol · ⏳ số liệu |
-| Ngân sách thống nhất 3 × 4.000 | ✅ cài đặt · ⏳ chạy |
+| Ngân sách thống nhất 3 × 10.000 | ✅ cài đặt · ⏳ chạy |
 | Quan sát 44 chiều (thêm tín hiệu giảm giá) trong Chương 3 | ✅ (C4/C5 "27/43 chiều" sửa khi viết lại kết quả) |
 | 85% là mục tiêu chính, ~90% là phụ | ✅ |
 | Thuật ngữ: local factored reward, Dec-POMDP team objective, ràng buộc mềm, chi phí vận hành ≠ phạt | ✅ |

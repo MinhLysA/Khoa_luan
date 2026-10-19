@@ -1,48 +1,24 @@
 #!/usr/bin/env python
 """
-run.py — mot cua duy nhat de chay ca du an.
+run.py — mot cua duy nhat de chay ca du an:  python run.py <lenh>
+cd D:\\KhoaLuanTotNghiep\\KhoaLuan_RL_Inventory_FIXED\\KhoaLuan_RL_Inventory_v2\\Khoa_luan\\rl_inventory; mkdir -Force logs | Out-Null; py -3.12 run.py full 2>&1 | Tee-Object -Append logs\\full.txt
 
-=== CHAY QUA DEM: MOT LENH CHO TOAN BO SO LIEU BAO CAO ===
-    python run.py full             # test -> train TOAN BO dot cuoi (3 seed mo hinh chinh
-                                   # x 4.000 ep, RQ3 x 3 seed, cac ablation, hold-out)
-                                   # -> danh gia + phan tich -> results/KET_QUA.txt
-    Bi ngat giua chung (tat may, mat dien): chay lai DUNG lenh do - lan train da
-    xong duoc bo qua, lan dang do tu resume; buoc danh gia chay lai tu dau.
-    Luu log:  python run.py full 2>&1 | Tee-Object logs\\full.txt      (PowerShell)
+Dot thuc nghiem cuoi (so lieu bao cao; seed o scripts/campaign.py):
+    full             test -> train 19 lan chay -> danh gia -> results/KET_QUA.txt
+                     Bi ngat thi chay lai, tu resume. Luu log (PowerShell):
+                     mkdir -Force logs; python run.py full 2>&1 | Tee-Object -Append logs\\full.txt
+    status           tien do tung lan chay
+    train_main       chi train mo hinh chinh (3 seed x ppo.total_episodes)
+    train_ablations  chi train ablation, RQ3, hold-out (1.000 ep)
+    eval_all         danh gia + moi phan tich -> KET_QUA.txt
+    tonghop          dung lai KET_QUA.txt tu ket qua da co
 
-=== DOT THUC NGHIEM CUOI, TUNG BUOC (scripts/campaign.py, seed: campaign.SEEDS) ===
-    python run.py status           # tien do tung lan chay (main_s*, abl_*, holdout)
-    python run.py train_main       # chi train mo hinh chinh (moi seed, 4.000 ep)
-    python run.py train_ablations  # chi train ablation + RQ3 nhieu seed + hold-out (1.000 ep)
-    python run.py eval_all         # tune baseline -> danh gia moi mo hinh -> iso, regime,
-                                   # behavior, quy mo, do nhay, do ben, hold-out -> KET_QUA.txt
-    python run.py tonghop          # chi dung lai multiseed_main.json, rq3_multiseed.json,
-                                   # KET_QUA.txt tu ket qua da co
+Chuan bi:  check | data (tien xu ly M5) | test
+Demo:      demo_data (dong goi app/demo_data/) | app (Streamlit, chi inference)
 
-=== CHUAN BI ===
-    python run.py check        # kiem tra thu vien + file can thiet
-    python run.py data         # tien xu ly M5 -> data/processed/
-    python run.py test         # chay unit test
-
-=== TUNG BUOC LE (giao thuc cu / thu nhanh, KHONG dung cho ban nop) ===
-    python run.py all          # du lieu -> baseline -> train -> danh gia (1 seed)
-    python run.py baseline     # tim kiem luoi tham so baseline
-    python run.py train        # huan luyen IPPO mot lan
-    python run.py eval         # danh gia & so sanh
-    python run.py iso          # so sanh O CUNG MUC PHUC VU
-    python run.py summary      # xuat TONG_HOP_SO_LIEU.txt tu ket qua hien co
-    python run.py multiseed    # train + eval 3 seed x 1.000 ep, roi xuat summary
-    python run.py regime       # thuc nghiem B: giai doan nhu cau + soc cau
-    python run.py behavior     # hanh vi policy, reward hacking, tam quan trong state
-
-=== DEMO ===
-    python run.py demo_data    # dong goi du lieu rut gon cho demo vao app/demo_data/
-    python run.py app          # mo demo Streamlit (chi inference, doc app/demo_data/)
-
-Tuy chon hay dung:
-    python run.py train --episodes 800
-    python run.py all --quick          # ban rut gon de thu duong ong (~5 phut)
-    python run.py multiseed --episodes 1000   # doi so episode moi seed (mac dinh 1000)
+Giao thuc cu / thu nhanh (khong dung cho ban nop):
+    all | baseline | train | eval | iso | summary | multiseed | regime | behavior
+    Tuy chon: --episodes N, --quick (~5 phut), --checkpoint (regime/behavior)
 """
 import argparse
 import os
@@ -53,12 +29,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 PY = sys.executable
 CAMPAIGN = [PY, "scripts/campaign.py"]
-# Log cua cac tien trinh con hien ngay ca khi chuyen huong ra file (Tee-Object).
-os.environ.setdefault("PYTHONUNBUFFERED", "1")
+os.environ.setdefault("PYTHONUNBUFFERED", "1")   # log hien ngay khi ghi ra file
 
-# [V3-6] 3 seed dung de danh gia do tin cay thong ke (python run.py multiseed).
-# Co dinh (khong random moi lan chay) de ket qua tai lap duoc.
-MULTISEED_SEEDS = [42, 1, 2]
+MULTISEED_SEEDS = [42, 1, 2]   # [V3-6] cho lenh multiseed (giao thuc cu)
 
 
 def sh(cmd):
@@ -96,8 +69,7 @@ def main():
     cmd_data = [PY, "scripts/data_preprocessing.py", "--m5",
                 "--n_warehouses", str(n_wh), "--n_skus", str(n_sku),
                 "--min_mean_demand", str(cfg["preprocess"].get("min_mean_demand", 0.2)),
-                # split_day phai KHOP voi config.yaml env.split_day, vi day la
-                # ranh gioi loc SKU va uoc luong gia/cau chi tu mien train.
+                # phai khop env.split_day: chi uoc luong gia/cau tu mien train
                 "--split_day", str(cfg["env"].get("split_day", 1050))]
     cmd_base = [PY, "scripts/tune_baselines.py", "--episodes", str(tune_eps)]
     cmd_train = [PY, "scripts/train.py", "--episodes", str(eps)]
@@ -107,7 +79,6 @@ def main():
     cmd_summary = [PY, "scripts/generate_summary.py"]
 
     if a.lenh == "full":
-        # Test truoc de khong mat ca dem train tren mot moi truong dang loi.
         sh([PY, "-m", "pytest", "tests/", "-q"])
         sh(CAMPAIGN + ["train", "all"])
         sh(CAMPAIGN + ["eval", "--n_eval", str(eval_eps)])
@@ -123,8 +94,7 @@ def main():
     elif a.lenh == "tonghop":
         sh(CAMPAIGN + ["tonghop"])
     elif a.lenh == "app":
-        # Demo 5 trang, CHI INFERENCE: nap app/demo_data/best_model.pth, khong
-        # co duong code nao goi huan luyen. Can `python run.py demo_data` truoc.
+        # chi inference tu app/demo_data/ (can chay demo_data truoc)
         sh([PY, "-m", "streamlit", "run", "app/streamlit_app.py"])
     elif a.lenh == "demo_data":
         sh([PY, "scripts/build_demo_data.py"])
@@ -141,10 +111,7 @@ def main():
     elif a.lenh == "summary":
         sh(cmd_summary)
     elif a.lenh == "multiseed":
-        # [V3-6] Train + danh gia MULTISEED_SEEDS (mac dinh 3 seed), moi seed
-        # gan --tag rieng nen khong ghi de ket qua cua seed truoc. Mac dinh
-        # 1000 episode/seed (nhanh hon 5000 de kiem tra do tin cay thong ke,
-        # doi bang --episodes).
+        # moi seed mot --tag rieng -> khong ghi de nhau
         ms_episodes = a.episodes or 1000
         for s in MULTISEED_SEEDS:
             tag = f"seed{s}"
