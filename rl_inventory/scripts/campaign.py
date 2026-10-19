@@ -25,9 +25,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 PY = sys.executable
 
+# Hat giong cho mo hinh chinh va RQ3 (seed dau = seed chinh, cac ablation khac
+# chi chay seed nay). Them/bot seed chi can sua dong nay.
+SEEDS = (42, 1, 2)
+
 # ten lan chay -> (config, seed, so episode, mo ta)
 MAIN = {f"main_s{s}": ("config.yaml", s, 4000, f"Mo hinh chinh, seed {s}")
-        for s in (42, 1, 2)}
+        for s in SEEDS}
 ABLATIONS = {
     "abl_ref":       ("config.yaml", 42, 1000, "Tham chieu 1000 episode (cung lich lr/entropy voi ablation)"),
     "abl_global":    ("configs/ablation_global_reward.yaml", 42, 1000, "RQ3: phan thuong toan cuc (team reward)"),
@@ -40,11 +44,12 @@ ABLATIONS = {
     "abl_warm":      ("configs/ablation_warm_start.yaml", 42, 1000, "Warm-start lich su cau"),
     "holdout":       ("configs/holdout_train.yaml", 42, 1000, "Hold-out: train 24 SKU"),
 }
-# [P4-2] RQ3 lap lai tren 3 hat giong (42 o tren + 1, 2): moc, toan cuc, khong chuan hoa
+# [P4-2] RQ3 lap lai tren moi hat giong trong SEEDS (42 o tren + cac seed con
+# lai): moc, toan cuc, khong chuan hoa
 RQ3_CFG = {"abl_ref": "config.yaml", "abl_global": "configs/ablation_global_reward.yaml",
            "abl_q3": "configs/ablation_q3_no_reward_norm.yaml"}
 for _base, _cfg in RQ3_CFG.items():
-    for _s in (1, 2):
+    for _s in SEEDS[1:]:
         ABLATIONS[f"{_base}_s{_s}"] = (_cfg, _s, 1000, f"RQ3 {_base}, seed {_s}")
 RUNS = {**MAIN, **ABLATIONS}
 
@@ -96,11 +101,12 @@ def train(tag):
 # Che do "auto": nhieu phien Colab cung chay tren MOT thu muc Drive. Moi phien
 # tu lay lan chay chua xong va chua co phien nao dang chay, theo thu tu uu tien.
 # ---------------------------------------------------------------------------
-PRIORITY = ["main_s42", "abl_ref", "abl_global", "abl_q3", "main_s1", "main_s2",
-            "abl_ref_s1", "abl_global_s1", "abl_q3_s1",
-            "abl_ref_s2", "abl_global_s2", "abl_q3_s2",
-            "abl_reward_cu", "holdout", "abl_trunk", "abl_nocal", "abl_nowh",
-            "abl_event", "abl_warm"]
+PRIORITY = (["main_s42", "abl_ref", "abl_global", "abl_q3"]
+            + [f"main_s{s}" for s in SEEDS[1:]]
+            + [f"{b}_s{s}" for s in SEEDS[1:] for b in RQ3_CFG]
+            + ["abl_reward_cu", "holdout", "abl_trunk", "abl_nocal", "abl_nowh",
+               "abl_event", "abl_warm"])
+assert sorted(PRIORITY) == sorted(RUNS), "PRIORITY phai chua dung moi lan chay trong RUNS"
 STALE_MIN = 20          # khoa khong co dau hieu song qua 20 phut = phien da chet
 ME = f"{socket.gethostname()}-{os.getpid()}"
 
@@ -181,8 +187,8 @@ def evaluate_all(n_eval=30):
 
     # 1. Baseline tinh chinh tren mien VAL
     sh([PY, "scripts/tune_baselines.py", "--episodes", 3, "--per_group"])
-    # 2. Danh gia 3 seed mo hinh chinh (+ cua so co dinh cho seed 42)
-    for s in (42, 1, 2):
+    # 2. Danh gia moi seed mo hinh chinh (+ cua so co dinh cho seed 42)
+    for s in SEEDS:
         if ck(f"main_s{s}"):
             sh([PY, "scripts/evaluate.py", "--checkpoint", ck(f"main_s{s}"),
                 "--episodes", n_eval, "--tag", f"main_s{s}"])
@@ -206,7 +212,7 @@ def evaluate_all(n_eval=30):
         if ck(tag):
             sh([PY, "scripts/policy_behavior.py", "--config", RUNS[tag][0],
                 "--checkpoint", ck(tag), "--tag", tag])
-    cmp = [t for t in ABLATIONS if t != "holdout" and not re.search(r"_s[12]$", t) and ck(t)]
+    cmp = [t for t in ABLATIONS if t != "holdout" and not re.search(r"_s\d+$", t) and ck(t)]
     if "abl_ref" in cmp and len(cmp) > 1:
         sh([PY, "scripts/plot_learning_curve.py", "--compare", *cmp, "--max_episode", 1000])
     # 9. Hold-out: 6 SKU chua gap (so voi mo hinh cung 1000 episode da thay ca 30 SKU)
@@ -224,7 +230,7 @@ def evaluate_all(n_eval=30):
 
 
 def tong_hop_rq3():
-    """[P4-2] RQ3 tren 3 hat giong: moi bien the (toan cuc, khong chuan hoa) so
+    """[P4-2] RQ3 tren moi hat giong (SEEDS): moi bien the (toan cuc, khong chuan hoa) so
     voi moc abl_ref CUNG hat giong. Hieu nang: kiem dinh theo cap tren 30 lan
     danh gia test. On dinh huan luyen: tu train_log (episode dau tien dat fill
     >= 85% tren val, chi phi / entropy / explained variance 100 episode cuoi)."""
@@ -259,7 +265,7 @@ def tong_hop_rq3():
     out = {}
     for base in RQ3_CFG:
         out[base] = {"seeds": {}}
-        for s in (42, 1, 2):
+        for s in SEEDS:
             t = tag(base, s)
             e = ippo_costs(t)
             if e is None:
@@ -282,18 +288,18 @@ def tong_hop_rq3():
     print("Da luu results/rq3_multiseed.json")
     for base, v in out.items():
         if "gap_vs_ref_mean" in v:
-            print(f"  {base:<11}: chi phi so voi abl_ref {v['gap_vs_ref_mean']:+.1f}% (TB 3 seed); "
+            print(f"  {base:<11}: chi phi so voi abl_ref {v['gap_vs_ref_mean']:+.1f}% (TB {v['n_seeds']} seed); "
                   f"abl_ref re hon co y nghia o {v['n_seeds_ref_re_hon_co_y_nghia']}/{v['n_seeds']} seed")
 
 
 def tong_hop_da_hat_giong():
-    """Tong hop 3 hat giong DUNG CACH: kiem dinh theo cap tinh RIENG tung hat
-    giong (evaluate.py), roi bao cao trung binh +- do lech chuan GIUA cac hat
-    giong - khong gop 90 lan danh gia IPPO voi 30 lan baseline nhu quan sat
-    doc lap."""
+    """Tong hop cac hat giong (SEEDS) DUNG CACH: kiem dinh theo cap tinh RIENG
+    tung hat giong (evaluate.py), roi bao cao trung binh +- do lech chuan GIUA
+    cac hat giong - khong gop moi lan danh gia IPPO cua cac seed voi 30 lan
+    baseline nhu quan sat doc lap."""
     import numpy as np
     rows = {}
-    for s in (42, 1, 2):
+    for s in SEEDS:
         p = ROOT / "results" / f"summary_main_s{s}.json"
         if p.exists():
             d = json.loads(p.read_text(encoding="utf-8"))
@@ -338,7 +344,9 @@ def main():
     elif a.ten == "auto":
         train_auto()
     else:
-        nhom = {"main": list(MAIN), "ablations": list(ABLATIONS), "all": list(RUNS)}
+        # "all": mo hinh chinh truoc (RQ1/RQ2), roi ablation theo thu tu uu tien
+        nhom = {"main": list(MAIN), "ablations": list(ABLATIONS),
+                "all": list(MAIN) + [t for t in PRIORITY if t not in MAIN]}
         tags = nhom.get(a.ten, [a.ten])
         bad = [t for t in tags if t not in RUNS]
         if bad:

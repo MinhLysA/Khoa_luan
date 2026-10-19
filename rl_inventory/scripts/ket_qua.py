@@ -8,8 +8,8 @@ File duoc DUNG LAI TOAN BO tu cac file ket qua goc moi khi train xong
     results/train_log_<tag>.csv          -> qua trinh huan luyen
     checkpoints/train_state_<tag>.json   -> config, seed cua lan train
     results/summary_<tag>.json           -> danh gia tren mien test
-    results/multiseed_main.json          -> RQ1 (3 hat giong)
-    results/rq3_multiseed.json           -> RQ3 (3 hat giong)
+    results/multiseed_main.json          -> RQ1 (da hat giong, campaign.SEEDS)
+    results/rq3_multiseed.json           -> RQ3 (da hat giong, campaign.SEEDS)
 Khong ghi noi tiep -> chay lai khong sinh doan trung, nhieu phien song song
 khong ghi de mat phan cua nhau, so lieu luon khop file goc.
 
@@ -125,7 +125,7 @@ def ghi_ket_qua(root=ROOT):
 
     L += ["=" * 89, "PHAN 1. TONG HOP CAU HOI NGHIEN CUU", "=" * 89]
     d = _doc_json(res / "multiseed_main.json")
-    L.append("RQ1 - Mo hinh chinh, 3 hat giong, so voi tung baseline tren mien test:")
+    L.append("RQ1 - Mo hinh chinh, da hat giong, so voi tung baseline tren mien test:")
     if d:
         L.append(f"  IPPO: chi phi TB {d['ippo_cost_mean']:,.0f} +- {d['ippo_cost_sd']:,.0f} (SD giua seed)"
                  f" | fill TB {d['ippo_fill_mean']:.1%} | {len(d['seeds'])} seed")
@@ -133,9 +133,9 @@ def ghi_ket_qua(root=ROOT):
             L.append(f"  vs {ref:<22}: TB {g['mean']:+7.2f}% (tu {g['min']:+.2f} den {g['max']:+.2f})"
                      f" | co y nghia o {g['n_seeds_significant']}/{g['n_seeds']} seed")
     else:
-        L.append("  (chua co - can danh gia main_s42/s1/s2 roi chay campaign.py tonghop)")
+        L.append("  (chua co - can danh gia moi main_s* roi chay campaign.py tonghop)")
     d = _doc_json(res / "rq3_multiseed.json")
-    L.append("RQ3 - Thiet ke phan thuong, 3 hat giong, so voi abl_ref cung seed:")
+    L.append("RQ3 - Thiet ke phan thuong, da hat giong, so voi abl_ref cung seed:")
     if d:
         for base, v in d.items():
             for sd, r in v["seeds"].items():
@@ -147,7 +147,7 @@ def ghi_ket_qua(root=ROOT):
                 L.append(f"  => {base}: TB {v['gap_vs_ref_mean']:+.2f}% so voi abl_ref; abl_ref re hon co y"
                          f" nghia o {v['n_seeds_ref_re_hon_co_y_nghia']}/{v['n_seeds']} seed")
     else:
-        L.append("  (chua co - can danh gia abl_ref/abl_global/abl_q3 x 3 seed roi chay campaign.py tonghop)")
+        L.append("  (chua co - can danh gia abl_ref/abl_global/abl_q3 x moi seed roi chay campaign.py tonghop)")
 
     train_tags = {p.stem[len("train_log_"):] for p in res.glob("train_log_*.csv")}
     eval_tags = {p.stem[len("summary_"):] for p in res.glob("summary_*.json")}
