@@ -30,6 +30,17 @@ env:
   obs_cover_days: 20.0
   min_mean_demand: 0.05
   include_price_signal: true
+  warehouse_stores:
+  - CA_3
+  - CA_1
+  - TX_2
+  - WI_2
+  - WI_3
+  - TX_3
+  - CA_2
+  - TX_1
+  - WI_1
+  - CA_4
   normalize_reward_per_pair: true
   reward_scale: 1.0
   service_penalty_mode: demand

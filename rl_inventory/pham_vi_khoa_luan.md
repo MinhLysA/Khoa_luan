@@ -249,6 +249,11 @@ cặp; đánh giá trọn quỹ đạo test; bootstrap khối tuần; phạt SLA
 reward toàn cục; warm-start; obs_drop; sự kiện sắp tới; hold-out SKU; shared
 trunk; độ nhạy chi phí; MCP; app chi tiết theo ngày.
 
+**P5 (19/10/2026, trước đợt train cuối):** mỗi cặp chỉ thấy cờ SNAP của bang
+chứa kho mình (`env.warehouse_stores`; trước đó cả 3 cờ hiện cho mọi kho, vẫn
+44 chiều); `abl_trunk` tắt thêm value norm để tái hiện đúng lỗi v1 (chạy thử:
+gradient critic/actor ≈ 18/0,13 trên thân chung).
+
 ---
 
 ## 7. Hướng phát triển (ngoài phạm vi)

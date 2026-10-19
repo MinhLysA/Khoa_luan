@@ -177,8 +177,10 @@ tại kỳ $t$ bao gồm:
     thời điểm nhu cầu tăng đột biến, nên đặc trưng này đóng vai trò chỉ báo sớm
     (leading indicator) của nhu cầu.
     \item Bối cảnh thời gian: thứ trong tuần (one-hot $7$ chiều) và vector đặc
-    trưng lịch $20$ chiều trích từ \path{calendar.csv} (ba cờ SNAP, một cờ
-    không có sự kiện, bốn loại sự kiện, mười hai tháng).
+    trưng lịch $20$ chiều trích từ \path{calendar.csv} (ba cờ SNAP theo bang
+    CA, TX, WI, trong đó mỗi tác tử chỉ giữ cờ của bang chứa kho mình và hai
+    cờ còn lại bằng $0$; một cờ không có sự kiện, bốn loại sự kiện, mười hai
+    tháng).
 \end{itemize}
 
 Tổng cộng vector quan sát của mỗi tác tử có $d = 44$ chiều. Hai thành phần

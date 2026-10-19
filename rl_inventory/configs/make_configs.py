@@ -23,8 +23,10 @@ ABLATIONS = {
                                    lambda c: c["env"].update(normalize_reward_per_pair=False)),
     "ablation_reward_demand_scaled": ("Phat SLA kieu cu (ty le mean_demand)",
                                       lambda c: c["env"].update(service_penalty_mode="demand")),
-    "ablation_shared_trunk": ("Actor/Critic dung chung than mang (v1)",
-                              lambda c: c["ppo"].update(shared_trunk=True)),
+    # Tat ca value norm: loi v1 la gradient value loss CHUA chuan hoa lan at
+    # policy loss tren than chung; con value norm thi loi do bi che mat.
+    "ablation_shared_trunk": ("Actor/Critic dung chung than mang, khong chuan hoa value (tai hien v1)",
+                              lambda c: c["ppo"].update(shared_trunk=True, use_value_norm=False)),
     "ablation_drop_calendar": ("Tat 27 chieu dac trung lich",
                                lambda c: c["env"].update(obs_drop=["calendar"])),
     "ablation_drop_warehouse": ("Tat 2 tin hieu cap kho (muc day, ty trong)",

@@ -1,5 +1,5 @@
 # SINH TU DONG boi configs/make_configs.py - KHONG sua tay.
-# Actor/Critic dung chung than mang (v1). Moi thu khac giong het config.yaml.
+# Actor/Critic dung chung than mang, khong chuan hoa value (tai hien v1). Moi thu khac giong het config.yaml.
 seed: 42
 paths:
   data_dir: data/processed
@@ -30,6 +30,17 @@ env:
   obs_cover_days: 20.0
   min_mean_demand: 0.05
   include_price_signal: true
+  warehouse_stores:
+  - CA_3
+  - CA_1
+  - TX_2
+  - WI_2
+  - WI_3
+  - TX_3
+  - CA_2
+  - TX_1
+  - WI_1
+  - CA_4
   normalize_reward_per_pair: true
   reward_scale: 1.0
   service_penalty_mode: normalized
@@ -88,7 +99,7 @@ ppo:
   hidden_dim: 128
   anneal_lr: true
   target_kl: 0.02
-  use_value_norm: true
+  use_value_norm: false
   clip_value_loss: true
   eval_every_episodes: 25
   eval_n_episodes: 2

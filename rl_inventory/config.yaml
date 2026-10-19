@@ -35,6 +35,11 @@ env:
 
   include_price_signal: true
 
+  # [P5-1] Cua hang theo DUNG thu tu truc kho cua demand_data
+  # (= "stores" trong data/processed/env_config.json). Moi cap chi thay co SNAP
+  # cua bang chua kho minh. Test kiem tra khop voi env_config.json.
+  warehouse_stores: ["CA_3", "CA_1", "TX_2", "WI_2", "WI_3", "TX_3", "CA_2", "TX_1", "WI_1", "CA_4"]
+
   normalize_reward_per_pair: true
   reward_scale: 1.0
 

@@ -605,3 +605,36 @@ def test_config_ablation_dong_bo_voi_config_chinh():
         fn(cfg)
         assert yaml.safe_load(open(ROOT / "configs" / f"{name}.yaml", encoding="utf-8")) == cfg, \
             f"configs/{name}.yaml lech voi config.yaml - chay python configs/make_configs.py"
+
+
+# --------------------------------------------------------------------------- #
+# [P5-1] SNAP theo bang cua kho
+# --------------------------------------------------------------------------- #
+def test_snap_chi_hien_co_cua_bang_chua_kho():
+    cal = np.zeros((200, 20), dtype=np.float32)
+    cal[:, 0:3] = 1.0                                  # ca 3 bang deu dang SNAP
+    cfg = dict(CFG, split_day=150, warehouse_stores=["CA_1", "TX_2", "WI_3"])
+    T, W, S = 200, cfg["n_warehouses"], cfg["n_skus"]
+    demand = np.ones((T, W, S), dtype=np.float32)
+    env = MultiWarehouseInventoryEnv(config=cfg, demand_data=demand,
+                                     calendar_features=cal, mode="train")
+    obs, _ = env.reset(seed=0)
+    c0 = env.obs_groups["calendar"][0] + 7
+    snap = obs[:, c0:c0 + 3].reshape(W, S, 3)
+    assert np.array_equal(snap, np.broadcast_to(np.eye(3)[:, None, :], (W, S, 3)))
+    # khong co warehouse_stores -> giu hanh vi cu (ca 3 co)
+    cfg.pop("warehouse_stores")
+    env_cu = MultiWarehouseInventoryEnv(config=cfg, demand_data=demand,
+                                        calendar_features=cal, mode="train")
+    assert (env_cu.reset(seed=0)[0][:, c0:c0 + 3] == 1.0).all()
+
+
+def test_warehouse_stores_khop_thu_tu_kho_cua_du_lieu():
+    """config.yaml phai liet ke kho dung thu tu truc kho cua demand_data."""
+    import json, yaml
+    meta = ROOT / "data" / "processed" / "env_config.json"
+    if not meta.exists():
+        pytest.skip("chua co du lieu da tien xu ly")
+    stores = json.loads(meta.read_text(encoding="utf-8"))["stores"]
+    cfg = yaml.safe_load(open(ROOT / "config.yaml", encoding="utf-8"))
+    assert cfg["env"]["warehouse_stores"] == stores

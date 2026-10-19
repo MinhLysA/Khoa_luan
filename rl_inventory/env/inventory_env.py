@@ -87,6 +87,14 @@ pham_vi_khoa_luan.md muc 9):
          10/110 tren ca hai nguon, lam ton kho cu giam oan). Nay tinh
          free_capacity = suc_chua - ton_cu, chi tu choi dung phan hang moi
          vuot qua free_capacity; ton kho cu khong bao gio bi buoc nay giam.
+
+PHIEN BAN P5:
+  [P5-1] SNAP THEO BANG CUA KHO. Ban truoc moi cap deu thay ca 3 co
+         snap_CA/TX/WI ma khong biet kho minh thuoc bang nao (khong co dac
+         trung dinh danh kho) -> kho CA cung "thay" snap_TX = 1. Nay moi cap chi
+         giu co SNAP cua bang chua kho minh, 2 co con lai = 0 (van 44 chieu).
+         Bang lay tu config env.warehouse_stores (cung thu tu truc kho cua
+         demand_data, xem data/processed/env_config.json).
 """
 
 import gymnasium as gym
@@ -302,6 +310,20 @@ class MultiWarehouseInventoryEnv(gym.Env):
         if bad:
             raise ValueError(f"obs_drop khong hop le: {bad}; chon trong {list(self.obs_groups)}")
         self._drop_cols = sorted(c for g in self.obs_drop for c in self.obs_groups[g])
+        # [P5-1] Mat na SNAP (n_pairs, 3): 1 o cot cua bang chua kho, 0 o 2 cot
+        # con lai. calendar_features cot 0..2 = snap_CA/TX/WI (data_preprocessing).
+        self._snap_mask = None
+        stores = self.config.get("warehouse_stores")
+        if stores and self.calendar_dim:
+            if len(stores) != self.n_warehouses:
+                raise ValueError(f"warehouse_stores co {len(stores)} kho, "
+                                 f"can {self.n_warehouses}")
+            bang = [str(s).split("_")[0] for s in stores]
+            mask = np.array([[b == x for x in ("CA", "TX", "WI")] for b in bang],
+                            dtype=np.float32)
+            self._snap_mask = np.repeat(mask, self.n_skus, axis=0)
+            c0 = self.obs_groups["calendar"][0] + 7          # sau 7 chieu thu
+            self._snap_cols = slice(c0, c0 + 3)
         self.observation_space = spaces.Box(
             low=0.0, high=1.0, shape=(self.n_pairs, self.obs_per_pair), dtype=np.float32)
 
@@ -583,6 +605,8 @@ class MultiWarehouseInventoryEnv(gym.Env):
             obs[:, c + 1] = float(self.event_gap[d] <= 7)
             c += 2
         obs[:, c:] = global_ctx[None, :]
+        if self._snap_mask is not None:
+            obs[:, self._snap_cols] *= self._snap_mask
         if self._drop_cols:
             obs[:, self._drop_cols] = 0.0
 

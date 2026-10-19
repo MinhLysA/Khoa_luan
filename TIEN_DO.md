@@ -18,7 +18,7 @@ Cập nhật: 29/09/2026 · Chú thích: ✅ xong · 🟡 đang triển khai / c
 | Thuật toán PS-IPPO | ✅ |
 | 3 baseline (EOQ, (s,S), Newsvendor) + tune trên val | ✅ code · 🟡 chạy lại trong đợt cuối |
 | Script đánh giá / phân tích | ✅ code · 🟡 chờ số liệu đợt cuối |
-| Test tự động | ✅ 44/44 pass với **44 chiều** (29/09; thêm test config ablation đồng bộ với config.yaml) |
+| Test tự động | ✅ 54/54 pass với **44 chiều** (19/10; thêm test SNAP theo bang [P5-1]) |
 | Notebook Colab + `campaign.py` | ✅ |
 | App Streamlit 4 trang + MCP prototype | ✅ |
 | **Đợt train cuối (3 main + 16 ablation/hold-out)** | 🟡 **0/19 — chưa chạy** |
