@@ -24,8 +24,12 @@ if str(ROOT) not in sys.path:
 from env.inventory_env import MultiWarehouseInventoryEnv
 from scripts.common import make_policies
 
-TEAL, ORANGE, GREY, INK, PAPER = "#0F6E63", "#C2571A", "#A7B0AB", "#16201C", "#F3F4F1"
-MUTED, BORDER, TEAL_SOFT = "#56625D", "#DCE1DB", "#DCEDE9"   # MUTED: chữ phụ; GREY: chỉ cho nét vẽ
+# Màu nét vẽ plotly: tông trung bình, đọc được trên cả theme sáng và tối.
+# TEAL (tên cũ) = màu nhấn của IPPO; ORANGE = chính sách đang so / cảnh báo; GREY = baseline; INK = đường mốc.
+TEAL, ORANGE, GREY, INK = "#4361F5", "#EF8A3C", "#AEB6C8", "#8A93A8"
+SHADE, ORANGE_SHADE = "rgba(138,147,168,.16)", "rgba(239,138,60,.14)"
+# Màu cho HTML: biến CSS định nghĩa trong CSS bên dưới, tự đổi theo theme sáng/tối
+MUTED, BORDER, TEAL_SOFT, ORANGE_SOFT = "var(--muted)", "var(--line)", "var(--accent-soft)", "var(--warn-soft)"
 CATEGORIES = ["FOODS", "HOBBIES", "HOUSEHOLD"]
 COST_PARTS = [("holding_cost", "Lưu kho"), ("stockout_cost", "Thiếu hàng"),
               ("ordering_cost", "Đặt hàng"), ("overflow_cost", "Tràn kho")]
@@ -235,33 +239,111 @@ def shock_results():
 # --------------------------------------------------------------------------- #
 # Giao diện dùng chung
 # --------------------------------------------------------------------------- #
+# Token màu theo hướng thiết kế demo gợi ý sản phẩm; light-dark() đọc color-scheme mà
+# Streamlit đặt trên .stApp theo theme đang chọn, nên mọi khối HTML tự đổi sáng/tối.
 CSS = f"""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
-.stApp *:not([data-testid="stIconMaterial"]) {{ font-family: 'IBM Plex Sans', sans-serif; }}
-.stApp {{ background: {PAPER}; color: {INK}; }}
-.stApp code {{ font-family: 'IBM Plex Mono', monospace; }}
-[data-testid="stMainBlockContainer"] {{ padding-top: 4.5rem; max-width: 1280px; }}
-.stApp h1 {{ font-size: 28px; font-weight: 600; padding: 0 0 .25rem; }}
-.stApp h2, .stApp h3 {{ font-size: 19px; font-weight: 600; }}
-.stApp [data-testid="stCaptionContainer"], .stApp .mota {{ color: {MUTED}; }}
-.eyebrow {{ color: {TEAL}; font-size: 12px; font-weight: 600; letter-spacing: .08em;
-  text-transform: uppercase; margin-bottom: .25rem; }}
-.mota {{ font-size: .95rem; margin: 0 0 .75rem; }}
-[class*="st-key-the_"] {{ background: #FFFFFF; border-radius: 10px; }}
-[data-testid="stAlert"] {{ background: {TEAL_SOFT}; color: {INK}; border: 1px solid {BORDER}; }}
-[data-testid="stAlert"] * {{ color: {INK}; }}
+.stApp {{
+  --bg: #F5F6FB; --surface: #FFFFFF; --surface-2: #EEF1F8;
+  --ink: #11141F; --muted: #5C6378; --line: #E2E5EE;
+  --accent: #3150F5; --accent-soft: #E7ECFF; --bar: #CCD2DF;
+  --good: #0F9A4C; --good-soft: #DEF5E8;
+  --warn: #B87300; --warn-soft: #FFF1D3;
+  --bad: #E0434A; --bad-soft: #FFE5E5;
+  --shadow: 0 1px 2px rgba(17,20,31,.04), 0 8px 24px -12px rgba(17,20,31,.12);
+}}
+@supports (color: light-dark(#000, #fff)) {{
+.stApp {{
+  --bg: light-dark(#F5F6FB, #0C0F17); --surface: light-dark(#FFFFFF, #141927); --surface-2: light-dark(#EEF1F8, #1B2133);
+  --ink: light-dark(#11141F, #EEF0F8); --muted: light-dark(#5C6378, #9BA3B9); --line: light-dark(#E2E5EE, #252C41);
+  --accent: light-dark(#3150F5, #7D93FF); --accent-soft: light-dark(#E7ECFF, #1D264D); --bar: light-dark(#CCD2DF, #374059);
+  --good: light-dark(#0F9A4C, #3FD07F); --good-soft: light-dark(#DEF5E8, #10301E);
+  --warn: light-dark(#B87300, #F2B543); --warn-soft: light-dark(#FFF1D3, #34270B);
+  --bad: light-dark(#E0434A, #FF6E73); --bad-soft: light-dark(#FFE5E5, #3B191B);
+  --shadow: 0 1px 2px light-dark(rgba(17,20,31,.04), rgba(0,0,0,.3)), 0 8px 24px -12px light-dark(rgba(17,20,31,.12), rgba(0,0,0,.6));
+}}
+}}
+.stApp, .stApp button, .stApp input {{ font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif; }}
+[data-testid="stMainBlockContainer"] {{ padding-top: 5.5rem; max-width: 1240px; }}
+/* thanh trên cùng: nền thẻ, đường kẻ dưới, mục đang mở gạch chân màu nhấn */
+[data-testid="stHeader"] {{ background: var(--surface); border-bottom: 1px solid var(--line); }}
+[data-testid="stTopNavLink"] {{ background: transparent !important; border-radius: 0; padding: 0 4px; margin: 0 8px;
+  border-bottom: 2px solid transparent; }}
+[data-testid="stTopNavLink"] p {{ color: var(--muted); font-weight: 600; font-size: 14.5px; }}
+[data-testid="stTopNavLink"][aria-current="page"] {{ border-bottom-color: var(--accent); }}
+[data-testid="stTopNavLink"][aria-current="page"] p, [data-testid="stTopNavLink"]:hover p {{ color: var(--accent); }}
+/* tiêu đề trang */
+.eyebrow {{ color: var(--accent); font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  margin-bottom: .1rem; }}
+.stApp h1 {{ font-size: 44px; font-weight: 800; letter-spacing: -.02em; line-height: 1.12; padding: 0 0 .35rem; }}
+.mota {{ font-size: 17px; color: var(--muted); max-width: 62ch; margin: 0 0 1.5rem; line-height: 1.55; }}
+.stApp h2, .stApp h3 {{ font-size: 19px; font-weight: 700; letter-spacing: -.01em; }}
+.stApp [data-testid="stCaptionContainer"] {{ color: var(--muted); }}
+/* thẻ: mọi container có key bắt đầu bằng the_ */
+[data-testid="stForm"], [class*="st-key-the_"] {{ background: var(--surface); border: 1px solid var(--line) !important; border-radius: 16px !important;
+  box-shadow: var(--shadow); padding: 20px 22px !important; margin-top: .6rem; }}
+[data-testid="stAlert"] {{ background: var(--accent-soft); border: none; border-radius: 12px; }}
+[data-testid="stAlert"] * {{ color: var(--ink); }}
 [data-testid="stColumn"] > div, [data-testid="stColumn"] [data-testid="stElementContainer"]:has(.kpi),
 [data-testid="stColumn"] [data-testid="stMarkdown"]:has(.kpi) {{ height: 100%; }}
-.kpi {{ background: #fff; border: 1px solid {BORDER}; border-radius: 10px; padding: 14px 16px; height: 100%; }}
-.kpi .lab {{ color: {MUTED}; font-size: .85rem; }}
-.kpi .num {{ font-size: 2rem; font-weight: 600; margin: 4px 0; color: {INK};
+.kpi {{ background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; height: 100%;
+  box-shadow: var(--shadow); }}
+.kpi .lab {{ color: var(--muted); font-size: 13px; font-weight: 600; }}
+.kpi .num {{ font-size: 32px; font-weight: 800; letter-spacing: -.02em; margin: 6px 0 8px; color: var(--ink);
   font-variant-numeric: tabular-nums; }}
-.kpi .note {{ font-size: .85rem; color: {MUTED}; }}
-.kpi .warn, .kpi .good {{ display: inline-block; padding: 2px 10px; border-radius: 999px; font-weight: 500; }}
-.kpi .warn {{ background: #F6E3D6; color: #A84A14; }}
-.kpi .good {{ background: {TEAL_SOFT}; color: #0A4F47; }}
-.box {{ background: #fff; border: 1px solid {BORDER}; border-radius: 10px; padding: 10px 14px; text-align: center; }}
+.kpi .note {{ font-size: 13px; color: var(--muted); }}
+.kpi .warn, .kpi .good, .chip {{ display: inline-block; padding: 3px 10px; border-radius: 999px; font-weight: 700;
+  font-size: 12.5px; }}
+.kpi .warn, .chip.warn {{ background: var(--warn-soft); color: var(--warn); }}
+.kpi .good, .chip.good {{ background: var(--good-soft); color: var(--good); }}
+.chip {{ background: var(--surface-2); color: var(--muted); white-space: nowrap; }}
+.chip.bad {{ background: var(--bad-soft); color: var(--bad); }}
+.box {{ background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px;
+  text-align: center; box-shadow: var(--shadow); }}
+/* đầu mục đánh số như demo gợi ý: vòng tròn số + tiêu đề + ghi chú bên phải */
+.muc {{ display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: .25rem 0 .9rem; }}
+.muc .so {{ width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 700;
+  font-size: 14px; display: inline-flex; align-items: center; justify-content: center; transform: translateY(3px); }}
+.muc .t {{ font-size: 21px; font-weight: 800; letter-spacing: -.01em; }}
+.muc .g {{ margin-left: auto; color: var(--muted); font-size: 13.5px; }}
+/* thẻ hỏi–đáp với thanh ngang, như trang Kết quả đánh giá của demo gợi ý */
+.hoi {{ font-size: 19px; font-weight: 800; letter-spacing: -.01em; margin-bottom: 4px; }}
+.dap {{ color: var(--muted); font-size: 14.5px; line-height: 1.55; margin-bottom: 16px; }}
+.dap b {{ color: var(--ink); }}
+.thanh {{ display: grid; gap: 12px; }}
+.thanh .r {{ display: grid; grid-template-columns: minmax(120px, 170px) minmax(0, 1fr) auto; gap: 6px 14px; align-items: center; }}
+.thanh .n {{ font-size: 14.5px; font-weight: 600; line-height: 1.25; }}
+.thanh .n small {{ display: block; color: var(--muted); font-weight: 500; font-size: 12px; margin-top: 3px; }}
+.thanh .n small .chip {{ font-size: 11.5px; padding: 2px 8px; }}
+.thanh .tr {{ position: relative; height: 12px; border-radius: 99px; background: var(--surface-2); }}
+.thanh .tr i {{ position: absolute; inset: 0 auto 0 0; border-radius: 99px; background: var(--bar); }}
+.thanh .tr u {{ position: absolute; top: -5px; bottom: -5px; width: 2px; background: var(--bad); }}
+.thanh .r.me .n {{ color: var(--accent); font-weight: 800; }}
+.thanh .r.me .tr i {{ background: var(--accent); }}
+.thanh .v {{ text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; min-width: 64px; }}
+.thanh .c {{ grid-column: 2 / 4; margin-top: -4px; }}
+.thanh .nhom {{ font-size: 12.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em;
+  margin-top: 6px; }}
+.ghi {{ color: var(--muted); font-size: 12.5px; margin-top: 14px; }}
+.stk-ds {{ display: grid; gap: 12px; }}
+.stk-r {{ display: grid; grid-template-columns: minmax(110px, 170px) minmax(0, 1fr) 86px; gap: 14px; align-items: center; }}
+.stk-r .n {{ font-size: 14px; font-weight: 600; }}
+.stk-r.me .n {{ color: var(--accent); font-weight: 800; }}
+.stk-r .v {{ text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; }}
+.stk {{ display: flex; height: 16px; border-radius: 6px; overflow: hidden; }}
+.stk span {{ height: 100%; }}
+.chu-mau {{ display: flex; gap: 16px; flex-wrap: wrap; color: var(--muted); font-size: 12.5px; margin-bottom: 14px; }}
+.chu-mau i {{ display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }}
+table.bang {{ width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }}
+table.bang th, table.bang td {{ padding: 11px 8px; border-bottom: 1px solid var(--line); text-align: right; }}
+table.bang thead th {{ color: var(--muted); font-size: 12.5px; font-weight: 600; }}
+table.bang th:first-child {{ text-align: left; }}
+table.bang tbody th {{ font-weight: 700; }}
+.chu-giai {{ display: flex; gap: 16px; flex-wrap: wrap; color: var(--muted); font-size: 12.5px; margin-bottom: 12px; }}
+.chu-giai span::before {{ content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+  margin-right: 6px; background: var(--bar); vertical-align: -1px; }}
+.chu-giai span.me::before {{ background: var(--accent); }}
+.chu-giai span.tg::before {{ width: 2px; border-radius: 0; height: 12px; background: var(--bad); }}
 </style>
 """
 
@@ -277,6 +359,53 @@ def tieu_de(nhan: str, tieu_de: str, mo_ta: str = None):
     st.title(tieu_de)
     if mo_ta:
         st.markdown(f'<div class="mota">{mo_ta}</div>', unsafe_allow_html=True)
+
+
+def muc(so, tieu_de: str, ghi_chu: str = ""):
+    """Đầu mục trong thẻ: vòng tròn số + tiêu đề, ghi chú mờ bên phải (như demo gợi ý sản phẩm)."""
+    st.markdown(f'<div class="muc"><span class="so">{so}</span><span class="t">{tieu_de}</span>'
+                f'<span class="g">{ghi_chu}</span></div>', unsafe_allow_html=True)
+
+
+TEN_CS = {"IPPO": "mô hình của đề tài", "EOQ": "đặt một lượng cố định", "(s,S)": "đặt bù khi tồn kho thấp",
+          "Newsvendor": "đặt theo nhu cầu dự kiến"}
+
+
+def ten_cs(p: str) -> tuple:
+    """Tên chính sách + một dòng mô tả bằng lời thường (cho nhãn biểu đồ)."""
+    goc = p.replace(" theo nhóm", "")
+    return p, TEN_CS.get(goc, "") + (", chỉnh riêng theo nhóm hàng" if p.endswith("theo nhóm") else "")
+
+
+def thanh(dong: list, lo: float = 0.0, hi: float = None, moc: float = None) -> str:
+    """Thanh ngang kiểu demo gợi ý. dong: dict(ten, phu, v, nhan, me, chip) hoặc dict(nhom=...) làm dòng tiêu đề nhóm.
+    Thanh tính từ lo đến hi; moc: vạch đỏ (vd mục tiêu mức phục vụ)."""
+    vs = [d["v"] for d in dong if "v" in d]
+    hi = max(vs) if hi is None else hi
+    x = lambda v: max(0.0, min(100.0, (v - lo) / (hi - lo) * 100))  # noqa: E731
+    out = []
+    for d in dong:
+        if "nhom" in d:
+            out.append(f'<div class="nhom">{d["nhom"]}</div>')
+            continue
+        vach = f'<u style="left:{x(moc):.1f}%"></u>' if moc is not None else ""
+        out.append(f'<div class="r{" me" if d.get("me") else ""}"><div class="n">{d["ten"]}'
+                   + (f'<small>{d["phu"]}</small>' if d.get("phu") else "")
+                   + f'</div><div class="tr"><i style="width:{x(d["v"]):.1f}%"></i>{vach}</div>'
+                   f'<div class="v">{d["nhan"]}</div>'
+                   + (f'<div class="c">{d["chip"]}</div>' if d.get("chip") else "") + "</div>")
+    return '<div class="thanh">' + "".join(out) + "</div>"
+
+
+def the_hoi(key: str, hoi: str, dap: str, than: str, ghi: str = ""):
+    """Một thẻ hỏi–đáp: câu hỏi, câu trả lời ngắn từ số liệu, phần thân (thường là thanh())."""
+    with st.container(key=f"the_{key}"):
+        st.markdown(f'<div class="hoi">{hoi}</div><div class="dap">{dap}</div>{than}'
+                    + (f'<div class="ghi">{ghi}</div>' if ghi else ""), unsafe_allow_html=True)
+
+
+def chip(text: str, tone: str = "") -> str:
+    return f'<span class="chip {tone}">{text}</span>'
 
 
 def nguon(*parts):
@@ -296,16 +425,17 @@ def pct(x, d: int = 1) -> str:
 def style_fig(fig, height: int = 380):
     fig.update_layout(height=height, margin=dict(l=70, r=20, t=50, b=50), separators=",.",
                       paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                      font=dict(family="IBM Plex Sans, sans-serif", color=INK, size=13),
-                      hoverlabel=dict(font_family="IBM Plex Mono, monospace"),
+                      font=dict(family="Plus Jakarta Sans, Segoe UI, sans-serif", size=13),
+                      hoverlabel=dict(font_family="Plus Jakarta Sans, Segoe UI, sans-serif"),
                       legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0))
-    fig.update_xaxes(showgrid=False, zerolinecolor="#EEF0EC", automargin=True)
-    fig.update_yaxes(gridcolor="#EEF0EC", zerolinecolor="#EEF0EC", automargin=True)
+    fig.update_xaxes(showgrid=False, zerolinecolor=SHADE, automargin=True)
+    fig.update_yaxes(gridcolor=SHADE, zerolinecolor=SHADE, automargin=True)
     return fig
 
 
 def chart(fig, height: int = 380):
-    st.plotly_chart(style_fig(fig, height), theme=None, config={"displayModeBar": False})
+    # theme="streamlit": chữ, trục, hover theo theme sáng/tối đang chọn; màu nét giữ như đã đặt
+    st.plotly_chart(style_fig(fig, height), theme="streamlit", config={"displayModeBar": False})
 
 
 def policy_color(name: str) -> str:

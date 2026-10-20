@@ -17,16 +17,16 @@ import core
 
 st.set_page_config(page_title="Mô phỏng chính sách đặt hàng", layout="wide")
 st.markdown(core.CSS, unsafe_allow_html=True)
+st.logo(str(core.APP / "logo.svg"), size="large")
 
 if not (core.DEMO / "meta.json").exists():
     st.error("Chưa có app/demo_data/. Chạy `python run.py demo_data` một lần rồi mở lại.")
     st.stop()
 
 st.navigation([
-    st.Page("pages_/tong_quan.py", title="Tổng quan", default=True),
-    st.Page("pages_/don_dat_hang.py", title="Đơn đặt hàng đề xuất"),
-    st.Page("pages_/chi_tiet_cap.py", title="Chi tiết cặp (kho, SKU)"),
-    st.Page("pages_/so_sanh.py", title="So sánh chính sách"),
+    st.Page("pages_/tong_quan.py", title="Kết quả", default=True),
+    st.Page("pages_/don_dat_hang.py", title="Đơn đặt hàng"),
+    st.Page("pages_/chi_tiet_cap.py", title="Chi tiết một mặt hàng"),
+    st.Page("pages_/so_sanh.py", title="So sánh chi tiết"),
     st.Page("pages_/soc_cau.py", title="Kịch bản tăng cầu"),
-    st.Page("pages_/mo_hinh.py", title="Về mô hình"),
 ], position="top").run()

@@ -1,10 +1,26 @@
-# Theme cho demo (python run.py app chay voi cwd = thu muc nay). Font nhung bang CSS trong app/core.py.
+# Theme cho demo (python run.py app chay voi cwd = thu muc nay), cung huong thiet ke voi demo goi y san pham.
+# Co ca sang va toi: mac dinh theo he dieu hanh, doi o menu ⋮ -> Settings. Mau HTML tuy bien o app/core.py.
 [theme]
-base = "light"
-primaryColor = "#0F6E63"
-backgroundColor = "#F3F4F1"
-secondaryBackgroundColor = "#E6E9E4"
-textColor = "#16201C"
+font = "Plus Jakarta Sans:https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap, Segoe UI, sans-serif"
+baseRadius = "12px"
+buttonRadius = "full"
+showWidgetBorder = true
+
+[theme.light]
+primaryColor = "#3150F5"
+backgroundColor = "#F5F6FB"
+secondaryBackgroundColor = "#EEF1F8"
+textColor = "#11141F"
+borderColor = "#E2E5EE"
+dataframeHeaderBackgroundColor = "#EEF1F8"
+
+[theme.dark]
+primaryColor = "#7D93FF"
+backgroundColor = "#0C0F17"
+secondaryBackgroundColor = "#1B2133"
+textColor = "#EEF0F8"
+borderColor = "#252C41"
+dataframeHeaderBackgroundColor = "#1B2133"
 
 [client]
-toolbarMode = "minimal"   # an nut Deploy khi trinh dien
+toolbarMode = "viewer"   # an nut Deploy, giu menu doi giao dien sang/toi

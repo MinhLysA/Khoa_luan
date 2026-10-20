@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PS-IPPO · Quản lý Tồn kho Đa kho – Kết quả Mô phỏng</title>
+<meta name="description" content="Dashboard kết quả mô phỏng hoàn chỉnh: PS-IPPO quản lý tồn kho đa kho, dựa trên dữ liệu M5 Competition.">
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0b0f1a;--bg2:#111827;--bg3:#1a2236;--card:#161e2e;--border:#253048;--border2:#1e2d42;--teal:#00d4aa;--teal2:#00b890;--teal-dim:rgba(0,212,170,.12);--orange:#ff6b35;--orange-dim:rgba(255,107,53,.12);--blue:#4fa3e8;--purple:#a78bfa;--yellow:#f59e0b;--red:#ef4444;--green:#22c55e;--txt:#e2e8f0;--txt2:#94a3b8;--txt3:#64748b;--mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;--r:14px;--r2:10px;--glow-teal:0 0 24px rgba(0,212,170,.2);--glow-orange:0 0 24px rgba(255,107,53,.2);--header-bg:rgba(11,15,26,.92);--grid-line:rgba(0,212,170,.04);}
+[data-theme="light"]{--bg:#f0f4f8;--bg2:#e8edf5;--bg3:#dde4ef;--card:#ffffff;--border:#d1dbe8;--border2:#c4d0e0;--teal:#009e7e;--teal2:#007f65;--teal-dim:rgba(0,158,126,.10);--orange:#e85d20;--orange-dim:rgba(232,93,32,.10);--blue:#2d7dd2;--purple:#7c5cbf;--yellow:#c97d00;--red:#c0392b;--green:#16a34a;--txt:#1e293b;--txt2:#475569;--txt3:#94a3b8;--glow-teal:0 2px 16px rgba(0,158,126,.15);--glow-orange:0 2px 16px rgba(232,93,32,.15);--header-bg:rgba(240,244,248,.95);--grid-line:rgba(0,158,126,.05);}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden;line-height:1.6}
+body::before{content:'';position:fixed;inset:0;z-index:-1;background-image:linear-gradient(var(--grid-line) 1px,transparent 1px),linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);background-size:40px 40px;transition:background-image .3s}
+body{transition:background .3s,color .3s}
+header{position:sticky;top:0;z-index:100;background:var(--header-bg);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 2rem;transition:background .3s,border-color .3s}
+.theme-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--bg3);color:var(--txt2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s;flex-shrink:0}
+.theme-btn:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-dim);transform:rotate(20deg)}
+.header-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:60px;gap:1rem}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-badge{background:linear-gradient(135deg,var(--teal),var(--blue));color:#fff;font-weight:800;font-size:.75rem;letter-spacing:.06em;padding:4px 10px;border-radius:6px;text-transform:uppercase}
+.logo-title{font-weight:700;font-size:1rem;color:var(--txt)}
+.logo-sub{font-size:.78rem;color:var(--txt3);font-family:var(--mono)}
+nav{display:flex;gap:.25rem}
+nav a{color:var(--txt2);text-decoration:none;font-size:.83rem;font-weight:500;padding:6px 14px;border-radius:8px;transition:all .2s}
+nav a:hover,nav a.active{color:var(--teal);background:var(--teal-dim)}
+.header-tag{font-family:var(--mono);font-size:.7rem;color:var(--txt3);background:var(--bg3);padding:3px 10px;border-radius:20px;border:1px solid var(--border);white-space:nowrap}
+main{max-width:1400px;margin:0 auto;padding:2rem}
+section{margin-bottom:3rem;scroll-margin-top:80px}
+.hero{background:linear-gradient(135deg,#0f1e36 0%,#0b1a2e 50%,#0d1f2f 100%);border:1px solid var(--border);border-radius:var(--r);padding:3rem;position:relative;overflow:hidden;margin-bottom:3rem}
+.hero::before{content:'';position:absolute;top:-60px;right:-60px;width:320px;height:320px;background:radial-gradient(circle,rgba(0,212,170,.15) 0%,transparent 70%);pointer-events:none}
+.hero::after{content:'';position:absolute;bottom:-80px;left:10%;width:400px;height:400px;background:radial-gradient(circle,rgba(79,163,232,.08) 0%,transparent 70%);pointer-events:none}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--teal-dim);border:1px solid rgba(0,212,170,.3);color:var(--teal);font-size:.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:5px 14px;border-radius:20px;margin-bottom:1.25rem}
+.hero-badge .dot{width:7px;height:7px;border-radius:50%;background:var(--teal);animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+.hero h1{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;line-height:1.2;margin-bottom:.75rem;background:linear-gradient(135deg,#fff 0%,var(--teal) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:1rem;color:var(--txt2);max-width:680px;margin-bottom:2rem}
+.hero-stats{display:flex;flex-wrap:wrap;gap:1rem}
+.hero-stat{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:var(--r2);padding:14px 20px;min-width:130px}
+.hero-stat .hs-val{font-size:1.7rem;font-weight:800;font-family:var(--mono);color:#fff;line-height:1}
+.hero-stat .hs-val.teal{color:var(--teal)}
+.hero-stat .hs-val.orange{color:var(--orange)}
+.hero-stat .hs-lbl{font-size:.75rem;color:var(--txt3);margin-top:4px}
+.sec-hd{display:flex;align-items:flex-end;gap:1rem;margin-bottom:1.5rem}
+.sec-num{font-family:var(--mono);font-size:.75rem;color:var(--teal);font-weight:700;letter-spacing:.1em}
+.sec-title{font-size:1.3rem;font-weight:700;color:var(--txt)}
+.sec-sub{font-size:.85rem;color:var(--txt3);margin-left:auto}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;position:relative;overflow:hidden;transition:transform .2s,border-color .2s,box-shadow .2s}
+.kpi:hover{transform:translateY(-2px);border-color:var(--teal);box-shadow:var(--glow-teal)}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--teal),transparent)}
+.kpi.warn::before{background:linear-gradient(90deg,var(--orange),transparent)}
+.kpi-lbl{font-size:.78rem;color:var(--txt3);font-weight:500;letter-spacing:.02em}
+.kpi-val{font-size:2rem;font-weight:800;font-family:var(--mono);color:#fff;line-height:1.2;margin:6px 0 4px}
+.kpi-note{font-size:.78rem;color:var(--txt3);display:flex;align-items:center;gap:4px}
+.tag{display:inline-block;font-size:.72rem;font-weight:600;padding:2px 9px;border-radius:20px}
+.tag.good{background:rgba(34,197,94,.15);color:var(--green)}
+.tag.warn{background:rgba(239,68,68,.15);color:var(--red)}
+.tag.info{background:rgba(79,163,232,.15);color:var(--blue)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem;transition:border-color .2s}
+.card:hover{border-color:var(--border2)}
+.card-title{font-size:.95rem;font-weight:700;color:var(--txt);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.card-title .icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.card-sub{font-size:.78rem;color:var(--txt3);margin-bottom:1.2rem}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.25rem}
+@media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.chart-box{position:relative;width:100%;height:320px}
+.chart-box.tall{height:380px}
+.chart-box.short{height:220px}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th{text-align:left;padding:10px 14px;font-size:.72rem;font-weight:700;color:var(--txt3);letter-spacing:.07em;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid rgba(37,48,72,.5);color:var(--txt2);font-family:var(--mono);white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+td.hi{color:#fff;font-weight:600}
+td.good{color:var(--green)}
+td.warn{color:var(--orange)}
+td.bad{color:var(--red)}
+td.policy-name{color:var(--txt);font-weight:600;font-family:var(--sans)}
+.tabs{display:flex;gap:.5rem;border-bottom:1px solid var(--border);margin-bottom:1.5rem}
+.tab{padding:8px 18px;font-size:.85rem;font-weight:500;color:var(--txt3);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;margin-bottom:-1px}
+.tab:hover{color:var(--txt)}
+.tab.active{color:var(--teal);border-bottom-color:var(--teal)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.abl-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;margin-bottom:6px;background:rgba(255,255,255,.02);border:1px solid var(--border2)}
+.abl-row:hover{background:rgba(255,255,255,.04)}
+.abl-name{font-size:.83rem;color:var(--txt);font-weight:600;min-width:150px}
+.abl-change{font-size:.75rem;color:var(--txt3);flex:1}
+.abl-delta{font-family:var(--mono);font-size:.85rem;font-weight:700;min-width:70px;text-align:right}
+.abl-status{font-size:.72rem;padding:2px 8px;border-radius:20px}
+footer{border-top:1px solid var(--border);padding:1.5rem 2rem;text-align:center;color:var(--txt3);font-size:.78rem}
+.footer-inner{max-width:1400px;margin:0 auto}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.fade-in{opacity:0;transform:translateY(16px);animation:fadeIn .6s ease forwards}
+@keyframes fadeIn{to{opacity:1;transform:none}}
+.fade-in:nth-child(1){animation-delay:.05s}
+.fade-in:nth-child(2){animation-delay:.1s}
+.fade-in:nth-child(3){animation-delay:.15s}
+.fade-in:nth-child(4){animation-delay:.2s}
+.fade-in:nth-child(5){animation-delay:.25s}
+.alert-box{padding:10px 14px;border-radius:8px;margin-top:.75rem}
+.alert-box.warn{background:var(--orange-dim);border:1px solid rgba(255,107,53,.2)}
+.alert-box.ok{background:var(--teal-dim);border:1px solid rgba(0,212,170,.2)}
+.alert-box .alert-title{font-size:.75rem;font-weight:700;margin-bottom:2px}
+.alert-box.warn .alert-title{color:var(--orange)}
+.alert-box.ok .alert-title{color:var(--teal)}
+.alert-box p{font-size:.78rem;color:var(--txt2)}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-badge">PS-IPPO</div>
+      <div>
+        <div class="logo-title">Quản lý Tồn kho Đa kho</div>
+        <div class="logo-sub">Khóa luận · M5 Competition · 10 kho × 30 SKU</div>
+      </div>
+    </div>
+    <nav>
+      <a href="#rq1" class="active">RQ1 Chính</a>
+      <a href="#rq2">RQ2 Quy mô</a>
+      <a href="#rq3">RQ3 Phần thưởng</a>
+      <a href="#ablation">Ablation</a>
+      <a href="#soc">SOC</a>
+      <a href="#training">Huấn luyện</a>
+    </nav>
+    <div class="header-tag">Cập nhật 2026-10-20</div>
+    <button class="theme-btn" id="themeToggle" title="Chuyển chế độ sáng/tối" aria-label="Toggle theme">🌙</button>
+  </div>
+</header>
+<main>
+<div class="hero fade-in">
+  <div class="hero-badge"><span class="dot"></span>Kết quả thí nghiệm hoàn chỉnh</div>
+  <h1>PS-IPPO · Parameter‑Sharing IPPO<br/>cho Quản lý Tồn kho Đa kho</h1>
+  <p class="hero-sub">Mô phỏng trên dữ liệu M5 Competition (Walmart). Mô hình Actor‑Critic chia sẻ tham số cho 300 cặp kho‑SKU. So sánh với 6 baseline truyền thống.</p>
+  <div class="hero-stats">
+    <div class="hero-stat fade-in"><div class="hs-val teal">90,9%</div><div class="hs-lbl">Fill rate trung bình (3 seed)</div></div>
+    <div class="hero-stat fade-in"><div class="hs-val">2.055.442</div><div class="hs-lbl">Chi phí TB (đơn vị mô phỏng)</div></div>
+    <div class="hero-stat fade-in"><div class="hs-val teal">‑17,8%</div><div class="hs-lbl">Rõ hơn EOQ (TB 3 seed)</div></div>
+    <div class="hero-stat fade-in"><div class="hs-val">10.000</div><div class="hs-lbl">Episodes huấn luyện (mô hình chính)</div></div>
+    <div class="hero-stat fade-in"><div class="hs-val orange">3 seed</div><div class="hs-lbl">Kiểm định ổn định</div></div>
+  </div>
+</div>
+<section id="rq1">
+  <div class="sec-hd">
+    <span class="sec-num">RQ1</span>
+    <h2 class="sec-title">Mô hình chính — So sánh với baseline</h2>
+    <span class="sec-sub">300 cặp × 30 SKU × 3 seed × 10.000 episode</span>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi fade-in"><div class="kpi-lbl">Chi phí IPPO (TB 3 seed)</div><div class="kpi-val" style="color:var(--teal)">2.055.442</div><div class="kpi-note">± 14.358 SD seed</div></div>
+    <div class="kpi fade-in"><div class="kpi-lbl">Fill rate trung bình</div><div class="kpi-val">90,9%</div><div class="kpi-note"><span class="tag good">≥85% đạt tiêu chuẩn</span></div></div>
+    <div class="kpi fade-in"><div class="kpi-lbl">Δ% (s,S)</div><div class="kpi-val" style="color:var(--green)">‑1,7%</div><div class="kpi-note">IPPO thắng 3/3 seed</div></div>
+    <div class="kpi fade-in"><div class="kpi-lbl">Δ% EOQ</div><div class="kpi-val" style="color:var(--green)">‑17,8%</div><div class="kpi-note">IPPO thắng 3/3 seed</div></div>
+    <div class="kpi warn fade-in"><div class="kpi-lbl">Δ% NV nhóm</div><div class="kpi-val" style="color:var(--orange)">+1,6%</div><div class="kpi-note"><span class="tag warn">IPPO thua 3/3 seed</span></div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card fade-in">
+      <div class="card-title"><span class="icon" style="background:var(--teal-dim)">💰</span>Tổng chi phí theo chính sách</div>
+      <div class="card-sub">Seed 42 · 30 SKU · 10.000 episode</div>
+      <div class="chart-box"><canvas id="costChart"></canvas></div>
+    </div>
+    <div class="card fade-in">
+      <div class="card-title"><span class="icon" style="background:rgba(79,163,232,.15)">📊</span>Δ% Chi phí IPPO so với baseline (TB 3 seed)</div>
+      <div class="card-sub">α = IPPO thắng · * = có ý nghĩa thống kê (p < 0,05)</div>
+      <div class="chart-box"><canvas id="deltaChart"></canvas></div>
+    </div>
+  </div>
+  <div class="grid-2" style="margin-top:1.25rem">
+    <div class="card fade-in">
+      <div class="card-title"><span class="icon" style="background:rgba(167,139,250,.15)">🧪</span>Cấu trúc chi phí theo thành phần</div>
+      <div class="card-sub">Seed 42 · lưu kho / thải hàng / đặt hàng / tràn kho</div>
+      <div class="chart-box"><canvas id="stackedChart"></canvas></div>
+    </div>
+    <div class="card fade-in">
+      <div class="card-title"><span class="icon" style="background:rgba(245,158,11,.15)">⚽</span>Chi phí IPPO theo seed</div>
+      <div class="card-sub">Kiểm tra độ ổn định (3 seed)</div>
+      <div style="display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap">
+        <div class="kpi" style="flex:1;min-width:100px;padding:14px"><div class="kpi-lbl">Seed 42</div><div class="kpi-val" style="font-size:1.3rem;color:var(--teal)">2.052.496</div><div class="kpi-note">Fill: 90,6%</div></div>
+        <div class="kpi" style="flex:1;min-width:100px;padding:14px"><div class="kpi-lbl">Seed 1</div><div class="kpi-val" style="font-size:1.3rem;color:var(--teal)">2.071.045</div><div class="kpi-note">Fill: 91,3%</div></div>
+        <div class="kpi" style="flex:1;min-width:100px;padding:14px"><div class="kpi-lbl">Seed 2</div><div class="kpi-val" style="font-size:1.3rem;color:var(--teal)">2.042.786</div><div class="kpi-note">Fill: 90,9%</div></div>
+      </div>
+      <div class="chart-box short"><canvas id="seedChart"></canvas></div>
+    </div>
+  </div>
+  <div class="card fade-in" style="margin-top:1.25rem">
+    <div class="card-title"><span class="icon" style="background:rgba(34,197,94,.15)">🔌</span>Kiểm định thống kê — Seed 42 (30 SKU)</div>
+    <div class="card-sub">t‑test và Wilcoxon · Δ% = α·p < 0,05</div>
+    <div class="tbl-wrap"><table><thead><tr><th>Baseline</th><th>Δ% Chi phí</th><th>Δ trung bình</th><th>CI 95%</th><th>p (t‑test)</th><th>p (Wilcoxon)</th><th>Cohen d_z</th><th>IPPO thắng</th><th>Kết luận</th></tr></thead><tbody id="statTbody"></tbody></table></div>
+  </div>
+</section>
+<section id="rq2">
+  <div class="sec-hd">
+    <span class="sec-num">RQ2</span>
+    <h2 class="sec-title">Quy mô &amp; Hold‑out</h2>
+    <span class="sec-sub">Phân tích độ bền &amp; ảnh hưởng quy mô</span>
+  </div>
+  <div class="grid-2">
+    <div class="card fade-in">
+      <div class="card-title"><span class="icon" style="background:var(--teal-dim)">📦</span>Fill rate theo quy mô — IPPO vs (s,S)</div>
+      <div class="card-sub">Mô hình main_s42 · mỗi nhóm trung bình/ngày</div>
+      <div class="chart-box"><canvas id="scaleChart"></canvas></div>
+      <div class="alert-box warn"><div class="alert-title">⚠ Cảnh báo</div><p>IPPO dưới 85% ở nhóm Rất thấp (<0,5) và Thấp (0,5‑2). Cần xem SKU có nhu cầu đặc biệt.</p></div>
+    </div>
+    <div class="card fade-in">
+      <div class="card-title"><span class="icon" style="background:rgba(167,139,250,.15)">🔍</span>Hold‑out: 6 SKU không gộp khi huấn luyện</div>
+      <div class="card-sub">60 cặp = 6 SKU × 10 kho (1 seed)</div>
+      <div class="chart-box"><canvas id="holdoutChart"></canvas></div>
+      <div class="alert-box ok"><div class="alert-title">✅ Tổng quan</div><p>IPPO không gộp vs đã gộp 10.000 ep (main_s42): chỉ +0,1% (p = 0,67 → không đáng kể).</p></div>
+    </div>
+  </div>
+</section>
+<section id="rq3">
+  <div class="sec-hd">
+    <span class="sec-num">RQ3</span>
+    <h2 class="sec-title">Thưởng phần thưởng — Reward Shaping</h2>
+    <span class="sec-sub">1.000 episode · 3 seed · so sánh với abl_ref cùng seed</span>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi fade-in"><div class="kpi-lbl">abl_ref (phần thưởng dạng xuất)</div><div class="kpi-val" style="color:var(--teal)">2.171.063</div><div class="kpi-note">Fill ~91,3% · Mốc so sánh</div></div>
+    <div class="kpi warn fade-in"><div class="kpi-lbl">abl_global (phần thưởng toàn cục)</div><div class="kpi-val" style="color:var(--red)">+419,6%</div><div class="kpi-note"><span class="tag warn">Thế hơn rỗ rệt · 3/3 seed</span></div></div>
+    <div class="kpi warn fade-in"><div class="kpi-lbl">abl_q3 (phần thưởng Q3)</div><div class="kpi-val" style="color:var(--orange)">+214,3%</div><div class="kpi-note"><span class="tag warn">Thế hơn rỗ rệt · 3/3 seed</span></div></div>
+  </div>
+  <div class="card fade-in">
+    <div class="card-title"><span class="icon" style="background:rgba(245,158,11,.15)">⚡</span>So sánh cấu trúc phần thưởng — Chi phí theo seed</div>
+    <div class="card-sub">abl_ref là cấu trúc phần thưởng tối thiểu, đánh giá chi phí và fill rate per‑pair</div>
+    <div class="chart-box tall"><canvas id="rq3Chart"></canvas></div>
+  </div>
+</section>
+<section id="ablation">
+  <div class="sec-hd">
+    <span class="sec-num">ABL</span>
+    <h2 class="sec-title">Ablation Study — Phân tích giảm trừ &amp; cấu trúc</h2>
+    <span class="sec-sub">1.000 episode · seed 42 · so sánh với abl_ref</span>
+  </div>
+  <div class="grid-2">
+    <div class="card fade-in">
+      <div class="card-title"><span class="icon" style="background:rgba(79,163,232,.15)">🤪</span>Ablation so với abl_ref (seed 42)</div>
+      <div class="card-sub">Δ% = (ablation − abl_ref) / abl_ref · * = tốt hơn abl_ref</div>
+      <div id="ablRows"></div>
+    </div>
+    <div class="card fade-in">
+      <div class="card-title"><span class="icon" style="background:rgba(167,139,250,.15)">📄</span>Chi phí Ablation (seed 42)</div>
+      <div class="card-sub">So sánh tổng chi phí trên test set</div>
+      <div class="chart-box tall"><canvas id="ablChart"></canvas></div>
+    </div>
+  </div>
+</section>
+<section id="soc">
+  <div class="sec-hd">
+    <span class="sec-num">SOC</span>
+    <h2 class="sec-title">Sốc cường — Phân tích biến động bất thường</h2>
+    <span class="sec-sub">28 ngày từ ngày 1650 · Cột 1,5 và 0,5</span>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('soc','up',this)">📈 Cột +1,5 (tăng đột biến)</div>
+    <div class="tab" onclick="switchTab('soc','down',this)">📉 Cột -0,5 (giảm đột biến)</div>
+  </div>
+  <div id="soc-up" class="tab-panel active">
+    <div class="card fade-in">
+      <div class="card-title"><span class="icon" style="background:rgba(239,68,68,.15)">🔥</span>Cột tăng +1,5 — Fill rate trước / trong / sau sốc</div>
+      <div class="card-sub">28 ngày trước / trong / sau sốc · CP/ngày trong giai đoạn sốc</div>
+      <div class="chart-box tall"><canvas id="shockUpChart"></canvas></div>
+      <div class="tbl-wrap" style="margin-top:1.25rem">
+        <table><thead><tr><th>Chính sách</th><th>Trước sốc</th><th>Trong sốc</th><th>Sau sốc</th><th>CP/ngày (sốc)</th></tr></thead><tbody id="shockUpBody"></tbody></table>
+      </div>
+    </div>
+  </div>
+  <div id="soc-down" class="tab-panel">
+    <div class="card fade-in">
+      <div class="card-title"><span class="icon" style="background:rgba(79,163,232,.15)">❄️</span>Cột giảm -0,5 — Fill rate trước / trong / sau sốc</div>
+      <div class="card-sub">Khi giảm: hàng tồn nhiều → fill rate tăng nhưng chi phí lưu kho tăng</div>
+      <div class="chart-box tall"><canvas id="shockDownChart"></canvas></div>
+      <div class="tbl-wrap" style="margin-top:1.25rem">
+        <table><thead><tr><th>Chính sách</th><th>Trước sốc</th><th>Trong sốc</th><th>Sau sốc</th><th>CP/ngày (sốc)</th></tr></thead><tbody id="shockDownBody"></tbody></table>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="training">
+  <div class="sec-hd">
+    <span class="sec-num">TRAIN</span>
+    <h2 class="sec-title">Huấn luyện — Tóm tắt mọi chạy</h2>
+    <span class="sec-sub">Entropy, Explained Variance, thời gian, best episode</span>
+  </div>
+  <div class="card fade-in">
+    <div class="card-title"><span class="icon" style="background:var(--teal-dim)">🚀</span>Kết quả huấn luyện tất cả runs</div>
+    <div class="card-sub">Best ep = checkpoint được chọn (CP val thắt nhất đạt fill ≥85%)</div>
+    <div class="tbl-wrap">
+      <table><thead><tr><th>Lần chạy</th><th>Episodes</th><th>Phút</th><th>Best ep</th><th>CP val</th><th>Fill val</th><th>≥85% (ep)</th><th>Entropy</th><th>EV</th><th>Hội tụ</th></tr></thead><tbody id="trainTbody"></tbody></table>
+    </div>
+  </div>
+  <div class="grid-2" style="margin-top:1.25rem">
+    <div class="card fade-in">
+      <div class="card-title"><span class="icon" style="background:var(--teal-dim)">📈</span>Entropy cuối vs Explained Variance</div>
+      <div class="card-sub">Lần chạy chính và ablation</div>
+      <div class="chart-box tall"><canvas id="evChart"></canvas></div>
+    </div>
+    <div class="card fade-in">
+      <div class="card-title"><span class="icon" style="background:rgba(245,158,11,.15)">⏱</span>Thời gian đạt fill ≥85% (episode đầu tiên)</div>
+      <div class="card-sub">Thống kê cho seed 42</div>
+      <div class="chart-box tall"><canvas id="conv85Chart"></canvas></div>
+    </div>
+  </div>
+</section>
+</main>
+<footer>
+  <div class="footer-inner">
+    <div>PS-IPPO · Quản lý Tồn kho Đa kho bằng Học Tăng Cường · Khóa luận tốt nghiệp 2026</div>
+    <div style="margin-top:4px;color:var(--txt3)">Số liệu được lấy từ <code style="font-family:var(--mono);font-size:.75rem">results/</code> · Không hardcode · Mô phỏng M5 Competition (Walmart)</div>
+  </div>
+</footer>
+<script>
+const TEAL='#00d4aa',ORANGE='#ff6b35',BLUE='#4fa3e8',PURPLE='#a78bfa',YELLOW='#f59e0b',GREY='#475569';
+Chart.defaults.font.family="'Inter',sans-serif";
+Chart.defaults.color='#94a3b8';
+Chart.defaults.borderColor='rgba(37,48,72,0.6)';
+Chart.register(window['chartjs-plugin-annotation']||{});
+function tip(){return{backgroundColor:'rgba(11,15,26,.95)',titleColor:'#e2e8f0',bodyColor:'#94a3b8',borderColor:'rgba(37,48,72,.8)',borderWidth:1,padding:10,cornerRadius:8,titleFont:{weight:'700',size:13},bodyFont:{family:"'JetBrains Mono',monospace",size:11}};}
+function nf(v){if(v==null)return'—';return new Intl.NumberFormat('vi-VN').format(Math.round(v));}
+const DATA={
+  s42:{
+    pol:['IPPO s42','(s,S)','(s,S) nhóm','EOQ','EOQ nhóm','Newsvendor','NV nhóm'],
+    tot:[2052496,2091665,2048883,2500198,2074745,2062190,2022942],
+    hol:[1400201,1233832,1171638,1601700,1243129,1197437,1101764],
+    sto:[434376,639569,655293,485725,657556,586138,661207],
+    ord:[176714,151834,176198,121240,133283,244125,244228],
+    ovf:[41206,66430,45754,291533,40777,34491,15743],
+    fil:[0.906,0.862,0.859,0.895,0.858,0.874,0.858],
+  },
+  delta:{
+    lbl:['(s,S)','(s,S) nhóm','EOQ','EOQ nhóm','Newsvendor','NV nhóm'],
+    mn:[-1.73,0.32,-17.79,-0.93,-0.33,1.61],
+    s42:[-1.87,0.18,-17.91,-1.07,-0.47,1.46],
+    s1:[-0.99,1.08,-17.16,-0.18,0.43,2.38],
+    s2:[-2.34,-0.30,-18.30,-1.54,-0.94,0.98],
+  },
+  stat:[
+    {nm:'(s,S)',g:-1.87,d:-39169,ci:[-43933,-34404],pt:'1.7e-16',pw:'1.9e-09',dz:-3.07,nc:30,n:30},
+    {nm:'(s,S) nhóm',g:0.18,d:3614,ci:[-576,7803],pt:'8.8e-02',pw:'1.3e-01',dz:0.32,nc:13,n:30},
+    {nm:'EOQ',g:-17.91,d:-447701,ci:[-453346,-442057],pt:'1.9e-44',pw:'1.9e-09',dz:-29.62,nc:30,n:30},
+    {nm:'EOQ nhóm',g:-1.07,d:-22249,ci:[-25936,-18561],pt:'4.6e-13',pw:'3.7e-09',dz:-2.25,nc:29,n:30},
+    {nm:'Newsvendor',g:-0.47,d:-9694,ci:[-13232,-6157],pt:'4.7e-06',pw:'9.2e-06',dz:-1.02,nc:25,n:30},
+    {nm:'NV nhóm',g:1.46,d:29554,ci:[26140,32967],pt:'4.3e-17',pw:'1.9e-09',dz:3.23,nc:0,n:30},
+  ],
+  scale:{
+    grp:['Rất thấp\\n(<0,5)','Thấp\\n(0,5-2)','Trung bình\\n(2-10)','Cao\\n(≥10)'],
+    ip:[74.2,83.2,89.5,95.8],
+    ss:[84.3,87.0,85.7,86.4],
+  },
+  holdout:{
+    pol:['IPPO\\nkhông gộp','IPPO\\nabl_ref','IPPO\\nmain_s42','(s,S)','(s,S)\\nnhóm','EOQ','EOQ\\nnhóm','Newsvnd','NV\\nnhóm'],
+    cost:[293002,312159,292774,312480,298280,409075,289557,289155,283519],
+    fill:[86.3,87.5,86.8,82.9,82.4,83.2,80.3,81.2,79.5],
+  },
+  rq3:{
+    lbl:['abl_ref\\ns42','abl_ref\\ns1','abl_ref\\ns2','abl_global\\ns42','abl_global\\ns1','abl_global\\ns2','abl_q3\\ns42','abl_q3\\ns1','abl_q3\\ns2'],
+    cost:[2183787,2149861,2179541,7711359,11819736,14293080,8972578,5716403,5798585],
+    fill:[91.4,91.2,91.4,86.0,81.3,81.2,86.8,87.7,87.6],
+    grp:['ref','ref','ref','global','global','global','q3','q3','q3'],
+  },
+  abl:[
+    {nm:'abl_ref',desc:'Mô hình chuẩn 1.000 ep',cost:2183787,fill:91.4,d:null,ok:true},
+    {nm:'abl_reward_cu',desc:'Phạt SLA',cost:2129529,fill:90.8,d:-2.5,ok:true},
+    {nm:'abl_nocal',desc:'Bỏ đục trừ',cost:2149459,fill:91.1,d:-1.6,ok:true},
+    {nm:'abl_event',desc:'Thêm đục trừ sự kiện',cost:2166864,fill:90.9,d:-0.8,ok:true},
+    {nm:'abl_warm',desc:'Warm‑start',cost:2064993,fill:90.8,d:-5.4,ok:true},
+    {nm:'abl_trunk',desc:'Cả cộng + tắt value norm',cost:2471782,fill:85.7,d:13.2,ok:false},
+    {nm:'abl_nowh',desc:'Bỏ tín hiệu cấp kho',cost:5273773,fill:91.2,d:141.5,ok:false},
+  ],
+  shockUp:[
+    {nm:'IPPO',pre:91.6,dur:83.5,post:93.3,cpd:5451,c:TEAL},
+    {nm:'EOQ',pre:90.7,dur:79.0,post:91.4,cpd:7738,c:ORANGE},
+    {nm:'(s,S)',pre:88.6,dur:81.2,post:89.6,cpd:6552,c:BLUE},
+    {nm:'Newsvendor',pre:90.2,dur:83.7,post:91.5,cpd:6278,c:PURPLE},
+    {nm:'EOQ nhóm',pre:87.5,dur:77.2,post:88.8,cpd:6488,c:YELLOW},
+    {nm:'(s,S) nhóm',pre:88.4,dur:81.2,post:89.4,cpd:6354,c:GREY},
+    {nm:'NV nhóm',pre:88.7,dur:82.9,post:90.4,cpd:6027,c:'#94a3b8'},
+  ],
+  shockDn:[
+    {nm:'IPPO',pre:91.6,dur:97.8,post:90.8,cpd:3354,c:TEAL},
+    {nm:'EOQ',pre:90.7,dur:94.3,post:86.5,cpd:3650,c:ORANGE},
+    {nm:'(s,S)',pre:88.6,dur:91.7,post:82.9,cpd:2680,c:BLUE},
+    {nm:'Newsvendor',pre:90.2,dur:92.0,post:83.4,cpd:2579,c:PURPLE},
+    {nm:'EOQ nhóm',pre:87.5,dur:90.3,post:82.0,cpd:2871,c:YELLOW},
+    {nm:'(s,S) nhóm',pre:88.4,dur:91.2,post:82.4,cpd:2600,c:GREY},
+    {nm:'NV nhóm',pre:88.7,dur:90.5,post:81.8,cpd:2435,c:'#94a3b8'},
+  ],
+  train:[
+    {r:'main_s42',ep:10000,mn:280,be:3775,cv:1576207,fv:90.2,e85:75,ent:0.128,ev:0.84,con:'đối ngang (+1.6%)'},
+    {r:'main_s1',ep:10000,mn:243,be:4950,cv:1595003,fv:90.8,e85:50,ent:0.127,ev:0.83,con:'đối ngang (+0.2%)'},
+    {r:'main_s2',ep:10000,mn:219,be:5250,cv:1570263,fv:90.4,e85:50,ent:0.126,ev:0.84,con:'đối ngang (+1.3%)'},
+    {r:'abl_ref',ep:1000,mn:22,be:1000,cv:1698112,fv:90.7,e85:75,ent:0.193,ev:0.72,con:'còn giảm (‑3.4%)'},
+    {r:'abl_ref_s1',ep:1000,mn:22,be:1000,cv:1675227,fv:90.5,e85:50,ent:0.193,ev:0.73,con:'còn giảm (‑4.2%)'},
+    {r:'abl_ref_s2',ep:1000,mn:22,be:1000,cv:1698317,fv:90.9,e85:50,ent:0.207,ev:0.72,con:'còn giảm (‑5.2%)'},
+    {r:'abl_global',ep:1000,mn:22,be:225,cv:5701769,fv:85.7,e85:225,ent:0.739,ev:0.96,con:'[!] 20% cũi <85%'},
+    {r:'abl_global_s1',ep:1000,mn:22,be:null,cv:null,fv:null,e85:null,ent:0.706,ev:0.93,con:'[!] val chưa đạt 85%'},
+    {r:'abl_global_s2',ep:1000,mn:22,be:null,cv:null,fv:null,e85:null,ent:0.596,ev:0.87,con:'[!] val chưa đạt 85%'},
+    {r:'abl_q3',ep:1000,mn:22,be:125,cv:6279436,fv:87.5,e85:100,ent:0.475,ev:1.00,con:'[!] 20% cũi <85%'},
+    {r:'abl_q3_s1',ep:1000,mn:22,be:975,cv:4145524,fv:88.5,e85:50,ent:0.372,ev:1.00,con:'còn giảm (‑10.1%)'},
+    {r:'abl_q3_s2',ep:1000,mn:22,be:1000,cv:4140459,fv:88.7,e85:50,ent:0.413,ev:1.00,con:'còn giảm (‑9.5%)'},
+    {r:'abl_event',ep:1000,mn:22,be:975,cv:1690153,fv:90.2,e85:75,ent:0.198,ev:0.70,con:'còn giảm (‑7.4%)'},
+    {r:'abl_nocal',ep:1000,mn:33,be:725,cv:1716818,fv:90.6,e85:75,ent:0.173,ev:0.71,con:'đối ngang (+0.5%)'},
+    {r:'abl_nowh',ep:1000,mn:24,be:75,cv:3917999,fv:90.1,e85:75,ent:0.396,ev:0.91,con:'[!] 20% cũi <85%'},
+    {r:'abl_reward_cu',ep:1000,mn:22,be:975,cv:1638807,fv:90.2,e85:75,ent:0.164,ev:0.78,con:'đối ngang (‑0.4%)'},
+    {r:'abl_trunk',ep:1000,mn:34,be:275,cv:1880187,fv:85.2,e85:275,ent:0.309,ev:0.77,con:'[!] 20% cũi <85%'},
+    {r:'abl_warm',ep:1000,mn:22,be:950,cv:1617700,fv:89.9,e85:75,ent:0.174,ev:0.77,con:'đối ngang (‑0.9%)'},
+    {r:'holdout',ep:1000,mn:30,be:675,cv:1417869,fv:90.0,e85:75,ent:0.170,ev:0.76,con:'đối ngang (+1.5%)'},
+  ],
+};
+// Populate statistical table
+(function(){
+  const statTbody = document.getElementById('statTbody');
+  DATA.stat.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${row.nm}</td><td>${row.g}%</td><td>${row.d}</td><td>${row.ci[0]} – ${row.ci[1]}</td><td>${row.pt}</td><td>${row.pw}</td><td>${row.dz}</td><td>${row.nc}/${row.n}</td><td>${row.n === row.nc ? 'IPPO thắng' : 'IPPO thua'}</td>`;
+    statTbody.appendChild(tr);
+  });
+})();
+
+// Populate training runs table
+(function(){
+  const trainTbody = document.getElementById('trainTbody');
+  DATA.train.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.r}</td><td>${r.ep}</td><td>${r.mn}</td><td>${r.be}</td><td>${r.cv}</td><td>${r.fv}%</td><td>${r.e85}</td><td>${r.ent}</td><td>${r.ev}</td><td>${r.con}</td>`;
+    trainTbody.appendChild(tr);
+  });
+})();
+
+// Populate ablation rows
+(function(){
+  const ablDiv = document.getElementById('ablRows');
+  DATA.abl.forEach(a => {
+    const div = document.createElement('div');
+    div.className = 'abl-row';
+    div.innerHTML = `
+      <div class="abl-name">${a.nm}</div>
+      <div class="abl-change">${a.desc}</div>
+      <div class="abl-delta">${a.d !== null ? (a.d > 0 ? '+'+a.d+'%' : a.d+'%') : '—'}</div>
+      <div class="abl-status">${a.ok ? 'OK' : 'WARN'}</div>
+    `;
+    ablDiv.appendChild(div);
+  });
+})();
+
+// Populate shock up table
+(function(){
+  const tbody = document.getElementById('shockUpBody');
+  DATA.shockUp.forEach(item => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${item.nm}</td><td>${item.pre}%</td><td>${item.dur}%</td><td>${item.post}%</td><td>${item.cpd}</td>`;
+    tbody.appendChild(tr);
+  });
+})();
+
+// Populate shock down table
+(function(){
+  const tbody = document.getElementById('shockDownBody');
+  DATA.shockDn.forEach(item => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${item.nm}</td><td>${item.pre}%</td><td>${item.dur}%</td><td>${item.post}%</td><td>${item.cpd}</td>`;
+    tbody.appendChild(tr);
+  });
+})();
+
+// Theme toggle logic
+(function(){
+  const btn = document.getElementById('themeToggle');
+  const html = document.documentElement;
+  let isLight = localStorage.getItem('theme') === 'light';
+  function applyTheme(light){
+    if(light){
+      html.setAttribute('data-theme','light');
+      btn.textContent='☀️';
+      btn.title='Chuyển sang chế độ tối';
+    } else {
+      html.removeAttribute('data-theme');
+      btn.textContent='🌙';
+      btn.title='Chuyển sang chế độ sáng';
+    }
+  }
+  applyTheme(isLight);
+  btn.addEventListener('click', () => {
+    isLight = !isLight;
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    applyTheme(isLight);
+  });
+})();
+</script>
+</body>
+</html>

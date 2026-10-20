@@ -17,16 +17,16 @@ FMT = {"Tồn kho": "%.1f", "Hàng đang về": "%.1f", "Nhu cầu TB 7 ngày": 
 COLCFG = {c: st.column_config.NumberColumn(c, format=f) for c, f in FMT.items()}
 COLCFG["Chọn"] = st.column_config.CheckboxColumn("Chọn", width="small")
 
-core.tieu_de(f"Đơn đặt hàng · {len(store_of)} kho × {len(meta['skus'])} SKU",
-             "Mô phỏng đơn đặt hàng đề xuất",
-             f"Miền test {dates[0]:%d/%m/%Y} – {dates[-1]:%d/%m/%Y}; mô phỏng chạy tới ngày đã chọn "
-             f"rồi lấy hành động deterministic của chính sách.")
+core.tieu_de(f"Đơn đặt hàng · {len(store_of)} cửa hàng × {len(meta['skus'])} mặt hàng",
+             "Đơn đặt hàng từ mô hình IPPO",
+             f"Chọn một ngày trong giai đoạn {dates[0]:%d/%m/%Y} – {dates[-1]:%d/%m/%Y}: mô phỏng chạy tới ngày đó, "
+             "chính sách đã chọn cho biết cần đặt bao nhiêu cho từng mặt hàng.")
 
 with st.form("loc"):
     c1, c2, c3, c4 = st.columns([1.1, 2.2, 2, 1.2])
     ngay = c1.date_input("Ngày", value=dates[-1], min_value=dates[0], max_value=dates[-1],
                          format="DD/MM/YYYY")
-    kho = c2.multiselect("Kho", list(store_of), default=list(store_of)[:1],
+    kho = c2.multiselect("Cửa hàng", list(store_of), default=list(store_of)[:1],
                          format_func=lambda k: f"{k} · {store_of[k]}")
     nganh = c3.multiselect("Ngành hàng", core.CATEGORIES, default=core.CATEGORIES)
     cs = c4.selectbox("Chính sách", meta["policies"])
@@ -56,14 +56,14 @@ if don is None:
 
 df = don["df"]
 the = st.container(border=True, key="the_don_nhap")
-the.subheader(f"Đơn nháp · {don['cs']} · ngày {don['ngay']:%d/%m/%Y}")
+with the:
+    core.muc(1, "Đơn nháp", f"{don['cs']} · ngày {don['ngay']:%d/%m/%Y}")
 if df.empty:
     st.info("Chính sách không đề xuất đặt hàng cho kho và ngành hàng đã chọn trong ngày này.")
     st.stop()
 
 with the:
-    gom = st.toggle("Gom phiếu theo kho × ngành hàng "
-                    "(ngành hàng là giả định thay cho nhà cung cấp vì M5 không có dữ liệu nhà cung cấp)")
+    gom = st.toggle("Gom phiếu theo cửa hàng × ngành hàng")
     if gom:
         view = (df.groupby(["Kho", "Ngành"], as_index=False)
                   .agg(**{"Số dòng": ("SKU", "size"),
@@ -84,7 +84,6 @@ with the:
         [{"": "Tổng", "Số dòng": len(df), "Số lượng đề xuất": int(df["Số lượng đề xuất"].sum()),
           "Thành tiền ($)": df["Thành tiền ($)"].sum(), "Chi phí đặt hàng": df["Chi phí đặt hàng"].sum()}],
         hide_index=True, column_config=COLCFG)
-    st.caption("Gom phiếu chỉ là lớp trình bày; chi phí đặt hàng vẫn tính theo từng cặp.")
 
 picked = ed[ed["Chọn"]]
 b1, b2, b3 = st.columns([1, 1, 5])
@@ -108,5 +107,3 @@ duyet = df[df["Trạng thái"] == "Đã duyệt"].assign(Ngày=f"{don['ngay']:%Y
 st.download_button("Tải đơn đã duyệt (CSV)", disabled=duyet.empty,
                    data=duyet[["Ngày", "Chính sách"] + LINE_COLS].to_csv(index=False).encode("utf-8-sig"),
                    file_name=f"don_da_duyet_{don['ngay']:%Y%m%d}.csv", mime="text/csv")
-core.nguon("đơn giá = giá bán lẻ sell_prices M5 tại tuần chứa ngày đã chọn (M5 không có giá nhập)",
-           f"chi phí đặt hàng cp_dh = {core.num(cp_dh)} mỗi cặp có đặt hàng (config)")

@@ -1,4 +1,4 @@
-"""Trang 3 - Chi tiết một cặp (kho, SKU): diễn biến trên miền test và quan sát 44 chiều của tác tử."""
+"""Trang 3 - Chi tiết một cặp (kho, SKU): diễn biến trên miền test và quyết định của IPPO ở ngày chọn."""
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -12,13 +12,13 @@ dates = core.test_dates(meta)
 env = core.base_env()
 store_of = dict(zip(P["Kho"], P["Cửa hàng"]))
 
-core.tieu_de(f"Chi tiết cặp · {len(store_of)} kho × {len(meta['skus'])} SKU",
-             "Chi tiết một cặp (kho, SKU) trong mô phỏng IPPO",
-             "Diễn biến trên miền test và quan sát của tác tử.")
-c1, c2, c3 = st.columns([1.2, 2, 1.2])
-kho = c1.selectbox("Kho", list(store_of), format_func=lambda k: f"{k} · {store_of[k]}")
-sku = c2.selectbox("SKU", meta["skus"])
-ngay = c3.date_input("Ngày xem quan sát", value=dates[-1], min_value=dates[0],
+core.tieu_de(f"Chi tiết · {len(store_of)} cửa hàng × {len(meta['skus'])} mặt hàng",
+             "Chi tiết một mặt hàng",
+             "Tồn kho, nhu cầu và các lần đặt hàng của IPPO cho một mặt hàng ở một cửa hàng.")
+c1, c2, c3 = st.container(key="the_chon").columns([1.2, 2, 1.2])
+kho = c1.selectbox("Cửa hàng", list(store_of), format_func=lambda k: f"{k} · {store_of[k]}")
+sku = c2.selectbox("Mặt hàng", meta["skus"])
+ngay = c3.date_input("Ngày xem quyết định", value=dates[-1], min_value=dates[0],
                      max_value=dates[-1], format="DD/MM/YYYY")
 row = P[(P["Kho"] == kho) & (P["SKU"] == sku)].iloc[0]
 p, w, day = int(row["pair"]), int(row["w"]), (ngay - dates[0]).days
@@ -37,7 +37,7 @@ fig = make_subplots(rows=3, cols=1, shared_xaxes=True, row_heights=[0.6, 0.08, 0
                     subplot_titles=("Tồn kho đầu ngày (đường bậc) và nhu cầu (cột) · đơn vị hàng",
                                     "Ngày đặt hàng · rê chuột để xem số lượng (đơn vị hàng)",
                                     f"Toàn kho {kho}: tổng tồn kho cuối ngày và sức chứa · đơn vị hàng"))
-fig.update_annotations(font=dict(size=13, color=core.INK), x=0, xanchor="left")
+fig.update_annotations(font=dict(size=13), x=0, xanchor="left")
 fig.add_bar(x=dates, y=cau, name="Nhu cầu", marker_color=core.GREY, opacity=0.55, row=1, col=1,
             hovertemplate="Nhu cầu: %{y:,.0f}<extra></extra>")
 fig.add_scatter(x=dates, y=r["inv"][:, p], name="Tồn kho đầu ngày", line=dict(color=core.TEAL, width=2, shape="hv"),
@@ -57,7 +57,7 @@ doan = np.flatnonzero(z[1:] != z[:-1]).reshape(-1, 2)      # [đầu, cuối) m�
 doan = doan[doan[:, 1] - doan[:, 0] >= 7]
 for a, b in doan:
     x0, x1 = mep(a, b - 1)
-    fig.add_vrect(x0=x0, x1=x1, fillcolor="#E6E9E4", line_width=0, layer="below", row=1, col=1)
+    fig.add_vrect(x0=x0, x1=x1, fillcolor=core.SHADE, line_width=0, layer="below", row=1, col=1)
 fig.add_vline(x=ngay, line=dict(color=core.INK, dash="dot", width=1))
 # Mặc định xem ngày đã chọn −60 … +30 ngày; thanh trượt dưới biểu đồ để mở rộng
 fig.update_xaxes(range=mep(max(day - 60, 0), min(day + 30, len(dates) - 1)),
@@ -68,45 +68,20 @@ fig.update_yaxes(visible=False, range=[-1, 1], row=2, col=1)
 fig.update_yaxes(title="Đơn vị hàng", row=3, col=1)
 fig.update_layout(showlegend=False, hovermode="x unified", bargap=0.15)
 with st.container(border=True, key="the_dien_bien"):
-    st.subheader(f"Diễn biến cặp {kho} · {sku}")
+    core.muc(1, "Diễn biến trong giai đoạn test", f"{kho} · {store_of[kho]} · {sku}")
     core.chart(fig, 640)
-    st.caption(("Vùng xám: dữ liệu M5 ghi nhận 0 bán (≥ 7 ngày liền) · " if len(doan) else "")
-               + "đường chấm dọc: ngày đang xem · sức chứa áp cho tổng tồn kho của cả kho, không riêng từng cặp.")
+    st.caption(("Vùng xám: những ngày liền không bán được sản phẩm nào · " if len(doan) else "")
+               + "đường chấm dọc: ngày đang xem.")
 
 s = core.state_at("IPPO", day)
 a = int(s["action"][p])
 mult = float(env.order_levels[a])
-st.subheader(f"Hành động deterministic ngày {ngay:%d/%m/%Y}")
+core.muc(2, "Quyết định của IPPO", f"ngày {ngay:%d/%m/%Y}")
 k = st.columns(3)
-k[0].markdown(core.kpi("Mức hành động", f"{a} / {env.n_action_levels - 1}",
-                       f"argmax của Actor trên {env.n_action_levels} mức"), unsafe_allow_html=True)
-k[1].markdown(core.kpi("Hệ số nhân", f"× {core.num(mult, 1)}",
-                       f"cầu TB ({core.num(env.mean_demand[p], 2)}/ngày) × lead time TB "
-                       f"({core.num(env.tg_giao_tb, 1)} ngày)"), unsafe_allow_html=True)
+k[0].markdown(core.kpi("Mức đặt hàng", f"{a} / {env.n_action_levels - 1}",
+                       f"trong {env.n_action_levels} mức đặt hàng (0 = không đặt)"), unsafe_allow_html=True)
+k[1].markdown(core.kpi("Đặt bằng", f"× {core.num(mult, 1)}",
+                       f"lượng bán trung bình trong {core.num(env.tg_giao_tb, 1)} ngày chờ hàng về"), unsafe_allow_html=True)
 k[2].markdown(core.kpi("Số lượng đặt", core.num(s["qty"][p]),
-                       "làm tròn lên theo bảng đặt hàng của cặp"), unsafe_allow_html=True)
+                       "đơn vị hàng, đã làm tròn"), unsafe_allow_html=True)
 
-lab = core.obs_labels(env, meta)
-tbl = pd.DataFrame(lab, columns=["Vai trò", "Nhóm", "Đặc trưng"]).assign(**{"Giá trị": s["obs"][p]})
-tbl.index.name = "Chiều"
-with st.container(border=True, key="the_quan_sat"):
-  st.subheader(f"Quan sát của tác tử ({len(tbl)} chiều)")
-  GHI_CHU = {
-      "Thông tin trạng thái": "Tồn kho, hàng đang về, lịch sử nhu cầu 7 ngày, fill rate gần đây, "
-                              "quy mô cầu của chính cặp này.",
-      "Tín hiệu cấp kho": "Kênh ghép nối gián tiếp giữa các cặp: các cặp cùng kho thấy chung util, "
-                          "nên hàng mà cặp khác đặt về làm thay đổi quan sát của cặp này.",
-      "Tín hiệu giá": "Mã hóa LIÊN TỤC trong [0, 1], không phải 0/1. Bằng 0 khi giá hôm nay bằng "
-                      "hoặc cao hơn giá bán TB miền train của chính cặp (bình thường hoặc tăng giá); "
-                      "càng gần 1 là giảm giá càng sâu (0,2 = đang giảm 20%).",
-      "Tín hiệu lịch": "Ngày trong tuần one-hot theo chỉ số ngày mod 7 (nhãn thứ đã quy đổi theo "
-                       "lịch M5); tiếp theo là SNAP 3 bang, loại sự kiện và tháng (one-hot).",
-  }
-  for vai_tro, ghi_chu in GHI_CHU.items():
-      t = tbl[tbl["Vai trò"] == vai_tro]
-      with st.expander(f"{vai_tro} · {len(t)} chiều", expanded=vai_tro != "Tín hiệu lịch"):
-          st.caption(ghi_chu)
-          st.dataframe(t[["Đặc trưng", "Giá trị"]], height=36 * (len(t) + 1),
-                       column_config={"Giá trị": st.column_config.NumberColumn(format="%.4f")})
-core.nguon(f"{len(tbl)} chiều = env.obs_per_pair ({env.obs_per_pair}), đã chuẩn hóa về [0, 1]",
-           "rollout IPPO đóng gói trong app/demo_data")

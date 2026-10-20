@@ -50,16 +50,15 @@ def noi(xs):
 
 
 # (khóa trong shock_metrics, tên cột, hướng tốt, định dạng)
-COT = [("truoc", "Fill rate trước", 1, pc), ("trong", "Trong sốc", 1, pc), ("sau", "Sau sốc", 1, pc),
+COT = [("truoc", "Đáp ứng trước", 1, pc), ("trong", "Trong sốc", 1, pc), ("sau", "Sau sốc", 1, pc),
        ("thieu_them", "Thiếu hàng tăng thêm", -1, core.num), ("chi_phi_them", "Chi phí tăng thêm", -1, dau),
        ("ve_lai", f"Về lại ≥ {core.pct(muc_dv, 0)} sau", -1, ve_lai)]
 FMT = {k: f for k, _, _, f in COT}
 HUONG = {k: d for k, _, d, _ in COT}
 
 core.tieu_de("Kịch bản · nếu nhu cầu tăng bất thường", "Giả lập nhu cầu tăng đột biến",
-             f"Nhân nhu cầu trong một khoảng ngày của miền test, rồi chạy lại cả {len(pols)} chính sách "
-             f"với cùng chuỗi cầu. Không chính sách nào được báo trước: IPPO chỉ nhận ra qua lịch sử "
-             f"nhu cầu {meta['env']['lookback']} ngày trong quan sát.")
+             f"Tăng nhu cầu trong một khoảng ngày rồi chạy lại cả {len(pols)} cách đặt hàng. Không cách nào "
+             f"được báo trước; IPPO chỉ nhận ra qua lượng bán {meta['env']['lookback']} ngày gần nhất.")
 
 f0, n0 = next(iter(PRESETS.values()))
 for k, v in dict(sc_heso=f0, sc_ngay=dates[s0], sc_dai=n0, sc_pv=PHAM_VI[0]).items():
@@ -78,8 +77,7 @@ with trai.container(border=True, key="the_thiet_lap"):
         if hien == (f, n, dates[s0], PHAM_VI[0]):                                  # tô kịch bản đang chọn
             st.markdown(f"<style>.st-key-ps_{i} button {{background:{core.TEAL_SOFT};"
                         f"border:1.5px solid {core.TEAL}}}</style>", unsafe_allow_html=True)
-    st.caption(f"Cả hai bắt đầu {dates[s0]:%d/%m/%Y} (ngày {core.SOC_NGAY_M5} theo chỉ số ngày M5, "
-               f"mặc định của phân tích sốc cầu).")
+    st.caption(f"Cả hai bắt đầu ngày {dates[s0]:%d/%m/%Y}.")
     st.divider()
     he_so = st.select_slider("Hệ số nhân nhu cầu", HE_SO, format_func=lambda x: f"× {core.num(x, 1)}",
                              key="sc_heso")
@@ -94,7 +92,7 @@ with trai.container(border=True, key="the_thiet_lap"):
     elif pv == "Theo ngành":
         chon = st.multiselect("Ngành hàng", core.CATEGORIES, key="sc_nganh")
     chay |= st.button("Chạy mô phỏng", type="primary", width="stretch")
-    st.caption(f"Khoảng 3–5 giây cho {len(pols)} chính sách · chỉ suy luận, không huấn luyện")
+    st.caption(f"Khoảng 3–5 giây cho {len(pols)} cách đặt hàng")
 
     if chay:
         s, n = ((ngay - dates[0]).days if ngay else -1), int(dai)
@@ -115,9 +113,6 @@ with trai.container(border=True, key="the_thiet_lap"):
 sh = core.shock_results()
 if sh:
     st.page_link("pages_/so_sanh.py", label="Xem số báo cáo nhiều lượt: trang So sánh chính sách, thẻ “Sốc cầu”")
-core.nguon(f"mô phỏng trực tiếp 1 lượt (hạt giống {meta['seed']}) trên app/demo_data/, không phải số báo cáo",
-           f"số báo cáo nhiều lượt: results/{sh[0]}" if sh
-           else "số báo cáo nhiều lượt (results/regime_analysis_*.json): chưa có dữ liệu")
 
 soc = st.session_state.get("soc")
 if soc is None:
@@ -142,7 +137,7 @@ def la_tot(p, k):
 
 # Câu kết luận theo luật: ai tốt nhất ở từng tiêu chí (kể cả đồng hạng), gộp lời khi trùng người
 nhom = {}
-for k, cau in [("trong", "giữ fill rate trong sốc cao nhất ({})"),
+for k, cau in [("trong", "giữ mức đáp ứng trong sốc cao nhất ({})"),
                ("chi_phi_them", "phát sinh thêm ít chi phí nhất ({})"),
                ("thieu_them", "thiếu thêm ít hàng nhất ({} đơn vị)")]:
     ai = tuple(p for p in pols if la_tot(p, k))
@@ -157,7 +152,7 @@ with phai:
 table.bang {{ width: 100%; border-collapse: collapse; border: none; font-size: 14px;
   font-variant-numeric: tabular-nums; }}
 table.bang tr {{ border: none; }}
-table.bang th, table.bang td {{ border: none; border-bottom: 1px solid #EEF0EC; padding: 10px 8px;
+table.bang th, table.bang td {{ border: none; border-bottom: 1px solid {core.BORDER}; padding: 10px 8px;
   text-align: right; font-weight: 400; }}
 table.bang thead th {{ color: {core.MUTED}; font-size: 12px; font-weight: 500;
   border-bottom: 1px solid {core.BORDER}; }}
@@ -166,7 +161,7 @@ table.bang tbody th {{ font-weight: 600; }}
 table.bang .tot {{ font-weight: 700; }}
 </style>
 <div style="background:{core.TEAL_SOFT};border-radius:10px;padding:16px 20px">
-<div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#0A4F47">
+<div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)">
 Nhu cầu × {core.num(f, 1)} · {n} ngày từ {dates[s]:%d/%m/%Y} · {soc['pham_vi']}</div>
 <div style="font-size:17px;font-weight:500;line-height:1.5">{ket_luan}</div></div>""",
                 unsafe_allow_html=True)
@@ -177,11 +172,11 @@ Nhu cầu × {core.num(f, 1)} · {n} ngày từ {dates[s]:%d/%m/%Y} · {soc['pha
         f'<span style="display:inline-block;width:18px;height:{h}px;background:{mau};border-radius:2px;'
         f'vertical-align:middle;margin-right:6px"></span>{ten}'
         for mau, h, ten in [(core.TEAL, 3, "IPPO"), (core.ORANGE, 3, base),
-                            (core.GREY, 2, f"{len(bases) - 1} baseline còn lại")]), unsafe_allow_html=True)
+                            (core.GREY, 2, f"{len(bases) - 1} cách còn lại")]), unsafe_allow_html=True)
 
     for col, k, nhan in zip(st.columns(4), ["trong", "thieu_them", "chi_phi_them", "ve_lai"],
-                            ["Fill rate trong sốc", "Thiếu hàng tăng thêm", "Chi phí tăng thêm",
-                             f"Về lại fill rate ≥ {core.pct(muc_dv, 0)} sau"]):
+                            ["Đáp ứng trong sốc", "Thiếu hàng tăng thêm", "Chi phí tăng thêm",
+                             f"Về lại mức đáp ứng ≥ {core.pct(muc_dv, 0)} sau"]):
         col.markdown(core.kpi(nhan, cham(core.TEAL) + FMT[k](m["IPPO"][k]),
                               cham(core.ORANGE) + f"{base}: {FMT[k](m[base][k])}"), unsafe_allow_html=True)
 
@@ -192,16 +187,16 @@ Nhu cầu × {core.num(f, 1)} · {n} ngày từ {dates[s]:%d/%m/%Y} · {soc['pha
 
     def khung(fig, y_title, **y):
         """Dải sốc (nền cam nhạt) + trục chung cho hai biểu đồ."""
-        fig.add_vrect(x0=x0, x1=x1, fillcolor="#F6E3D6", line_width=0, layer="below",
+        fig.add_vrect(x0=x0, x1=x1, fillcolor=core.ORANGE_SHADE, line_width=0, layer="below",
                       annotation_text=f"Sốc × {core.num(f, 1)}", annotation_position="top left",
-                      annotation_font=dict(color="#A84A14", size=12))
+                      annotation_font=dict(color=core.ORANGE, size=12))
         fig.update_xaxes(tickformat="%d/%m", hoverformat="%d/%m/%Y")
         fig.update_yaxes(title=y_title, **y)
         fig.update_layout(hovermode="x unified")
         return fig
 
     with st.container(border=True, key="the_fill_soc"):
-        st.subheader("Fill rate toàn mạng theo ngày")
+        core.muc(1, "Mức đáp ứng nhu cầu theo ngày")
         st.caption(f"{dates[lo]:%d/%m} – {dates[hi - 1]:%d/%m/%Y} · {PAD} ngày trước và sau sốc")
         fig = go.Figure()
         for p in [q for q in bases if q != base] + [base, "IPPO"]:          # IPPO vẽ sau cùng (trên cùng)
@@ -211,13 +206,13 @@ Nhu cầu × {core.num(f, 1)} · {n} ngày từ {dates[s]:%d/%m/%Y} · {soc['pha
                             hovertemplate=f"{p}: %{{y:.1%}}<extra></extra>")
         fig.add_hline(y=muc_dv, line=dict(color=core.INK, dash="dash", width=1.5),
                       annotation_text=f"mục tiêu {core.pct(muc_dv, 0)}", annotation_position="top right")
-        core.chart(khung(fig, "Fill rate (%)", tickformat=".0%"), 340)
+        core.chart(khung(fig, "Mức đáp ứng (%)", tickformat=".0%"), 340)
 
     with st.container(border=True, key="the_dat_hang_soc"):
-        st.subheader("Lượng đặt hàng so với nhu cầu")
+        core.muc(2, "Lượng đặt hàng so với nhu cầu")
         st.caption(f"Tổng {len(P)} cặp, đơn vị hàng/ngày · cho thấy chính sách phản ứng nhanh hay chậm")
         fig = go.Figure(go.Scatter(x=x, y=kq["IPPO"][0]["demand"][lo:hi], name="Nhu cầu toàn mạng",
-                                   fill="tozeroy", fillcolor="#E2E6E0", line=dict(width=0),
+                                   fill="tozeroy", fillcolor=core.SHADE, line=dict(width=0),
                                    hovertemplate="Nhu cầu: %{y:,.0f}<extra></extra>"))
         for p, mau, w in [(base, core.ORANGE, 2), ("IPPO", core.TEAL, 2.5)]:
             fig.add_scatter(x=x, y=kq[p][0]["order"][lo:hi], name=f"Đặt hàng · {p}", line=dict(color=mau, width=w),
@@ -225,11 +220,11 @@ Nhu cầu × {core.num(f, 1)} · {n} ngày từ {dates[s]:%d/%m/%Y} · {soc['pha
         core.chart(khung(fig, "Đơn vị hàng/ngày", tickformat=",d"), 300)
 
     with st.container(border=True, key="the_bang_soc"):
-        st.subheader(f"Cả {len(pols)} chính sách")
+        core.muc(3, f"Cả {len(pols)} cách đặt hàng")
         dong = ""
         for p in pols:
             mau = core.TEAL if p == "IPPO" else core.ORANGE if p == base else core.GREY
-            nen = core.TEAL_SOFT if p == "IPPO" else "#FBF1EA" if p == base else "transparent"
+            nen = core.TEAL_SOFT if p == "IPPO" else core.ORANGE_SOFT if p == base else "transparent"
             o = "".join(f'<td class="{"tot" if la_tot(p, k) else ""}">{fmt(m[p][k])}</td>'
                         for k, _, _, fmt in COT)
             dong += f'<tr style="background:{nen}"><th>{cham(mau, 10)}{p}</th>{o}</tr>'
@@ -238,5 +233,5 @@ Nhu cầu × {core.num(f, 1)} · {n} ngày từ {dates[s]:%d/%m/%Y} · {soc['pha
                     f'<tbody>{dong}</tbody></table>', unsafe_allow_html=True)
         st.caption(f"Đậm: tốt nhất ở cột đó. “Tăng thêm” so với chính chính sách đó khi không có sốc, tính từ "
                    f"ngày sốc bắt đầu tới {PAD} ngày sau khi sốc kết thúc. “Về lại ≥ {core.pct(muc_dv, 0)}”: "
-                   f"số ngày từ lúc sốc bắt đầu tới khi fill rate trung bình 7 ngày trở lại mục tiêu sau lần "
+                   f"số ngày từ lúc sốc bắt đầu tới khi mức đáp ứng trung bình 7 ngày trở lại mục tiêu sau lần "
                    f"đầu xuống dưới.")

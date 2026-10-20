@@ -1,135 +1,176 @@
-"""Trang 1 - Tổng quan: KPI (results/), heatmap fill rate và sức chứa (rollout trong demo_data)."""
+"""Trang 1 - Kết quả: các câu hỏi chính của đề tài, mỗi câu một thẻ thanh ngang.
+Số liệu đọc từ results/ (đánh giá mô hình đã huấn luyện), câu trả lời sinh từ số liệu, không hardcode."""
 import numpy as np
-import pandas as pd
-import plotly.graph_objects as go
 import streamlit as st
-from plotly.subplots import make_subplots
 
 import core
 
-UTIL_CANH_BAO = 0.90            # kho dùng từ 90% sức chứa trở lên tô cam
-CAU_LE_TE = 3                   # cầu TB/ngày từ mức này trở xuống: "lẻ tẻ" (chỉ để mô tả)
-BAC = [-0.10, 0.0, 0.05, 0.10]  # cận các bậc màu fill rate, tính so với mục tiêu muc_dv
-MAU_BAC = ["#C2571A", "#EDBE9F", "#DDE3DC", "#8CC2B7", "#0F6E63"]
-
-meta, arr = core.load_demo()
-P = core.pairs(meta)
-W, S = len(meta["stores"]), len(meta["skus"])
-muc_dv, pt_tk = float(meta["env"]["muc_dv"]), float(meta["env"]["pt_tk"])
-nhan_kho = [f"{k} · {c}" for k, c in P[["Kho", "Cửa hàng"]].drop_duplicates().values]
-
+meta, _ = core.load_demo()
+muc_dv = float(meta["env"]["muc_dv"])
+so_ngay = len(core.test_dates(meta))
 sm = core.summary(meta)
-nhan = f"Tổng quan · {W} kho × {S} SKU · dữ liệu M5"
+ms = core.read_results("multiseed_main.json")
+qm = core.read_results("scale_group_v2_main.json")
+rq3 = core.read_results("rq3_multiseed.json")
+soc = core.shock_results()
+
+# Nhãn lời thường cho nhóm quy mô cầu và biến thể phần thưởng (chỉ là tên, số vẫn đọc từ file)
+NHOM = {"Rất thấp (<0,5)": ("Bán rất chậm", "dưới 0,5 sản phẩm/ngày"), "Thấp (0,5-2)": ("Bán chậm", "0,5–2 sản phẩm/ngày"),
+        "Trung bình (2-10)": ("Bán vừa", "2–10 sản phẩm/ngày"), "Cao (>=10)": ("Bán chạy", "từ 10 sản phẩm/ngày")}
+RQ3 = {"abl_ref": ("Cách của đề tài", "thưởng riêng từng mặt hàng"),
+       "abl_global": ("Thưởng chung", "cả mạng chung một điểm thưởng"),
+       "abl_q3": ("Bỏ chuẩn hóa thưởng", "không cân theo quy mô mặt hàng")}
+
+
+def dau(x, d=1):
+    return ("+" if x > 0 else "−" if x < 0 else "") + core.num(abs(x), d) + "%"
+
+
+core.tieu_de(f"Kết quả · {len(meta['stores'])} cửa hàng × {len(meta['skus'])} mặt hàng",
+             "Kết quả đề tài",
+             f"Mô hình IPPO đã huấn luyện tự đặt hàng trong {so_ngay} ngày bán hàng chưa dùng khi học, "
+             f"đặt cạnh {len(sm[0]) - 1 if sm else 6} cách đặt hàng truyền thống trong cùng điều kiện.")
 if sm is None:
-    core.tieu_de(nhan, "Tổng quan mô phỏng trên miền test")
-    core.no_data(f"results/summary_{meta['results_tag']}.json")
-else:
-    df, stat, raw = sm
-    ip = df.loc["IPPO"]
-    if "gap_percent" in stat:
-        gap = stat["gap_percent"]
-        cao_nhat = ip.fill_rate_mean >= df["fill_rate_mean"].max()
-        core.tieu_de(nhan, f"IPPO giữ fill rate {core.pct(ip.fill_rate_mean)} — "
-                           f"{'đổi lại ' if gap > 0 else ''}chi phí {'+' if gap > 0 else ''}"
-                           f"{core.num(gap, 1)}% so với {stat['best_baseline']}",
-                     f"Fill rate cao nhất trong {len(df)} chính sách." if cao_nhat else None)
-    else:
-        core.tieu_de(nhan, "Tổng quan mô phỏng trên miền test")
-    c = st.columns(4)
-    if "gap_percent" in stat:
-        so_sanh = f"{'+' if gap > 0 else ''}{core.num(gap, 1)}% so với {stat['best_baseline']}"
-        c[0].markdown(core.kpi("Tổng chi phí IPPO", core.num(ip.total_cost_mean),
-                               so_sanh, "warn" if gap > 0 else "good"), unsafe_allow_html=True)
-    else:
-        c[0].markdown(core.kpi("Tổng chi phí IPPO", core.num(ip.total_cost_mean),
-                               "chưa có dữ liệu so sánh"), unsafe_allow_html=True)
-    c[1].markdown(core.kpi("Fill rate trung bình", core.pct(ip.fill_rate_mean),
-                           f"Mục tiêu {core.pct(muc_dv, 0)}",
-                           "good" if ip.fill_rate_mean >= muc_dv else "warn"), unsafe_allow_html=True)
-    c[2].markdown(core.kpi("Hàng bị từ chối do tràn kho", core.num(ip.overflow_cost_mean / pt_tk),
-                           f"Chi phí tràn kho / pt_tk ({core.num(pt_tk)} mỗi đơn vị)"),
-                  unsafe_allow_html=True)
-    c[3].markdown(core.kpi("Mức dùng sức chứa",
-                           core.pct(ip.avg_inventory_mean / sum(raw["capacity_per_warehouse"])),
-                           "Tồn kho TB toàn mạng / tổng sức chứa"), unsafe_allow_html=True)
+    core.no_data("kết quả đánh giá mô hình chính")
+    st.stop()
 
-with st.container(border=True, key="the_heatmap"):
-    h1, h2 = st.columns([3, 2])
-    h1.subheader("Fill rate theo cặp (kho, SKU)")
-    with h2:
-        cs = st.segmented_control("Chính sách", meta["policies"], default="IPPO",
-                                  label_visibility="collapsed", key="cs_tq") or "IPPO"
-    r = core.rollout(cs)
-    dem = arr["demand"].reshape(len(arr["demand"]), -1).sum(axis=0)
-    with np.errstate(invalid="ignore", divide="ignore"):
-        fr = np.where(dem > 0, 1 - r["stockout"].sum(axis=0) / dem, np.nan)
-    co = ~np.isnan(fr)                                       # cặp có nhu cầu
-    nguong = [round(muc_dv + d, 4) for d in BAC]
-    bac = np.where(co, np.digitize(fr, nguong), np.nan)      # 0..4, NaN = ô trống
-    h1.caption(f"{int((fr >= muc_dv).sum())}/{int(co.sum())} cặp đạt mục tiêu {core.pct(muc_dv, 0)} · "
-               "rê chuột vào ô để xem tên SKU đầy đủ")
-    hover = np.array([f"{nhan_kho[p // S]} · {meta['skus'][p % S]}<br>"
-                      + (f"Fill rate {core.pct(fr[p])}" if co[p] else "Không có nhu cầu")
-                      for p in range(W * S)]).reshape(W, S)
-    nhom = [[s for s, sku in enumerate(meta["skus"]) if sku.split("_")[0] == c] for c in core.CATEGORIES]
-    fig = make_subplots(rows=1, cols=len(nhom), shared_yaxes=True, horizontal_spacing=0.025,
-                        column_widths=[len(g) for g in nhom], subplot_titles=core.CATEGORIES)
-    fig.update_annotations(font=dict(size=12, color=core.INK))
-    thang_mau = [[round((i + e) / 5, 2), m] for i, m in enumerate(MAU_BAC) for e in (0, 1)]
-    for j, g in enumerate(nhom, 1):
-        ten = [meta["skus"][s] for s in g]                   # x = tên đầy đủ để không trùng ô
-        fig.add_heatmap(z=bac.reshape(W, S)[:, g], x=ten,
-                        y=nhan_kho, text=hover[:, g], hovertemplate="%{text}<extra></extra>",
-                        colorscale=thang_mau, zmin=-0.5, zmax=4.5, showscale=False, xgap=2, ygap=2,
-                        row=1, col=j)
-        fig.update_xaxes(tickvals=ten, ticktext=[t.rsplit("_", 1)[1] for t in ten], row=1, col=j)  # "090"
-    fig.update_yaxes(autorange="reversed")
-    fig.update_xaxes(type="category", tickangle=0, tickfont=dict(size=10.5))
-    core.chart(fig, 420)
-    nhan_bac = ([f"< {core.pct(nguong[0], 0)}"]
-                + [f"{core.num(100 * a)}–{core.pct(b, 0)}" for a, b in zip(nguong, nguong[1:])]
-                + [f"≥ {core.pct(nguong[-1], 0)}"])
-    so_cap = np.bincount(bac[co].astype(int), minlength=len(MAU_BAC))
-    st.markdown('<div style="font-size:13px">' + " &nbsp;&nbsp; ".join(
-        f'<span style="display:inline-block;width:14px;height:14px;border-radius:3px;'
-        f'vertical-align:-2px;margin-right:6px;background:{MAU_BAC[i]}"></span>{nhan_bac[i]} '
-        f'<span style="color:{core.MUTED}">· {so_cap[i]} cặp</span>' for i in reversed(range(len(MAU_BAC))))
-        + ("" if co.all() else f' &nbsp;&nbsp; <span style="color:{core.MUTED}">ô trống: cặp không có nhu cầu</span>')
-        + "</div>", unsafe_allow_html=True)
+df, stat, raw = sm
+per = stat.get("per_baseline", {})
+bases = [p for p in df.index if p != "IPPO"]
+ip = df.loc["IPPO"]
+re_nhat = min(bases, key=lambda p: df.loc[p, "total_cost_mean"])
+cao_nhat = ip.fill_rate_mean >= df["fill_rate_mean"].max()
 
-c1, c2 = st.columns(2)
-with c1.container(border=True, key="the_suc_chua"):
-    st.subheader(f"Mức sử dụng sức chứa theo kho · {cs}")
-    u = r["util"].mean(axis=0)
-    fig = go.Figure(go.Bar(
-        x=u, y=nhan_kho, orientation="h", text=[core.pct(x) for x in u], textposition="outside",
-        marker_color=[core.ORANGE if x >= UTIL_CANH_BAO else core.TEAL for x in u],
-        hovertemplate="%{y}<br>%{x:.1%}<extra></extra>"))
-    fig.add_vline(x=UTIL_CANH_BAO, line=dict(color=core.GREY, dash="dot"))
-    fig.update_yaxes(autorange="reversed")
-    fig.update_xaxes(tickformat=".0%", range=[0, max(1.0, float(u.max()) * 1.15)])
-    core.chart(fig, 400)
-    st.caption(f"Kho dùng từ {core.pct(UTIL_CANH_BAO, 0)} sức chứa trở lên tô cam.")
+# --------------------------------------------------------------------------- #
+# Bốn số chính
+# --------------------------------------------------------------------------- #
+k = st.columns(4)
+k[0].markdown(core.kpi("Đáp ứng nhu cầu khách", core.pct(ip.fill_rate_mean),
+                       f"Cao nhất trong {len(df)} cách" if cao_nhat else f"Mục tiêu {core.pct(muc_dv, 0)}",
+                       "good" if ip.fill_rate_mean >= muc_dv else "warn"), unsafe_allow_html=True)
+k[1].markdown(core.kpi("Tổng chi phí", core.num(ip.total_cost_mean),
+                       "đơn vị chi phí trong mô phỏng"), unsafe_allow_html=True)
+for col, b in zip(k[2:], ["EOQ", "(s,S)"]):
+    if b in per:
+        g = per[b]["gap_percent"]
+        col.markdown(core.kpi(f"So với {b}", f"{'rẻ hơn' if g < 0 else 'đắt hơn'} {core.num(abs(g), 1)}%",
+                              f"rẻ hơn ở {per[b]['n_ippo_cheaper']}/{per[b]['n']} lượt chạy",
+                              "good" if g < 0 else "warn"), unsafe_allow_html=True)
 
-with c2.container(border=True, key="the_thap_nhat"):
-    st.subheader(f"5 cặp có fill rate thấp nhất · {cs}")
-    cau_tb = arr["demand"].mean(axis=0).reshape(-1)          # cầu TB/ngày trên miền test
-    thap = [p for p in np.argsort(fr) if co[p]][:5]
-    F = fr.reshape(W, S)
-    mo_ta = ([f"Đều là mặt hàng cầu lẻ tẻ (≤ {CAU_LE_TE} đơn vị/ngày)"]
-             if all(cau_tb[p] <= CAU_LE_TE for p in thap) else [])
-    mo_ta += [f"{sku} dưới {core.pct(nguong[0], 0)} ở cả {W} kho"
-              for s, sku in enumerate(meta["skus"]) if np.all(F[:, s] < nguong[0])]
-    if mo_ta:
-        st.caption("; ".join(mo_ta))
-    bang = pd.DataFrame({"Kho": [nhan_kho[p // S] for p in thap], "SKU": [meta["skus"][p % S] for p in thap],
-                         "Fill rate": [fr[p] for p in thap],
-                         "Cầu TB/ngày": ["< 0,1" if cau_tb[p] < 0.05 else core.num(cau_tb[p], 1) for p in thap]})
-    st.dataframe(bang.style.format({"Fill rate": core.pct}).map(
-        lambda v: "color: #A84A14; font-weight: 600" if v < muc_dv else "", subset=["Fill rate"]),
-        hide_index=True)
+# --------------------------------------------------------------------------- #
+# 1. Chi phí   2. Đáp ứng nhu cầu
+# --------------------------------------------------------------------------- #
+c1, c2 = st.columns(2, gap="medium")
+with c1:
+    re_, dat_, ngang = [], [], []
+    dong = []
+    for p in df.sort_values("total_cost_mean").index:
+        t, phu = core.ten_cs(p)
+        chip = ""
+        if p != "IPPO" and p in per:
+            g, ro = per[p]["gap_percent"], per[p]["p_paired"] < 0.05
+            if not ro:
+                chip = core.chip("ngang IPPO")
+                ngang.append(p)
+            elif g < 0:
+                chip = core.chip(f"IPPO rẻ hơn {core.num(-g, 1)}%", "good")
+                re_.append(p)
+            else:
+                chip = core.chip(f"IPPO đắt hơn {core.num(g, 1)}%", "warn")
+                dat_.append(p)
+        dong.append(dict(ten=t, phu=chip or "mô hình của đề tài", v=df.loc[p, "total_cost_mean"],
+                         nhan=core.num(df.loc[p, "total_cost_mean"]), me=p == "IPPO"))
+    dap = []
+    if re_:
+        dap.append(f"IPPO <b>rẻ hơn rõ</b> {', '.join(re_)}")
+    if dat_:
+        dap.append(f"<b>đắt hơn</b> {', '.join(dat_)}")
+    if ngang:
+        dap.append(f"ngang {', '.join(ngang)}")
+    core.the_hoi("q1", "IPPO có đặt hàng rẻ hơn không?", "; ".join(dap) + ".", core.thanh(dong),
+                 f"Tổng chi phí lưu kho, thiếu hàng, đặt hàng và hàng bị trả do kho đầy; trung bình "
+                 f"{raw['meta']['n_episodes']} lượt chạy. Thanh ngắn hơn là rẻ hơn.")
 
-core.nguon(*([f"results/summary_{meta['results_tag']}.json",
-              f"trung bình {raw['meta']['n_episodes']} lượt đánh giá",
-              f"checkpoint {raw['meta']['checkpoint']}"] if sm else []),
-           f"biểu đồ: một lượt mô phỏng đại diện (hạt giống {meta['seed']})")
+with c2:
+    lo = 0.7
+    dong = [dict(ten=core.ten_cs(p)[0], phu=core.ten_cs(p)[1], v=df.loc[p, "fill_rate_mean"],
+                 nhan=core.pct(df.loc[p, "fill_rate_mean"]), me=p == "IPPO")
+            for p in df.sort_values("fill_rate_mean", ascending=False).index]
+    khac = df.loc[bases, "fill_rate_mean"]
+    core.the_hoi("q2", "IPPO có phục vụ khách tốt hơn không?",
+                 f"IPPO đáp ứng <b>{core.pct(ip.fill_rate_mean)}</b> lượng hàng khách cần"
+                 + (", <b>cao nhất</b>" if cao_nhat else "")
+                 + f"; các cách truyền thống từ {core.pct(khac.min())} đến {core.pct(khac.max())}.",
+                 '<div class="chu-giai"><span class="me">IPPO</span><span>cách truyền thống</span>'
+                 f'<span class="tg">mục tiêu {core.pct(muc_dv, 0)}</span></div>'
+                 + core.thanh(dong, lo=lo, hi=1.0, moc=muc_dv),
+                 f"Thanh tính từ {core.pct(lo, 0)} để thấy rõ chênh lệch. Thanh dài hơn là ít hết hàng hơn.")
+
+# --------------------------------------------------------------------------- #
+# 3. Theo tốc độ bán   4. Khi nhu cầu tăng đột ngột
+# --------------------------------------------------------------------------- #
+c1, c2 = st.columns(2, gap="medium")
+with c1:
+    if qm:
+        so = next(p for p in qm if p != "IPPO")
+        dong, tot, kem = [], [], []
+        for gr, v in qm["IPPO"].items():
+            ten, phu = NHOM.get(gr, (gr, ""))
+            a, b = v["fill"], qm[so][gr]["fill"]
+            (tot if a > b else kem).append(f"{ten.lower()} ({'+' if a > b else '−'}{core.num(abs(a - b) * 100, 1)} điểm)")
+            dong += [dict(nhom=f"{ten} · {phu} · {v['n_pairs']} mặt hàng-cửa hàng"),
+                     dict(ten="IPPO", v=a, nhan=core.pct(a), me=True), dict(ten=so, v=b, nhan=core.pct(b))]
+        dap = []
+        if tot:
+            dap.append(f"IPPO <b>tốt hơn</b> {so} ở hàng {', '.join(tot)}")
+        if kem:
+            dap.append(f"<b>kém hơn</b> ở hàng {', '.join(kem)}")
+        core.the_hoi("q3", "Hàng bán chậm và hàng bán chạy khác nhau thế nào?", "; ".join(dap) + ".",
+                     core.thanh(dong, lo=0.6, hi=1.0, moc=muc_dv),
+                     f"Mức đáp ứng nhu cầu theo tốc độ bán của mặt hàng; thanh tính từ 60%. Vạch đỏ: mục tiêu {core.pct(muc_dv, 0)}.")
+with c2:
+    if soc:
+        _, b2 = soc
+        f = next(iter(b2["results"]))
+        kq = {p: v for p, v in b2["results"][f].items() if "cùng mức" not in p}
+        trong = {p: v["Trong sốc"]["fill_rate"] for p, v in kq.items()}
+        cpd = {p: v["Trong sốc"]["cost_per_day"] for p, v in kq.items()}
+        dong = [dict(ten=core.ten_cs(p)[0], v=trong[p], nhan=core.pct(trong[p]), me=p == "IPPO",
+                     phu=core.chip(f"chi phí/ngày {core.num(cpd[p])}", "good" if cpd[p] == min(cpd.values()) else ""))
+                for p in sorted(kq, key=lambda p: -trong[p])]
+        hang = sorted(trong.values(), reverse=True).index(trong["IPPO"]) + 1
+        dap = (f"Khi nhu cầu tăng ×{core.num(float(f), 1)} trong {b2['len']} ngày, IPPO vẫn đáp ứng "
+               f"<b>{core.pct(trong['IPPO'])}</b> (đứng thứ {hang}/{len(trong)})"
+               + (" với <b>chi phí mỗi ngày thấp nhất</b>" if cpd["IPPO"] == min(cpd.values()) else "") + ".")
+        core.the_hoi("q4", "Khi nhu cầu tăng đột ngột thì sao?", dap, core.thanh(dong, lo=0.6, hi=1.0, moc=muc_dv),
+                     "Mức đáp ứng trong những ngày nhu cầu tăng; không cách nào được báo trước. "
+                     "Thử kịch bản khác ở trang Kịch bản tăng cầu.")
+
+# --------------------------------------------------------------------------- #
+# 5. Độ ổn định   6. Thiết kế phần thưởng
+# --------------------------------------------------------------------------- #
+c1, c2 = st.columns(2, gap="medium")
+with c1:
+    if ms:
+        cs = [ms["seeds"][s]["cost"] for s in ms["seeds"]]
+        dong = [dict(ten=f"Lần huấn luyện {i}", v=c, nhan=core.num(c), me=True) for i, c in enumerate(cs, 1)]
+        ca3 = [b for b, g in ms["gap_vs_baseline"].items() if g["n_seeds_re_hon"] == g["n_seeds"]]
+        core.the_hoi("q5", "Huấn luyện lại thì kết quả có giữ được không?",
+                     f"{len(cs)} lần huấn luyện độc lập cho chi phí chênh nhau tối đa "
+                     f"<b>{core.num((max(cs) - min(cs)) / np.mean(cs) * 100, 1)}%</b>"
+                     + (f"; IPPO rẻ hơn {', '.join(ca3)} ở <b>cả {len(cs)} lần</b>." if ca3 else "."),
+                     core.thanh(dong, lo=0, hi=max(cs) * 1.05),
+                     "Mỗi lần huấn luyện bắt đầu từ một khởi tạo ngẫu nhiên khác.")
+with c2:
+    if rq3:
+        tb = {t: np.mean([r["cost"] for r in v["seeds"].values()]) for t, v in rq3.items()}
+        goc = tb.get("abl_ref")
+        dong = [dict(ten=RQ3.get(t, (t, ""))[0], v=c, nhan=core.num(c), me=t == "abl_ref",
+                     phu=RQ3.get(t, (t, ""))[1] + (" " + core.chip(f"gấp {core.num(c / goc, 1)} lần", "warn")
+                                                   if goc and t != "abl_ref" else ""))
+                for t, c in tb.items()]
+        xau = [(RQ3.get(t, (t, ""))[0].lower(), c / goc) for t, c in tb.items() if goc and t != "abl_ref"]
+        core.the_hoi("q6", "Cách tính điểm thưởng khi học có quan trọng không?",
+                     "Có: " + "; ".join(f"{t} làm chi phí <b>gấp {core.num(r, 1)} lần</b>" for t, r in xau) + ".",
+                     core.thanh(dong),
+                     f"Các biến thể học cùng số lượt, trung bình {len(next(iter(rq3.values()))['seeds'])} lần huấn luyện.")
