@@ -1,6 +1,6 @@
 {
-  "checkpoint": "checkpoints/best_model_seed42.pth",
-  "results_tag": "seed42",
+  "checkpoint": "checkpoints/best_model_main_s42.pth",
+  "results_tag": "main_s42",
   "seed": 1000,
   "env": {
     "n_warehouses": 10,
@@ -25,6 +25,18 @@
     "obs_cover_days": 20.0,
     "min_mean_demand": 0.05,
     "include_price_signal": true,
+    "warehouse_stores": [
+      "CA_3",
+      "CA_1",
+      "TX_2",
+      "WI_2",
+      "WI_3",
+      "TX_3",
+      "CA_2",
+      "TX_1",
+      "WI_1",
+      "CA_4"
+    ],
     "normalize_reward_per_pair": true,
     "reward_scale": 1.0,
     "service_penalty_mode": "normalized",
@@ -78,7 +90,7 @@
     "min_fill_to_save": 0.85,
     "normalize_adv_per_pair": true,
     "shared_trunk": false,
-    "total_episodes": 4000
+    "total_episodes": 10000
   },
   "stores": [
     "CA_3",

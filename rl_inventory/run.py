@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 """
 run.py — mot cua duy nhat de chay ca du an:  python run.py <lenh>
-cd D:\\KhoaLuanTotNghiep\\KhoaLuan_RL_Inventory_FIXED\\KhoaLuan_RL_Inventory_v2\\Khoa_luan\\rl_inventory; mkdir -Force logs | Out-Null; py -3.12 run.py full 2>&1 | Tee-Object -Append logs\\full.txt
+cd D:\\KhoaLuanTotNghiep\\KhoaLuan_RL_Inventory_FIXED\\KhoaLuan_RL_Inventory_v2\\Khoa_luan\\rl_inventory; py -3.12 run.py full
 
 Dot thuc nghiem cuoi (so lieu bao cao; seed o scripts/campaign.py):
     full             test -> train 19 lan chay -> danh gia -> results/KET_QUA.txt
-                     Bi ngat thi chay lai, tu resume. Luu log (PowerShell):
-                     mkdir -Force logs; python run.py full 2>&1 | Tee-Object -Append logs\\full.txt
+                     Bi ngat thi chay lai, tu resume. Log tu ghi vao logs/<lenh>.txt
+                     (full, train_*, eval_all) - khong can 2>&1 / Tee-Object.
     status           tien do tung lan chay
     train_main       chi train mo hinh chinh (3 seed x ppo.total_episodes)
     train_ablations  chi train ablation, RQ3, hold-out (1.000 ep)
@@ -24,21 +24,46 @@ import argparse
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 PY = sys.executable
 CAMPAIGN = [PY, "scripts/campaign.py"]
-os.environ.setdefault("PYTHONUNBUFFERED", "1")   # log hien ngay khi ghi ra file
+os.environ.setdefault("PYTHONUNBUFFERED", "1")     # log tien trinh con hien ngay
+os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")  # tat thong bao TensorFlow (tu tensorboard)
+os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
+sys.stdout.reconfigure(errors="replace")
+LOG = None   # file log cua cac lenh chay dai, mo trong main()
 
 MULTISEED_SEEDS = [42, 1, 2]   # [V3-6] cho lenh multiseed (giao thuc cu)
 
 
 def sh(cmd):
-    print("\n$ " + " ".join(str(c) for c in cmd))
-    r = subprocess.run(cmd, cwd=str(ROOT))
-    if r.returncode != 0:
-        sys.exit(r.returncode)
+    """Chay lenh con. Khi co LOG: gop stderr vao stdout, vua in vua ghi log, nen
+    PowerShell khong to do stderr thanh loi (NativeCommandError)."""
+    dong = "\n$ " + " ".join(str(c) for c in cmd)
+    print(dong, flush=True)
+    if LOG is None:
+        code = subprocess.run(cmd, cwd=str(ROOT)).returncode
+    else:
+        LOG.write(dong + "\n")
+        p = subprocess.Popen(cmd, cwd=str(ROOT), stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT, text=True,
+                             encoding="utf-8", errors="replace")
+        for s in p.stdout:
+            sys.stdout.write(s)
+            sys.stdout.flush()
+            LOG.write(s)
+            LOG.flush()
+        code = p.wait()
+    if code != 0:
+        msg = f"\n[LOI] lenh tren thoat voi ma {code} - dung lai."
+        print(msg)
+        if LOG:
+            LOG.write(msg + "\n")
+        sys.exit(code)
 
 
 def main():
@@ -57,6 +82,13 @@ def main():
     ap.add_argument("--checkpoint", default="checkpoints/best_model_main_s42.pth",
                     help="Checkpoint IPPO cho lenh regime/behavior")
     a = ap.parse_args()
+
+    global LOG
+    if a.lenh in ("full", "train_main", "train_ablations", "eval_all"):
+        (ROOT / "logs").mkdir(exist_ok=True)
+        LOG = open(ROOT / "logs" / f"{a.lenh}.txt", "a", encoding="utf-8")
+        LOG.write(f"\n===== {time.strftime('%Y-%m-%d %H:%M:%S')}  python run.py {a.lenh} =====\n")
+        print(f"Log: logs/{a.lenh}.txt")
 
     import yaml
     cfg = yaml.safe_load(open(ROOT / "config.yaml", encoding="utf-8"))

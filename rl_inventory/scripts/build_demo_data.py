@@ -59,8 +59,8 @@ def rollout(env, act, seed):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--checkpoint", default="checkpoints/best_model_seed42.pth")
-    ap.add_argument("--tag", default="seed42",
+    ap.add_argument("--checkpoint", default="checkpoints/best_model_main_s42.pth")
+    ap.add_argument("--tag", default="main_s42",
                     help="Hau to file trong results/ ma app doc (summary_<tag>.json...)")
     a = ap.parse_args()
 

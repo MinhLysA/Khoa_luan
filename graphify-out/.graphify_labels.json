@@ -1,0 +1,15 @@
+{
+  "1": "Tác tử PPO",
+  "2": "Kiểm thử môi trường",
+  "3": "Điều phối run.py & demo data",
+  "4": "Mô phỏng & sốc cầu",
+  "5": "Campaign & kết quả sốc",
+  "6": "Cấu hình ablation",
+  "7": "MCP server",
+  "8": "Lõi demo (core.py)",
+  "9": "Nạp dữ liệu & cache demo",
+  "10": "Trang demo & định dạng số",
+  "11": "Tổng hợp kết quả",
+  "12": "Trang đơn đặt hàng & UI",
+  "15": "scripts/__init__"
+}

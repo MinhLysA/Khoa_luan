@@ -131,7 +131,8 @@ def ghi_ket_qua(root=ROOT):
                  f" | fill TB {d['ippo_fill_mean']:.1%} | {len(d['seeds'])} seed")
         for ref, g in d["gap_vs_baseline"].items():
             L.append(f"  vs {ref:<22}: TB {g['mean']:+7.2f}% (tu {g['min']:+.2f} den {g['max']:+.2f})"
-                     f" | co y nghia o {g['n_seeds_significant']}/{g['n_seeds']} seed")
+                     f" | co y nghia: re hon {g.get('n_seeds_re_hon', '?')}, dat hon {g.get('n_seeds_dat_hon', '?')}"
+                     f" / {g['n_seeds']} seed")
     else:
         L.append("  (chua co - can danh gia moi main_s* roi chay campaign.py tonghop)")
     d = _doc_json(res / "rq3_multiseed.json")

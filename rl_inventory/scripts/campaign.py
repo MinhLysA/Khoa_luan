@@ -325,6 +325,9 @@ def tong_hop_da_hat_giong():
         sig = [r["per_baseline"][ref]["p_paired"] < 0.05 for r in rows.values() if ref in r["per_baseline"]]
         out["gap_vs_baseline"][ref] = {"mean": float(np.mean(g)), "min": float(min(g)),
                                        "max": float(max(g)), "n_seeds_significant": int(sum(sig)),
+                                       # tach theo chieu: co y nghia nhung IPPO re hon / dat hon
+                                       "n_seeds_re_hon": int(sum(s and x < 0 for s, x in zip(sig, g))),
+                                       "n_seeds_dat_hon": int(sum(s and x > 0 for s, x in zip(sig, g))),
                                        "n_seeds": len(g)}
     (ROOT / "results" / "multiseed_main.json").write_text(
         json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
