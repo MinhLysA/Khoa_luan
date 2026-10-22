@@ -26,16 +26,21 @@ hàng ngẫu nhiên từ một đến ba ngày. PS-IPPO được so sánh với 
 điển đã tinh chỉnh trên miền validation, qua nhiều hạt giống huấn luyện và kiểm
 định thống kê theo cặp.
 
-% CAP NHAT SAU DOT CHAY CUOI: cac con so duoi day tu ban 3 hat giong x 1.000 episode.
-Kết quả cho thấy khi được so ở cùng mức phục vụ, PS-IPPO đạt tổng chi phí vận
-hành thấp hơn $(s, S)$ $10{,}2\%$ và thấp hơn Newsvendor $14{,}4\%$, còn EOQ không
-đạt được mức phục vụ đó. Ưu thế tập trung ở các giai đoạn nhu cầu biến động
-(ngày có sự kiện, cuối tuần); khi nhu cầu ổn định, $(s,S)$ đạt chi phí thấp hơn.
-Chia sẻ tham số duy trì hiệu năng tốt ở nhóm mặt hàng có nhu cầu trung bình và
-cao, nhưng phân bổ mức phục vụ thấp hơn cho nhóm nhu cầu thấp. Đóng góp của khóa
-luận là một khung PS-IPPO có ràng buộc sức chứa dùng chung trên dữ liệu bán lẻ
-thực tế, cùng một giao thức đánh giá tách biệt rõ chi phí vận hành, mức phục vụ
-và tín hiệu huấn luyện.
+Kết quả (mô hình chính $10.000$ episode $\times$ $3$ hạt giống) cho thấy ở điểm
+vận hành mà mỗi phương pháp tự chọn, PS-IPPO có tổng chi phí xấp xỉ các chính
+sách cổ điển tốt nhất --- thấp hơn $(s, S)$ $1{,}7\%$ và EOQ $17{,}8\%$, ngang các
+phiên bản tinh chỉnh theo nhóm quy mô cầu --- nhưng với mức phục vụ cao hơn
+khoảng $4$--$5$ điểm phần trăm ($90{,}9\%$ so với $85{,}8$--$86{,}2\%$). Khi các
+chính sách cổ điển được buộc đạt mức phục vụ tương đương ($\approx 90\%$), chúng
+đắt hơn PS-IPPO $17{,}3$--$25{,}7\%$ (cận trên do lưới tham số thô), còn EOQ không
+đạt được mức đó. Khi nhu cầu ổn định, chính sách cổ điển tinh chỉnh theo nhóm
+ngang hoặc rẻ hơn; ưu thế của PS-IPPO tập trung ở giai đoạn nhu cầu biến động
+(ngày có sự kiện, cuối tuần, sốc cầu). Chia sẻ tham số duy trì hiệu năng tốt ở
+nhóm mặt hàng có nhu cầu trung bình và cao, nhưng mức phục vụ ở nhóm nhu cầu thấp
+chưa đạt ngưỡng ($28{,}7\%$ số cặp dưới $85\%$). Đóng góp của khóa luận là một
+khung PS-IPPO có ràng buộc sức chứa dùng chung trên dữ liệu bán lẻ thực tế, một
+giao thức đánh giá tách biệt rõ chi phí vận hành, mức phục vụ và tín hiệu huấn
+luyện, và một ứng dụng mô phỏng đề xuất đơn đặt hàng từ mô hình đã huấn luyện.
 
 \vspace{0.3cm}
 \noindent\textbf{Từ khóa:} quản lý tồn kho; học tăng cường đa tác tử; IPPO; chia

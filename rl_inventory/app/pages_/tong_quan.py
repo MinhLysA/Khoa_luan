@@ -174,3 +174,33 @@ with c2:
                      "Có: " + "; ".join(f"{t} làm chi phí <b>gấp {core.num(r, 1)} lần</b>" for t, r in xau) + ".",
                      core.thanh(dong),
                      f"Các biến thể học cùng số lượt, trung bình {len(next(iter(rq3.values()))['seeds'])} lần huấn luyện.")
+
+# --------------------------------------------------------------------------- #
+# 7. Báo cáo tổng hợp theo kho / ngành hàng (chỉ đọc kết quả mô phỏng, không điều khiển tác tử)
+# --------------------------------------------------------------------------- #
+with st.container(border=True, key="the_tong_hop"):
+    core.muc(7, "Tổng hợp theo cửa hàng hoặc ngành hàng",
+             f"{so_ngay} ngày test · số từ mô phỏng đã chạy sẵn")
+    P = core.pairs(meta)
+    t1, t2, t3 = st.columns([1.3, 1.3, 2.4])
+    cs = t1.selectbox("Cách đặt hàng", meta["policies"], key="th_cs")
+    theo = t2.selectbox("Gom theo", ["Cửa hàng", "Ngành hàng"], key="th_theo")
+    ro = core.rollout(cs)
+    dem = core.load_demo()[1]["demand"].reshape(so_ngay, -1)
+    d = P.assign(nhu_cau=dem.sum(0), thieu=ro["stockout"].sum(0), dat=ro["order"].sum(0),
+                 ngay_dat=(ro["order"] > 0).sum(0), ton=ro["inv"].mean(0))
+    g = d.groupby("Cửa hàng" if theo == "Cửa hàng" else "Ngành")
+    tb = g.agg(nhu_cau=("nhu_cau", "sum"), thieu=("thieu", "sum"), dat=("dat", "sum"),
+               ngay_dat=("ngay_dat", "sum"), ton=("ton", "sum"), cap=("pair", "count"))
+    tb["Đáp ứng nhu cầu"] = 1 - tb.thieu / tb.nhu_cau
+    tb = tb.rename(columns={"cap": "Số cặp", "ton": "Tồn kho TB (đv)", "dat": "Tổng lượng đặt",
+                            "ngay_dat": "Số lần đặt", "thieu": "Thiếu hàng (đv)"})
+    tb.index.name = theo
+    tb.loc["Toàn mạng"] = [tb["nhu_cau"].sum(), tb["Thiếu hàng (đv)"].sum(), tb["Tổng lượng đặt"].sum(),
+                           tb["Số lần đặt"].sum(), tb["Tồn kho TB (đv)"].sum(), tb["Số cặp"].sum(),
+                           1 - tb["Thiếu hàng (đv)"].sum() / tb["nhu_cau"].sum()]
+    tb = tb[["Số cặp", "Đáp ứng nhu cầu", "Thiếu hàng (đv)", "Tồn kho TB (đv)", "Tổng lượng đặt", "Số lần đặt"]]
+    st.dataframe(tb.reset_index(), hide_index=True, width="stretch", column_config={
+        "Đáp ứng nhu cầu": st.column_config.NumberColumn(format="percent"),
+        **{c: st.column_config.NumberColumn(format="localized") for c in tb.columns if c != "Đáp ứng nhu cầu"}})
+    st.caption("Lớp tổng hợp chỉ đọc quyết định của các tác tử rồi cộng lại để báo cáo; không điều khiển tác tử nào.")

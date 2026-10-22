@@ -64,7 +64,13 @@ f0, n0 = next(iter(PRESETS.values()))
 for k, v in dict(sc_heso=f0, sc_ngay=dates[s0], sc_dai=n0, sc_pv=PHAM_VI[0]).items():
     st.session_state.setdefault(k, v)
 
-trai, phai = st.columns([1, 2.6], gap="large")
+st.markdown("""<style>
+.st-key-the_thiet_lap button p { white-space: normal; line-height: 1.3; }
+.st-key-the_thiet_lap button { min-height: 2.6rem; height: auto; padding: .45rem 1rem; }
+.st-key-the_thiet_lap [data-testid="stDateInput"] input { min-width: 0; }
+</style>""", unsafe_allow_html=True)
+
+trai, phai = st.columns([1, 2.1], gap="large")
 with trai.container(border=True, key="the_thiet_lap"):
     st.markdown("**Kịch bản có sẵn**")
     chay = False
@@ -81,11 +87,10 @@ with trai.container(border=True, key="the_thiet_lap"):
     st.divider()
     he_so = st.select_slider("Hệ số nhân nhu cầu", HE_SO, format_func=lambda x: f"× {core.num(x, 1)}",
                              key="sc_heso")
-    c1, c2 = st.columns(2)
-    ngay = c1.date_input("Bắt đầu", min_value=dates[0], max_value=dates[-1], format="DD/MM/YYYY",
+    ngay = st.date_input("Bắt đầu", min_value=dates[0], max_value=dates[-1], format="DD/MM/YYYY",
                          key="sc_ngay")
-    dai = c2.number_input("Kéo dài (ngày)", 3, 56, step=1, key="sc_dai")
-    pv = st.segmented_control("Phạm vi", PHAM_VI, required=True, key="sc_pv", width="stretch")
+    dai = st.number_input("Kéo dài (ngày)", 3, 56, step=1, key="sc_dai")
+    pv = st.selectbox("Phạm vi", PHAM_VI, key="sc_pv")
     chon = []
     if pv == "Theo kho":
         chon = st.multiselect("Kho", list(store_of), format_func=lambda k: f"{k} · {store_of[k]}", key="sc_kho")

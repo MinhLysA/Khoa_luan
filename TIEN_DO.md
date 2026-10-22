@@ -1,6 +1,6 @@
 # Theo dõi tiến độ khóa luận (PS-IPPO tồn kho đa kho)
 
-Cập nhật: 29/09/2026 · Chú thích: ✅ xong · 🟡 đang triển khai / chờ train · ⬜ chưa làm · ⚠️ cần tự kiểm tra
+Cập nhật: 23/10/2026 · Chú thích: ✅ xong · 🟡 đang triển khai / chờ train · ⬜ chưa làm · ⚠️ cần tự kiểm tra
 
 > **[25/09/2026] Quyết định thiết kế:** Bật `include_price_signal: true` → môi trường dùng **44 chiều** (thêm tín hiệu giảm giá [V3-4]). Cần cập nhật Chương 3 báo cáo (Bảng đối chiếu biến trạng thái, công thức obs\_per\_pair, mô tả đặc trưng giá) trước khi nộp.
 
@@ -21,9 +21,9 @@ Cập nhật: 29/09/2026 · Chú thích: ✅ xong · 🟡 đang triển khai / c
 | Test tự động | ✅ 54/54 pass với **44 chiều** (19/10; thêm test SNAP theo bang [P5-1]) |
 | Notebook Colab + `campaign.py` | ✅ |
 | App Streamlit 4 trang + MCP prototype | ✅ |
-| **Đợt train cuối (3 main + 16 ablation/hold-out)** | 🟡 **0/19 — chưa chạy** |
-| Báo cáo LaTeX (91 trang) | ✅ khung · 🟡 C4/C5/Abstract chờ số liệu cuối |
-| Poster | ✅ có file · ⬜ cập nhật số liệu cuối |
+| **Đợt train cuối (3 main + 16 ablation/hold-out)** | ✅ 19/19 — số liệu ở `rl_inventory/results/KET_QUA.txt` (20/10) |
+| Báo cáo LaTeX (100 trang) | ✅ C1, C3, C4, C5, Abstract đã cập nhật theo số cuối + góp ý GVHD 04/10 |
+| Poster | ⬜ còn phải thay số tay trong .pptx (xem mục Góp ý GVHD) |
 
 ---
 
@@ -207,3 +207,25 @@ Lead time > 3 ngày, mục tiêu 80/90%, Lagrange theo cặp, chuyển hàng li�
 | Phụ lục A dùng `\ref` tự động; MCP ở Phụ lục B | ✅ |
 | booktabs cho mọi bảng | 🟡 bảng kết quả C4 chuyển khi sinh lại |
 | Viết lại Abstract, C4, C5; xóa "sơ bộ"/"đang chờ train" | ⏳ sau đợt cuối |
+
+
+---
+
+## Góp ý GVHD họp 04/10/2026 (cập nhật 23/10/2026)
+
+| Mục | Việc | Trạng thái |
+|---|---|---|
+| K1, K2 | Bảng 6+ thành phần RL, câu '300 tác tử, một π_θ' (C3) | ✅ |
+| K3 | Lớp tổng hợp báo cáo (C3) + bảng tổng hợp theo cửa hàng/ngành trên demo | ✅ |
+| K4 | Cột Nhóm + Mã hóa trong bảng biến trạng thái (C3) | ✅ |
+| K6 | Áp dụng cho Việt Nam (C5, van_dap) | ✅ |
+| K7 | Ngày lịch 3 miền + hình trục thời gian (C3), bảng (C4) | ✅ |
+| K8, K9 | Phát biểu bài toán (C1); kết quả theo giai đoạn nhu cầu, không kết luận RL thắng mọi nơi (C4, C5) | ✅ |
+| K10 | Không dùng số '40–50%'; dùng số KET_QUA.txt | ✅ |
+| K11 | Đợt train cuối + cập nhật C4, C5, Abstract | ✅ |
+| D1, D6 | Gọi là 'ứng dụng mô phỏng'; phạm vi dừng ở phiếu gửi phòng mua hàng | ✅ |
+| D2, D3 | Demo chỉ suy luận, dùng `demo_data` | ✅ |
+| D4 | Bộ lọc kho/ngành + bảng KPI tổng hợp (trang Kết quả, trang Đơn đặt hàng) | ✅ |
+| D5 | Luồng phiếu: nháp → duyệt/từ chối, gom phiếu | ✅ |
+| Poster .pptx | Thay số tay: 10.000 ep × 3 seed; IPPO 2.055.442, fill 90,9%; −1,7% so (s,S), −17,8% so EOQ; baseline theo nhóm ngang IPPO | ⬜ |
+| K5 | Chuẩn bị số thời gian train/ablation để trả lời (có trong van_dap) | 🟡 |

@@ -382,6 +382,8 @@ Ngoài ra có **Hình 3.1 — mô hình khái niệm** (câu 23).
 
 ### 18. So sánh với chính sách truyền thống — không mặc định RL thắng
 
+> Các số (★) trong mục này thuộc protocol cũ (1.000 episode). Số của đợt cuối (10.000 episode × 3 seed) nằm ở Phần V, câu 29.
+
 **Trả lời ngắn.** Nhóm **không** đặt giả thuyết "RL chắc chắn tốt hơn". Ba baseline
 EOQ, (s,S) (tương đương reorder point có lô), Newsvendor (dạng base-stock) được
 **tinh chỉnh tham số** trên cùng môi trường, trên miền validation, theo **cùng tiêu
@@ -409,6 +411,8 @@ luận khi sức chứa, lead time, mức nhu cầu thay đổi được kiểm 
 ---
 
 ### 19–21. RL trong môi trường động — Thực nghiệm A và B
+
+> Các số (★) trong mục này thuộc protocol cũ (1.000 episode). Số của đợt cuối (10.000 episode × 3 seed) nằm ở Phần V, câu 29.
 
 **Trả lời ngắn.** Nhóm làm đúng hai nhóm thực nghiệm giảng viên gợi ý:
 - **Thực nghiệm A (dài hạn):** trung bình trên toàn kỳ đánh giá.
@@ -510,6 +514,142 @@ hiển thị đủ các cột giảng viên liệt kê:
 
 Kèm KPI của cặp (số ngày thiếu hàng, fill rate, tổng chi phí, tổng reward) và biểu
 đồ cầu – tồn kho – hàng đang về – lượng đặt theo ngày.
+
+---
+
+## Phần V — Bổ sung theo góp ý buổi họp 04/10/2026
+
+*Số liệu lấy từ `results/KET_QUA.txt` (cập nhật 20/10/2026), đợt cuối: mô hình chính 10.000 episode × 3 seed.*
+
+### 28. 300 tác tử thì rối lắm — có phải 300 mô hình không?
+
+**Trả lời ngắn.** Không. Có **300 tác tử** (10 kho × 30 mặt hàng) nhưng chỉ **một mạng
+chính sách π_θ dùng chung**: một bộ tham số được huấn luyện, 300 tác tử cùng dùng nó,
+mỗi tác tử đưa quan sát riêng vào mạng và nhận quyết định riêng. Số tham số là hằng số,
+không tăng theo số kho hay số mặt hàng.
+
+**Bằng chứng.** Hình "Kiến trúc đa tác tử" và Bảng "Các thành phần của mô hình học tăng
+cường" (đầu mục MDP, Chương 3).
+
+---
+
+### 29. Khi nhu cầu ổn định, EOQ tĩnh có khi tốt hơn RL — nhóm trả lời sao?
+
+**Trả lời ngắn.** Đúng, và nhóm **không** kết luận RL thắng ở mọi nơi. Số đợt cuối
+(mô hình `main_s42`, so IPPO với baseline, Δ% âm = IPPO rẻ hơn, * = có ý nghĩa):
+- **Ổn định / ngày thường:** IPPO **ngang** các baseline chung tham số ((s,S) −0,6%,
+  Newsvendor −0,1%, đều không có ý nghĩa), và **đắt hơn** (s,S) theo nhóm (+1,8%*) và
+  Newsvendor theo nhóm (+2,3%*). Ngày thường: (s,S) +0,5%, Newsvendor theo nhóm +3,3%*.
+- **Mùa lễ T11–T12:** điểm yếu của IPPO, đắt hơn (s,S) +8,2% (chưa có ý nghĩa), đắt hơn
+  Newsvendor theo nhóm +10,1%*.
+- **Ngày có sự kiện / cuối tuần:** IPPO rẻ hơn (s,S) 7,5%* và 8,6%*.
+- **Tổng toàn kỳ:** IPPO rẻ hơn EOQ 17,8% và (s,S) 1,7% ở cả 3 seed; **ngang** (s,S) theo
+  nhóm (+0,3%), EOQ theo nhóm (−0,9%), Newsvendor (−0,3%); **đắt hơn** Newsvendor theo
+  nhóm (+1,6%) ở cả 3 seed.
+
+**Sốc cầu 28 ngày — số thật, dùng thay mọi con số nói miệng trước đây** (fill: trước /
+trong / sau sốc):
+- Cầu ×1,5: trong sốc IPPO 83,5% so với EOQ 79,0%, (s,S) 81,2%, Newsvendor 83,7%; chi phí
+  mỗi ngày trong sốc IPPO 5.451 so với 6.278–7.738 của các baseline chung tham số.
+- Cầu ×0,5 (cầu giảm rồi hồi phục): sau sốc IPPO giữ 90,8%, các baseline chung tham số còn
+  82,9–86,5%.
+
+**Cách nói.** RL có lợi nhất khi nhu cầu **biến động** (sự kiện, cuối tuần, sốc); khi
+nhu cầu ổn định thì chính sách tĩnh được tinh chỉnh tốt cũng cạnh tranh ngang. Lưu ý
+thêm: phân tích cùng mức phục vụ có cảnh báo lưới tham số thô làm lợi thế IPPO bị phóng đại.
+
+**Bằng chứng.** `results/KET_QUA.txt` mục 1, 5a, 5b; `results/regime_analysis_main.json`.
+
+---
+
+### 30. Thêm nhiều thông tin thì train có lâu không? Train mất bao lâu?
+
+**Trả lời ngắn.** Mô hình chính 10.000 episode mất **219–280 phút mỗi seed** (3 seed:
+280, 243, 219 phút). Mỗi lần ablation 1.000 episode mất khoảng **22 phút** (tối đa
+34 phút). Thêm đặc trưng ít làm tăng thời gian: `abl_event` (46 chiều thay vì 44) vẫn 22
+phút, bằng `abl_ref`.
+
+**Giải thích.** Chi phí huấn luyện chủ yếu do chạy môi trường 300 tác tử và cập nhật PPO,
+không do độ rộng vector quan sát. Vì chỉ có một mạng dùng chung, thời gian cũng không
+nhân lên theo 300.
+
+**Bằng chứng.** `results/KET_QUA.txt` mục 6 (cột Phút, "phiên train cuối").
+
+---
+
+### 31. Dữ liệu là của Mỹ — nếu áp dụng cho Việt Nam?
+
+**Trả lời ngắn.** Mô hình học từ dữ liệu (data-driven), nên áp dụng cho Việt Nam phải
+**huấn luyện lại trên dữ liệu Việt Nam**; **không** dùng lại trọng số đã học từ Walmart.
+
+**Giải thích.**
+- Kiến trúc, hàm phần thưởng và quy trình huấn luyện giữ nguyên.
+- Thay vector lịch 20 chiều (SNAP, sự kiện, tháng của Mỹ) bằng lịch Việt Nam (Tết, các
+  ngày lễ, mùa mua sắm…); ba cờ SNAP bỏ đi vì không có tương đương.
+- Đơn giá chi phí, sức chứa kho và thời gian giao phải hiệu chỉnh theo doanh nghiệp.
+- Với thông tin lịch: thực nghiệm bỏ đặc trưng lịch cho thấy chi phí gần như không đổi
+  (abl_nocal −1,6%, nhỏ hơn mức dao động 1,6% giữa các seed) nên việc đổi lịch ít rủi ro.
+
+**Bằng chứng.** Chương 5 (hạn chế, hướng phát triển); `results/KET_QUA.txt` mục 4.
+
+---
+
+### 32. Mô hình biết tín hiệu mạnh hay yếu bằng cách nào?
+
+**Trả lời ngắn.** Tín hiệu **liên tục** như giảm giá g ∈ [0, 1] mang độ mạnh ngay trong
+giá trị (0 = giá thường, gần 1 = giảm sâu; đo so với giá trung bình của chính cặp,
+ước lượng trên miền train). Các **cờ 0/1** (SNAP, sự kiện, tháng, thứ) chỉ cho biết có
+hay không; mức tác động do mạng **tự học qua trọng số** từ phần thưởng.
+
+**Bằng chứng.** Bảng đối chiếu biến trạng thái (Chương 3) có cột Nhóm và Mã hóa; tầm
+quan trọng nhóm đặc trưng ở Chương 4.
+
+---
+
+### 33. Khi bảo vệ, demo chạy gì? Có train lại không?
+
+**Trả lời ngắn.** Demo là **ứng dụng mô phỏng chỉ chạy suy luận**. Quy trình: train
+offline → lưu checkpoint (`checkpoints/best_model_main_s42.pth`) → ứng dụng nạp
+checkpoint và chạy trên miền test như một tập kiểm tra. Ứng dụng không có mã huấn luyện,
+nên không cần GPU và không mất thời gian train trên máy hội đồng.
+
+**Chạy.** Từ thư mục `rl_inventory`: `streamlit run app/streamlit_app.py` (5 trang: Kết
+quả, Đơn đặt hàng, Chi tiết một mặt hàng, So sánh chi tiết, Kịch bản tăng cầu). Cần
+sẵn checkpoint và `results/baseline_params.json` trên máy dùng để demo.
+
+---
+
+### 34. Sao không đặt hàng thẳng với nhà cung cấp? "Phiếu đề nghị" là gì?
+
+**Trả lời ngắn.** Đầu ra của mô hình là **yêu cầu đặt hàng lại** (số lượng, thời điểm,
+cho từng kho – mặt hàng). Quy trình thực tế: bộ phận có nhu cầu gửi **phiếu đề nghị**
+sang phòng mua hàng, phòng mua hàng mới hỏi báo giá và chọn nhà cung cấp. Khóa luận
+**dừng ở bước lập và duyệt phiếu gửi phòng mua hàng**; hai bước sau nằm ngoài phạm vi vì
+dữ liệu M5 không có nhà cung cấp. Đây là giới hạn phạm vi, không phải giới hạn của
+phương pháp.
+
+**Trong ứng dụng.** Trang "Đơn đặt hàng": phiếu ở trạng thái Nháp → admin Duyệt hoặc Từ
+chối (vì hệ thống đôi khi nhầm), có tùy chọn gom phiếu theo kho × ngành hàng. Việc gom theo
+ngành hàng là **giả định** vì M5 không có nhà cung cấp; môi trường tính chi phí đặt hàng
+theo từng cặp nên gom phiếu chỉ là cách trình bày, không đổi kết quả mô hình.
+
+---
+
+### 35. Quản lý cần xem tổng hợp — vậy có coordinator không?
+
+**Trả lời ngắn.** Không. Ứng dụng có một **lớp tổng hợp báo cáo** nằm sau các tác tử: chỉ
+**đọc** quyết định và kết quả để tính KPI theo kho, theo ngành hàng, toàn mạng. Lớp này
+không gửi thông tin ngược lại tác tử nào, không đổi quan sát, hành động hay phần thưởng,
+nên không phải coordinator và bài toán không thành CTDE.
+
+---
+
+### 36. Dữ liệu chia thế nào, ngày nào?
+
+**Trả lời ngắn.** Ngày 0 = 29/01/2011. Train 29/01/2011–13/12/2013 (1.050 ngày);
+validation 14/12/2013–17/01/2015 (400 ngày); test 18/01/2015–22/05/2016 (491 ngày).
+Cửa sổ: lịch sử cầu 7 ngày, fill rate trượt 30 ngày, episode 365 ngày. Miền test chỉ
+dùng để báo cáo kết quả cuối.
 
 ---
 

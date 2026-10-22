@@ -191,7 +191,17 @@ từ dữ liệu bán lẻ thực tế.
 \subsection{Mục tiêu nghiên cứu}
 \label{subsec:muctieu}
 
-Khóa luận đặt ra bốn mục tiêu cụ thể:
+\paragraph{Phát biểu bài toán.} Các chính sách đặt hàng lại truyền thống như
+EOQ, $(s, S)$ hay Newsvendor đặt tham số một lần từ nhu cầu trung bình và độ
+biến động đã ước lượng, nên kém nhạy khi nhu cầu thay đổi do giá, ngày lễ, sự
+kiện hoặc một đợt tăng cầu bất thường. Khóa luận vì vậy xây dựng một \emph{mô
+hình học tăng cường} để các tác tử tự quyết định đặt hàng lại từ quan sát hằng
+ngày, với mục tiêu giảm tổng chi phí vận hành mà vẫn giữ mức phục vụ tối thiểu.
+Mô hình được kiểm tra ở cả giai đoạn nhu cầu ổn định lẫn khi có sốc cầu, vì chỉ
+khi nhu cầu biến động thì lợi thế của một chính sách thích nghi so với chính
+sách tĩnh mới có thể xuất hiện (Chương~\ref{chap:chapter4}).
+
+Khóa luận đặt ra năm mục tiêu cụ thể:
 
 \begin{itemize}
     \item Xây dựng môi trường mô phỏng tồn kho đa kho -- đa mặt hàng theo chuẩn
@@ -213,6 +223,11 @@ Khóa luận đặt ra bốn mục tiêu cụ thể:
     \item Đánh giá hiệu năng của mô hình đề xuất trong so sánh với ba chính
     sách tồn kho cổ điển, theo giao thức thực nghiệm đa hạt giống có kiểm định
     thống kê \parencite{henderson2018, agarwal2021}.
+
+    \item Xây dựng ứng dụng \emph{mô phỏng} nạp mô hình đã huấn luyện và chạy
+    suy luận trên dữ liệu kiểm tra để xem kết quả, các phiếu đề nghị đặt hàng và
+    kịch bản tăng cầu. Đây là ứng dụng mô phỏng minh họa kết quả mô hình, không
+    phải một hệ thống vận hành thực tế.
 \end{itemize}
 
 \subsection{Câu hỏi nghiên cứu}
@@ -261,8 +276,11 @@ lại trong hệ thống tồn kho đa kho -- đa mặt hàng, và thuật toán
     gian giao hàng ngẫu nhiên trong khoảng từ một đến ba ngày.
 
     \item Cấu trúc mạng lưới: các kho hoạt động song song và độc lập
-    về nguồn cung, mỗi kho đặt hàng trực tiếp từ nhà cung cấp bên ngoài. Sự
-    ràng buộc giữa các mặt hàng phát sinh từ dung lượng kho dùng chung.
+    về nguồn cung, mỗi kho đặt hàng từ nhà cung cấp bên ngoài (được mô phỏng
+    bằng thời gian giao ngẫu nhiên). Sự ràng buộc giữa các mặt hàng phát sinh từ
+    dung lượng kho dùng chung. Đầu ra của mô hình là \emph{yêu cầu đặt hàng
+    lại}: số lượng và thời điểm đặt cho từng cặp kho--mặt hàng (xem
+    Mục~\ref{subsec:phamvingoai}).
 
     \item Nguồn dữ liệu: bộ dữ liệu bán lẻ M5 Walmart
     \cite{makridakis2022background}, cụ thể là hai tệp
@@ -298,9 +316,18 @@ lại trong hệ thống tồn kho đa kho -- đa mặt hàng, và thuật toán
     dụng trực tiếp thông tin nhu cầu lịch sử trong vector quan sát.
     \item Cơ chế truyền thông giữa các tác tử; các tác tử ra quyết định hoàn
     toàn dựa trên quan sát cục bộ.
-    \item Triển khai hệ thống thời gian thực hoặc tích hợp với nền tảng quản trị
-    doanh nghiệp; sản phẩm của khóa luận là kết quả mô phỏng và phân tích định
-    lượng.
+    \item Triển khai vận hành thời gian thực hoặc tích hợp với nền tảng quản trị
+    doanh nghiệp; sản phẩm của khóa luận là kết quả mô phỏng, phân tích định
+    lượng và một ứng dụng mô phỏng chỉ chạy suy luận từ mô hình đã huấn luyện
+    (không huấn luyện lại trong ứng dụng).
+    \item Các bước sau khi có yêu cầu đặt hàng: hỏi báo giá, chọn và gửi đơn tới
+    nhà cung cấp. Trong quy trình thực tế, bộ phận có nhu cầu gửi phiếu đề nghị
+    sang phòng mua hàng và phòng mua hàng mới hỏi báo giá; khóa luận dừng ở bước
+    lập và duyệt phiếu đề nghị đặt hàng gửi phòng mua hàng. Bộ dữ liệu M5 không
+    có thông tin nhà cung cấp nên các bước này không thể mô hình hóa từ dữ liệu.
+    Đây là \emph{giới hạn phạm vi}, không phải hạn chế của phương pháp: khi có
+    dữ liệu nhà cung cấp, đầu ra của mô hình có thể nối vào luồng tự động hóa
+    này.
 \end{itemize}
 
 \section{Phương pháp nghiên cứu}

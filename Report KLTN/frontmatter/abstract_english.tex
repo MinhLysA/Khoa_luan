@@ -26,16 +26,22 @@ one to three days. PS-IPPO is compared with three classical policies tuned on
 the validation period, over several training seeds and with paired statistical
 tests.
 
-% UPDATE AFTER THE FINAL CAMPAIGN: figures below come from 3 seeds x 1,000 episodes.
-At a matched service level, PS-IPPO achieves a total operating cost $10.2\%$
-lower than $(s, S)$ and $14.4\%$ lower than the Newsvendor policy, while EOQ does
-not reach that service level. The advantage is concentrated in volatile demand
-periods (event days, weekends); under stable demand, $(s,S)$ attains a lower
-cost. Parameter sharing maintains performance for medium- and high-demand
-products but allocates a lower service level to low-demand products. The
-contribution is a PS-IPPO framework with shared warehouse capacity on real
-retail data, together with an evaluation protocol that separates operating cost,
-service level and the training signal.
+With the main model ($10{,}000$ episodes $\times$ $3$ seeds), at the operating
+point each method selects for itself, PS-IPPO has a total cost close to the best
+classical policies --- $1.7\%$ below $(s, S)$ and $17.8\%$ below EOQ, and on par
+with the versions tuned per demand-scale group --- while reaching a service level
+about $4$--$5$ percentage points higher ($90.9\%$ versus $85.8$--$86.2\%$). When
+the classical policies are forced to a comparable service level ($\approx 90\%$)
+they cost $17.3$--$25.7\%$ more than PS-IPPO (an upper bound, because the
+parameter grid is coarse), and EOQ cannot reach it. Under stable demand,
+group-tuned classical policies match or beat PS-IPPO; its advantage is
+concentrated in volatile demand periods (event days, weekends, demand shocks).
+Parameter sharing maintains performance for medium- and high-demand products,
+but the service level of low-demand products falls short of the target ($28.7\%$
+of pairs below $85\%$). The contributions are a PS-IPPO framework with shared
+warehouse capacity on real retail data, an evaluation protocol that separates
+operating cost, service level and the training signal, and a simulation
+application that proposes purchase orders from the trained model.
 
 \vspace{0.3cm}
 \noindent\textbf{Keywords:} inventory management; multi-agent reinforcement

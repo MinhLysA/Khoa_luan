@@ -26,10 +26,11 @@ nhóm phân tích chuyên sâu (mục thứ năm dưới đây):
     \item Cài đặt và huấn luyện IPPO: triển khai thuật toán Independent
     Multi-Agent PPO \parencite{dewitt2020ippo} với cơ chế chia sẻ tham số
     \parencite{gupta2017}, sử dụng GAE \parencite{schulman2016gae} và chuẩn hóa
-    lợi thế theo từng cặp. Mô hình hội tụ ổn định trên quy mô $300$ tác
-    tử sau khoảng $600$--$800$ episode, với entropy giảm từ $1{,}778$ xuống
-    $0{,}18$ và explained variance của Critic duy trì quanh $0{,}75$--$0{,}80$,
-    nhất quán trên cả $3$ hạt giống huấn luyện độc lập đã kiểm chứng.
+    lợi thế theo từng cặp; $300$ tác tử dùng chung một mạng chính sách. Mô
+    hình chính được huấn luyện $10.000$ episode trên $3$ hạt giống độc lập và
+    hội tụ ổn định: phần thưởng đi ngang từ khoảng episode $1.200$, entropy giảm
+    từ $1{,}779$ xuống $0{,}13$ và explained variance của Critic duy trì quanh
+    $0{,}84$, nhất quán trên cả $3$ hạt giống.
 
     \item Đánh giá đối chứng: so sánh IPPO với ba chính sách cổ điển
     (EOQ, $(s, S)$, Newsvendor) trên $30$ episode đánh giá dùng chung hạt
@@ -42,70 +43,93 @@ nhóm phân tích chuyên sâu (mục thứ năm dưới đây):
     đoạn nhu cầu (ổn định, biến động, sự kiện, mùa lễ) và thử sốc cầu nhân tạo
     (thực nghiệm B); kiểm tra bằng thực nghiệm tính hợp lý của hành vi đặt
     hàng, dấu hiệu khai thác phần thưởng và tầm quan trọng của từng nhóm đặc
-    trưng trạng thái. Kết quả mô phỏng được đưa lên ứng dụng Streamlit cho
-    phép xem diễn biến theo từng ngày của từng cặp kho--mặt hàng (nhu cầu, tồn
-    kho, hàng đang về, lượng đặt, thiếu hàng, phần thưởng, cảnh báo thiếu hàng).
+    trưng trạng thái. Kết quả mô phỏng được đưa lên một ứng dụng mô phỏng
+    (Streamlit) chỉ nạp checkpoint đã huấn luyện và chạy trên miền test, không
+    huấn luyện lại. Ứng dụng cho phép xem kết quả tổng hợp, xem diễn biến theo
+    từng ngày của từng cặp kho--mặt hàng (nhu cầu, tồn kho, hàng đang về, lượng
+    đặt, thiếu hàng), so sánh các chính sách, thử kịch bản tăng cầu, và xem đơn
+    đặt hàng đề xuất theo ngày kèm bước duyệt phiếu (Nháp, Đã duyệt, Từ chối).
 \end{enumerate}
+
+Phạm vi của sản phẩm là \emph{mô phỏng và đề xuất}: đầu ra của mô hình là yêu
+cầu đặt hàng lại (số lượng, thời điểm, cho từng kho--mặt hàng) và dừng ở bước
+phiếu đề nghị gửi sang bộ phận mua hàng. Hỏi báo giá, chọn và gửi nhà cung cấp
+nằm ngoài phạm vi, vì dữ liệu M5 không có thông tin nhà cung cấp; đây là giới
+hạn phạm vi chứ không phải giới hạn kỹ thuật, và có thể mở rộng thành luồng tự
+động khi có dữ liệu nhà cung cấp.
 
 \subsection{Trả lời các câu hỏi nghiên cứu}
 \label{subsec:traLoiCauHoi}
 
-Câu hỏi 1 (IPPO so với các chính sách cổ điển). Câu trả lời là
-khẳng định, nhưng chỉ khi mức phục vụ được kiểm soát. Ở điểm vận hành mà mỗi
-phương pháp tự chọn, IPPO \textbf{không} rẻ hơn các chính sách cổ điển: gộp
-trên $3$ hạt giống huấn luyện $\times$ $30$ episode đánh giá, IPPO đắt hơn
-$(s, S)$ $4{,}89\%$ và Newsvendor $3{,}16\%$ (dù vẫn rẻ hơn EOQ $10{,}41\%$),
-khác biệt có ý nghĩa thống kê rất cao ($p = 5{,}45 \times 10^{-33}$ với kiểm
-định $t$ Welch; Cohen's $d = 4{,}06$) và nhất quán trên cả $3$ hạt giống độc
-lập. Nguyên nhân là IPPO dịch chuyển tới mức phục vụ $90{,}5\%$ --- cao hơn hẳn
-$75$--$84\%$ của ba chính sách cổ điển --- nên đây không phải là ưu thế Pareto
-mà là một điểm khác trên đường đánh đổi chi phí--mức phục vụ.
+Câu hỏi 1 (IPPO so với các chính sách cổ điển). Câu trả lời là khẳng định có
+điều kiện, và không mang tính chiếm ưu thế tuyệt đối. Ở điểm vận hành mà mỗi
+phương pháp tự chọn, IPPO đạt tổng chi phí xấp xỉ các chính sách cổ điển tốt
+nhất: gộp trên $3$ hạt giống huấn luyện $\times$ $30$ lần đánh giá, IPPO rẻ hơn
+$(s, S)$ $1{,}7\%$ và EOQ $17{,}8\%$ (nhất quán ở cả $3$ hạt giống), ngang
+$(s, S)$ theo nhóm ($+0{,}3\%$), EOQ theo nhóm ($-0{,}9\%$) và Newsvendor
+($-0{,}3\%$) --- các chênh lệch này đổi dấu giữa các hạt giống --- và đắt hơn
+Newsvendor theo nhóm $1{,}6\%$ ở cả $3$ hạt giống. Điều IPPO đạt thêm là mức
+phục vụ cao hơn: $90{,}9\%$ so với $85{,}8$--$86{,}2\%$ của bốn bản $(s, S)$,
+$(s, S)$ theo nhóm, EOQ theo nhóm và Newsvendor theo nhóm, tức cao hơn khoảng
+$4$--$5$ điểm phần trăm với cùng một mức chi phí.
 
-Khi so sánh ở cùng mức phục vụ ($\approx 90\%$) --- phép so sánh chặt chẽ hơn
-về mặt phương pháp luận vì loại bỏ được sai lệch do hai mục tiêu tối ưu khác
-nhau --- kết luận đảo chiều: IPPO rẻ hơn $(s, S)$ $10{,}2\%$ và rẻ hơn
-Newsvendor $14{,}4\%$, trong khi EOQ không có cấu hình nào đạt được mức phục vụ
-đó do cấu trúc lượng đặt hàng cố định. Nguyên nhân là các chính sách cổ điển
-chỉ có thể nâng mức phục vụ bằng cách tăng tham số an toàn áp dụng đồng loạt
-cho cả $300$ cặp --- khiến chi phí tăng đáng kể ở cả những mặt hàng vốn đã đạt mức
-phục vụ tốt --- còn IPPO điều chỉnh theo từng trạng thái quan sát được. Khóa
-luận coi phép so sánh ở cùng mức phục vụ là căn cứ chính đáng để trả lời Câu
-hỏi 1, và ghi nhận rõ ràng rằng phép so sánh trực tiếp không kiểm soát mức
-phục vụ có thể dẫn tới kết luận ngược lại.
+Khi so sánh ở cùng mức phục vụ ($\approx 90\%$), các baseline phải nâng tham số
+an toàn áp dụng đồng loạt cho cả $300$ cặp nên chi phí tăng mạnh: $(s, S)$ đắt
+hơn IPPO $25{,}7\%$ và Newsvendor đắt hơn $17{,}3\%$, còn EOQ không có cấu hình
+nào đạt được mức phục vụ đó do cấu trúc lượng đặt hàng cố định. Cần đọc các con
+số này với một cảnh báo: lưới tham số của baseline thô nên chúng vượt mục tiêu
+phục vụ hơn một điểm phần trăm ($92{,}65\%$ và $92{,}28\%$ so với $90{,}15\%$), vì
+vậy $25{,}7\%$ và $17{,}3\%$ là cận trên của lợi thế chi phí chứ không phải ước
+lượng chính xác. Khóa luận không khẳng định IPPO rẻ hơn các chính sách cổ điển ở
+mọi nơi, mà khẳng định: IPPO duy trì mức phục vụ cao hơn mà không đắt hơn các
+baseline mạnh nhất, và rẻ hơn rõ rệt khi các baseline phải nâng mức phục vụ lên
+tương đương.
 
-Thực nghiệm B bổ sung sắc thái cho câu trả lời này. Khi nhu cầu ổn định,
-$(s,S)$ tinh chỉnh trực tiếp rẻ hơn IPPO vài phần trăm; ưu thế của IPPO tập
-trung ở giai đoạn biến động --- fill rate chỉ giảm $2{,}4$ điểm phần trăm từ
-ngày ổn định sang ngày biến động (so với $5$--$7$ điểm của $(s,S)$), rẻ hơn
-khoảng $10\%$ ở ngày có sự kiện và cuối tuần dù phục vụ tốt hơn, và tốn ít hơn
-khoảng $29\%$--$32\%$ chi phí khi chống đỡ một cú sốc tăng cầu $50\%$. Các
-chênh lệch ở ngày ổn định, ngày có sự kiện và cuối tuần đều có ý nghĩa thống kê
-theo bootstrap khối tuần. Mùa lễ cuối năm là giai đoạn IPPO yếu nhất, nhưng dữ
-liệu chỉ có $9$ tuần nên chưa đủ để kết luận chắc chắn. Ở cùng mức phục vụ, IPPO
-rẻ hơn $(s,S)$ ở cả tám nhóm ngày, và rẻ hơn ở cả $36$ bộ đơn giá chi phí trong
-phân tích độ nhạy. Kết luận hợp lý vì vậy không phải ``học
-tăng cường tốt hơn'' một cách chung chung, mà là: chính sách cổ điển đủ tốt khi
-nhu cầu ổn định, còn IPPO có giá trị khi nhu cầu biến động nhanh.
+Thực nghiệm B (theo giai đoạn nhu cầu) bổ sung sắc thái cho câu trả lời này và
+khớp với nhận định rằng chính sách tĩnh như EOQ hay $(s,S)$ đã tinh chỉnh có thể
+đủ tốt khi nhu cầu ổn định, còn học tăng cường có giá trị khi nhu cầu biến động.
+Khi nhu cầu ổn định hoặc vào ngày thường, IPPO ngang $(s,S)$ tinh chỉnh trực tiếp
+nhưng đắt hơn Newsvendor theo nhóm $2{,}3$--$3{,}3\%$ (có ý nghĩa thống kê). Ưu thế
+của IPPO tập trung ở giai đoạn biến động: fill rate chỉ giảm $2{,}2$ điểm phần trăm
+từ ngày ổn định sang ngày biến động (so với $6{,}5$ điểm của $(s,S)$), rẻ hơn
+$(s,S)$ $7{,}5\%$ ở ngày có sự kiện và $8{,}6\%$ ở cuối tuần dù phục vụ tốt hơn
+(nhưng không có ý nghĩa thống kê so với Newsvendor theo nhóm), và tốn ít chi phí
+hơn khoảng $13\%$--$17\%$ so với $(s,S)$ và Newsvendor trực tiếp khi chống đỡ một cú
+sốc tăng cầu $50\%$ (fill rate tương đương hoặc cao hơn); sau cú sụt cầu $50\%$, các chính
+sách cổ điển tinh chỉnh trực tiếp tụt xuống $82{,}9$--$83{,}4\%$ còn IPPO giữ
+$90{,}8\%$. Mùa lễ cuối năm là giai đoạn IPPO yếu nhất (đắt hơn Newsvendor theo
+nhóm $10{,}1\%$, có ý nghĩa thống kê), nhưng dữ liệu chỉ có $9$ tuần nên chưa đủ để
+kết luận chắc chắn. Về độ nhạy, ở cùng mức phục vụ IPPO rẻ hơn ở cả $36/36$ bộ đơn
+giá, còn so thẳng với các baseline theo nhóm IPPO chỉ rẻ hơn ở $18$--$24$ trong $36$
+bộ. Kết luận hợp lý vì vậy không phải ``học tăng cường tốt hơn'' một cách chung
+chung, mà là: chính sách cổ điển đủ tốt khi nhu cầu ổn định, còn IPPO có giá trị
+khi nhu cầu biến động nhanh và khi cần mức phục vụ cao.
 
 Câu hỏi 2 (hiệu năng theo nhóm quy mô nhu cầu). Câu trả lời là có điều
 kiện. Một bộ trọng số duy nhất điều khiển được $300$ cặp có nhu cầu từ dưới
 $0{,}1$ đến $143$ đơn vị mỗi ngày, và ở nhóm nhu cầu trung bình và cao IPPO vượt
 $(s,S)$ trên cả fill rate lẫn chi phí. Tuy nhiên, ở nhóm bán chậm (dưới $2$ đơn
-vị mỗi ngày) IPPO phục vụ kém hơn $(s,S)$; phân tích phân bố cho thấy $39\%$ số
-cặp của IPPO dưới ngưỡng $85\%$. Nguyên nhân chủ yếu nằm ở cách định cỡ hình
-phạt mức phục vụ theo $\bar{D}^{(i)}$ chứ không phải ở khả năng biểu diễn của
-mạng dùng chung (Mục~\ref{subsec:tongQuatHoa}, \ref{subsec:kiemTraStateReward}).
-Khả năng áp dụng cho mặt hàng chưa từng gặp khi huấn luyện chưa được kiểm chứng.
+vị mỗi ngày) IPPO phục vụ kém hơn $(s,S)$ ($74{,}2\%$ so với $84{,}3\%$ ở nhóm dưới
+$0{,}5$ đơn vị mỗi ngày); phân tích phân bố cho thấy $28{,}7\%$ số cặp của IPPO
+dưới ngưỡng $85\%$ (so với $5{,}7\%$ của $(s,S)$ cùng mức phục vụ). Hình phạt
+chuẩn hóa giảm nhưng không loại bỏ hiện tượng này ($28{,}3\%$ so với $33{,}0\%$
+cặp dưới $85\%$ khi so với hình phạt tỷ lệ theo nhu cầu, cùng ngân sách $1.000$
+episode). Về mặt hàng chưa từng gặp khi huấn luyện, một thí nghiệm hold-out ($6$
+mặt hàng bị giữ lại, $60$ cặp, một hạt giống) cho chi phí tương đương mô hình đã
+gặp mặt hàng đó ($+0{,}1\%$, $p = 0{,}67$), tức không có dấu hiệu suy giảm; kết
+quả này chỉ trên một hạt giống và một tập $6$ mặt hàng nên cần kiểm chứng thêm.
 
-Câu hỏi 3 (thiết kế tín hiệu phần thưởng). Về khía cạnh chuẩn hóa, có bằng chứng
-sơ bộ ủng hộ. Một lần chạy loại trừ tắt chuẩn hóa phần thưởng theo cặp (dừng ở
-khoảng $625$ episode) cho tổng chi phí cao gấp khoảng $3{,}2$ lần và fill rate
-chỉ $80{,}7\%$, so với lần huấn luyện gốc ở cùng khoảng episode
-(Mục~\ref{subsec:ablationReward}). Đáng chú ý là Critic khi đó đạt explained
-variance gần $1$ nhưng chính sách vẫn kém. Điều này khớp với lập luận rằng
-return chênh nhau nhiều bậc độ lớn khiến tín hiệu học bị các cặp nhu cầu lớn chi
-phối. Kết luận định lượng đầy đủ chờ lần chạy $1.000$ episode trong đợt thực
-nghiệm bổ sung.
+Câu hỏi 3 (thiết kế tín hiệu phần thưởng). Có bằng chứng ủng hộ phần thưởng
+cục bộ có chuẩn hóa theo cặp. Trên $3$ hạt giống, mỗi lần chạy $1.000$ episode
+và so với lần tham chiếu cùng hạt giống, phần thưởng toàn cục làm tổng chi phí
+tăng trung bình $419{,}6\%$ và việc tắt chuẩn hóa theo cặp làm tăng trung bình
+$214{,}3\%$, đều có ý nghĩa thống kê ở cả $3$ hạt giống và lớn hơn nhiều dao động
+$1{,}6\%$ giữa các hạt giống của lần tham chiếu (Mục~\ref{subsec:ablationReward}).
+Đáng chú ý là Critic khi không chuẩn hóa đạt explained variance $1{,}00$ nhưng
+chính sách vẫn kém, khớp với lập luận rằng return chênh nhau nhiều bậc độ lớn
+khiến tín hiệu học bị các cặp nhu cầu lớn chi phối. Giới hạn: các lần chạy chỉ
+dài $1.000$ episode và entropy còn cao, nên chưa thể loại trừ khả năng các biến
+thể chỉ học chậm hơn.
 
 \section{Những hạn chế còn tồn tại}
 \label{sec:hanChe}
@@ -123,35 +147,41 @@ nghiệm bổ sung.
     đặc biệt đáng lưu ý vì Zhu và Wu \cite{zhu2026spatiotemporal} báo cáo mức
     suy giảm đáng kể khi loại bỏ cơ chế phối hợp trong khung của họ.
 
-    \item Số episode mỗi hạt giống huấn luyện: kết quả chính được kiểm
-    chứng trên $3$ hạt giống độc lập theo khuyến nghị của Henderson và cộng sự
-    \cite{henderson2018}, mỗi hạt giống $1.000$ episode. Huấn luyện tiếp hạt
-    giống $42$ tới khoảng $4.083$ episode đã giảm thêm khoảng $5\%$ chi phí,
-    cho thấy $1.000$ episode chưa phải điểm bão hòa; kết quả dài hơn mới có trên
-    một hạt giống.
+    \item Số hạt giống của từng phân tích: kết quả chính được kiểm chứng trên $3$
+    hạt giống độc lập, mỗi hạt giống $10.000$ episode theo khuyến nghị của
+    Henderson và cộng sự \cite{henderson2018}. Nhưng các phân tích sâu (Thực
+    nghiệm B, so sánh cùng mức phục vụ, kiểm tra hành vi, độ nhạy đơn giá, độ bền
+    zero-shot) chỉ dùng hạt giống $42$, còn các thí nghiệm loại trừ ngoài thiết kế
+    phần thưởng và thí nghiệm hold-out chỉ chạy một hạt giống, $1.000$ episode.
 
-    \item Mất cân bằng mức phục vụ giữa các mặt hàng: hình phạt mức phục
-    vụ tỷ lệ với nhu cầu trung bình nên chính sách phân bổ mức phục vụ thấp hơn cho
-    mặt hàng bán chậm mà vẫn đạt mục tiêu chung; $39\%$ số cặp có fill rate dưới $85\%$.
+    \item Phép so sánh cùng mức phục vụ bị phóng đại: lưới tham số baseline thô
+    nên các baseline vượt mục tiêu phục vụ hơn một điểm phần trăm, làm khoảng cách
+    chi phí ($25{,}7\%$ và $17{,}3\%$) là cận trên. Ở phép so sánh trực tiếp, IPPO
+    chỉ ngang các baseline theo nhóm về chi phí.
+
+    \item Mất cân bằng mức phục vụ giữa các mặt hàng: dù đã dùng hình phạt chuẩn
+    hóa, $28{,}7\%$ số cặp có fill rate dưới $85\%$ (so với $33{,}0\%$ khi dùng
+    hình phạt tỷ lệ theo nhu cầu ở cùng ngân sách $1.000$ episode), tập trung ở nhóm
+    mặt hàng bán chậm; mục tiêu mức phục vụ chỉ được đáp ứng ở cấp hệ thống.
 
     \item Giới hạn của thực nghiệm theo giai đoạn: miền test chỉ dài $491$
     ngày nên các episode chồng lấn nhau. Bootstrap theo khối tuần cho khoảng tin
     cậy của từng giai đoạn nhưng không loại bỏ hết tự tương quan, và mùa lễ chỉ
-    có $9$ tuần nên kết luận về mùa lễ chưa có ý nghĩa thống kê.
+    có $9$ tuần nên kết luận về mùa lễ chưa chắc chắn.
 
-    \item Kết quả chính và các phân tích bổ sung dùng hai checkpoint khác
-    nhau: các bảng chính dùng $3$ hạt giống $\times$ $1.000$ episode, còn thực
-    nghiệm B, phần kiểm tra hành vi và phân tích độ nhạy dùng checkpoint hạt
-    giống $42$ huấn luyện tiếp tới khoảng $4.083$ episode. Đợt thực nghiệm bổ
-    sung (Mục~\ref{subsec:dotBoSung}) thống nhất lại toàn bộ trên một cấu hình.
+    \item Đặc trưng lịch và đặc trưng giá gần như không được khai thác: $27$
+    chiều lịch chỉ đóng góp khoảng $5{,}3\%$ chi phí và $1$ chiều tín hiệu giá
+    đóng góp dưới $1\%$ theo phân tích permutation importance (tổng cộng $28/44$
+    chiều quan sát), thêm đặc trưng sự kiện sắp tới không cải thiện vượt dao động
+    giữa hạt giống, và IPPO yếu nhất ở mùa lễ.
 
-    \item Hình phạt mức phục vụ tỷ lệ theo nhu cầu: mọi kết quả ở
-    Chương~\ref{chap:chapter4} dùng cách định cỡ cũ. Biến thể chuẩn
-    hóa~(\ref{eq:phatChuanHoa}) đã cài đặt nhưng chưa có kết quả huấn luyện.
-
-    \item Đặc trưng lịch gần như không được khai thác: $27/43$ chiều
-    quan sát chỉ đóng góp khoảng $3{,}5\%$ chi phí theo phân tích permutation
-    importance, và IPPO yếu nhất ở mùa lễ.
+    \item Dữ liệu từ một thị trường duy nhất: dữ liệu M5 là dữ liệu bán lẻ của
+    Walmart tại Hoa Kỳ, và vector lịch (sự kiện, SNAP) phản ánh lịch của Hoa
+    Kỳ. Mô hình học từ dữ liệu (data-driven) nên khi áp dụng cho Việt Nam
+    \emph{không} thể dùng lại trọng số đã học: cần huấn luyện lại trên dữ liệu
+    bán hàng của Việt Nam và thay vector lịch bằng lịch lễ Việt Nam (Tết Nguyên
+    đán, các ngày nghỉ lễ, mùa khuyến mãi), trong khi kiến trúc mô hình và quy
+    trình huấn luyện được giữ nguyên.
 
     \item Không gian hành động rời rạc thô: chỉ có $K = 6$ mức đặt
     hàng; trong thực tế, doanh nghiệp có thể cần quyết định lượng đặt chính xác
@@ -167,38 +197,38 @@ nghiệm bổ sung.
 \section{Hướng phát triển trong tương lai}
 \label{sec:huongPhatTrien}
 
-\subsection{Đợt thực nghiệm bổ sung đã cài đặt}
+\subsection{Đợt thực nghiệm cuối đã hoàn tất và các thí nghiệm còn lại}
 \label{subsec:dotBoSung}
 
-Các hạn chế nêu ở Mục~\ref{sec:hanChe} đều đã được chuyển thành thí nghiệm cụ
-thể. Toàn bộ mã nguồn đã được cài đặt và kiểm thử (tổng cộng $39$ kiểm thử đơn
-vị), và được gom vào một kịch bản duy nhất (\texttt{scripts/campaign.py}) có
-khả năng huấn luyện tiếp khi bị gián đoạn. Riêng phần huấn luyện (khoảng $25$
-giờ CPU) chưa hoàn tất tại thời điểm viết báo cáo. Mỗi thí nghiệm loại trừ chỉ
-khác cấu hình tham chiếu đúng một thay đổi (Bảng~\ref{tab:dotBoSung}); cấu hình
-tham chiếu dùng hình phạt mức phục vụ chuẩn hóa~(\ref{eq:phatChuanHoa}).
+Các hạn chế nêu ở Mục~\ref{sec:hanChe} đã được chuyển thành thí nghiệm cụ thể và
+đợt thực nghiệm cuối ($19$ lần huấn luyện, gom vào một kịch bản duy nhất
+\texttt{scripts/campaign.py} có khả năng huấn luyện tiếp khi bị gián đoạn) đã
+chạy xong; kết quả nằm ở Chương~\ref{chap:chapter4} (Bảng~\ref{tab:dotBoSung}
+liệt kê từng lần chạy). Mỗi thí nghiệm loại trừ chỉ khác cấu hình tham chiếu đúng
+một thay đổi; cấu hình tham chiếu và mô hình chính dùng hình phạt mức phục vụ
+chuẩn hóa~(\ref{eq:phatChuanHoa}).
 
 \begin{table}[htbp]
     \centering
-    \caption{Đợt thực nghiệm bổ sung: mã nguồn đã sẵn sàng, đang chờ huấn luyện}
+    \caption{Đợt thực nghiệm cuối: các lần chạy, và nơi báo cáo kết quả}
     \label{tab:dotBoSung}
     \small
     \begin{tabular}{|p{3.0cm}|p{5.6cm}|p{4.8cm}|}
         \hline
-        \textbf{Lần chạy} & \textbf{Thay đổi so với tham chiếu} & \textbf{Trả lời câu hỏi} \\
+        \textbf{Lần chạy} & \textbf{Thay đổi so với tham chiếu} & \textbf{Kết quả} \\
         \hline
-        Mô hình chính ($3$ hạt giống $\times$ $4.000$ episode) & Hình phạt mức phục vụ chuẩn hóa & Mặt hàng bán chậm còn bị phân bổ mức phục vụ thấp hơn không; kết luận ``không đắt hơn $(s,S)$'' có lặp lại trên $3$ hạt giống không \\ \hline
+        Mô hình chính ($3$ hạt giống $\times$ $10.000$ episode) & Hình phạt mức phục vụ chuẩn hóa & Mục~\ref{subsec:soSanhChiPhi}: ngang các baseline mạnh nhất về chi phí, mức phục vụ cao hơn $4$--$5$ điểm \\ \hline
         Tham chiếu $1.000$ episode & --- & Mốc so sánh cho các thí nghiệm loại trừ \\ \hline
-        Phần thưởng toàn cục ($3$ hạt giống) & \texttt{reward\_mode: global} & Câu hỏi 3: cục bộ so với toàn cục \\ \hline
-        Tắt chuẩn hóa theo cặp ($3$ hạt giống) & \texttt{normalize\_reward\_per\_pair: false} & Câu hỏi 3: có/không chuẩn hóa \\ \hline
-        Baseline theo nhóm quy mô cầu & Mỗi nhóm cầu một bộ tham số (s,S), Newsvendor, EOQ & So sánh với đối thủ mạnh hơn \\ \hline
-        Độ bền theo điều kiện vận hành & Sức chứa 4/6 ngày, lead time 2--3 hoặc luôn 3 ngày, nhu cầu $\pm 20\%$ (không huấn luyện lại) & Kết luận có đứng vững khi môi trường thay đổi \\ \hline
-        Phạt SLA kiểu cũ & \texttt{service\_penalty\_mode: demand} & Tác động của việc định cỡ lại hình phạt \\ \hline
-        Actor--Critic chung thân & \texttt{shared\_trunk: true}, một optimizer & Vì sao phải tách hai mạng (Mục~\ref{subsec:ablationTrunk}) \\ \hline
-        Bỏ đặc trưng lịch / cấp kho & \texttt{obs\_drop} & Trạng thái có biến dư thừa không \\ \hline
-        Thêm sự kiện sắp tới & $2$ đặc trưng: số ngày tới sự kiện kế tiếp, có sự kiện trong $7$ ngày & Khắc phục điểm yếu mùa lễ \\ \hline
-        Warm-start & Lịch sử nhu cầu khởi tạo bằng dữ liệu thật & Ảnh hưởng của lịch sử rỗng đầu episode \\ \hline
-        Hold-out mặt hàng & Huấn luyện $24$ mặt hàng, đánh giá $6$ mặt hàng chưa gặp & Câu hỏi 2 (tổng quát hóa) \\
+        Phần thưởng toàn cục ($3$ hạt giống) & \texttt{reward\_mode: global} & Mục~\ref{subsec:ablationReward}: chi phí tăng $419{,}6\%$ \\ \hline
+        Tắt chuẩn hóa theo cặp ($3$ hạt giống) & \texttt{normalize\_reward\_per\_pair: false} & Mục~\ref{subsec:ablationReward}: chi phí tăng $214{,}3\%$ \\ \hline
+        Baseline theo nhóm quy mô cầu & Mỗi nhóm cầu một bộ tham số (s,S), Newsvendor, EOQ & Mục~\ref{subsec:soSanhChiPhi}: đối thủ mạnh nhất, ngang IPPO về chi phí \\ \hline
+        Độ bền theo điều kiện vận hành & Sức chứa 4/6 ngày, lead time 2--3 hoặc luôn 3 ngày, nhu cầu $\pm 20\%$ (không huấn luyện lại) & Mục~\ref{subsec:doBen}: bền, yếu khi nhu cầu giảm $20\%$ \\ \hline
+        Phạt SLA kiểu cũ & \texttt{service\_penalty\_mode: demand} & Mục~\ref{subsec:ablationKhac}: $-2{,}5\%$, một hạt giống \\ \hline
+        Actor--Critic chung thân & \texttt{shared\_trunk: true}, một optimizer, tắt value norm & Mục~\ref{subsec:ablationTrunk}: $+13{,}2\%$ \\ \hline
+        Bỏ đặc trưng lịch / cấp kho & \texttt{obs\_drop} & Mục~\ref{subsec:ablationKhac}: lịch $-1{,}6\%$ (trong dao động), cấp kho $+141{,}5\%$ \\ \hline
+        Thêm sự kiện sắp tới & $2$ đặc trưng: số ngày tới sự kiện kế tiếp, có sự kiện trong $7$ ngày & Mục~\ref{subsec:ablationKhac}: $-0{,}8\%$ (trong dao động) \\ \hline
+        Warm-start & Lịch sử nhu cầu khởi tạo bằng dữ liệu thật & Mục~\ref{subsec:ablationKhac}: $-5{,}4\%$ (môi trường khác) \\ \hline
+        Hold-out mặt hàng & Huấn luyện $24$ mặt hàng, đánh giá $6$ mặt hàng chưa gặp & Mục~\ref{subsec:tongQuatHoa}: $+0{,}1\%$, không khác biệt \\
         \hline
     \end{tabular}
 \end{table}
@@ -207,8 +237,10 @@ Giao thức đánh giá của đợt này cũng được củng cố: baseline t
 val (cùng miền dùng để chọn checkpoint IPPO) thay vì miền train; báo cáo kiểm
 định $t$ theo cặp cùng hệ số $d_z$; đánh giá thêm trên các cửa sổ cố định trải
 đều miền test; và dùng khoảng tin cậy bootstrap theo khối tuần cho từng giai
-đoạn nhu cầu. Các công cụ phân tích này đã được áp dụng ngay cho kết quả hiện
-có ở Chương~\ref{chap:chapter4}.
+đoạn nhu cầu. Còn lại chưa làm: lặp các thí nghiệm loại trừ trên nhiều hạt giống
+và huấn luyện chúng tới $10.000$ episode; lưới tham số mịn hơn quanh mức phục vụ
+$90{,}15\%$ cho phép so sánh cùng mức phục vụ; thí nghiệm loại trừ riêng cho tín
+hiệu giá.
 
 \subsection{Các hướng mở rộng khác}
 
@@ -255,15 +287,21 @@ có ở Chương~\ref{chap:chapter4}.
 
     \item Tích hợp dự báo nhu cầu: nhúng mô hình dự báo chuỗi thời
     gian (LSTM, Transformer) vào vector quan sát của tác tử, tận dụng thông tin
-% VIET LAI THEO SO LIEU CUOI: 'da du vuot cac chinh sach co dien' chua duoc so lieu xac nhan (xem ghi chu C4 muc hieu qua tinh toan).
-    xu hướng và mùa vụ. Cần lưu ý rằng kết quả hiện tại cho thấy phương án
-    không dùng dự báo đã đủ vượt các chính sách cổ điển với chi phí tính toán
-    thấp hơn nhiều bậc, nên hướng này cần được đánh giá trên tương quan
-    lợi ích --- chi phí chứ không mặc nhiên là một cải tiến.
+    xu hướng và mùa vụ. Phương án hiện tại không dùng dự báo và có chi phí tính
+    toán thấp (khoảng $220$--$280$ phút huấn luyện mỗi hạt giống), nên hướng này
+    cần được đánh giá trên tương quan lợi ích --- chi phí chứ không mặc nhiên là
+    một cải tiến.
 
-    \item Triển khai thử nghiệm thực tế: xây dựng hệ thống dạng SaaS
-    kết nối API với nền tảng quản lý kho, cho phép đánh giá mô hình trên dữ liệu
-    vận hành trực tiếp.
+    \item Triển khai thử nghiệm thực tế: nâng ứng dụng mô phỏng hiện tại thành
+    một hệ thống kết nối API với nền tảng quản lý kho (hướng dạng SaaS), cho phép
+    đánh giá mô hình trên dữ liệu vận hành trực tiếp, và nối luồng phiếu đề nghị
+    đặt hàng với bộ phận mua hàng (hỏi báo giá, chọn nhà cung cấp) khi có dữ liệu
+    nhà cung cấp. Khóa luận hiện dừng ở bước phiếu đề nghị.
+
+    \item Áp dụng cho thị trường Việt Nam: thu thập dữ liệu bán hàng của doanh
+    nghiệp Việt Nam, thay vector lịch Hoa Kỳ bằng lịch lễ Việt Nam (Tết Nguyên
+    đán, các ngày nghỉ lễ), và huấn luyện lại mô hình với kiến trúc giữ nguyên;
+    trọng số học từ dữ liệu Walmart không được dùng lại.
 
     \item Mở rộng quy mô: thử nghiệm với toàn bộ $3.049$ SKU gốc của
     M5 và đánh giá khả năng mở rộng của cơ chế chia sẻ tham số.
