@@ -1,61 +1,139 @@
-# Tổng hợp thay đổi đề tài PS-IPPO
+# Báo cáo thay đổi đề tài khóa luận: trước và sau
 
-Cập nhật: 31/10/2026, 12:05. "Trước" là trạng thái đầu phiên làm việc ngày 31/10 (commit `fcd1673`). "Hiện tại" là bản đang nằm trên máy, **chưa commit**.
+- **Đề tài:** Xây dựng mô hình học tăng cường tối ưu hóa chính sách đặt hàng lại trong quản lý tồn kho đa kho
+- **Sinh viên:** Lê Minh Lý (52300220), Sử Thị Yến Linh (52300218)
+- **Giảng viên hướng dẫn:** TS. Hồ Thị Linh
+- **Cập nhật:** 31/10/2026. "Trước" là bản đến commit `fcd1673`, "sau" là bản hiện tại.
 
 ## 1. Tóm tắt
 
-- **Hướng đề tài đổi.** Trên mô hình seed 42, ở cùng mức phục vụ, IPPO rẻ hơn mọi chính sách cổ điển 7,3–22,3% nhưng đắt hơn chính sách dự báo 4,3%. Luận điểm mới: "So với dự báo rồi tối ưu, học tăng cường thêm được gì, trong điều kiện nào?".
-- **Thêm biến thể U5** (tác tử chọn hệ số an toàn trên nền dự báo). Đây là ứng viên tốt nhất để có kết quả dương thật.
-- **Code sẵn sàng train:** 77 test pass, đã rà hai vòng và sửa 18 lỗi.
-- **Train local:** đã bỏ hai notebook Colab, có một lệnh duy nhất `python run.py full`.
-- **Báo cáo:** lý thuyết, phương pháp, bố cục đã xong (102 trang). Kết luận ở C4, C5, tóm tắt đã viết lại theo số seed 42; số cuối chờ train xong.
-- **Chưa có:** số liệu cuối, và máy hiện tại không có GPU NVIDIA (xem mục 9).
+- **Đã đổi hướng câu hỏi chính.** Từ "IPPO có tốt hơn chính sách cổ điển không" sang "so với dự báo rồi tối ưu, học tăng cường thêm được gì và trong điều kiện nào".
+- **Lý do đổi:** khi thêm chính sách đối chứng dùng dự báo nhu cầu, chính sách này rẻ hơn IPPO. Giữ luận điểm cũ sẽ không bảo vệ được trước hội đồng.
+- **Đã bổ sung:** so sánh ở cùng mức phục vụ, chính sách đối chứng mạnh hơn, các biến thể có dự báo, nguồn cung chung giữa các kho và thống kê chặt hơn.
+- **Trạng thái:** lý thuyết, phương pháp và code đã xong. **Kết quả cuối chưa có**, mọi số trong tài liệu này là số sơ bộ của một hạt giống (seed 42), 10.000 tập, chỉ đánh giá lại trên mô hình đã có.
+- **Kết quả sơ bộ:** ở cùng mức phục vụ, IPPO rẻ hơn mọi chính sách cổ điển từ 7,3% đến 22,3%, nhưng đắt hơn chính sách dự báo 4,3%. Kết hợp IPPO với dự báo rút khoảng cách còn 1,0%, chưa vượt được.
 
-## 2. Trước và hiện tại
+## 2. Trước và sau khi thay đổi
 
-| Hạng mục | Trước | Hiện tại |
+| Nội dung | Trước | Sau |
 |---|---|---|
-| Câu hỏi nghiên cứu | 3 câu; Câu 1 hỏi IPPO có rẻ hơn ở mức 85% không | 4 câu; Câu 1 so với đối chứng có cùng thông tin, ở cùng mức phục vụ; Câu 4 về dự báo và cấu trúc hành động |
-| Chính sách đối chứng | EOQ, (s,S), Newsvendor | Thêm (s,S) biết sức chứa, Newsvendor dự báo, mốc biết trước nhu cầu |
-| So sánh cùng mức phục vụ | Lưới thô, ngưỡng lấy từ miền kiểm thử, chỉ bản một bộ tham số | Lưới mịn, chọn trên miền xác thực, dải ±0,2 điểm, có đường biên cho bản theo nhóm |
-| Thống kê | 3 seed, p-value theo cặp | 5 seed, IQM, bootstrap phân tầng theo khối 7 và 30 ngày |
-| Mô hình | Chỉ mô hình chính | Thêm U1, U2, U3, U4, U5, C', E2, mỗi biến thể đổi một thành phần |
-| Cách chạy | Notebook Colab, chạy tay từng bước | `python run.py full`, tự chọn tham số trên miền xác thực, tự nối tiếp khi bị ngắt |
-| Kiểm tra trước khi train | Chạy thử thủ công | `python run.py full --quick` trên bản sao |
-| Báo cáo | Kết luận IPPO "rẻ hơn rõ rệt" dựa trên lưới thô | Kết luận theo số đo mới: ngang chính sách cổ điển, chưa vượt chính sách dự báo; chỗ cần đổi số có đánh dấu `[SO-MOI]` |
-| Trình bày C4 | Theo loại thí nghiệm | Theo từng câu hỏi nghiên cứu |
+| Câu hỏi nghiên cứu | 3 câu, câu chính hỏi IPPO có rẻ hơn ở mức 85% không | 5 câu. Câu 1 so với đối chứng có cùng thông tin, ở cùng mức phục vụ. Thêm Câu 4 về dự báo và cấu trúc hành động, Câu 5 về điều kiện vận hành |
+| Chính sách đối chứng | EOQ, (s,S), Newsvendor | Thêm (s,S) biết sức chứa, Newsvendor dùng dự báo LightGBM, mốc biết trước nhu cầu |
+| Cách so sánh | Tổng chi phí, mỗi chính sách ở một mức phục vụ khác nhau; lưới tham số thô | Thêm so sánh ở cùng mức phục vụ trên đường biên chi phí–mức phục vụ; lưới mịn; chỉ chọn tham số trên miền xác thực |
+| Tính đa kho | Các kho chỉ chia sức chứa nội bộ, không ảnh hưởng lẫn nhau | Thêm thí nghiệm nguồn cung chung: mỗi mặt hàng có trần cung ứng toàn mạng, thiếu thì mọi kho bị cắt theo tỷ lệ |
+| Mô hình | Một mô hình PS-IPPO | Giữ mô hình chính làm mốc, thêm 6 biến thể, mỗi biến thể đổi một thành phần |
+| Sốc cầu | Chưa so với chính sách dự báo | Dự báo được tính lại trên nhu cầu đã đổi để so được |
+| Thống kê | 3 hạt giống, p-value theo cặp | 5 hạt giống, IQM, bootstrap phân tầng theo khối 7 và 30 ngày |
+| Quy trình chạy | Chạy tay trên Colab | Train local bằng một lệnh, tự nối tiếp khi bị ngắt |
+| Báo cáo | Kết luận IPPO rẻ hơn rõ rệt, dựa trên lưới thô | Trình bày theo từng câu hỏi nghiên cứu, kết luận theo số đo mới; các chỗ chờ số có đánh dấu `[SO-MOI]` |
 
-## 2a. Khai thác thêm đề tài (đợt 31/10/2026)
+## 3. Kết quả sơ bộ
 
-Bốn chỗ còn thiếu và cách xử lý:
+Đo trên miền kiểm thử 491 ngày, 30 lần đánh giá, một hạt giống. Đây chưa phải số cuối.
 
-| Chỗ thiếu | Trước | Hiện tại |
-|---|---|---|
-| "Đa kho" chưa thật sự đa kho | Kho chỉ chia sức chứa nội bộ, các kho không ảnh hưởng nhau | Thêm nguồn cung chung theo từng mặt hàng (`supply_cover`), chia theo tỷ lệ đơn, tác tử thấy tỷ lệ được cấp hôm trước |
-| Chưa so với dự báo khi sốc cầu | Newsvendor dự báo bị loại khỏi sốc cầu và kịch bản đổi mức cầu | `du_bao_lai`: giữ mô hình dự báo, tính lại đặc trưng trên nhu cầu đã đổi |
-| Chưa biết IPPO thắng ở đâu | Chỉ có fill theo nhóm | `scripts/hybrid_policy.py`: tách chi phí theo nhóm, kết hợp hai chính sách, chọn trên val |
-| Chưa có "trong điều kiện nào" | Độ nhạy không học lại | 12 lần train mới: nguồn cung ρ = 2 và 3, sức chứa 3 và 8 ngày, mỗi điều kiện có mô hình chính và bản nền dự báo |
+**So sánh trực tiếp**, mỗi chính sách dùng cấu hình tinh chỉnh của mình:
 
-Thêm hệ số roi da (`bullwhip`) vào `evaluate.py`, Câu hỏi 5 vào C1, mô hình nguồn cung vào C3, thiết kế và kết quả kết hợp vào C4, sửa hạn chế và hướng phát triển ở C5.
+| Chính sách | Tổng chi phí | Tỷ lệ đáp ứng | IPPO so với chính sách này |
+|---|---:|---:|---:|
+| IPPO | 2.052.496 | 90,65% | — |
+| Newsvendor dự báo | 1.899.732 | 88,1% | đắt hơn 8,0% |
+| Newsvendor theo nhóm | 2.022.942 | 85,8% | đắt hơn 1,5% |
+| (s,S) theo nhóm | 2.048.883 | 85,9% | ngang, không có ý nghĩa thống kê |
+| Newsvendor | 2.062.190 | 87,4% | rẻ hơn 0,5% |
+| EOQ theo nhóm | 2.074.745 | 85,8% | rẻ hơn 1,1% |
+| (s,S) | 2.091.665 | 86,2% | rẻ hơn 1,9% |
+| (s,S) biết sức chứa | 2.153.173 | 86,1% | rẻ hơn 4,7% |
+| EOQ | 2.500.198 | 89,5% | rẻ hơn 17,9% |
+| Biết trước nhu cầu (mốc lý tưởng) | 1.358.864 | 93,6% | đắt hơn 51% |
 
-Số đo seed 42 (chỉ đánh giá, không train, 30 lần):
+**So ở cùng mức phục vụ 90,65%**, đọc trên đường biên. Đây là phép so sánh công bằng hơn vì IPPO đang giữ mức phục vụ cao hơn các chính sách khác:
+
+| Chính sách | Tổng chi phí | IPPO so với chính sách này |
+|---|---:|---:|
+| EOQ | 2.640.010 | rẻ hơn 22,3% |
+| (s,S) | 2.366.664 | rẻ hơn 13,3% |
+| EOQ theo nhóm | 2.275.502 | rẻ hơn 9,8% |
+| (s,S) biết sức chứa (lưới rút gọn) | 2.260.819 | rẻ hơn 9,2% |
+| Newsvendor theo nhóm | 2.243.057 | rẻ hơn 8,5% |
+| Newsvendor | 2.230.265 | rẻ hơn 8,0% |
+| (s,S) theo nhóm | 2.213.800 | rẻ hơn 7,3% |
+| Newsvendor dự báo | 1.968.561 | đắt hơn 4,3% |
+
+**Tách theo nhóm nhu cầu** (chi phí / tỷ lệ đáp ứng):
 
 | Nhóm nhu cầu | IPPO | Newsvendor dự báo |
 |---|---:|---:|
-| Rất thấp | 248.587 / 74,2% | 254.448 / 78,2% |
-| Thấp | 470.140 / 83,2% | 443.355 / 85,3% |
-| Trung bình | 485.451 / 89,5% | 445.004 / 86,7% |
-| Cao | 848.318 / 95,8% | 756.926 / 91,1% |
+| Rất thấp (dưới 0,5) | 248.587 / 74,2% | 254.448 / 78,2% |
+| Thấp (0,5–2) | 470.140 / 83,2% | 443.355 / 85,3% |
+| Trung bình (2–10) | 485.451 / 89,5% | 445.004 / 86,7% |
+| Cao (từ 10) | 848.318 / 95,8% | 756.926 / 91,1% |
 
-Chính sách kết hợp (IPPO cho nhóm cao, dự báo cho ba nhóm còn lại): 2.005.411 / 90,70%. Rẻ hơn IPPO 2,3% ở cả 30/30 lần đánh giá. So với Newsvendor dự báo cùng mức phục vụ, khoảng cách còn 1,9% thay vì 4,3%. Chưa thắng được chính sách dự báo.
+**Kết hợp IPPO và dự báo.** Mỗi nhóm nhu cầu dùng IPPO hoặc một cấu hình dự báo, chọn trên miền xác thực, không cần huấn luyện lại. Tại mức 90,65%:
 
-Mức ρ chọn bằng cách chạy thử chính sách đã có, chưa tinh chỉnh lại: ρ = 3 giảm fill khoảng 2 điểm, ρ = 2 giảm khoảng 4 điểm, ρ = 1,5 giảm gần 6 điểm.
+| Chính sách | Tổng chi phí | So với Newsvendor dự báo |
+|---|---:|---:|
+| IPPO | 2.052.496 | đắt hơn 4,3% |
+| Kết hợp (IPPO cho nhóm cao, dự báo cho ba nhóm còn lại) | 1.987.598 | đắt hơn 1,0% |
+| Newsvendor dự báo theo nhóm | 1.965.309 | rẻ hơn 0,2% |
+| Newsvendor dự báo | 1.968.561 | — |
 
-Không làm điều chuyển hàng ngang: chưa cần vì nguồn cung chung đã tạo ràng buộc giữa các kho, và luật điều chuyển sẽ áp dụng cho mọi chính sách nên không trả lời câu hỏi về học tăng cường.
+**Nhận định từ số sơ bộ:**
 
-## 2b. Đổi tên để nộp bài
+- IPPO vượt mọi chính sách cổ điển khi so công bằng, kể cả bản tinh chỉnh theo nhóm và bản biết sức chứa.
+- Thông tin về nhu cầu tương lai là phần giá trị nhất. Dự báo LightGBM có RMSSE 0,87 so với 1,19 của cách lấy nhu cầu tuần trước, và mốc biết trước nhu cầu rẻ hơn IPPO khoảng một phần ba.
+- IPPO chưa thêm được lợi thế chi phí so với dự báo. Ở nhóm bán chậm, đặt hàng theo dự báo là đủ. Nhóm bán nhanh là nơi IPPO tiến gần nhất.
+- Biến thể hứa hẹn nhất là cho tác tử chọn hệ số an toàn trên nền dự báo: chạy thử 600 tập chỉ kém Newsvendor dự báo 0,7% trên miền xác thực. Chưa chắc vượt được ở 10.000 tập.
 
-Tài liệu này và `TIEN_DO.md` vẫn dùng mã trong phương án (U1, U5...). Trong code, các tên đã đổi như sau.
+**Kiểm tra đi kèm:** không phát hiện rò rỉ dữ liệu; làm tròn lượng đặt về 6 mức không phải nguyên nhân chênh lệch (ảnh hưởng tối đa khoảng 1,6%); code hiện tại tái lập đúng số của mô hình cũ.
+
+## 4. Thí nghiệm sẽ chạy
+
+| Câu hỏi | Thí nghiệm | Mục đích |
+|---|---|---|
+| 1 | Mô hình chính, 5 hạt giống | Có số cuối, có khoảng tin cậy |
+| 2 | Theo quy mô nhu cầu, mặt hàng chưa gặp, 1.000 tác tử | Kiểm tra chia sẻ tham số |
+| 3 | Phần thưởng toàn cục, bỏ chuẩn hóa, 3 hạt giống | Vai trò của thiết kế phần thưởng |
+| 4 | 6 biến thể, trong đó hệ số an toàn trên nền dự báo chạy 5 hạt giống | Dự báo và cấu trúc hành động có giúp không |
+| 5 | Nguồn cung chung ρ = 2 và 3; sức chứa 3 và 8 ngày | Lợi thế thay đổi thế nào theo điều kiện vận hành |
+
+Hai mức ρ chọn bằng cách chạy thử chính sách có sẵn: ρ = 3 làm tỷ lệ đáp ứng giảm khoảng 2 điểm, ρ = 2 giảm khoảng 4 điểm, ρ = 1,5 giảm gần 6 điểm.
+
+Khối lượng: khoảng 480.000 tập, tương đương 160 giờ trên GPU cỡ T4 hoặc 320 giờ trên CPU 4 nhân, chưa kể phần quét lưới chính sách đối chứng.
+
+## 5. Hạn chế và rủi ro
+
+- **Chưa có kết quả cuối.** Số hiện tại của một hạt giống. Trung bình 3 hạt giống và kết quả loại trừ trong báo cáo cũ không còn file gốc, phải chạy lại.
+- **IPPO có thể không vượt được chính sách dự báo.** Khi đó kết luận là dự báo rồi tối ưu đã đủ tốt trong bối cảnh này, học tăng cường không thêm được về chi phí. Kết luận này vẫn có giá trị vì được so sánh công bằng.
+- **Nguồn cung chung có thể làm IPPO tệ đi,** vì cách chia theo tỷ lệ tạo động cơ đặt dư. Nhóm đo thêm hệ số roi da để phân tích hiện tượng này.
+- **Chưa có máy GPU.** Máy hiện tại chỉ có CPU.
+- **Toàn bộ dây chuyền chưa chạy trọn trên bản code cuối.** Sẽ chạy thử nhanh trước khi train.
+- **Phạm vi còn giới hạn:** chưa xét mạng đa cấp và điều chuyển hàng giữa các kho, dữ liệu M5 là doanh số chứ không phải nhu cầu thật, sức chứa và đơn giá chi phí là giả định.
+
+## 6. Kế hoạch tiếp theo
+
+1. Xin ý kiến giảng viên về các điểm ở mục 7.
+2. Chốt máy GPU, chạy thử nhanh cả dây chuyền.
+3. Train toàn bộ, ưu tiên mô hình chính, biến thể hệ số an toàn trên nền dự báo, rồi nguồn cung chung ρ = 2.
+4. Thay số vào báo cáo, viết phần kết quả Câu hỏi 4 và 5, chốt kết luận.
+5. Hoàn thiện ứng dụng demo, poster, tài liệu vấn đáp. Hạn nộp 23/01/2027.
+
+## 7. Điểm cần xin ý kiến giảng viên
+
+- Đồng ý đổi câu hỏi chính sang "so với dự báo rồi tối ưu, học tăng cường thêm được gì" không?
+- Năm câu hỏi và sáu biến thể có quá rộng không, nếu cần rút gọn thì giữ phần nào?
+- Nếu IPPO không vượt được chính sách dự báo, kết luận theo hướng ở mục 5 có chấp nhận được không?
+- Nếu thiếu thời gian train, có thể giảm từ 5 xuống 3 hạt giống cho mô hình chính không?
+- Giả định nguồn cung chung (trần theo từng mặt hàng, chia theo tỷ lệ) có phù hợp không?
+
+---
+
+# Phụ lục kỹ thuật
+
+Phần này dành cho nhóm, ghi chi tiết để tra cứu.
+
+## A. Đổi tên để nộp bài
+
+`TIEN_DO.md` và phụ lục này vẫn dùng mã trong phương án (U1, U5...). Trong code, các tên đã đổi như sau.
 
 | Mã trong phương án | Nội dung | Nhóm chạy | File cấu hình |
 |---|---|---|---|
@@ -80,57 +158,7 @@ Tài liệu này và `TIEN_DO.md` vẫn dùng mã trong phương án (U1, U5...)
 
 Cấu trúc thư mục: thêm `README.md` ở gốc; `TIEN_DO.md`, `TONG_HOP_THAY_DOI.md`, `van_dap.md`, `pham_vi_khoa_luan.md` và ba bài báo PDF chuyển vào `docs/`.
 
-## 3. Kết quả đo mới
-
-Đo trên mô hình 10.000 episode seed 42, 30 lần đánh giá, miền kiểm thử. Code hiện tại tái lập đúng số IPPO trong C4. **Đây là một hạt giống, chưa phải số cuối.**
-
-| Chính sách | Tổng chi phí | Tỷ lệ đáp ứng | IPPO so với chính sách này |
-|---|---:|---:|---:|
-| IPPO | 2.052.496 | 90,65% | — |
-| Newsvendor dự báo | 1.899.732 | 88,1% | đắt hơn 8,0% |
-| Newsvendor theo nhóm | 2.022.942 | 85,8% | đắt hơn 1,5% |
-| (s,S) theo nhóm | 2.048.883 | 85,9% | ngang, không có ý nghĩa thống kê |
-| Newsvendor | 2.062.190 | 87,4% | rẻ hơn 0,5% |
-| EOQ theo nhóm | 2.074.745 | 85,8% | rẻ hơn 1,1% |
-| (s,S) | 2.091.665 | 86,2% | rẻ hơn 1,9% |
-| (s,S) biết sức chứa | 2.153.173 | 86,1% | rẻ hơn 4,7% |
-| EOQ | 2.500.198 | 89,5% | rẻ hơn 17,9% |
-| Biết trước nhu cầu | 1.358.864 | 93,6% | đắt hơn 51% |
-
-**Ở đúng mức phục vụ của IPPO (90,65%), lưới mịn, đọc trên đường biên:**
-
-| Chính sách | Tổng chi phí | IPPO so với chính sách này |
-|---|---:|---:|
-| EOQ | 2.640.010 | rẻ hơn 22,3% |
-| (s,S) | 2.366.664 | rẻ hơn 13,3% |
-| EOQ theo nhóm | 2.275.502 | rẻ hơn 9,8% |
-| Newsvendor theo nhóm | 2.243.057 | rẻ hơn 8,5% |
-| Newsvendor | 2.230.265 | rẻ hơn 8,0% |
-| (s,S) theo nhóm | 2.213.800 | rẻ hơn 7,3% |
-| Newsvendor dự báo | 1.968.561 | đắt hơn 4,3% |
-| (s,S) biết sức chứa | 2.260.819 (lưới rút gọn, 240 cấu hình) | rẻ hơn 9,2% |
-
-Số cũ trong C4 là 25,7% và 17,3% do lưới thô, đã thay bằng số trên.
-
-Các phép kiểm tra đi kèm:
-
-- **Rò rỉ dữ liệu:** chỉ số ngày của dự báo đúng; test rò rỉ pass.
-- **Làm tròn 6 mức:** bỏ làm tròn thì (s,S) theo nhóm rẻ thêm 1,6%, Newsvendor theo nhóm đắt hơn 0,7%. Làm tròn không phải nguyên nhân.
-- **Dự báo LightGBM:** RMSSE trên kiểm thử 0,87, so với 1,19 của cách lấy nhu cầu tuần trước.
-
-**Chạy thử trên miền xác thực, so với Newsvendor dự báo ở cùng tỷ lệ đáp ứng:**
-
-| Lần chạy | Episode | Chi phí, tỷ lệ đáp ứng | Chênh so với Newsvendor dự báo |
-|---|---:|---:|---:|
-| U5 lưới rộng, `phi_dv` = 3 | 500 | 1.631.557 ở 91,09% | +5,0% |
-| U5 lưới rộng, `phi_dv` = 1 | 500 | 1.553.522 ở 89,79% | +3,1% |
-| U1 | 500 | 1.746.085 ở 90,60% | +14,0% |
-| U5 lưới hẹp, entropy mặc định | 600 | 1.532.124 ở 89,77% | +1,7% |
-| **U5 lưới hẹp, entropy thấp (đã chốt)** | 600 | 1.492.070 ở 88,85% | **+0,7%** |
-
-Cấu hình đã chốt: `z` thuộc {0; 0,2; 0,4; 0,6; 0,8; 1,2}, hệ số entropy 0,005 giảm về 0,0005, `phi_dv` = 1. Chỉ chọn trên miền xác thực. Chưa chắc thắng ở 10.000 episode, nhưng chiều hướng tốt nhất trong các biến thể.
-
-## 4. Thay đổi về code
+## B. Thay đổi về code
 
 ### Tính năng mới
 
@@ -154,6 +182,11 @@ Mọi tính năng nằm sau cờ, tắt mặc định, mô hình chính giữ 44
 | E2 | 1.000 tác tử | `configs/scale_1000_agents.yaml` |
 | A5 | Trang phiếu mua sắm | `app/core.py`, `app/pages_/don_dat_hang.py` |
 | Mới | Mốc biết trước nhu cầu | `scripts/perfect_demand_benchmark.py` |
+| Mới | Nguồn cung chung (`supply_cover`), thêm 1 chiều quan sát | `env/inventory_env.py` |
+| Mới | Dự báo tính lại khi đổi nhu cầu (`du_bao_lai`) | `scripts/forecast_demand.py` |
+| Mới | Chính sách kết hợp theo nhóm | `scripts/hybrid_policy.py` |
+| Mới | Hệ số roi da | `scripts/evaluate.py` |
+| Mới | 4 điều kiện vận hành, 12 lần train | `configs/make_configs.py`, `scripts/run_experiments.py` |
 
 ### Lỗi đã sửa
 
@@ -199,18 +232,7 @@ Ngoài ra, chạy thử trọn luồng phát hiện checkpoint C' không lưu λ
 - `logs/phien_ban_code.txt`: ghi commit của từng lần train.
 - Mở nhiều terminal `python scripts/run_experiments.py train full` được, không giẫm chân nhau.
 
-## 5. Thay đổi về báo cáo
-
-| Chương | Thay đổi |
-|---|---|
-| C1 | Viết lại bằng câu đơn giản, gạch đầu dòng; sửa câu hỏi nghiên cứu; bỏ tham chiếu tới chương sau; bỏ bảng chi phí trùng |
-| C2 | Thêm mức đặt mục tiêu, dự báo rồi tối ưu, LightGBM, RMSSE, CMDP, PID Lagrange, CTDE, chia sẻ chọn lọc, phương trình Bellman; đối chiếu lại 13 nguồn mới; sửa câu CD-PPO; thêm hàng chính sách đối chứng trong bảng so sánh |
-| C3 | Sắp lại mục MDP; chuyển hình Actor–Critic về đúng mục; thêm mục 3.4 cho 6 biến thể; thêm ví dụ bằng số; sửa các chỗ sai so với code (lịch hàng về, chuẩn hóa phần thưởng, đơn giá, "phối hợp") |
-| C4 | Thêm hai chính sách đối chứng, so sánh trên đường biên, thống kê, bảng nối câu hỏi với thí nghiệm, bảng thiết kế thí nghiệm mở rộng; sắp lại theo câu hỏi nghiên cứu; bỏ mục hạn chế trùng C5 |
-| C5 | Bỏ đoạn trùng bảng đối chiếu; bảng 9 hướng phát triển |
-| Chung | Bỏ câu dẫn bảng cạnh bảng; bỏ tham chiếu tới mục của chương sau; bớt thuật ngữ dịch gượng |
-
-## 6. Bỏ Colab
+## C. Bỏ Colab
 
 | File, nội dung | Trạng thái |
 |---|---|
@@ -219,7 +241,7 @@ Ngoài ra, chạy thử trọn luồng phát hiện checkpoint C' không lưu λ
 | README, `run_experiments.py`, `train.py`, `evaluate.py`, `.gitignore` | Đã bỏ nội dung Colab, viết lại hướng dẫn local |
 | `TIEN_DO.md` | Còn 4 dòng ghi lịch sử, không ảnh hưởng gì |
 
-## 7. Cách train
+## D. Cách train
 
 ```powershell
 cd rl_inventory
@@ -232,7 +254,7 @@ python run.py full           # train thật
 
 Bị ngắt thì chạy lại đúng lệnh, tự nối tiếp. Kết quả nằm ở `results/KET_QUA.txt`.
 
-Thứ tự train: mô hình chính → U5 → U1 → U2 → `phi_dv` → siêu tham số → ablation → U4 → U3 → C' → E2.
+Thứ tự train: mô hình chính → U5 → U1 → U2 → `phi_dv` → siêu tham số → ablation → U4 → U3 → C' → E2 → điều kiện vận hành.
 
 | Nhóm | Episode | GPU cỡ T4 | CPU 4 nhân |
 |---|---:|---:|---:|
@@ -246,30 +268,24 @@ Thứ tự train: mô hình chính → U5 → U1 → U2 → `phi_dv` → siêu t
 | U3 | 30.000 | 11 giờ | 21 giờ |
 | C' | 33.000 | 10 giờ | 20 giờ |
 | E2 | 10.000 | 9–25 giờ | 18–50 giờ |
-| **Tổng** | **360.000** | **khoảng 125 giờ** | **khoảng 250 giờ** |
+| Điều kiện vận hành | 120.000 | 36 giờ | 72 giờ |
+| **Tổng** | **480.000** | **khoảng 160 giờ** | **khoảng 320 giờ** |
 
-## 8. Việc còn lại sau khi train
+## E. Chạy thử trên miền xác thực
 
-1. Thay số ở mọi chỗ có comment `% [SO-MOI]` (C4, C5, tóm tắt).
-2. Viết lại kết luận theo luận điểm mới, thêm mục Câu hỏi 4.
-3. Chạy `python scripts/export_tex_numbers.py` để quét số cũ.
-4. Dựng lại demo bằng `python run.py demo_data`.
-5. Cập nhật `van_dap.md`.
-6. Tạo release `v1.0-final`.
-7. Làm poster.
+So với Newsvendor dự báo ở cùng tỷ lệ đáp ứng:
 
-## 9. Rủi ro và điều cần biết
+| Lần chạy | Episode | Chi phí, tỷ lệ đáp ứng | Chênh so với Newsvendor dự báo |
+|---|---:|---:|---:|
+| U5 lưới rộng, `phi_dv` = 3 | 500 | 1.631.557 ở 91,09% | +5,0% |
+| U5 lưới rộng, `phi_dv` = 1 | 500 | 1.553.522 ở 89,79% | +3,1% |
+| U1 | 500 | 1.746.085 ở 90,60% | +14,0% |
+| U5 lưới hẹp, entropy mặc định | 600 | 1.532.124 ở 89,77% | +1,7% |
+| **U5 lưới hẹp, entropy thấp (đã chốt)** | 600 | 1.492.070 ở 88,85% | **+0,7%** |
 
-- **GPU:** máy i5-1135G7 này chỉ có Intel Iris Xe, PyTorch đang là bản CPU. Nếu train trên máy khác thì phải chuyển code sang trước (commit hoặc sao chép).
-- **`app/demo_data/best_model.pth`** là bản seed 42 duy nhất còn lại của đợt 10.000 episode. Nên sao lưu trước khi chạy `run.py demo_data`.
-- **Thiếu số gốc:** trung bình 3 seed trong C4 (2.055.442), ablation và log học không còn file gốc; `run.py full` sẽ tạo lại toàn bộ.
-- **U5 chưa chắc thắng.** Nếu không thắng, đề tài vẫn bảo vệ được theo luận điểm mới, kết luận là dự báo rồi tối ưu đủ tốt trong bối cảnh này.
-- **Câu hỏi nghiên cứu đã đổi:** nên báo giảng viên sớm.
-- **Tác giả bài SSRN:** cần tự đối chiếu trên trình duyệt vì trang từ chối truy cập.
-- **Hai file `phuluc_*.tex`** đã bị xóa từ trước, cần xác nhận là cố ý.
-- **Toàn bộ thay đổi chưa commit,** chỉ nằm trên một máy.
+Cấu hình đã chốt: `z` thuộc {0; 0,2; 0,4; 0,6; 0,8; 1,2}, hệ số entropy 0,005 giảm về 0,0005, `phi_dv` = 1. Chỉ chọn trên miền xác thực. Chưa chắc thắng ở 10.000 episode, nhưng chiều hướng tốt nhất trong các biến thể.
 
-## 10. Trạng thái trước khi train
+## F. Trạng thái kiểm tra trước khi train
 
 - [x] Chốt cấu hình `forecast_safety_factor` trên miền xác thực.
 - [x] Đường biên đầy đủ của seed 42, gồm bản theo nhóm.
@@ -278,7 +294,7 @@ Thứ tự train: mô hình chính → U5 → U1 → U2 → `phi_dv` → siêu t
 - [x] `export_tex_numbers.py` đọc được định dạng kết quả thật.
 - [x] `build_results.py` sinh được `KET_QUA.txt` từ kết quả thật của seed 42.
 - [x] Mọi script trong `scripts/` khởi động được, tham số `run_experiments.py` truyền vào khớp với từng script.
-- [x] 82 test pass, báo cáo 102 trang, không tràn lề, không tham chiếu lỗi.
+- [x] 82 test pass, báo cáo 105 trang, không tràn lề, không tham chiếu lỗi.
 - [ ] Dự báo tính lại mới có test trên dữ liệu giả, chưa chạy trên mô hình dự báo thật vì `forecast_model.txt` chỉ sinh ra khi chạy lại `forecast_demand.py`.
 - [ ] Biến thể nguồn cung chung mới chạy với chính sách có sẵn, IPPO chưa được train trong điều kiện này.
 - [ ] `run.py full --quick` chưa chạy trọn trên code cuối. Lượt gần nhất qua 121 lệnh rồi dừng ở lỗi số 5 của vòng rà 3. Phần đánh giá thí nghiệm mở rộng và tổng hợp sau chỗ đó mới được đọc code, chưa chạy nối tiếp. Lượt chạy lại đã dừng theo yêu cầu không train.

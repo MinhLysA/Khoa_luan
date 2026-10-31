@@ -969,8 +969,8 @@ def test_khong_bat_nguon_cung_thi_khong_cat_don():
 
 def test_tron_chinh_sach_theo_nhom():
     from hybrid_policy import tron
-    fn = tron(lambda o, e: np.zeros(3, int), lambda o, e: np.ones(3, int), np.array([True, False, True]))
-    assert fn(None, None).tolist() == [0, 1, 0]
+    fn = tron([lambda o, e: np.full(3, 7), lambda o, e: np.full(3, 8)], np.array([0, 1, 0]))
+    assert fn(None, None).tolist() == [7, 8, 7]
 
 
 def test_du_bao_lai_phan_ung_voi_soc_tu_ngay_hom_sau(tmp_path):

@@ -444,9 +444,9 @@ def _mo_rong(res):
         L += ["", f"  Mốc biết trước nhu cầu (L = {m['L']}): chi phí {m['cost']:,.0f}, fill {m['fill']:.1%}"]
     for p in sorted(res.glob("hybrid_policy_*.json")):
         h = _doc_json(p)
-        L += ["", f"  Kết hợp IPPO và Newsvendor dự báo ({p.stem[len('hybrid_policy_'):]}), chọn trên val:",
-              "    " + "  ".join(f"{n}: {x['cost']:,.0f} / {x['fill']:.1%}" for n, x in h["tong"].items()),
-              "    IPPO dùng cho: " + (", ".join(g for g, c in h["chon_tren_val"].items() if c == "IPPO") or "không nhóm nào")]
+        L += ["", f"  Kết hợp IPPO và Newsvendor dự báo ({p.stem[len('hybrid_policy_'):]}), tại fill {h['muc_ippo']:.2%} của IPPO, chọn trên val:",
+              "    " + "  ".join(f"{n}: {'—' if c is None else format(c, ',.0f')}" for n, c in h["tai_muc_ippo"].items()),
+              "    IPPO dùng cho: " + (", ".join(h["cau_hinh_gan_nhat"]["nhom_dung_ippo"]) or "không nhóm nào")]
     rows = []
     for p in sorted([*res.glob("summary_*.json"), *res.glob("scale_1000/summary_*.json"),
                      *res.glob("shared_supply_*/summary_*.json"), *res.glob("capacity_*/summary_*.json")]):

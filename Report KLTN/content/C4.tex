@@ -503,7 +503,7 @@ Có ba nhận xét từ kết quả này:
 \label{subsec:ketHop}
 
 % [SO-MOI] So cua hat giong 1, thay bang ket qua nhieu hat giong
-IPPO và chính sách dự báo mạnh ở những nhóm hàng khác nhau, nên kết hợp hai chính sách rẻ hơn dùng riêng IPPO. Để biết học tăng cường thêm được gì, chi phí và mức phục vụ được tách theo bốn nhóm quy mô nhu cầu.
+Dùng chính sách dự báo cho nhóm bán chậm và giữ IPPO cho nhóm bán nhanh rẻ hơn dùng riêng IPPO. Để biết học tăng cường thêm được gì, chi phí và mức phục vụ được tách theo bốn nhóm quy mô nhu cầu.
 
 \begin{table}[H]
     \centering
@@ -527,18 +527,21 @@ IPPO và chính sách dự báo mạnh ở những nhóm hàng khác nhau, nên 
 
 Chính sách dự báo chiếm ưu thế ở hai nhóm bán chậm. Ở hai nhóm bán nhanh, IPPO có mức phục vụ cao hơn nhưng tốn thêm chi phí. Từ đó nhóm xây dựng chính sách kết hợp theo các bước sau:
 \begin{itemize}
-    \item Mỗi nhóm nhu cầu dùng một trong hai chính sách. Cách gán được chọn trên miền xác thực, là cách rẻ nhất mà không làm mức phục vụ thấp hơn IPPO quá 0,2 điểm phần trăm.
-    \item Hai chính sách chạy chung trong một lần mô phỏng, vì các cặp của cả hai vẫn chia sẻ sức chứa của cùng một kho.
+    \item Mỗi nhóm nhu cầu dùng IPPO hoặc một cấu hình Newsvendor dự báo trên đường biên. Các cách gán được quét trên miền xác thực để tạo đường biên chi phí--mức phục vụ của chính sách kết hợp.
+    \item Các chính sách chạy chung trong một lần mô phỏng, vì các cặp vẫn chia sẻ sức chứa của cùng một kho.
+    \item Để so sánh công bằng, Newsvendor dự báo cũng được chọn cấu hình theo nhóm theo đúng cách này nhưng không có IPPO.
     \item Không cần huấn luyện lại. Chính sách kết hợp chỉ dùng mô hình đã học và mô hình dự báo đã có.
 \end{itemize}
 
-Cách gán được chọn là dùng IPPO cho nhóm nhu cầu cao và dùng chính sách dự báo cho ba nhóm còn lại. Kết quả trên miền kiểm thử như sau:
+Đọc trên đường biên tại mức phục vụ 90,65\% của IPPO, kết quả trên miền kiểm thử như sau:
 \begin{itemize}
-    \item Chính sách kết hợp có chi phí 2.005.411 và tỷ lệ đáp ứng 90,70\%, rẻ hơn IPPO 2,3\% ở mức phục vụ ngang nhau. Chênh lệch này xuất hiện ở cả 30 lần đánh giá.
-    \item So với chính sách dự báo ở cùng mức phục vụ, chính sách kết hợp vẫn đắt hơn 1,9\%, nhưng khoảng cách đã giảm so với mức 4,3\% của IPPO.
+    \item Trong các cách gán gần mức này, IPPO chỉ được chọn cho nhóm nhu cầu cao, ba nhóm còn lại dùng chính sách dự báo.
+    \item Chính sách kết hợp có chi phí 1.987.598, rẻ hơn IPPO 3,2\%.
+    \item Chính sách kết hợp vẫn đắt hơn Newsvendor dự báo 1,0\%. Khoảng cách đã giảm từ mức 4,3\% của IPPO nhưng chưa đảo chiều.
+    \item Newsvendor dự báo theo nhóm có chi phí 1.965.309, gần như không đổi so với 1.968.561 của bản một cấu hình.
 \end{itemize}
 
-Kết quả này cho thấy phần đóng góp của học tăng cường tập trung ở nhóm hàng bán nhanh. Nhóm này chiếm phần lớn nhu cầu nên có ảnh hưởng lớn tới mức phục vụ toàn hệ thống. Ở nhóm bán chậm, quy tắc đặt hàng theo dự báo là đủ.
+Kết quả này cho thấy ở nhóm bán chậm, quy tắc đặt hàng theo dự báo là đủ. Nhóm nhu cầu cao là nhóm duy nhất mà IPPO tiến gần chính sách dự báo, nhưng trên mô hình này IPPO chưa tạo được lợi thế chi phí so với một cấu hình dự báo có hệ số an toàn cao hơn.
 
 \subsection{Hiệu năng theo giai đoạn nhu cầu}
 \label{subsec:hanChe}
@@ -1004,7 +1007,7 @@ Câu hỏi 1 hỏi PS-IPPO có rẻ hơn các chính sách đối chứng khi so
     \item So với các chính sách cổ điển, IPPO rẻ hơn khi so ở cùng mức phục vụ: rẻ hơn 7,3--22,3\%, kể cả các phiên bản theo nhóm (mục~\ref{subsec:isoService}). Khi mỗi phương pháp dùng cấu hình tốt nhất của mình, IPPO có chi phí xấp xỉ nhưng mức phục vụ cao hơn 4--5 điểm phần trăm.
     \item So với chính sách biết sức chứa, IPPO rẻ hơn (mục~\ref{subsec:soSanhThongTin}).
     \item So với chính sách dùng dự báo, IPPO đắt hơn, kể cả khi hai bên có mức phục vụ gần nhau. Vì vậy đề tài chưa thể kết luận học tăng cường thay được dự báo rồi tối ưu.
-    \item IPPO và chính sách dự báo bổ sung cho nhau. Dùng IPPO cho nhóm nhu cầu cao và dự báo cho các nhóm còn lại rẻ hơn IPPO 2,3\%, và rút ngắn khoảng cách với chính sách dự báo (mục~\ref{subsec:ketHop}).
+    \item Dùng IPPO cho nhóm nhu cầu cao và dự báo cho các nhóm còn lại rẻ hơn IPPO 3,2\%, nhưng vẫn đắt hơn chính sách dự báo 1,0\% (mục~\ref{subsec:ketHop}).
     \item Ưu thế không tuyệt đối. Khi nhu cầu ổn định hoặc vào mùa lễ, chính sách tinh chỉnh theo nhóm rẻ hơn hoặc ngang IPPO. Ưu thế của IPPO tập trung ở độ bền mức phục vụ khi nhu cầu biến động, ở ngày sự kiện, cuối tuần và khi có sốc cầu (mục~\ref{subsec:hanChe}).
 \end{itemize}
 

@@ -676,7 +676,7 @@ Chỉ dùng số trong `results/KET_QUA.txt`. Nếu kết quả ngược với k
 | Vì sao chênh lệch chi phí cùng mức phục vụ đổi so với bản trước? | Bản trước dùng lưới thô nên baseline đạt fill 92,65% và 92,28%, cao hơn mục tiêu 90,15%. Với lưới mịn và dải ±0,2 điểm, chênh lệch là [X]% (CI [..]). |
 | IPPO có hơn nhờ biết sức chứa không? | Đã thêm (s,S) biết sức chứa. Ở cùng mức phục vụ, chênh lệch còn lại là [Y]%. |
 | "Đa kho" ở đâu, các kho có ảnh hưởng nhau không? | Mô hình chính thì không: kho chỉ chia sức chứa nội bộ. Vì vậy đề tài thêm thí nghiệm nguồn cung chung, mỗi mặt hàng có trần cung ứng toàn mạng và các kho bị cắt theo tỷ lệ. Kết quả ở Câu hỏi 5. |
-| Học tăng cường thêm được gì so với dự báo? | Tách theo nhóm nhu cầu: IPPO giữ mức phục vụ cao ở nhóm bán nhanh, dự báo tốt hơn ở nhóm bán chậm. Kết hợp hai chính sách rẻ hơn IPPO 2,3% (seed 42), nhưng vẫn đắt hơn dự báo 1,9%. |
+| Học tăng cường thêm được gì so với dự báo? | Trên seed 42 thì chưa thêm được về chi phí. Dự báo tốt hơn ở nhóm bán chậm; ở nhóm bán nhanh IPPO tiến gần dự báo nhất. Kết hợp hai chính sách rẻ hơn IPPO 3,2% nhưng vẫn đắt hơn dự báo 1,0%. |
 | Vì sao không dự báo rồi tối ưu? | Đã thử LightGBM + Newsvendor: [Z]. Khi IPPO nhận cùng dự báo (U1), chênh lệch là [W]. |
 | Vì sao fill của IPPO là 90,7–90,9% khi mục tiêu là 85%? | Điểm vận hành phụ thuộc `phi_dv`. Đã chạy `phi_dv` ∈ {…} và vẽ đường biên; tại 85%, IPPO [..] so với baseline. |
 | Vì sao 28,7% cặp dưới 85%? | Chủ yếu ở nhóm cầu thấp (bảng phân rã [..]); mục tiêu 85% chỉ được đáp ứng ở cấp hệ thống. [Nếu làm C': kết quả Lagrange PID là [..].] |
