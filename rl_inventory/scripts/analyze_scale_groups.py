@@ -68,7 +68,7 @@ def main():
     ckpt = ROOT / args.checkpoint
     agent = PPOAgent(env.obs_per_pair, n_pairs, env.n_action_levels,
                      config=cfg["ppo"], device="cpu")
-    agent.load(str(ckpt))
+    agent.load(str(ckpt), env=env)
     agent.network.eval()
 
     # -- 3 nhom tam phan vi theo mean_demand (uoc luong tu mien train) --------
@@ -96,7 +96,7 @@ def main():
         obs, _ = env.reset(seed=base_seed + i)
         while True:
             action, _, _ = agent.select_action(obs, deterministic=True)
-            obs, _, term, trunc, info = env.step(action)
+            obs, _, term, trunc, info = env.step(agent.env_action(action, env))
             sum_cost   += -info["local_rewards"].astype(np.float64)
             sum_demand += info["demand_pairs"].astype(np.float64)
             sum_stock  += info["stockout_pairs"].astype(np.float64)

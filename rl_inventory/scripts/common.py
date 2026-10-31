@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from env.inventory_env import MultiWarehouseInventoryEnv
+from env.inventory_env import MultiWarehouseInventoryEnv, load_forecast
 from agents.ppo_agent import PPOAgent
 from baselines.traditional_policies import (POLICY_REGISTRY, build_env_state,
                                             demand_group_index, expand_group_params)
@@ -38,30 +38,32 @@ def load_data(cfg):
     return out
 
 
-def make_env(cfg, data, mode="test", demand_override=None):
+def make_env(cfg, data, mode="test", demand_override=None, forecast=None):
     demand = data["demand_data"] if demand_override is None else demand_override
     return MultiWarehouseInventoryEnv(
         config=cfg["env"], demand_data=demand,
         calendar_features=data["calendar_features"],
         price_per_pair=data["price_per_pair"],
-        price_series=data["price_series"], mode=mode)
+        price_series=data["price_series"], mode=mode, forecast=forecast)
 
 
 def load_agent(cfg, env, checkpoint):
     agent = PPOAgent(env.obs_per_pair, env.n_pairs, env.n_action_levels,
                      config=cfg["ppo"], device="cpu")
-    agent.load(str(ROOT / checkpoint))
+    agent.load(str(ROOT / checkpoint), env=env)
     agent.network.eval()
     return agent
 
 
-def make_policies(cfg, env, checkpoint, include_iso=True, include_group=True):
+def make_policies(cfg, env, checkpoint, include_iso=True, include_group=True,
+                  du_bao=True, iso_tag="main_s42"):
     """dict ten -> action_fn(obs, env). Gom IPPO, 3 baseline tinh chinh truc
     tiep (baseline_params.json) va - neu co iso_service.json - cac baseline
     duoc chinh de dat CUNG MUC PHUC VU voi IPPO (so sanh chi phi cong bang)."""
     results = ROOT / cfg["paths"]["results_dir"]
     agent = load_agent(cfg, env, checkpoint)
-    pols = {"IPPO": lambda obs, e: agent.select_action(obs, deterministic=True)[0]}
+    pols = {"IPPO": lambda obs, e: agent.env_action(
+        agent.select_action(obs, deterministic=True)[0], e)}
 
     defaults = {
         "EOQ": dict(ordering_cost=env.cp_dh, holding_cost=env.cp_lk,
@@ -70,7 +72,13 @@ def make_policies(cfg, env, checkpoint, include_iso=True, include_group=True):
                       ordering_cost=env.cp_dh, holding_cost=env.cp_lk),
         "Newsvendor": dict(holding_cost=env.cp_lk, stockout_cost=env.cp_th,
                            lead_time=env.tg_giao_tb),
+        "(s,S) biết sức chứa": dict(lead_time=env.tg_giao_tb, ordering_cost=env.cp_dh,
+                                    holding_cost=env.cp_lk),
     }
+    # du_bao=False khi cau mo phong bi doi ma khong tinh lai du bao; (F, sigma) la du bao da tinh lai
+    if du_bao and (results / "forecast_test.npy").exists():
+        F, sigma = du_bao if isinstance(du_bao, tuple) else load_forecast(results)
+        defaults["Newsvendor dự báo"] = dict(forecast=F, sigma=sigma)
 
     def build(name, params):
         pol = POLICY_REGISTRY[name](n_pairs=env.n_pairs, **{**defaults[name], **params})
@@ -79,7 +87,8 @@ def make_policies(cfg, env, checkpoint, include_iso=True, include_group=True):
     p = results / "baseline_params.json"
     tuned = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
     for name in defaults:
-        pols[name] = build(name, tuned.get(name, {}))
+        if name in tuned or name in ("EOQ", "(s,S)", "Newsvendor"):
+            pols[name] = build(name, tuned.get(name, {}))
 
     # [P4-1] Baseline tinh chinh theo nhom quy mo cau (manh hon bo tham so chung)
     p = results / "baseline_params_group.json"
@@ -89,10 +98,18 @@ def make_policies(cfg, env, checkpoint, include_iso=True, include_group=True):
             if name in defaults:
                 pols[f"{name} theo nhóm"] = build(name, expand_group_params(by_group, gi))
 
-    p = results / "iso_service.json"
+    # [Cung muc phuc vu] Uu tien luoi min cua seed chinh, roi moi den luoi tho
+    p = results / f"same_service_{iso_tag}.json"
+    if not p.exists():
+        p = results / "iso_service.json"
     if include_iso and p.exists():
         iso = json.loads(p.read_text(encoding="utf-8"))
         for name, r in iso.get("ket_qua", {}).items():
-            if name in defaults and r.get("params"):
-                pols[f"{name} (cùng mức PV)"] = build(name, r["params"])
+            # noi suy: chi phi la uoc tinh, params la diem gan nhat tren duong bien
+            goc = name.removesuffix(" theo nhóm")
+            lech = abs(r.get("fill_cau_hinh", r.get("fill") or 0) - (r.get("fill") or 0))
+            if goc in defaults and r.get("params") and not r.get("khong_dat") and lech <= 0.01:
+                tham_so = r["params"] if goc == name else expand_group_params(
+                    r["params"], demand_group_index(env.mean_demand))
+                pols[f"{name} (cùng mức PV)"] = build(goc, tham_so)
     return pols

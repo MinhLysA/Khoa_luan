@@ -43,6 +43,18 @@
 \usepackage{tikz}
 \usetikzlibrary{calc, arrows.meta, positioning, fit, backgrounds}
 \usepackage{float}
+\usepackage{placeins}  % \FloatBarrier: giữ bảng, hình của chương trước mục tóm tắt
+% Trang chỉ chứa bảng/hình: đặt từ đầu trang thay vì căn giữa theo chiều dọc (tránh khoảng trắng lớn phía trên).
+\makeatletter
+\setlength{\@fptop}{0pt}
+\setlength{\@fpbot}{0pt plus 1fil}
+\setlength{\@fpsep}{\floatsep}
+\makeatother
+% Cho bảng, hình nằm chung trang với chữ nhiều hơn: ít trang chỉ có float, ít khoảng trắng cuối trang.
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.8}
 \usepackage{longtable}
 \usepackage{booktabs}
 \usepackage{array}
@@ -50,6 +62,14 @@
 \usepackage{tabularx}
 \usepackage{xltabular}
 \newcolumntype{Y}{>{\centering\arraybackslash}X}
+% Bảng kẻ lưới đầy đủ (| và \hline): thêm khoảng đệm trên mỗi hàng để chữ không sát đường kẻ.
+\setlength{\extrarowheight}{2pt}
+% Ô hai dòng: \tbl, \tbr, \tbc{dòng 1}{dòng 2} căn trái, phải, giữa (tiêu đề cột dài, không phải co bảng).
+\newcommand{\tbl}[2]{\begin{tabular}[c]{@{}l@{}}#1\\#2\end{tabular}}
+\newcommand{\tbr}[2]{\begin{tabular}[c]{@{}r@{}}#1\\#2\end{tabular}}
+\newcommand{\tbc}[2]{\begin{tabular}[c]{@{}c@{}}#1\\#2\end{tabular}}
+% \ghichu{...}: ghi chú ngắn dưới bảng (ký hiệu, đơn vị); chú thích bảng chỉ giữ cụm danh từ ngắn.
+\newcommand{\ghichu}[1]{\par\smallskip\begin{minipage}{\linewidth}\small\textit{Ghi chú:} #1\end{minipage}}
 \usepackage{subcaption}
 \graphicspath{{media/}}
 \usepackage{caption}
@@ -76,17 +96,29 @@
 \renewcommand{\cftchapleader}{\bfseries\cftdotfill{\cftdotsep}}
 \renewcommand{\cftchappagefont}{\bfseries}
 
-% 2. Cấp Mục (Section - 1.1): Chữ thường
+\setlength{\cftchapindent}{0pt}
+
+% 2. Cấp Mục (Section - 1.1): Chữ thường, thụt 0.635cm
 \renewcommand{\cftsecfont}{\normalfont}
 \renewcommand{\cftsecleader}{\normalfont\cftdotfill{\cftdotsep}}
 \renewcommand{\cftsecpagefont}{\normalfont}
+\setlength{\cftsecindent}{0.635cm}
 \setlength{\cftsecnumwidth}{2.2em}
 
-% 3. Cấp Tiểu mục (Subsection - 1.1.1): In nghiêng
+% 3. Cấp Tiểu mục (Subsection - 1.1.1): In nghiêng, thụt 1.27cm
 \renewcommand{\cftsubsecfont}{\itshape}
 \renewcommand{\cftsubsecleader}{\itshape\cftdotfill{\cftdotsep}}
 \renewcommand{\cftsubsecpagefont}{\itshape}
+\setlength{\cftsubsecindent}{1.27cm}
 \setlength{\cftsubsecnumwidth}{2.8em}
+
+% Dòng đầu của mục, tiểu mục bị mất phần thụt (\parindent của mục lục về 0), nên chèn lại bằng tay.
+% Dòng ngắt xuống vẫn thụt theo \leftskip = indent + numwidth nên thẳng hàng với chữ tiêu đề.
+\renewcommand{\cftsecfont}{\normalfont\hspace*{\cftsecindent}}
+\renewcommand{\cftsubsecfont}{\itshape\hspace*{\cftsubsecindent}}
+% Lề phải: số trang rộng 2em, tiêu đề dừng cách lề 3,5em để luôn còn dấu chấm dẫn trước số trang.
+\cftsetpnumwidth{2em}
+\cftsetrmarg{3.5em}
 
 % Khoảng cách giữa các dòng trong Mục lục
 \setlength{\cftbeforechapskip}{8pt} 
@@ -96,12 +128,12 @@
 % Danh mục hình vẽ
 \renewcommand{\cftfigpresnum}{Hình } 
 \renewcommand{\cftfigaftersnum}{: }  
-\setlength{\cftfignumwidth}{4.5em}   
+\setlength{\cftfignumwidth}{5.3em}   % đủ cho "Hình 4.10: "
 
 % Danh mục bảng biểu
-\renewcommand{\cfttabpresnum}{Bảng } 
-\renewcommand{\cfttabaftersnum}{: }  
-\setlength{\cfttabnumwidth}{4.5em}   
+\renewcommand{\cfttabpresnum}{Bảng }
+\renewcommand{\cfttabaftersnum}{: }
+\setlength{\cfttabnumwidth}{5.3em}   % đủ cho "Bảng 4.10: "
 
 % Xóa khoảng trắng thừa giữa các chương trong danh mục hình/bảng
 \usepackage{etoolbox}
@@ -160,7 +192,15 @@
 \usepackage{csquotes} 
 \DeclareQuoteAlias{english}{vietnamese}
 
-\usepackage[backend=biber, style=ieee, language=english, autolang=none]{biblatex}
+\usepackage[backend=biber, style=ieee, language=english, autolang=none, defernumbers=true]{biblatex}
+% Tài liệu tham khảo chia theo chủ đề (main.tex in từng nhóm); defernumbers: đánh số liên tục theo thứ tự in.
+% Thêm nguồn mới vào references.bib thì phải gán nó vào một nhóm dưới đây, nếu không nguồn đó không được in.
+\DeclareBibliographyCategory{tonkho}\addtocategory{tonkho}{harris1913,arrow1951,scarf1960,clark1960,zipkin2000,zipkin2008,silver2016,lee1997}
+\DeclareBibliographyCategory{rl}\addtocategory{rl}{bellman1957,puterman1994,sutton2018,schulman2015trpo,schulman2016gae,schulman2017ppo,ng1999,stooke2020,altman1999}
+\DeclareBibliographyCategory{marl}\addtocategory{marl}{bernstein2002,oliehoek2016,tan1993,gupta2017,dewitt2020ippo,yu2022mappo,wolpert2001,devlin2011potential,christianos2021seps,zaheer2017deepsets}
+\DeclareBibliographyCategory{rltonkho}\addtocategory{rltonkho}{oroojlooyjadid2022,gijsbrechts2022,yang2023mabim,ding2022cdppo,liu2025happo,kotecha2024decentralized,demoor2022reward,zhu2026spatiotemporal,jeong2026alca,boute2022,kaynov2024,vanvuchelen2020,maggiar2025,madeka2022}
+\DeclareBibliographyCategory{dubao}\addtocategory{dubao}{ke2017lightgbm,croston1972,syntetos2005accuracy,syntetos2005categorization,kostenko2006,makridakis2022background,makridakis2022accuracy,m5dataset,banrudin2019,elmachtoub2022}
+\DeclareBibliographyCategory{danhgia}\addtocategory{danhgia}{brockman2016gym,towers2024gymnasium,hubbs2020orgym,henderson2018,agarwal2021,kunsch1989}
 % biblatex khong co vietnamese.lbx -> cac chuoi (vol., no., et al., in Proc.)
 % bi in thang ten khoa noi bo (jourvol, andothers). Dung chuoi tieng Anh
 % cho danh muc tai lieu, dung quy uoc IEEE.
@@ -170,8 +210,11 @@
   urlseen = {Accessed},
 }
 \addbibresource{backmatter/references.bib}
-\usepackage{xurl} 
-\let\parencite\cite 
+\usepackage{xurl}
+% Cho phép ngắt DOI/URL sau chữ số và chữ hoa để DOI dài không tràn lề phải.
+\setcounter{biburlnumpenalty}{100}
+\setcounter{biburlucpenalty}{100}
+\let\parencite\cite
 
 
 
@@ -186,7 +229,7 @@
 }
 
 \defbibheading{subbib}{
-    \noindent #1\par\vspace{6pt}
+    \noindent\textit{#1}\par\vspace{6pt}
 }
 
 % Giu moi truong mac dinh cua style IEEE (nhan so [n] treo le trai); chi
@@ -208,4 +251,24 @@
     labelsep=0.4cm
 }
 \renewcommand{\labelitemi}{--}
-\renewcommand{\labelitemii}{$-$}
+\renewcommand{\labelitemii}{+}
+\renewcommand{\labelitemiii}{*}
+\renewcommand{\labelitemiv}{$\cdot$}
+
+\setlist[itemize,1]{
+    label=--,
+    labelindent=1.27cm,
+    leftmargin=*,
+    align=left,
+    labelsep=0.4cm
+}
+% Ý con của một gạch đầu dòng dùng dấu "+", nhãn thẳng hàng với chữ của ý cha.
+\setlist[itemize,2]{
+    label=+,
+    labelindent=0pt,
+    leftmargin=*,
+    align=left,
+    labelsep=0.35cm
+}
+% Gạch đầu dòng nằm trong danh sách đánh số (1), (2)... cũng là ý con nên dùng "+".
+\setlist[enumerate]{before={\setlist[itemize,1]{label=+, labelindent=0pt, leftmargin=*, align=left, labelsep=0.35cm}}}

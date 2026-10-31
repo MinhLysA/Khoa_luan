@@ -184,6 +184,39 @@ def pairs(meta) -> pd.DataFrame:
                          for s, sku in enumerate(meta["skus"])])
 
 
+def dong_de_nghi(policy: str, day: int) -> pd.DataFrame:
+    """Các dòng có lượng đặt > 0 của chính sách trong ngày, đã kèm đơn giá."""
+    meta, arr = load_demo()
+    s = state_at(policy, day)
+    so = {"Tồn kho": s["inv"], "Hàng đang về": s["pipe"], "Nhu cầu TB 7 ngày": s["dem7"],
+          "Số lượng đề nghị": s["qty"], "Đơn giá ($)": arr["price"][day].reshape(-1)}
+    df = pairs(meta).assign(**so)
+    return df[df["Số lượng đề nghị"] > 0].astype({c: float for c in so}).round(2)
+
+
+def lap_phieu(dong: pd.DataFrame, ngay: date) -> pd.DataFrame:
+    """Gắn mã phiếu (mỗi kho mỗi ngày một phiếu) và ngày cần hàng cho từng dòng.
+    Ngày cần hàng = ngày lập + số ngày tồn còn bán được, tối thiểu ngày lập + 1."""
+    ton, tb7 = dong["Tồn kho"].to_numpy(), dong["Nhu cầu TB 7 ngày"].to_numpy()
+    so_ngay = np.maximum(np.floor(ton / np.where(tb7 > 0, tb7, np.inf)), 1).astype(int)
+    return dong.assign(**{
+        "Mã phiếu": f"PR-{ngay:%Y%m%d}-" + dong["Kho"] + "-001",
+        "Ngày cần hàng": [f"{ngay + timedelta(days=int(n)):%d/%m/%Y}" for n in so_ngay],
+        "Thành tiền ($)": (dong["Số lượng đề nghị"] * dong["Đơn giá ($)"]).round(2),
+        "Trạng thái": "Nháp"}).reset_index(drop=True)
+
+
+def tom_tat_phieu(df: pd.DataFrame) -> pd.DataFrame:
+    """Một dòng cho mỗi phiếu, không tính dòng đã bỏ; phiếu lẫn trạng thái hiện là 'Một phần'."""
+    giu = df["Trạng thái"] != "Đã bỏ"
+    d = df.assign(**{c: df[c].where(giu, 0) for c in ("Số lượng đề nghị", "Thành tiền ($)")})
+    return (d.groupby(["Mã phiếu", "Kho", "Cửa hàng"], as_index=False)
+              .agg(**{"Số dòng": ("Số lượng đề nghị", lambda x: int((x > 0).sum())),
+                      "Tổng số lượng": ("Số lượng đề nghị", "sum"),
+                      "Thành tiền ($)": ("Thành tiền ($)", "sum"),
+                      "Trạng thái": ("Trạng thái", lambda x: x.iloc[0] if x.nunique() == 1 else "Một phần")}))
+
+
 def obs_labels(env, meta) -> list:
     """(vai trò, nhóm, tên) cho từng chiều obs, theo env.obs_groups."""
     L, LT, cover = env.lookback, env.lead_time_max, env.obs_cover_days

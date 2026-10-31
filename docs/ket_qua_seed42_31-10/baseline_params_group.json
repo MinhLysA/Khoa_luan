@@ -1,0 +1,90 @@
+{
+  "groups": [
+    "Rất thấp (<0,5)",
+    "Thấp (0,5-2)",
+    "Trung bình (2-10)",
+    "Cao (>=10)"
+  ],
+  "edges": [
+    0.5,
+    2.0,
+    10.0
+  ],
+  "params": {
+    "EOQ": {
+      "0": {
+        "q_factor": 1.0,
+        "lead_time": 1.0
+      },
+      "1": {
+        "q_factor": 1.5,
+        "lead_time": 2.0
+      },
+      "2": {
+        "q_factor": 2.0,
+        "lead_time": 4.0
+      },
+      "3": {
+        "q_factor": 3.0,
+        "lead_time": 4.0
+      }
+    },
+    "(s,S)": {
+      "0": {
+        "service_level": 0.7,
+        "q_factor": 1.0,
+        "lead_time": 2.0
+      },
+      "1": {
+        "service_level": 0.8,
+        "q_factor": 0.5,
+        "lead_time": 3.0
+      },
+      "2": {
+        "service_level": 0.7,
+        "q_factor": 1.0,
+        "lead_time": 3.0
+      },
+      "3": {
+        "service_level": 0.7,
+        "q_factor": 1.0,
+        "lead_time": 3.0
+      }
+    },
+    "Newsvendor": {
+      "0": {
+        "cr_override": 0.6,
+        "lead_time": 3.0
+      },
+      "1": {
+        "cr_override": 0.75,
+        "lead_time": 3.0
+      },
+      "2": {
+        "cr_override": 0.85,
+        "lead_time": 3.0
+      },
+      "3": {
+        "cr_override": 0.6,
+        "lead_time": 4.0
+      }
+    }
+  },
+  "chon": {
+    "EOQ": {
+      "cost": 1606195.5755384762,
+      "fill": 0.8518638572559839,
+      "feasible": true
+    },
+    "(s,S)": {
+      "cost": 1597666.4612055023,
+      "fill": 0.8530078688063091,
+      "feasible": true
+    },
+    "Newsvendor": {
+      "cost": 1600939.6562788289,
+      "fill": 0.850402593377185,
+      "feasible": true
+    }
+  }
+}

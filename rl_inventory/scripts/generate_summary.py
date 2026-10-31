@@ -318,7 +318,8 @@ def main():
         body.append("")
 
     out_path = ROOT / "TONG_HOP_SO_LIEU.txt"
-    out_path.write_text("\n".join(header + body), encoding="utf-8")
+    canh_bao = ["LOI THOI: khong dung cho bao cao, so lieu chinh o results/KET_QUA.txt.", ""]
+    out_path.write_text("\n".join(canh_bao + header + body), encoding="utf-8")
     print(f"Da xuat: {out_path}")
 
 

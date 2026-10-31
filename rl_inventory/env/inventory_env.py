@@ -95,12 +95,28 @@ PHIEN BAN P5:
          giu co SNAP cua bang chua kho minh, 2 co con lai = 0 (van 44 chieu).
          Bang lay tu config env.warehouse_stores (cung thu tu truc kho cua
          demand_data, xem data/processed/env_config.json).
+
+MO RONG (deu sau co, tat mac dinh -> mo hinh chinh van 44 chieu):
+  [Du bao trong quan sat] include_forecast: them 2 chieu du bao (TB du bao 1-3 ngay, sai so du bao
+       truot 28 ngay) tu results/forecast_*.npy (scripts/forecast_demand.py).
+  [Phat theo tung cap] lagrange_per_pair: thay he so phi_dv bang nhan tu lambda_i rieng tung
+       cap, cap nhat bang bo dieu khien PID moi fill_rate_window ngay.
 """
 
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
+from pathlib import Path
 from typing import Optional, Tuple, Dict, Any
+
+
+def load_forecast(results_dir=None):
+    """[Du bao trong quan sat] Ghep du bao ba mien theo chi so ngay that -> (F, sigma):
+    F (T, n_pairs, 3): du bao cau ngay t, t+1, t+2, chi dung du lieu toi t-1.
+    sigma (T, n_pairs): do lech chuan sai so du bao 28 ngay truoc t."""
+    d = Path(results_dir) if results_dir else Path(__file__).resolve().parent.parent / "results"
+    F = np.concatenate([np.load(d / f"forecast_{m}.npy") for m in ("train_oof", "val", "test")])
+    return F.astype(np.float32), np.load(d / "forecast_sigma.npy").astype(np.float32)
 
 
 class MultiWarehouseInventoryEnv(gym.Env):
@@ -114,7 +130,8 @@ class MultiWarehouseInventoryEnv(gym.Env):
                  calendar_features: Optional[np.ndarray] = None,
                  price_per_pair: Optional[np.ndarray] = None,
                  price_series: Optional[np.ndarray] = None,
-                 mode: str = "train"):
+                 mode: str = "train",
+                 forecast: Optional[Tuple[np.ndarray, np.ndarray]] = None):
         super().__init__()
 
         self.config = config or {}
@@ -145,6 +162,15 @@ class MultiWarehouseInventoryEnv(gym.Env):
         self.pt_tk  = float(self.config.get("pt_tk",  5.0))    # phat tran kho / dv
         self.phi_dv = float(self.config.get("phi_dv", 3.0))    # he so phat muc phuc vu
         self.muc_dv = float(self.config.get("muc_dv", 0.85))   # nguong fill rate (beta)
+        # [Phat theo tung cap] lam = he so phat dang dung: hang so phi_dv, hoac mang lambda_i
+        self.lam = self.phi_dv
+        self._lag0 = None
+        self.lagrange_dim = int(bool(self.config.get("lagrange_per_pair", False)))
+        pid = self.config.get("lagrange", {}) or {}
+        self.lag_kp = float(pid.get("kp", 1.0))
+        self.lag_ki = float(pid.get("ki", 1.0))
+        self.lag_kd = float(pid.get("kd", 0.0))
+        self.lag_max = float(pid.get("lambda_max", 20.0))
 
         self._capacity_cfg       = self.config.get("warehouse_capacity", "auto")
         self.capacity_cover_days = float(self.config.get("capacity_cover_days", 8.0))
@@ -288,9 +314,18 @@ class MultiWarehouseInventoryEnv(gym.Env):
                     nxt = t
                 gap[t] = 60.0 if nxt is None else float(nxt - t)
             self.event_gap = gap
+        # [Du bao trong quan sat] Du bao nhan tu ngoai hoac doc tu results/ khi bat co.
+        self.forecast_dim = 2 if self.config.get("include_forecast", False) else 0
+        if self.forecast_dim:
+            self.forecast, self.forecast_sigma = forecast or load_forecast()
+        # [Nguon cung chung] Moi mat hang co san luong ngay gioi han tren toan mang. Cac kho
+        # canh tranh cung nguon, thieu thi chia theo ty le don. Them 1 chieu: ty le hom qua.
+        self.supply_cover = self.config.get("supply_cover")
+        self.supply_dim = 1 if self.supply_cover else 0
         self.obs_per_pair = (1 + 1 + self.lookback + self.lead_time_max
                              + 1 + 1 + 1 + 1 + self.price_signal_dim
-                             + self.event_lookahead_dim + 7 + self.calendar_dim)
+                             + self.event_lookahead_dim + self.forecast_dim
+                             + self.lagrange_dim + self.supply_dim + 7 + self.calendar_dim)
         # Vi tri tung nhom dac trung trong vector quan sat (dung cho obs_drop
         # va cho permutation importance o scripts/policy_behavior.py).
         L, LT, c = self.lookback, self.lead_time_max, 0
@@ -298,7 +333,9 @@ class MultiWarehouseInventoryEnv(gym.Env):
         for ten, n in [("inventory", 2), ("demand_history", L), ("pipeline", LT),
                        ("fill_rate", 1), ("scale", 1), ("warehouse", 2),
                        ("price", self.price_signal_dim),
-                       ("event_lookahead", self.event_lookahead_dim)]:
+                       ("event_lookahead", self.event_lookahead_dim),
+                       ("forecast", self.forecast_dim), ("lagrange", self.lagrange_dim),
+                       ("supply", self.supply_dim)]:
             if n:
                 self.obs_groups[ten] = list(range(c, c + n))
             c += n
@@ -329,6 +366,9 @@ class MultiWarehouseInventoryEnv(gym.Env):
 
         self.scale_feat = np.clip(
             np.log1p(self.mean_demand) / np.log1p(150.0), 0.0, 1.0).astype(np.float32)
+        self.nguon_cung = (self.supply_cover * self.mean_demand.reshape(
+            self.n_warehouses, self.n_skus).sum(axis=0) if self.supply_dim else None)
+        self.ty_le_cung = np.ones(self.n_skus, dtype=np.float32)
 
         # [P3-2] Danh gia cuoi tren TOAN BO quy dao test [val_day, T): mot chuoi
         # nhu cau co dinh, chi lap lai hat giong ngau nhien cua thoi gian giao
@@ -382,10 +422,21 @@ class MultiWarehouseInventoryEnv(gym.Env):
         self.inventory = np.round(self.mean_demand * he_so_bd).astype(np.float32)
 
         self.pipeline_orders    = np.zeros((self.lead_time_max, self.n_pairs), dtype=np.float32)
+        self.ty_le_cung = np.ones(self.n_skus, dtype=np.float32)
         self.demand_history     = np.zeros((self.lookback, self.n_pairs), dtype=np.float32)
         self.demand_fr_window   = np.zeros((self.cua_so_dv, self.n_pairs), dtype=np.float32)
         self.stockout_fr_window = np.zeros((self.cua_so_dv, self.n_pairs), dtype=np.float32)
         self.fill_rate_per_pair = np.ones(self.n_pairs, dtype=np.float32)
+        if self.lagrange_dim:
+            # [Phat theo tung cap] lambda la nhan tu doi ngau: mien train giu qua cac tap (Stooke
+            # 2020), val/test xuat phat lai tu gia tri da hoc de moi lan danh gia
+            # giong nhau va so sanh duoc theo cap.
+            if self._lag0 is None:
+                self.set_lagrange((np.full(self.n_pairs, self.phi_dv),
+                                   np.full(self.n_pairs, self.phi_dv / self.lag_ki),
+                                   np.zeros(self.n_pairs)))
+            elif self.mode != "train":
+                self.set_lagrange(self._lag0)
 
         if self.demand_data is not None:
             T = self.demand_data.shape[0]
@@ -426,6 +477,12 @@ class MultiWarehouseInventoryEnv(gym.Env):
 
         # -- B1: Hanh dong -> luong dat hang --------------------------------
         order_qty = self.action_to_qty(action).astype(np.float32)
+        don_yeu_cau = float(order_qty.sum())
+        if self.nguon_cung is not None:
+            don = order_qty.reshape(self.n_warehouses, self.n_skus)
+            self.ty_le_cung = np.minimum(self.nguon_cung / np.maximum(don.sum(axis=0), 1e-6),
+                                         1.0).astype(np.float32)
+            order_qty = (don * self.ty_le_cung).reshape(-1)
 
         # -- B2: Nhan hang tu pipeline --------------------------------------
         hang_ve = self.pipeline_orders[0].copy()
@@ -492,6 +549,15 @@ class MultiWarehouseInventoryEnv(gym.Env):
             tong_nc > 1e-6, 1.0 - tong_th / np.maximum(tong_nc, 1e-6), 1.0
         ).astype(np.float32)
 
+        # [Phat theo tung cap] PID tren fill rate cua so (khong dung fill tung ngay vi khong xac
+        # dinh khi cau = 0); chan tich phan de khong tich luy vuot lambda_max.
+        if self.lagrange_dim and (self.current_step + 1) % self.cua_so_dv == 0:
+            e = self.muc_dv - self.fill_rate_per_pair
+            self._lag_sum = np.clip(self._lag_sum + e, 0.0, self.lag_max / self.lag_ki)
+            self.lam = np.clip(self.lag_ki * self._lag_sum + self.lag_kp * e
+                               + self.lag_kd * (e - self._lag_prev), 0.0, self.lag_max)
+            self._lag_prev = e
+
         # -- B6: Reward ------------------------------------------------------
         raw_reward, local_rewards, cost_breakdown = self._calculate_reward(
             self.inventory, stockout, order_qty, overflow, self.fill_rate_per_pair)
@@ -524,10 +590,12 @@ class MultiWarehouseInventoryEnv(gym.Env):
             "overflow":        float(overflow.sum()),
             "order_qty":       float(order_qty.sum()),
             "order_qty_pairs": order_qty,
+            "order_requested": don_yeu_cau,
             "n_orders":        int((order_qty > 0).sum()),
             "inventory":       float(self.inventory.sum()),
             "raw_reward":      raw_reward,
             "local_rewards":   local_rewards,
+            "op_cost_pairs":   self.chi_phi_cap.copy(),
             "local_scaled_rewards": local_scaled.astype(np.float32),
             "fill_rate_mean":  float(self.fill_rate_per_pair.mean()),
             "cost_holding":         cost_breakdown["cost_holding"],
@@ -549,9 +617,19 @@ class MultiWarehouseInventoryEnv(gym.Env):
                                     (self.demand_data.shape[0] - 1)
                                     if self.demand_data is not None else 0)),
         }
+        if self.lagrange_dim:
+            info["lambda_pairs"] = self.lam.copy()
         return self._get_observation(), scaled_reward, terminated, truncated, info
 
     # ------------------------------------------------------------------ #
+    def set_lagrange(self, state):
+        """[Phat theo tung cap] Dat trang thai PID (lambda, tong sai so, sai so truoc) lam diem xuat phat."""
+        self._lag0 = tuple(np.array(x, dtype=np.float32) for x in state)
+        self.lam, self._lag_sum, self._lag_prev = (x.copy() for x in self._lag0)
+
+    def get_lagrange(self):
+        return tuple(x.copy() for x in (self.lam, self._lag_sum, self._lag_prev))
+
     def _get_observation(self) -> np.ndarray:
         day_of_week = np.zeros(7, dtype=np.float32)
         if self.calendar_features is not None:
@@ -604,6 +682,18 @@ class MultiWarehouseInventoryEnv(gym.Env):
             obs[:, c] = min(self.event_gap[d] / 30.0, 1.0)
             obs[:, c + 1] = float(self.event_gap[d] <= 7)
             c += 2
+        if self.forecast_dim:
+            d = min(self.start_day + self.current_step, len(self.forecast) - 1)
+            thang = np.log1p(self.mean_demand * 10.0 + 1.0)
+            obs[:, c] = np.log1p(self.forecast[d].mean(axis=1)) / thang
+            obs[:, c + 1] = np.log1p(self.forecast_sigma[d]) / thang
+            c += 2
+        if self.lagrange_dim:
+            obs[:, c] = self.lam / self.lag_max
+            c += 1
+        if self.supply_dim:
+            obs[:, c] = np.tile(self.ty_le_cung, self.n_warehouses)
+            c += 1
         obs[:, c:] = global_ctx[None, :]
         if self._snap_mask is not None:
             obs[:, self._snap_cols] *= self._snap_mask
@@ -634,9 +724,10 @@ class MultiWarehouseInventoryEnv(gym.Env):
         phi_tran   = self.pt_tk * tran
 
         shortfall   = np.maximum(0.0, self.muc_dv - fill_rate)
-        phi_phat_dv = self.phi_dv * shortfall * self.sla_scale
+        phi_phat_dv = self.lam * shortfall * self.sla_scale
 
-        R_local = -(chi_phi_lk + chi_phi_th + chi_phi_dh + phi_tran + phi_phat_dv)
+        self.chi_phi_cap = chi_phi_lk + chi_phi_th + chi_phi_dh + phi_tran
+        R_local = -(self.chi_phi_cap + phi_phat_dv)
 
         breakdown = {
             "cost_holding":         float(np.sum(chi_phi_lk)),

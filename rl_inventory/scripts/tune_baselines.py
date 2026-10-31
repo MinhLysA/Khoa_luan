@@ -27,10 +27,10 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from env.inventory_env import MultiWarehouseInventoryEnv
+from env.inventory_env import MultiWarehouseInventoryEnv, load_forecast
 from baselines.traditional_policies import (
-    EOQPolicy, SsPolicy, NewsvendorPolicy, build_env_state,
-    demand_group_index, expand_group_params, DEMAND_GROUP_NAMES, DEMAND_GROUP_EDGES)
+    EOQPolicy, SsPolicy, NewsvendorPolicy, CapacityAwareSs, ForecastNewsvendor,
+    build_env_state, demand_group_index, expand_group_params, DEMAND_GROUP_NAMES, DEMAND_GROUP_EDGES)
 
 
 def danh_gia(env, policy, n_episodes, base_seed):
@@ -107,8 +107,23 @@ def main():
                                           for cr, lt in itertools.product(
                                               [0.60, 0.75, 0.85, 0.90, 0.95, 0.99],
                                               [1.0, LT, 3.0, 4.0])]),
+        # [Biet suc chua] (s,S) biet suc chua: them kappa vao luoi cua (s,S)
+        "(s,S) biết sức chứa": (CapacityAwareSs, [
+            dict(service_level=sl, q_factor=qf, lead_time=lt, kappa=kp,
+                 ordering_cost=env.cp_dh, holding_cost=env.cp_lk)
+            for sl, qf, lt, kp in itertools.product(
+                [0.70, 0.80, 0.90, 0.95, 0.99], [0.5, 1.0, 1.5], [1.0, LT, 3.0, 4.0],
+                [0.8, 1.0, 1.1, 1.2, 1.5])]),
     }
-    an = {"ordering_cost", "holding_cost", "stockout_cost"}
+    an = {"ordering_cost", "holding_cost", "stockout_cost", "forecast", "sigma"}
+    results_dir = ROOT / paths["results_dir"]
+    results_dir.mkdir(parents=True, exist_ok=True)
+    if (results_dir / "forecast_test.npy").exists():       # [Du bao] sau forecast_demand.py
+        F, sigma = load_forecast(results_dir)
+        luoi["Newsvendor dự báo"] = (ForecastNewsvendor, [
+            dict(cr_override=float(cr), lead_time=lt, forecast=F, sigma=sigma)
+            for cr, lt in itertools.product([0.60, 0.75, 0.85, 0.90, 0.95, 0.99],
+                                            [1.0, 2.0, 3.0, 4.0])])
     results, chi_tiet = {}, {}
     for ten, (cls, grid) in luoi.items():
         print(f"\n[{ten}] quet {len(grid)} cau hinh")
@@ -133,7 +148,8 @@ def main():
     print(f"\nDa luu tham so baseline da tinh chinh vao {out}")
 
     if args.per_group:
-        tune_theo_nhom(env, luoi, an, results, args, seed, paths)
+        co_dien = {k: luoi[k] for k in ("EOQ", "(s,S)", "Newsvendor")}
+        tune_theo_nhom(env, co_dien, an, results, args, seed, paths)
 
 
 def tune_theo_nhom(env, luoi, an, results, args, seed, paths):

@@ -1,0 +1,140 @@
+{
+  "target_fill": 0.9064528765091453,
+  "fill_val_ippo": 0.9039426947682279,
+  "ket_qua": {
+    "IPPO": {
+      "cost": 2052496.168634367,
+      "fill": 0.9064528765091453,
+      "params": null
+    },
+    "EOQ": {
+      "cost": 2640010.106335783,
+      "fill": 0.9059825914370745,
+      "params": {
+        "q_factor": 2.75,
+        "lead_time": 4.5
+      },
+      "noi_suy": false,
+      "delta_ippo_percent": -22.25423062932359
+    },
+    "(s,S)": {
+      "cost": 2366664.2045287234,
+      "fill": 0.9064528765091453,
+      "params": {
+        "service_level": 0.93,
+        "q_factor": 0.75,
+        "lead_time": 3.0
+      },
+      "noi_suy": true,
+      "delta_ippo_percent": -13.27471955223648
+    },
+    "Newsvendor": {
+      "cost": 2230264.791449261,
+      "fill": 0.9064528765091453,
+      "params": {
+        "cr_override": 0.8,
+        "lead_time": 4.0
+      },
+      "noi_suy": true,
+      "delta_ippo_percent": -7.970740671531528
+    },
+    "(s,S) biết sức chứa": {
+      "cost": null,
+      "fill": 0.860807097619246,
+      "params": {
+        "service_level": 0.8,
+        "q_factor": 0.75,
+        "lead_time": 4.0,
+        "kappa": 1.0
+      },
+      "noi_suy": false,
+      "khong_dat": true
+    },
+    "Newsvendor dự báo": {
+      "cost": 1968560.7270723884,
+      "fill": 0.9064528765091453,
+      "params": {
+        "cr_override": 0.67,
+        "lead_time": 3.0
+      },
+      "noi_suy": true,
+      "delta_ippo_percent": 4.263797423552473
+    },
+    "EOQ theo nhóm": {
+      "cost": 2275501.6252923766,
+      "fill": 0.9074933827199055,
+      "params": {
+        "0": {
+          "q_factor": 1.0,
+          "lead_time": 5.0
+        },
+        "1": {
+          "q_factor": 1.25,
+          "lead_time": 4.0
+        },
+        "2": {
+          "q_factor": 2.0,
+          "lead_time": 4.0
+        },
+        "3": {
+          "q_factor": 2.75,
+          "lead_time": 4.5
+        }
+      },
+      "noi_suy": false,
+      "delta_ippo_percent": -9.800276746862613
+    },
+    "(s,S) theo nhóm": {
+      "cost": 2213800.444650197,
+      "fill": 0.9064528765091453,
+      "params": {
+        "0": {
+          "service_level": 0.81,
+          "q_factor": 0.75,
+          "lead_time": 3.0
+        },
+        "1": {
+          "service_level": 0.8,
+          "q_factor": 0.75,
+          "lead_time": 3.0
+        },
+        "2": {
+          "service_level": 0.89,
+          "q_factor": 0.5,
+          "lead_time": 3.0
+        },
+        "3": {
+          "service_level": 0.8,
+          "q_factor": 0.25,
+          "lead_time": 4.0
+        }
+      },
+      "noi_suy": true,
+      "delta_ippo_percent": -7.286306062754344
+    },
+    "Newsvendor theo nhóm": {
+      "cost": 2243057.3243911727,
+      "fill": 0.9064528765091453,
+      "params": {
+        "0": {
+          "cr_override": 0.8,
+          "lead_time": 4.0
+        },
+        "1": {
+          "cr_override": 0.94,
+          "lead_time": 3.0
+        },
+        "2": {
+          "cr_override": 0.8,
+          "lead_time": 4.0
+        },
+        "3": {
+          "cr_override": 0.83,
+          "lead_time": 4.0
+        }
+      },
+      "noi_suy": true,
+      "delta_ippo_percent": -8.4955990060811
+    }
+  }
+}

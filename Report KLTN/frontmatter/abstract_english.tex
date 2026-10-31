@@ -1,48 +1,16 @@
+% [SO-MOI] Cap nhat doi thu va ket luan theo ket qua moi
 \newpage
 \begin{center}
-{\fontsize{16pt}{19.2pt}\selectfont \textbf{BUILDING A REINFORCEMENT LEARNING MODEL FOR OPTIMIZING REORDER POLICY IN MULTI-WAREHOUSE INVENTORY MANAGEMENT}\par}
+{\fontsize{15pt}{18pt}\selectfont \textbf{BUILDING A REINFORCEMENT LEARNING MODEL FOR OPTIMIZING REORDER POLICY IN MULTI-WAREHOUSE INVENTORY MANAGEMENT}\par}
 \vspace{0.5cm}
 {\fontsize{16pt}{19.2pt}\selectfont \textbf{ABSTRACT}\par}
 \end{center}
 \vspace{0.2cm}
 
-Inventory control in a retail network with many warehouses and many products is
-a sequential decision problem under uncertainty: holding, stockout, ordering and
-overflow costs must be balanced while a customer service level is maintained.
-Classical policies such as EOQ, $(s, S)$ and the Newsvendor model assume
-stationary demand, fixed lead times and unconstrained storage, and lose their
-optimality when these assumptions are violated.
+Inventory control in a retail network with many warehouses and many products is a sequential decision problem under uncertainty. Holding, stockout, ordering and overflow costs must be balanced while a customer service level is maintained. Classical policies such as EOQ, $(s, S)$ and the Newsvendor model assume stationary demand, fixed lead times and unconstrained storage. When these assumptions are violated, the policies lose their optimality.
 
-This thesis models $10$ warehouses $\times$ $30$ products as $300$ agents, each
-choosing the replenishment quantity of one warehouse--product pair from local
-observations, with the products of a warehouse sharing a finite capacity. The
-agents are trained with Independent PPO under parameter sharing (PS-IPPO), using
-a local factored reward per pair, per-pair reward normalization, and an $85\%$
-service-level target implemented as a soft constraint.
+This thesis models a network of 10 warehouses and 30 products as 300 agents. Each agent chooses the replenishment quantity of one warehouse--product pair from local observations, and the products of a warehouse share a finite capacity. The agents are trained with Independent PPO under parameter sharing (PS-IPPO). The reward is factored locally per pair and normalized by the cost scale of each pair. The minimum service-level target is implemented as a soft constraint.
 
-The simulation uses the real demand of the M5 Walmart dataset ($1{,}941$ days),
-split into training, validation and test periods, with stochastic lead times of
-one to three days. PS-IPPO is compared with three classical policies tuned on
-the validation period, over several training seeds and with paired statistical
-tests.
+The simulation uses the real demand of the M5 Walmart dataset, split in time into training, validation and test periods, with stochastic lead times. PS-IPPO is compared with classical policies and a predict-then-optimize policy tuned on the validation period, over several training seeds and with paired statistical tests. The comparison is made both with each method at its best configuration and at a common service level.
 
-With the main model ($10{,}000$ episodes $\times$ $3$ seeds), at the operating
-point each method selects for itself, PS-IPPO has a total cost close to the best
-classical policies --- $1.7\%$ below $(s, S)$ and $17.8\%$ below EOQ, and on par
-with the versions tuned per demand-scale group --- while reaching a service level
-about $4$--$5$ percentage points higher ($90.9\%$ versus $85.8$--$86.2\%$). When
-the classical policies are forced to a comparable service level ($\approx 90\%$)
-they cost $17.3$--$25.7\%$ more than PS-IPPO (an upper bound, because the
-parameter grid is coarse), and EOQ cannot reach it. Under stable demand,
-group-tuned classical policies match or beat PS-IPPO; its advantage is
-concentrated in volatile demand periods (event days, weekends, demand shocks).
-Parameter sharing maintains performance for medium- and high-demand products,
-but the service level of low-demand products falls short of the target ($28.7\%$
-of pairs below $85\%$). The contributions are a PS-IPPO framework with shared
-warehouse capacity on real retail data, an evaluation protocol that separates
-operating cost, service level and the training signal, and a simulation
-application that proposes purchase orders from the trained model.
-
-\vspace{0.3cm}
-\noindent\textbf{Keywords:} inventory management; multi-agent reinforcement
-learning; IPPO; parameter sharing; M5.
+The results show that PS-IPPO is cheaper than the classical policies at a common service level, but the policy that uses demand forecasts remains cheaper. Information about future demand has the largest effect on cost. The contributions are a PS-IPPO framework with shared warehouse capacity on real retail data, an evaluation protocol that separates operating cost, service level and the training signal, and a simulation application that proposes purchase requests from the trained model.

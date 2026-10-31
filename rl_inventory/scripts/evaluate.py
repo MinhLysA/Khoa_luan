@@ -33,12 +33,12 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from env.inventory_env import MultiWarehouseInventoryEnv
-from ket_qua import dinh_dang_danh_gia, ghi_ket_qua
+from env.inventory_env import MultiWarehouseInventoryEnv, load_forecast
+from build_results import dinh_dang_danh_gia, ghi_ket_qua
 from agents.ppo_agent import PPOAgent
 from baselines.traditional_policies import (
-    EOQPolicy, SsPolicy, NewsvendorPolicy, build_env_state,
-    demand_group_index, expand_group_params)
+    EOQPolicy, SsPolicy, NewsvendorPolicy, CapacityAwareSs, ForecastNewsvendor,
+    build_env_state, demand_group_index, expand_group_params)
 
 import matplotlib
 matplotlib.use("Agg")
@@ -51,11 +51,12 @@ def run_episode(env, policy, is_ppo=False, seed=None, deterministic=True,
     hold = stock = order = over = svc = 0.0
     demand_tot = stockout_tot = 0.0
     n_order_events = 0
-    inv_trace, trace = [], []
+    inv_trace, trace, don_ngay, cau_ngay = [], [], [], []
 
     while True:
         if is_ppo:
             action, _, _ = policy.select_action(obs, deterministic=deterministic)
+            action = policy.env_action(action, env)
         else:
             action = policy.get_action(build_env_state(env))
 
@@ -71,6 +72,8 @@ def run_episode(env, policy, is_ppo=False, seed=None, deterministic=True,
         stockout_tot   += info["stockout"]
         n_order_events += info["n_orders"]
         inv_trace.append(info["inventory"])
+        don_ngay.append(info["order_requested"])
+        cau_ngay.append(info["demand"])
 
         if collect_trace:
             trace.append({
@@ -101,6 +104,8 @@ def run_episode(env, policy, is_ppo=False, seed=None, deterministic=True,
         "demand_units": demand_tot, "n_order_events": n_order_events,
         "avg_inventory": float(np.mean(inv_trace)),
         "inventory_std": float(np.std(inv_trace)),
+        # Hieu ung roi da: phuong sai luong dat (truoc khi bi cat) so voi phuong sai nhu cau
+        "bullwhip": float(np.var(don_ngay) / max(np.var(cau_ngay), 1e-6)),
     }
     return (res, trace) if collect_trace else (res, None)
 
@@ -149,7 +154,7 @@ def main():
     parser.add_argument("--config", type=str, default="config.yaml")
     parser.add_argument("--checkpoint", type=str, default="checkpoints/best_model_main_s42.pth")
     parser.add_argument("--episodes", type=int, default=None)
-    parser.add_argument("--mode", type=str, default="test", choices=["train", "test"])
+    parser.add_argument("--mode", type=str, default="test", choices=["train", "val", "test"])
     parser.add_argument("--tag", type=str, default="",
                         help="Hau to ten file ket qua, vd --tag seed1 -> summary_seed1.json")
     # [P1-3] Ngay bat dau CO DINH, trai deu tren toan mien test (moi chinh
@@ -201,15 +206,16 @@ def main():
         print(f"Da nap tham so baseline da tinh chinh tu {params_path.name}")
     else:
         # Dung han: baseline tham so mac dinh khong dat fill 85% -> bang so sanh
-        # sai ma khong ai de y (da xay ra o lan chay thu Colab 29/09).
+        # sai ma khong ai de y (da xay ra o lan chay thu 29/09).
         sys.exit(f"LOI: chua co {params_path} -> chay scripts/tune_baselines.py "
                  "--tune_mode val --per_group truoc khi danh gia.")
 
     all_dfs, traces = [], {}
     start_days = None
     if args.fixed_windows and env.demand_data is not None:
-        lo = env.val_day if args.mode == "test" else 0
-        hi = (env.demand_data.shape[0] if args.mode == "test" else env.split_day) - env.episode_length
+        lo, hi = {"test": (env.val_day, env.demand_data.shape[0]),
+                  "val": (env.split_day, env.val_day)}.get(args.mode, (0, env.split_day))
+        hi -= env.episode_length
         start_days = np.linspace(lo, max(hi, lo), n_episodes).round().astype(int).tolist()
         print(f"Cua so co dinh: ngay bat dau {start_days[0]}..{start_days[-1]}")
 
@@ -218,7 +224,7 @@ def main():
         agent = PPOAgent(obs_per_pair=env.obs_per_pair, n_pairs=env.n_pairs,
                          n_action_levels=env.n_action_levels, config=cfg.get("ppo", {}))
         try:
-            agent.load(str(ckpt))
+            agent.load(str(ckpt), env=env)
             agent.network.eval()
             all_dfs.append(evaluate_policy(env, agent, n_episodes, is_ppo=True,
                                            name="IPPO", base_seed=base_seed,
@@ -238,6 +244,15 @@ def main():
                                               stockout_cost=env.cp_th,
                                               lead_time=env.tg_giao_tb)),
     ]
+    # [Biet suc chua][Du bao] Chi danh gia khi da tinh chinh, khong bao cao ban tham so mac dinh
+    if "(s,S) biết sức chứa" in tuned:
+        specs.append(("(s,S) biết sức chứa", CapacityAwareSs,
+                      dict(lead_time=env.tg_giao_tb, ordering_cost=env.cp_dh,
+                           holding_cost=env.cp_lk)))
+    if "Newsvendor dự báo" in tuned:
+        F, sigma = load_forecast(results_dir)
+        if F.shape[1] == env.n_pairs:           # hold-out 6 SKU: du bao da hoc ca SKU chua gap
+            specs.append(("Newsvendor dự báo", ForecastNewsvendor, dict(forecast=F, sigma=sigma)))
     for name, cls, kw in specs:
         kw.update(tuned.get(name, {}))
         pol = cls(n_pairs=env.n_pairs, **kw)
@@ -263,7 +278,7 @@ def main():
 
     metrics = ["total_cost", "holding_cost", "stockout_cost", "ordering_cost",
                "overflow_cost", "fill_rate", "avg_inventory", "n_order_events",
-               "inventory_std", "service_penalty_shaping"]
+               "inventory_std", "service_penalty_shaping", "bullwhip"]
     summary = df_all.groupby("policy")[metrics].agg(["mean", "std"])
     summary.columns = ["_".join(c) for c in summary.columns]
     summary = summary.reset_index()

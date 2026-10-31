@@ -608,6 +608,414 @@ def test_config_ablation_dong_bo_voi_config_chinh():
 
 
 # --------------------------------------------------------------------------- #
+# Mo rong: baseline cung thong tin, du bao, base-stock, nhom tham so, Lagrange
+# --------------------------------------------------------------------------- #
+def _trang_thai_chay(env, n=8):
+    from baselines.traditional_policies import build_env_state
+    env.reset(seed=0)
+    for _ in range(n):
+        env.step(np.full(env.n_pairs, 1))
+    return build_env_state(env)
+
+
+def test_ss_biet_suc_chua_khong_vuot_phan_con_trong():
+    from baselines.traditional_policies import CapacityAwareSs
+    env = make_env()
+    st = _trang_thai_chay(env)
+    pol = CapacityAwareSs(env.n_pairs, kappa=0.9, service_level=0.99, q_factor=3.0, lead_time=5.0,
+                          ordering_cost=5.0, holding_cost=1.0)
+    q = env.action_to_qty(pol.get_action(st)).reshape(env.n_warehouses, env.n_skus)
+    ton = (st["inventory"] + st["pipeline_orders"].sum(axis=0)).reshape(q.shape).sum(axis=1)
+    room = np.maximum(0.9 * env.suc_chua_kho - ton, 0.0)
+    # sai so luong tu hoa: toi da nua buoc lon nhat cua bang muc dat moi cap
+    buoc = np.diff(env.order_qty_table, axis=1).max(axis=1).reshape(q.shape).sum(axis=1)
+    assert (q.sum(axis=1) <= room + 0.5 * buoc).all()
+
+
+def test_ss_biet_suc_chua_rong_cho_trung_ss():
+    from baselines.traditional_policies import CapacityAwareSs, SsPolicy
+    env = make_env(warehouse_capacity=1e9)
+    st = _trang_thai_chay(env)
+    kw = dict(service_level=0.9, q_factor=1.0, lead_time=3.0, ordering_cost=5.0, holding_cost=1.0)
+    assert np.array_equal(CapacityAwareSs(env.n_pairs, **kw).get_action(st),
+                          SsPolicy(env.n_pairs, **kw).get_action(st))
+
+
+def _du_bao(env, T=200):
+    F = np.zeros((T, env.n_pairs, 3), dtype=np.float32)
+    F[:] = env.mean_demand[None, :, None]
+    return F, np.ones((T, env.n_pairs), dtype=np.float32)
+
+
+def test_newsvendor_du_bao_tra_dung_ngay():
+    from baselines.traditional_policies import ForecastNewsvendor, build_env_state
+    env = make_env()
+    F, sigma = _du_bao(env)
+    F[:] = 0.0
+    env.reset(seed=0, options={"start_day": 10})
+    F[10] = 7.0
+    pol = ForecastNewsvendor(env.n_pairs, F, sigma * 0, cr_override=0.5, lead_time=4.0)
+    env.inventory[:] = 0.0
+    q = env.action_to_qty(pol.get_action(build_env_state(env)))
+    # 5 ngay bao phu x 7/ngay = 35, lam tron ve muc gan nhat cua bang
+    assert np.array_equal(q, env.action_to_qty(env.qty_to_action(np.full(env.n_pairs, 35.0))))
+
+
+def test_quan_sat_du_bao_them_2_chieu_va_nam_trong_0_1():
+    goc = make_env()
+    F, sigma = _du_bao(goc)
+    env = MultiWarehouseInventoryEnv(config=goc.config | {"include_forecast": True},
+                                     demand_data=goc.demand_data, forecast=(F, sigma), mode="train")
+    assert env.obs_per_pair == goc.obs_per_pair + 2
+    obs, _ = env.reset(seed=0)
+    c = env.obs_groups["forecast"]
+    assert obs.shape[1] == env.obs_per_pair and (obs[:, c] > 0).all() and (obs[:, c] <= 1).all()
+    assert list(range(env.obs_per_pair)) == sorted(i for v in env.obs_groups.values() for i in v)
+
+
+def test_base_stock_z_co_dinh_trung_ss():
+    from baselines.traditional_policies import BaseStockActions, SsPolicy, build_env_state
+    env = make_env()
+    st = _trang_thai_chay(env)
+    pol = SsPolicy(env.n_pairs, service_level=0.9, lead_time=3.0, q_factor=1.0,
+                   ordering_cost=5.0, holding_cost=1.0)
+    bs = BaseStockActions(env.n_pairs, z_levels=[float(pol.z)] * 6, lead_time=3.0, q_factor=1.0)
+    a = bs(np.zeros(env.n_pairs, dtype=int), env)
+    assert np.array_equal(a, pol.get_action(st))
+
+
+def _thu_thap(env, ag, buf, n=8):
+    obs, _ = env.reset(seed=0)
+    for _ in range(n):
+        a, lp, v = ag.select_action(obs)
+        nobs, r, te, tr, info = env.step(ag.env_action(a, env))
+        buf.add(obs, a, lp, info["local_scaled_rewards"], v)
+        obs = nobs
+    buf.compute_gae(last_values=ag.select_action(obs)[2], gamma=ag.gamma, gae_lambda=ag.gae_lambda)
+
+
+def test_u5_z_co_dinh_trung_newsvendor_du_bao():
+    from baselines.traditional_policies import BaseStockActions, ForecastNewsvendor, build_env_state
+    env = make_env()
+    env.reset(seed=0)
+    T = env.demand_data.shape[0] if env.demand_data is not None else 2000
+    rng = np.random.default_rng(0)
+    env.forecast = rng.uniform(0, 5, (T, env.n_pairs, 3)).astype(np.float32)
+    env.forecast_sigma = rng.uniform(0, 2, (T, env.n_pairs)).astype(np.float32)
+    bao = BaseStockActions(env.n_pairs, [0.0, 0.5], lead_time=3.0, du_bao=True)
+    a = bao(np.ones(env.n_pairs, dtype=int), env)
+    pol = ForecastNewsvendor(env.n_pairs, env.forecast, env.forecast_sigma, lead_time=3.0)
+    pol.z = 0.5
+    assert np.array_equal(a, pol.get_action(build_env_state(env)))
+
+
+def test_buffer_u2_luu_chi_so_z_goc():
+    from agents.ppo_agent import PPOAgent
+    from agents.rollout_buffer import RolloutBuffer
+    env = make_env()
+    ag = PPOAgent(env.obs_per_pair, env.n_pairs, env.n_action_levels,
+                  config={"action_mode": "base_stock", "mini_batch_size": 32,
+                          "base_stock": {"z_levels": [-0.5, 0, 0.5, 1, 1.5, 2.5]}})
+    buf = RolloutBuffer(buffer_size=8, obs_per_pair=env.obs_per_pair, n_pairs=env.n_pairs)
+    obs, _ = env.reset(seed=0)
+    a, lp, v = ag.select_action(obs)
+    buf.add(obs, a, lp, np.zeros(env.n_pairs), v)
+    assert np.array_equal(buf.actions[0], a)         # luu hanh dong goc, khong phai muc dat
+    assert ag.env_action(a, env).shape == a.shape
+
+
+def test_grouped_mlp_k1_trung_mang_chinh():
+    import torch
+    from agents.ppo_agent import GroupedMLP, _mlp
+    net = _mlp(9, 16, 6, 0.01)
+    g = GroupedMLP(1, 12, 9, 16, 6, 0.01)
+    for l, i in enumerate((0, 2, 4)):
+        g.w[l].data[0] = net[i].weight.data
+        g.b[l].data[0] = net[i].bias.data
+    x = torch.rand(5, 12, 9)
+    assert torch.allclose(g(x), net(x), atol=1e-6)
+    assert g(x[0]).shape == (12, 6)                  # luc chon hanh dong khong co truc buoc
+
+
+def test_u4_k_mang_cap_nhat_duoc():
+    from agents.ppo_agent import PPOAgent, pair_groups
+    from agents.rollout_buffer import RolloutBuffer
+    env = make_env()
+    ag = PPOAgent(env.obs_per_pair, env.n_pairs, env.n_action_levels,
+                  config={"param_groups": 3, "batch_mode": "time", "mini_batch_size": 48})
+    ag.set_groups(pair_groups(3, env))
+    assert ag.network.actor.group_of.tolist() == pair_groups(3, env).tolist()
+    buf = RolloutBuffer(buffer_size=8, obs_per_pair=env.obs_per_pair, n_pairs=env.n_pairs)
+    _thu_thap(env, ag, buf)
+    trc = [q.clone() for q in ag.network.parameters()]
+    ag.update(buf)
+    assert any(not torch_equal(a, b) for a, b in zip(trc, ag.network.parameters()))
+    with pytest.raises(ValueError):
+        PPOAgent(env.obs_per_pair, env.n_pairs, env.n_action_levels, config={"param_groups": 3})
+
+
+def test_buffer_lay_mau_theo_nhom_giu_tron_nhom():
+    from agents.rollout_buffer import RolloutBuffer
+    env = make_env()
+    buf = RolloutBuffer(buffer_size=6, obs_per_pair=2, n_pairs=12, group_size=4)
+    for t in range(6):
+        s = np.zeros((12, 2), dtype=np.float32)
+        s[:, 0] = t                                  # danh dau buoc
+        s[:, 1] = np.repeat(np.arange(3), 4)         # danh dau kho
+        buf.add(s, np.zeros(12, int), np.zeros(12), np.zeros(12), np.zeros(12))
+    buf.compute_gae(np.zeros(12))
+    tong = 0
+    for b in buf.get_batches(batch_size=16, mode="warehouse"):
+        assert b["states"].shape[1:] == (4, 2) and b["actions"].shape[1:] == (4,)
+        assert (b["states"][:, :, 0] == b["states"][:, :1, 0]).all()
+        assert (b["states"][:, :, 1] == b["states"][:, :1, 1]).all()
+        tong += b["states"].shape[0]
+    assert tong == 18
+    assert all(b["states"].shape[1:] == (12, 2) for b in buf.get_batches(batch_size=24, mode="time"))
+    assert all(b["states"].ndim == 2 for b in buf.get_batches(batch_size=24))
+
+
+def test_critic_ngu_canh_bat_bien_hoan_vi_sku():
+    import torch
+    from agents.ppo_agent import ContextCritic
+    c = ContextCritic(5, 4, 16)
+    x = torch.rand(2, 4, 5)
+    p = torch.tensor([2, 0, 3, 1])
+    assert torch.allclose(c(x)[:, p], c(x[:, p]), atol=1e-6)     # V cua tung SKU di theo SKU do
+    assert c(x.reshape(8, 5)).shape == (8, 1)                    # lo phang tu select_action
+
+
+def test_u3_cap_nhat_duoc():
+    from agents.ppo_agent import PPOAgent
+    from agents.rollout_buffer import RolloutBuffer
+    env = make_env()
+    ag = PPOAgent(env.obs_per_pair, env.n_pairs, env.n_action_levels,
+                  config={"critic_context": "warehouse", "batch_mode": "warehouse",
+                          "warehouse_skus": env.n_skus, "mini_batch_size": 16})
+    buf = RolloutBuffer(buffer_size=8, obs_per_pair=env.obs_per_pair, n_pairs=env.n_pairs,
+                        group_size=env.n_skus)
+    _thu_thap(env, ag, buf)
+    assert ag.update(buf)["grad_norm_critic"] > 0
+
+
+def test_lagrange_lambda_tang_khi_fill_thap_va_giu_trong_chan():
+    env = make_env(lagrange_per_pair=True, fill_rate_window=5,
+                   lagrange=dict(kp=1.0, ki=1.0, kd=0.0, lambda_max=4.0))
+    assert env.obs_per_pair == make_env().obs_per_pair + 1
+    obs, _ = env.reset(seed=0)
+    assert np.allclose(env.lam, env.phi_dv)
+    assert np.allclose(obs[:, env.obs_groups["lagrange"]], env.phi_dv / 4.0)
+    for _ in range(30):                              # khong dat hang -> het hang -> fill thap
+        obs, *_, info = env.step(np.zeros(env.n_pairs, dtype=int))
+    assert (info["lambda_pairs"][env.mean_demand > 1] > env.phi_dv).all()
+    assert info["lambda_pairs"].max() <= 4.0
+
+
+def test_lagrange_giu_qua_tap_train_luu_checkpoint_va_khoi_phuc_khi_danh_gia(tmp_path):
+    from agents.ppo_agent import PPOAgent
+    cfg = dict(lagrange_per_pair=True, fill_rate_window=5,
+               lagrange=dict(kp=1.0, ki=1.0, kd=0.0, lambda_max=4.0))
+    khong_dat = lambda e: e.step(np.zeros(e.n_pairs, dtype=int))
+    env = make_env(**cfg)
+    env.reset(seed=0)
+    for _ in range(30):
+        khong_dat(env)
+    lam = env.lam.copy()
+    assert not np.allclose(lam, env.phi_dv)
+    env.reset(seed=1)
+    assert np.allclose(env.lam, lam)                 # mien train: nhan tu giu qua cac tap
+
+    ag = PPOAgent(env.obs_per_pair, env.n_pairs, env.n_action_levels, config={})
+    ag.lagrange_env = env
+    ag.save(str(tmp_path / "m.pth"))
+    te = make_env(mode="test", **cfg)
+    ag.load(str(tmp_path / "m.pth"), env=te)
+    for s in (0, 1):                                 # moi lan danh gia cung diem xuat phat
+        te.reset(seed=s)
+        assert np.allclose(te.lam, lam)
+        for _ in range(30):
+            khong_dat(te)
+
+
+def test_duong_bien_quet_lai_khi_van_tay_doi(tmp_path, monkeypatch):
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+    import compare_same_service as iso
+    env, goi = make_env(), []
+    monkeypatch.setattr(iso, "chay", lambda *a, **k: goi.append(1) or (1.0, 0.9))
+    luoi = {"(s,S)": (iso.SsPolicy, [dict(service_level=0.9, lead_time=2.0)])}
+    quet = lambda vt: iso.quet_duong_bien(env, env, luoi, 1, 1, 0, tmp_path / "bien.json", vt)
+    quet("a")
+    n = len(goi)
+    assert n and (quet("a"), len(goi))[1] == n       # cung van tay: dung lai cache
+    quet("b")
+    assert len(goi) == 2 * n
+
+
+def test_chon_theo_nhom_moi_nhom_lay_cau_hinh_re_nhat_theo_gia_bong():
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+    import compare_same_service as iso
+    C = np.array([[1.0, 10.0], [5.0, 2.0]])          # (cau hinh, nhom): chi phi
+    T = np.array([[9.0, 9.0], [0.0, 0.0]])           # cau hinh 0 thieu nhieu hang hon
+    assert iso.chon_theo_nhom(C, T, [0.0]) == {(0, 1)}   # khong phat thieu hang: re nhat tung nhom
+    assert iso.chon_theo_nhom(C, T, [100.0]) == {(1, 1)}  # gia bong cao: ca hai nhom giu hang
+
+
+def test_chon_phi_dung_cac_lan_danh_gia_val_khac_nhau(tmp_path, monkeypatch):
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+    import run_experiments as campaign
+    monkeypatch.setattr(campaign, "ROOT", tmp_path)
+    (tmp_path / "results").mkdir()
+    for p, f in zip(campaign.PHI, (0.70, 0.86, 0.90, 0.93, 0.97)):
+        (tmp_path / "results" / f"train_log_penalty{p}_trial.csv").write_text(
+            f"episode,eval_fill\n1,\n2,{f}\n3,{f}\n", encoding="utf-8")
+    assert campaign.chon_phi() == ["10", "60"]
+    (tmp_path / "results" / "train_log_x.csv").write_text(
+        "episode,eval_fill\n1,0.5\n2,0.5\n3,0.5\n4,0.9\n", encoding="utf-8")
+    assert campaign.fill_val_cuoi("x") == pytest.approx(0.7)   # 0.5 lap lai chi tinh mot lan
+
+
+def test_chi_phi_van_hanh_theo_cap_khong_gom_phat_sla():
+    env = make_env()
+    env.reset(seed=0)
+    *_, info = env.step(np.zeros(env.n_pairs, dtype=int))
+    assert info["op_cost_pairs"].sum() == pytest.approx(
+        info["cost_total"] - info["cost_service_penalty"], rel=1e-5)
+
+
+def test_lagrange_tat_giu_nguyen_phat():
+    env = make_env()
+    env.reset(seed=0)
+    assert env.lam == env.phi_dv
+
+
+def test_forecast_khong_nhin_tuong_lai():
+    from forecast_demand import features
+    rng = np.random.default_rng(0)
+    T, P = 80, 20
+    D = rng.poisson(2.0, size=(T, P)).astype(np.float32)
+    cal = np.zeros((T, 20), dtype=np.float32)
+    cal[:, 8] = 1.0
+    price = np.ones((T, P), dtype=np.float32)
+    md, snap = np.ones(P), np.zeros(P, dtype=int)
+    t = 50
+    a = features(D, cal, price, price[0], md, snap, [t], W=2)
+    D2 = D.copy()
+    D2[t:] += 100.0                                  # doi nhu cau tu ngay t tro di
+    b = features(D2, cal, price, price[0], md, snap, [t], W=2)
+    assert np.array_equal(a, b)
+    D3 = D.copy()
+    D3[t - 1] += 100.0                               # ngay t-1 phai co tac dung
+    assert not np.array_equal(a, features(D3, cal, price, price[0], md, snap, [t], W=2))
+
+
+def test_duong_bien_noi_suy_va_chon_cung_muc():
+    from compare_same_service import duong_test, doc_tai, chon_cung_muc, pareto
+    diem = [{"val_fill": f, "val_cost": c, "test_fill": f, "test_cost": c, "params": {"x": f}}
+            for f, c in [(0.86, 100.0), (0.90, 120.0), (0.94, 160.0)]]
+    assert len(pareto(diem + [{"val_fill": 0.87, "val_cost": 130.0}])) == 3
+    f, c = duong_test(diem)
+    assert doc_tai(f, c, 0.92) == pytest.approx(140.0)
+    assert doc_tai(f, c, 0.99) is None
+    r = chon_cung_muc(diem, 110.0, 0.90, 0.90)
+    assert r["noi_suy"] is False and r["delta_ippo_percent"] == pytest.approx(100 * (110 / 120 - 1))
+    r = chon_cung_muc(diem, 110.0, 0.90, 0.92)       # val khop nhung test lech -> noi suy
+    assert r["noi_suy"] is True and r["cost"] == pytest.approx(140.0)
+    r = chon_cung_muc(diem, 110.0, 0.90, 0.91)       # noi suy van tra ve cau hinh that gan nhat
+    assert r["params"] == {"x": 0.90} and r["fill_cau_hinh"] == 0.90
+    assert chon_cung_muc(diem, 110.0, 0.90, 0.99).get("khong_dat")
+
+
+def test_cung_muc_noi_suy_chi_dung_cau_hinh_du_gan(tmp_path, monkeypatch):
+    import json
+    import common
+    env = make_env()
+    ket_qua = {
+        "(s,S)": {"cost": 1.0, "fill": 0.90, "noi_suy": True, "fill_cau_hinh": 0.895,
+                  "params": {"service_level": 0.9, "q_factor": 1.0, "lead_time": 2.0}},
+        "EOQ": {"cost": 1.0, "fill": 0.90, "noi_suy": True, "fill_cau_hinh": 0.88,
+                "params": {"q_factor": 1.0, "lead_time": 2.0}},
+        "Newsvendor": {"cost": None, "khong_dat": True},
+    }
+    (tmp_path / "same_service_main_s42.json").write_text(json.dumps({"ket_qua": ket_qua}), encoding="utf-8")
+    monkeypatch.setattr(common, "load_agent", lambda *a: None)
+    pols = common.make_policies({"paths": {"results_dir": str(tmp_path)}}, env, None, du_bao=False)
+    assert "(s,S) (cùng mức PV)" in pols
+    assert "EOQ (cùng mức PV)" not in pols and "Newsvendor (cùng mức PV)" not in pols
+
+
+def test_nguon_cung_chung_gioi_han_toan_mang_va_tin_hieu():
+    env = make_env(supply_cover=0.5)
+    goc = make_env()
+    assert env.obs_per_pair == goc.obs_per_pair + 1 and env.obs_groups["supply"]
+    obs, _ = env.reset(seed=0)
+    assert np.all(obs[:, env.obs_groups["supply"][0]] == 1.0)
+    a = np.full(env.n_pairs, env.n_action_levels - 1)
+    obs, _, _, _, inf = env.step(a)
+    don = inf["order_qty_pairs"].reshape(env.n_warehouses, env.n_skus)
+    assert np.all(don.sum(axis=0) <= env.nguon_cung + 1e-3)
+    assert inf["order_requested"] > inf["order_qty"]
+    # moi kho bi cat cung ty le tren cung mat hang
+    cot = obs[:, env.obs_groups["supply"][0]].reshape(env.n_warehouses, env.n_skus)
+    assert np.allclose(cot, cot[0]) and cot.max() < 1.0
+    assert np.allclose(goc.action_to_qty(a).reshape(don.shape) * cot, don, atol=1e-3)
+
+
+def test_khong_bat_nguon_cung_thi_khong_cat_don():
+    env = make_env()
+    env.reset(seed=0)
+    *_, inf = env.step(np.full(env.n_pairs, env.n_action_levels - 1))
+    assert inf["order_requested"] == pytest.approx(inf["order_qty"]) and "supply" not in env.obs_groups
+
+
+def test_tron_chinh_sach_theo_nhom():
+    from hybrid_policy import tron
+    fn = tron(lambda o, e: np.zeros(3, int), lambda o, e: np.ones(3, int), np.array([True, False, True]))
+    assert fn(None, None).tolist() == [0, 1, 0]
+
+
+def test_du_bao_lai_phan_ung_voi_soc_tu_ngay_hom_sau(tmp_path):
+    pytest.importorskip("lightgbm")
+    from forecast_demand import du_bao_lai, features, fit, targets, sai_so_truot, HORIZONS
+    rng = np.random.default_rng(0)
+    T, W, S = 120, 2, 2
+    P = W * S
+    muc = 2.0 + 8.0 * (np.arange(T) // 15 % 2)        # muc cau doi theo khoi de mo hinh hoc tu lich su
+    D = rng.poisson(muc[:, None, None], size=(T, W, S)).astype(np.float32)
+    cal = np.zeros((T, 20), dtype=np.float32)
+    cal[:, 8] = 1.0
+    data = dict(demand_data=D, calendar_features=cal, price_per_pair=np.ones((W, S), dtype=np.float32),
+                price_series=np.ones((T, W, S), dtype=np.float32))
+    E = dict(split_day=60, val_day=90, warehouse_stores=["CA_1", "TX_1"])
+    cfg = dict(env=E, paths=dict(results_dir=str(tmp_path)))
+    Dp, md = D.reshape(T, P), np.full(P, 5.0)
+    snap = np.repeat([0, 1], S)
+    ngay = np.arange(28, 90 - max(HORIZONS))
+    m = fit({"objective": "regression"}, features(Dp, cal, np.ones((T, P)), np.ones(P), md, snap, ngay, W),
+            targets(Dp, ngay), 20)
+    m.save_model(str(tmp_path / "forecast_model.txt"))
+    F = np.full((T, P, 3), 5.0, dtype=np.float32)
+    for ten, x in (("train_oof", F[:60]), ("val", F[60:90]), ("test", F[90:]), ("sigma", np.ones((T, P)))):
+        np.save(tmp_path / f"forecast_{ten}.npy", x)
+    sot = D.copy()
+    sot[100:] *= 3.0
+    F2, sigma2 = du_bao_lai(cfg, data, sot)
+    F0, sigma0 = du_bao_lai(cfg, data, D)
+    assert np.array_equal(F2[:101], F0[:101])         # ngay 100 chua thay soc
+    assert not np.allclose(F2[101:], F0[101:])
+    assert sigma2[115:].mean() > sigma0[115:].mean()
+    assert du_bao_lai(dict(cfg, paths=dict(results_dir=str(tmp_path / "khong"))), data, sot) is None
+
+
+def test_bootstrap_phan_tang_dau_dung():
+    from multi_seed_stats import bootstrap_phan_tang
+    C_base = np.ones(70) * 100
+    C_ippo = np.stack([C_base * 0.9, C_base * 0.92, C_base * 0.88])
+    r = bootstrap_phan_tang(C_ippo, C_base, 7, 200, np.random.default_rng(0))
+    assert r["tb_percent"] == pytest.approx(-10.0)
+    assert r["co_y_nghia"] and r["ci95_high"] < 0
+
+
+# --------------------------------------------------------------------------- #
 # [P5-1] SNAP theo bang cua kho
 # --------------------------------------------------------------------------- #
 def test_snap_chi_hien_co_cua_bang_chua_kho():

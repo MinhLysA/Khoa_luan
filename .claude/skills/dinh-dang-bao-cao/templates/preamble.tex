@@ -1,0 +1,269 @@
+\documentclass[a4paper]{report}
+
+% --- FONT & NGÔN NGỮ ---
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+\usepackage[vietnamese]{babel}
+\usepackage{microtype} % Tự động tinh chỉnh khoảng cách để giảm lỗi tràn lề
+
+% --- ÉP FONT 13pt TOÀN CỤC ---
+\usepackage{fontsize}
+\changefontsize[15.6]{13} % Cỡ chữ 13pt, base leading 15.6pt
+
+% --- CANH LỀ CHUẨN A4 BÁO CÁO DACNTT TDTU ---
+% Lề trái 3.5cm (đóng gáy sách), lề phải 2.0cm, lề trên 3.0cm, lề dưới 3.0cm
+\usepackage[top=3.0cm, bottom=3.0cm, left=3.5cm, right=2.0cm, headheight=16pt, headsep=1.0cm, footskip=1.2cm]{geometry}
+
+% --- DÃN DÒNG & THỤT ĐẦU DÒNG ĐOẠN VĂN ---
+\usepackage{setspace}
+\onehalfspacing % Dãn dòng 1.5 lines chuẩn
+\usepackage{indentfirst}
+\setlength{\parindent}{1.27cm} % Thụt đầu dòng 1.27cm (0.5 inch)
+\setlength{\parskip}{0pt}      % Không dãn cách đoạn thừa thãi
+\emergencystretch 3em          % Chống tuyệt đối lỗi tràn lề phải (overfull hbox)
+
+% --- HEADER & FOOTER: ĐÁNH SỐ TRANG GIỮA TRÊN ---
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{} 
+\fancyhead[C]{\fontsize{10pt}{12pt}\selectfont\thepage} % Số trang căn giữa phía trên
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Đảm bảo trang đầu chương / trang plain vẫn có số trang căn giữa phía trên
+\fancypagestyle{plain}{
+    \fancyhf{} 
+    \fancyhead[C]{\fontsize{10pt}{12pt}\selectfont\thepage} 
+    \renewcommand{\headrulewidth}{0pt}
+}
+
+% --- TOÁN HỌC & HÌNH ẢNH ---
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{calc, positioning, decorations.pathreplacing}
+\usepackage{float}
+\usepackage{placeins}  % \FloatBarrier: giữ hình của chương trước mục tóm tắt
+% Trang chỉ chứa bảng/hình: đặt từ đầu trang thay vì căn giữa theo chiều dọc (tránh khoảng trắng lớn phía trên).
+\makeatletter
+\setlength{\@fptop}{0pt}
+\setlength{\@fpbot}{0pt plus 1fil}
+% Khoảng cách cố định giữa các float trên trang chỉ có float (mặc định giãn ra cho đều trang, tạo khoảng trắng giữa các thuật toán).
+\setlength{\@fpsep}{\floatsep}
+\makeatother
+% Cho bảng, hình, thuật toán nằm chung trang với chữ nhiều hơn: ít trang chỉ có float, ít khoảng trắng cuối trang.
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.8}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{adjustbox} % bảng sinh tự động: max width=\textwidth (thu nhỏ bảng rộng, không phóng to bảng hẹp)
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{xltabular}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+% Bảng kẻ lưới đầy đủ (| và \hline): thêm khoảng đệm trên mỗi hàng để chữ không sát đường kẻ.
+\setlength{\extrarowheight}{2pt}
+% Ô hai dòng của bảng sinh tự động: \tbsd{trung bình}{độ lệch chuẩn} (độ lệch chuẩn dòng dưới, cùng cỡ chữ);
+% \tbl, \tbr, \tbc{dòng 1}{dòng 2}: căn trái, phải, giữa (tiêu đề cột, cặp A/B và khoảng tin cậy của bảng kiểm định).
+\newcommand{\tbsd}[2]{\begin{tabular}[c]{@{}r@{}}#1\\$\pm$\,#2\end{tabular}}
+\newcommand{\tbl}[2]{\begin{tabular}[c]{@{}l@{}}#1\\#2\end{tabular}}
+\newcommand{\tbr}[2]{\begin{tabular}[c]{@{}r@{}}#1\\#2\end{tabular}}
+\newcommand{\tbc}[2]{\begin{tabular}[c]{@{}c@{}}#1\\#2\end{tabular}}
+\usepackage{subcaption}
+% --- MÃ GIẢ (THUẬT TOÁN) ---
+% Đánh số theo chương (Thuật toán 3.1, ...); từ khóa tiếng Việt; noend: bỏ dòng "hết ..." (thụt lề thể hiện khối lệnh);
+% từ khóa viết chữ thường, không in đậm.
+\usepackage[chapter]{algorithm}
+\usepackage[noend]{algpseudocode}
+\floatname{algorithm}{Thuật toán}
+\algrenewcommand\algorithmicrequire{Đầu vào:}
+\algrenewcommand\algorithmicensure{Đầu ra:}
+\algrenewcommand\algorithmicfor{với}
+\algrenewcommand\algorithmicforall{với mọi}
+\algrenewcommand\algorithmicdo{làm}
+\algrenewcommand\algorithmicwhile{trong khi}
+\algrenewcommand\algorithmicrepeat{lặp}
+\algrenewcommand\algorithmicuntil{đến khi}
+\algrenewcommand\algorithmicif{nếu}
+\algrenewcommand\algorithmicthen{thì}
+\algrenewcommand\algorithmicelse{ngược lại}
+\algrenewcommand\algorithmicreturn{trả về}
+\algrenewcommand\algorithmicfunction{hàm}
+\algrenewcommand\algorithmicprocedure{thủ tục}
+\algrenewcommand{\algorithmiccomment}[1]{\hfill\(\triangleright\) \textit{#1}}
+\graphicspath{{media/}}
+\usepackage{caption}
+\captionsetup{
+    font={small},
+    labelfont={bf},
+    labelsep=colon,
+    skip=6pt
+}
+
+\usepackage[hidelinks]{hyperref} % Liên kết mục lục sạch sẽ, không viền đỏ
+
+% --- TÙY CHỈNH MỤC LỤC & DANH MỤC (TOC, LOF, LOT) ---
+\usepackage{tocloft} 
+\renewcommand{\cftdotsep}{0.5} % Dấu chấm mục lục san sát chuẩn Word
+
+% Thêm chữ "CHƯƠNG " vào Mục lục
+\renewcommand{\cftchappresnum}{CHƯƠNG } 
+\renewcommand{\cftchapaftersnum}{. }    
+\setlength{\cftchapnumwidth}{6.0em}     
+
+% 1. Cấp Chương (Chapter): In đậm toàn hàng
+\renewcommand{\cftchapfont}{\bfseries}
+\renewcommand{\cftchapleader}{\bfseries\cftdotfill{\cftdotsep}}
+\renewcommand{\cftchappagefont}{\bfseries}
+
+% 2. Cấp Mục (Section - 1.1): Chữ thường
+\renewcommand{\cftsecfont}{\normalfont}
+\renewcommand{\cftsecleader}{\normalfont\cftdotfill{\cftdotsep}}
+\renewcommand{\cftsecpagefont}{\normalfont}
+\setlength{\cftsecnumwidth}{2.8em} % đủ cho "3.10"
+
+% 3. Cấp Tiểu mục (Subsection - 1.1.1): In nghiêng
+\renewcommand{\cftsubsecfont}{\itshape}
+\renewcommand{\cftsubsecleader}{\itshape\cftdotfill{\cftdotsep}}
+\renewcommand{\cftsubsecpagefont}{\itshape}
+\setlength{\cftsubsecnumwidth}{2.8em}
+
+% Khoảng cách giữa các dòng trong Mục lục
+\setlength{\cftbeforechapskip}{8pt} 
+\setlength{\cftbeforesecskip}{5pt}
+\setlength{\cftbeforesubsecskip}{4pt}
+
+% Danh mục hình vẽ
+\renewcommand{\cftfigpresnum}{Hình } 
+\renewcommand{\cftfigaftersnum}{: }  
+\setlength{\cftfignumwidth}{5.3em}   % đủ cho "Hình 4.10: "
+
+% Danh mục bảng biểu
+\renewcommand{\cfttabpresnum}{Bảng }
+\renewcommand{\cfttabaftersnum}{: }
+\setlength{\cfttabnumwidth}{5.3em} % đủ cho "Bảng 4.10: "
+
+% Xóa khoảng trắng thừa giữa các chương trong danh mục hình/bảng
+\usepackage{etoolbox}
+\makeatletter
+\AtBeginDocument{
+  \patchcmd{\@chapter}{\addtocontents{lof}{\protect\addvspace{10\p@}}}{}{}{}
+  \patchcmd{\@chapter}{\addtocontents{lot}{\protect\addvspace{10\p@}}}{}{}{}
+}
+\makeatother
+
+% --- ĐỊNH DẠNG TIÊU ĐỀ CÁC CẤP (HEADING SPACING CHUẨN ĐẸP) ---
+\usepackage{titlesec}
+\setcounter{secnumdepth}{3} % Đánh số tới cấp 1.1.1.1
+
+% Heading 1: Chương (\chapter) - 16pt Bold
+\titleformat{\chapter}[hang]
+  {\fontsize{16pt}{22pt}\selectfont\bfseries} 
+  {CHƯƠNG \thechapter.} 
+  {0.5cm} 
+  {}
+\titlespacing*{\chapter}{0pt}{0pt}{16pt} % Cách dưới 16pt
+
+% Heading 2: Mục lớn (\section) - 14pt Bold, sát lề trái 0cm
+\titleformat{\section}[hang]
+  {\fontsize{14pt}{19pt}\selectfont\bfseries} 
+  {\thesection}
+  {0.4cm} 
+  {}
+\titlespacing*{\section}{0pt}{14pt}{6pt} % Sát lề trái
+
+% Heading 3: Tiểu mục (\subsection - vd 3.1.1) - 13pt Bold Italic, thụt vào 0.635cm (nửa tab)
+\titleformat{\subsection}[hang]
+  {\fontsize{13pt}{18pt}\selectfont\bfseries\itshape} 
+  {\thesubsection}
+  {0.35cm} 
+  {}
+\titlespacing*{\subsection}{0.635cm}{10pt}{4pt} % Thụt vào bậc thang 0.635cm
+
+% Heading 4: Tiểu mục con (\subsubsection - vd 3.1.1.1) - 13pt Italic, thụt vào 1.27cm (1 tab)
+\titleformat{\subsubsection}[hang]
+  {\fontsize{13pt}{18pt}\selectfont\itshape} 
+  {\thesubsubsection}
+  {0.3cm} 
+  {}
+\titlespacing*{\subsubsection}{1.27cm}{8pt}{3pt} % Thụt vào bậc thang 1.27cm
+
+% --- KHOẢNG CÁCH CÔNG THỨC TOÁN HỌC ---
+\AtBeginDocument{
+  \setlength{\abovedisplayskip}{6pt}
+  \setlength{\belowdisplayskip}{6pt}
+  \setlength{\abovedisplayshortskip}{3pt} 
+  \setlength{\belowdisplayshortskip}{3pt}
+}
+
+% --- TÀI LIỆU THAM KHẢO ---
+\usepackage{csquotes} 
+\DeclareQuoteAlias{english}{vietnamese}
+
+\usepackage[backend=biber, style=ieee, defernumbers=true]{biblatex}
+% Tài liệu tham khảo chia theo nhóm (main.tex in từng nhóm); defernumbers: đánh số liên tục theo thứ tự in.
+% Mẫu: thay khoá trích dẫn bằng khoá trong references.bib của khóa luận. Mọi nguồn phải thuộc đúng một nhóm,
+% thiếu nhóm thì nguồn đó không được in. main.tex in từng nhóm bằng \printbibliography[category=..., heading=subbib].
+\DeclareBibliographyCategory{dulieu}\addtocategory{dulieu}{khoa_du_lieu_1}
+\DeclareBibliographyCategory{doichung}\addtocategory{doichung}{khoa_nen_tang_1,khoa_nen_tang_2}
+\DeclareBibliographyCategory{lythuyet}\addtocategory{lythuyet}{khoa_ly_thuyet_1}
+\DeclareBibliographyCategory{danhgia}\addtocategory{danhgia}{khoa_danh_gia_1}
+\addbibresource{backmatter/references.bib}
+% biblatex không có gói ngôn ngữ tiếng Việt: thiếu 2 dòng này thì danh mục tài liệu in từ khoá thô
+% (and, in, pages, andothers). Dùng chuỗi tiếng Anh, riêng "and"/"et al." đổi sang tiếng Việt.
+\DeclareLanguageMapping{vietnamese}{english}
+\DefineBibliographyStrings{vietnamese}{andothers={và cộng sự}, and={và}}
+\usepackage{xurl}
+% Cho phép ngắt DOI/URL sau chữ số và chữ hoa (DOI 10.1109/ICDM... từng tràn lề phải)
+\setcounter{biburlnumpenalty}{100}
+\setcounter{biburlucpenalty}{100}
+\let\parencite\cite
+
+
+
+\defbibheading{bibcenter}{
+    \clearpage
+    \phantomsection
+    \addcontentsline{toc}{chapter}{TÀI LIỆU THAM KHẢO}
+    \begin{center}
+        {\fontsize{16pt}{22pt}\selectfont\bfseries TÀI LIỆU THAM KHẢO\par}
+    \end{center}
+    \vspace{12pt}
+}
+
+\defbibheading{subbib}{
+    \noindent\textit{#1}\par\vspace{6pt}
+}
+
+% Danh mục đánh số [1], [2], ... khớp với số trích dẫn trong bài; dòng sau thụt theo độ rộng nhãn.
+\defbibenvironment{bibliography}
+  {\list
+     {\printtext[labelnumberwidth]{\printfield{labelprefix}\printfield{labelnumber}}}
+     {\setlength{\labelwidth}{\labelnumberwidth}
+      \setlength{\leftmargin}{\labelwidth}
+      \addtolength{\leftmargin}{\labelsep}
+      \setlength{\itemsep}{0.5\baselineskip}
+      \setlength{\parsep}{0pt}}
+      \renewcommand*{\makelabel}[1]{##1\hss}}
+  {\endlist}
+  {\item}
+
+
+
+% --- TÙY CHỈNH DANH SÁCH (ITEMIZE / ENUMERATE) ---
+\usepackage{enumitem}
+\setlist{
+    topsep=3pt,
+    partopsep=0pt,
+    itemsep=2pt,
+    parsep=0pt,
+    labelindent=1.27cm,
+    leftmargin=*,
+    align=left,
+    labelsep=0.4cm
+}
+\renewcommand{\labelitemi}{--}
+\renewcommand{\labelitemii}{$-$}

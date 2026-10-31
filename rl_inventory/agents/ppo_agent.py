@@ -22,6 +22,11 @@ PHIEN BAN v2 - sua cac nguyen nhan chinh khien huan luyen khong hoi tu:
           o do lon O(1) bat ke thang do chi phi.
 
   [V2-11] VALUE CLIPPING (tuy chon) de mot update khong keo critic di qua xa.
+
+MO RONG (deu sau co trong ppo:, tat mac dinh):
+  [He so an toan] action_mode: base_stock - hanh dong la chi so he so an toan z.
+  [Critic theo kho] critic_context: warehouse - Critic thay them ngu canh cac SKU cung kho.
+  [Muc chia se tham so] param_groups: K - K bo trong so thay vi mot, cap i dung bo cua nhom no.
 """
 
 import numpy as np
@@ -33,6 +38,7 @@ from torch.distributions import Categorical
 from typing import Tuple, Optional, Dict, Any
 
 from agents.rollout_buffer import RolloutBuffer
+from baselines.traditional_policies import BaseStockActions, demand_group_index
 
 
 def _mlp(in_dim: int, hidden: int, out_dim: int, out_gain: float) -> nn.Sequential:
@@ -47,6 +53,60 @@ def _mlp(in_dim: int, hidden: int, out_dim: int, out_gain: float) -> nn.Sequenti
             nn.init.constant_(m.bias, 0.0)
     nn.init.orthogonal_(net[-1].weight, gain=out_gain)
     return net
+
+
+class GroupedMLP(nn.Module):
+    """[Muc chia se tham so] MLP 2 lop an voi K bo trong so doc lap; group_of[i] la nhom cua cap i.
+    Dau vao (..., n_pairs, in_dim): tinh bang einsum tren lo co cau truc, tranh
+    phai tao mot ma tran trong so rieng cho tung mau."""
+
+    def __init__(self, k: int, n_pairs: int, in_dim: int, hidden: int, out_dim: int,
+                 out_gain: float):
+        super().__init__()
+        nets = [_mlp(in_dim, hidden, out_dim, out_gain) for _ in range(k)]
+        lop = [0, 2, 4]                         # vi tri 3 lop Linear trong _mlp
+        self.w = nn.ParameterList(
+            nn.Parameter(torch.stack([n[l].weight.data for n in nets])) for l in lop)
+        self.b = nn.ParameterList(
+            nn.Parameter(torch.stack([n[l].bias.data for n in nets])) for l in lop)
+        self.register_buffer("group_of", torch.arange(n_pairs) % k)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        g = self.group_of
+        for l, (w, b) in enumerate(zip(self.w, self.b)):
+            x = torch.einsum("pij,...pj->...pi", w[g], x) + b[g]
+            if l < 2:
+                x = torch.tanh(x)
+        return x
+
+
+class ContextCritic(nn.Module):
+    """[Critic theo kho] V_i = MLP([o_i, c_w]). c_w = [TB, max] theo SKU cua h(o_j) trong cung
+    kho, nen bat bien khi hoan vi SKU. Dau vao phai du tron nhom n_skus quan sat."""
+
+    def __init__(self, obs_dim: int, n_skus: int, hidden: int, ctx_dim: int = 64):
+        super().__init__()
+        self.obs_dim, self.n_skus = obs_dim, n_skus
+        self.h = nn.Sequential(nn.Linear(obs_dim, ctx_dim), nn.Tanh())
+        self.v = _mlp(obs_dim + 2 * ctx_dim, hidden, 1, out_gain=1.0)
+
+    def forward(self, obs: torch.Tensor) -> torch.Tensor:
+        x = obs.reshape(-1, self.n_skus, self.obs_dim)        # (nhom, SKU, obs)
+        h = self.h(x)
+        c = torch.cat([h.mean(dim=1), h.max(dim=1).values], dim=-1)
+        c = c[:, None, :].expand(-1, self.n_skus, -1)
+        return self.v(torch.cat([x, c], dim=-1)).reshape(*obs.shape[:-1], 1)
+
+
+def pair_groups(k: int, env) -> np.ndarray:
+    """[Muc chia se tham so] Anh xa cap -> nhom: 1 mang chung, 4 nhom cau, 1 mang/kho, 1 mang/cap."""
+    if k == 4:
+        return demand_group_index(env.mean_demand)
+    if k == env.n_warehouses:
+        return np.repeat(np.arange(k), env.n_skus)
+    if k in (1, env.n_pairs):
+        return np.arange(env.n_pairs) % k
+    raise ValueError(f"param_groups khong hop le: {k}")
 
 
 class ValueNormalizer:
@@ -90,7 +150,8 @@ class SharedActorCriticNetwork(nn.Module):
     """[V2-8] Actor va Critic la HAI mang doc lap (van chia se giua cac tac tu)."""
 
     def __init__(self, obs_per_pair: int, n_action_levels: int, hidden_dim: int = 128,
-                 shared_trunk: bool = False):
+                 shared_trunk: bool = False, n_pairs: int = 0,
+                 param_groups: Optional[int] = None, context_skus: int = 0):
         super().__init__()
         self.obs_per_pair = obs_per_pair
         self.n_action_levels = n_action_levels
@@ -106,9 +167,15 @@ class SharedActorCriticNetwork(nn.Module):
             nn.init.orthogonal_(self.critic[-1].weight, gain=1.0)
             for head in (self.actor[-1], self.critic[-1]):
                 nn.init.constant_(head.bias, 0.0)
+        elif param_groups:
+            self.actor  = GroupedMLP(param_groups, n_pairs, obs_per_pair, hidden_dim,
+                                     n_action_levels, out_gain=0.01)
+            self.critic = GroupedMLP(param_groups, n_pairs, obs_per_pair, hidden_dim,
+                                     1, out_gain=1.0)
         else:
             self.actor  = _mlp(obs_per_pair, hidden_dim, n_action_levels, out_gain=0.01)
-            self.critic = _mlp(obs_per_pair, hidden_dim, 1, out_gain=1.0)
+            self.critic = (ContextCritic(obs_per_pair, context_skus, hidden_dim)
+                           if context_skus else _mlp(obs_per_pair, hidden_dim, 1, out_gain=1.0))
 
     def forward(self, obs: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         return self.actor(obs), self.critic(obs).squeeze(-1)
@@ -135,6 +202,7 @@ class PPOAgent:
         if str(device).startswith("cuda") and not torch.cuda.is_available():
             device = "cpu"
         self.device = torch.device(device)
+        self.lagrange_env = None                  # [Phat theo tung cap] moi truong train, luu lambda kem checkpoint
 
         cfg = config or {}
         self.lr_actor        = float(cfg.get("lr_actor", 3.0e-4))
@@ -154,10 +222,25 @@ class PPOAgent:
         self.use_value_norm  = bool(cfg.get("use_value_norm", True))
         self.clip_value_loss = bool(cfg.get("clip_value_loss", True))
         self.shared_trunk    = bool(cfg.get("shared_trunk", False))
+        self.param_groups    = cfg.get("param_groups")
+        self.batch_mode      = str(cfg.get("batch_mode", "flat"))
+        context = cfg.get("critic_context")
+        if self.param_groups and self.batch_mode != "time":
+            raise ValueError("param_groups can batch_mode: time")
+        if context and self.batch_mode != "warehouse":
+            raise ValueError("critic_context can batch_mode: warehouse")
 
         self.network = SharedActorCriticNetwork(
             obs_per_pair, n_action_levels, self.hidden_dim,
-            shared_trunk=self.shared_trunk).to(self.device)
+            shared_trunk=self.shared_trunk, n_pairs=n_pairs, param_groups=self.param_groups,
+            context_skus=int(cfg.get("warehouse_skus", 30)) if context else 0).to(self.device)
+
+        # [He so an toan] Buffer luu chi so z; env.step nhan muc dat da quy doi qua env_action()
+        self.to_env = None
+        if cfg.get("action_mode", "direct") == "base_stock":
+            self.to_env = BaseStockActions(n_pairs, **cfg["base_stock"])
+            if len(self.to_env.z_levels) != n_action_levels:
+                raise ValueError("so muc z phai bang so muc hanh dong cua moi truong")
 
         if self.shared_trunk:
             # [P2-7] Nhu v1: MOT optimizer, MOT lan cat gradient cho toan mang.
@@ -171,6 +254,15 @@ class PPOAgent:
         self.value_norm = ValueNormalizer() if self.use_value_norm else None
 
     # ------------------------------------------------------------------ #
+    def set_groups(self, groups: np.ndarray):
+        """[Muc chia se tham so] Gan cap -> nhom; luu trong state_dict nen nap checkpoint tu khoi phuc."""
+        g = torch.as_tensor(groups, dtype=torch.long, device=self.device)
+        self.network.actor.group_of.copy_(g)
+        self.network.critic.group_of.copy_(g)
+
+    def env_action(self, action: np.ndarray, env) -> np.ndarray:
+        return action if self.to_env is None else self.to_env(action, env)
+
     def set_lr_scale(self, scale: float):
         scale = float(np.clip(scale, 0.0, 1.0))
         for g in self.opt_actor.param_groups:
@@ -220,7 +312,8 @@ class PPOAgent:
             if stop_early:
                 break
             epoch_kls = []
-            for batch in rollout_buffer.get_batches(batch_size=self.mini_batch_size):
+            for batch in rollout_buffer.get_batches(batch_size=self.mini_batch_size,
+                                                    mode=self.batch_mode):
                 _, new_log_prob, entropy, new_value = self.network.get_action_and_value(
                     batch["states"], action=batch["actions"])
 
@@ -305,24 +398,30 @@ class PPOAgent:
         # [P0-8] Luu them trang thai 2 optimizer (Adam moments) de --resume
         # trong train.py la mot lan warm-start THAT SU, khong phai khoi tao
         # lai Adam tu dau. Khong anh huong checkpoint cu: cac noi chi doc
-        # "network"/"value_norm" (evaluate.py, iso_service.py, ...) van chay
+        # "network"/"value_norm" (evaluate.py, compare_same_service.py, ...) van chay
         # binh thuong vi khong dong cham toi 2 key moi nay.
         torch.save({"network": self.network.state_dict(),
                     "value_norm": (self.value_norm.state_dict()
                                    if self.value_norm is not None else None),
                     "opt_actor": self.opt_actor.state_dict(),
                     "opt_critic": (self.opt_critic.state_dict()
-                                   if self.opt_critic else None)},
+                                   if self.opt_critic else None),
+                    "lagrange": (self.lagrange_env.get_lagrange()
+                                 if self.lagrange_env is not None else None)},
                    filepath)
 
-    def load(self, filepath: str, load_optimizer: bool = False):
+    def load(self, filepath: str, load_optimizer: bool = False, env=None):
         blob = torch.load(filepath, map_location=self.device, weights_only=False)
         if isinstance(blob, dict) and "network" in blob:
             self.network.load_state_dict(blob["network"])
+            if env is not None and getattr(env, "lagrange_dim", 0):
+                if blob.get("lagrange") is None:
+                    raise ValueError(f"{filepath} khong co lambda cua mo hinh [Phat theo tung cap]")
+                env.set_lagrange(blob["lagrange"])
             if self.value_norm is not None and blob.get("value_norm"):
                 self.value_norm.load_state_dict(blob["value_norm"])
             # [P0-8] load_optimizer=False la mac dinh (dung cho evaluate.py,
-            # iso_service.py, analyze_scale_groups.py - chi can trong so).
+            # compare_same_service.py, analyze_scale_groups.py - chi can trong so).
             # Checkpoint cu (truoc [P0-8]) khong co 2 key nay -> .get() tra
             # None, bo qua an toan, chi mat dong luong Adam chu khong loi.
             if load_optimizer:

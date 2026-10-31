@@ -1,0 +1,201 @@
+{
+  "seeds": [
+    42
+  ],
+  "so_ngay": 491,
+  "lan_danh_gia": 30,
+  "gap_chi_phi": {
+    "EOQ": {
+      "khoi_7": {
+        "tb_percent": -17.906639067339867,
+        "sd_percent": 0.0,
+        "iqm_percent": -17.906639067339867,
+        "ci95_low": -19.627063483788607,
+        "ci95_high": -16.043781828881702,
+        "co_y_nghia": true,
+        "cac_seed_percent": [
+          -17.906639067339867
+        ]
+      },
+      "khoi_30": {
+        "tb_percent": -17.906639067339867,
+        "sd_percent": 0.0,
+        "iqm_percent": -17.906639067339867,
+        "ci95_low": -20.68083224879119,
+        "ci95_high": -14.981411495257852,
+        "co_y_nghia": true,
+        "cac_seed_percent": [
+          -17.906639067339867
+        ]
+      }
+    },
+    "(s,S)": {
+      "khoi_7": {
+        "tb_percent": -1.872607956254857,
+        "sd_percent": 0.0,
+        "iqm_percent": -1.872607956254857,
+        "ci95_low": -4.309088347264982,
+        "ci95_high": 0.7757194307001413,
+        "co_y_nghia": false,
+        "cac_seed_percent": [
+          -1.872607956254857
+        ]
+      },
+      "khoi_30": {
+        "tb_percent": -1.872607956254857,
+        "sd_percent": 0.0,
+        "iqm_percent": -1.872607956254857,
+        "ci95_low": -5.336007400264207,
+        "ci95_high": 1.9237616182771835,
+        "co_y_nghia": false,
+        "cac_seed_percent": [
+          -1.872607956254857
+        ]
+      }
+    },
+    "Newsvendor": {
+      "khoi_7": {
+        "tb_percent": -0.47009361418628437,
+        "sd_percent": 0.0,
+        "iqm_percent": -0.47009361418628437,
+        "ci95_low": -2.3210851530457712,
+        "ci95_high": 1.4885410054547568,
+        "co_y_nghia": false,
+        "cac_seed_percent": [
+          -0.47009361418628437
+        ]
+      },
+      "khoi_30": {
+        "tb_percent": -0.47009361418628437,
+        "sd_percent": 0.0,
+        "iqm_percent": -0.47009361418628437,
+        "ci95_low": -3.0151402689219253,
+        "ci95_high": 2.135395044065779,
+        "co_y_nghia": false,
+        "cac_seed_percent": [
+          -0.47009361418628437
+        ]
+      }
+    },
+    "(s,S) biết sức chứa": {
+      "khoi_7": {
+        "tb_percent": -4.675750658009948,
+        "sd_percent": 0.0,
+        "iqm_percent": -4.675750658009948,
+        "ci95_low": -6.830797633688797,
+        "ci95_high": -2.380230131390712,
+        "co_y_nghia": true,
+        "cac_seed_percent": [
+          -4.675750658009948
+        ]
+      },
+      "khoi_30": {
+        "tb_percent": -4.675750658009948,
+        "sd_percent": 0.0,
+        "iqm_percent": -4.675750658009948,
+        "ci95_low": -7.92751327894168,
+        "ci95_high": -1.3641681421297114,
+        "co_y_nghia": true,
+        "cac_seed_percent": [
+          -4.675750658009948
+        ]
+      }
+    },
+    "Newsvendor dự báo": {
+      "khoi_7": {
+        "tb_percent": 8.041335462695699,
+        "sd_percent": 0.0,
+        "iqm_percent": 8.041335462695699,
+        "ci95_low": 5.861656416039622,
+        "ci95_high": 10.295117489501012,
+        "co_y_nghia": true,
+        "cac_seed_percent": [
+          8.041335462695699
+        ]
+      },
+      "khoi_30": {
+        "tb_percent": 8.041335462695699,
+        "sd_percent": 0.0,
+        "iqm_percent": 8.041335462695699,
+        "ci95_low": 5.264449497457802,
+        "ci95_high": 11.332336778519815,
+        "co_y_nghia": true,
+        "cac_seed_percent": [
+          8.041335462695699
+        ]
+      }
+    },
+    "EOQ theo nhóm": {
+      "khoi_7": {
+        "tb_percent": -1.0723611964564395,
+        "sd_percent": 0.0,
+        "iqm_percent": -1.0723611964564395,
+        "ci95_low": -2.775130284086618,
+        "ci95_high": 0.5583284051955548,
+        "co_y_nghia": false,
+        "cac_seed_percent": [
+          -1.0723611964564395
+        ]
+      },
+      "khoi_30": {
+        "tb_percent": -1.0723611964564395,
+        "sd_percent": 0.0,
+        "iqm_percent": -1.0723611964564395,
+        "ci95_low": -3.271772164629351,
+        "ci95_high": 1.167030523938916,
+        "co_y_nghia": false,
+        "cac_seed_percent": [
+          -1.0723611964564395
+        ]
+      }
+    },
+    "(s,S) theo nhóm": {
+      "khoi_7": {
+        "tb_percent": 0.17636894941475134,
+        "sd_percent": 0.0,
+        "iqm_percent": 0.17636894941475134,
+        "ci95_low": -2.339849154518676,
+        "ci95_high": 2.993571200006894,
+        "co_y_nghia": false,
+        "cac_seed_percent": [
+          0.17636894941475134
+        ]
+      },
+      "khoi_30": {
+        "tb_percent": 0.17636894941475134,
+        "sd_percent": 0.0,
+        "iqm_percent": 0.17636894941475134,
+        "ci95_low": -3.2955497765082677,
+        "ci95_high": 3.78918164425186,
+        "co_y_nghia": false,
+        "cac_seed_percent": [
+          0.17636894941475134
+        ]
+      }
+    },
+    "Newsvendor theo nhóm": {
+      "khoi_7": {
+        "tb_percent": 1.460926683254904,
+        "sd_percent": 0.0,
+        "iqm_percent": 1.460926683254904,
+        "ci95_low": -0.44978120357547474,
+        "ci95_high": 3.417952618154496,
+        "co_y_nghia": false,
+        "cac_seed_percent": [
+          1.460926683254904
+        ]
+      },
+      "khoi_30": {
+        "tb_percent": 1.460926683254904,
+        "sd_percent": 0.0,
+        "iqm_percent": 1.460926683254904,
+        "ci95_low": -1.0388375339115552,
+        "ci95_high": 3.9990671897371475,
+        "co_y_nghia": false,
+        "cac_seed_percent": [
+          1.460926683254904
+        ]
+      }
+    }
+  }
+}

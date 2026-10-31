@@ -37,6 +37,7 @@ TEN_NHOM = {"inventory": "Tồn kho & vị thế tồn kho", "demand_history": "
             "pipeline": "Hàng đang về (pipeline)", "fill_rate": "Fill rate 30 ngày",
             "scale": "Đặc trưng quy mô", "warehouse": "Tín hiệu cấp kho",
             "price": "Tín hiệu giá", "event_lookahead": "Sự kiện sắp tới",
+            "forecast": "Dự báo nhu cầu", "lagrange": "Nhân tử Lagrange",
             "calendar": "Lịch (thứ, SNAP, sự kiện, tháng)"}
 
 

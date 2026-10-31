@@ -4,7 +4,7 @@ scripts/regime_analysis.py
 THUC NGHIEM B - hieu nang theo GIAI DOAN NHU CAU (khong huan luyen lai, chi
 danh gia checkpoint da co tren mien TEST).
 
-Thuc nghiem A (evaluate.py, iso_service.py) tinh trung binh ca 365 ngay. O
+Thuc nghiem A (evaluate.py, compare_same_service.py) tinh trung binh ca 365 ngay. O
 day ta tach ra theo tung loai ngay de tra loi: IPPO co loi the o giai doan
 nhu cau bien dong khong, va chinh sach co dien co tot hon khi nhu cau on dinh
 khong?
@@ -33,6 +33,7 @@ import json
 import numpy as np
 
 from common import ROOT, load_config, load_data, make_env, make_policies
+from forecast_demand import du_bao_lai
 
 import matplotlib
 matplotlib.use("Agg")
@@ -130,7 +131,7 @@ def main():
     ap.add_argument("--config", default="config.yaml")
     ap.add_argument("--checkpoint", default="checkpoints/best_model_main_s42.pth")
     ap.add_argument("--episodes", type=int, default=30)
-    ap.add_argument("--shock_factors", type=float, nargs="*", default=[1.5, 0.5])
+    ap.add_argument("--shock_factors", type=float, nargs="*", default=[1.5, 0.5, 2.0, 3.0, 4.0])
     ap.add_argument("--shock_start", type=int, default=1650,
                     help="Ngay bat dau soc (phai nam trong moi episode test)")
     ap.add_argument("--shock_len", type=int, default=28)
@@ -185,8 +186,9 @@ def main():
     for f in a.shock_factors:
         dem = data["demand_data"].astype(np.float32).copy()
         dem[s0:s0 + L] *= f
-        env_s = make_env(cfg, data, demand_override=dem)
-        pols = make_policies(cfg, env_s, a.checkpoint)
+        F = du_bao_lai(cfg, data, dem)
+        env_s = make_env(cfg, data, demand_override=dem, forecast=F)
+        pols = make_policies(cfg, env_s, a.checkpoint, du_bao=F or False)
         b2[str(f)], traj[str(f)] = {}, {}
         print(f"B2 | soc x{f} tai ngay [{s0}, {s0 + L})")
         for name, fn in pols.items():

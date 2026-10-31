@@ -56,7 +56,8 @@ def main():
     a = ap.parse_args()
 
     cfg = load_config(a.config)
-    env = make_env(cfg, load_data(cfg))
+    data = load_data(cfg)
+    env = make_env(cfg, data)
     pols = make_policies(cfg, env, a.checkpoint)
     seeds = [cfg["eval"].get("seed", 1000) + i for i in range(a.episodes)]
 
@@ -91,11 +92,22 @@ def main():
         print(f"IPPO re hon {ref:<26s} o {v['ippo_cheaper_in']}/{v['of']} bo don gia "
               f"(chenh lech {v['gap_min']:+.1f}% .. {v['gap_max']:+.1f}%)")
 
+    # Don gia sat gia ban M5 (bien loi 30%, luu kho 25%/nam tren gia von). Chi phi dat
+    # hang khong co trong du lieu nen thu ba muc. Chinh sach giu nguyen, khong hoc lai.
+    gia = float(np.mean(data["price_per_pair"]))
+    c_th, c_lk = 0.3 * gia, 0.25 * 0.7 * gia / 365
+    theo_gia = []
+    for c_dh in (0.1, 0.5, 1.0):
+        costs = {n: cost(t, c_lk, c_th, c_dh, c_th) for n, t in totals.items()}
+        gap = {r: 100 * (costs["IPPO"] / costs[r] - 1) for r in refs}
+        theo_gia.append({"c_lk": c_lk, "c_th": c_th, "c_dh": c_dh, "costs": costs, "gap": gap})
+        print(f"Theo gia ban, c_dh={c_dh}: " + "  ".join(f"{r} {g:+.1f}%" for r, g in gap.items()))
+
     suffix = f"_{a.tag}" if a.tag else ""
     out = ROOT / cfg["paths"]["results_dir"] / f"sensitivity{suffix}.json"
     out.write_text(json.dumps({"checkpoint": a.checkpoint, "episodes": a.episodes,
-                               "physical_totals": totals, "grid": grid,
-                               "summary": summary}, indent=2, ensure_ascii=False),
+                               "physical_totals": totals, "grid": grid, "summary": summary,
+                               "theo_gia_ban": theo_gia}, indent=2, ensure_ascii=False),
                    encoding="utf-8")
     print(f"Da luu {out}")
 

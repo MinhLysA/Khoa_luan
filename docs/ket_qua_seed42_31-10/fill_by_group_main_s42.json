@@ -1,0 +1,297 @@
+{
+  "checkpoint": "checkpoints/best_model_main_s42.pth",
+  "episodes": 30,
+  "nhom": {
+    "IPPO": {
+      "Rất thấp (<0,5)": {
+        "n_pairs": 105,
+        "fill_tb": 0.8083290270943724,
+        "ty_le_duoi_nguong": 0.5428571428571428,
+        "chi_phi_cap_ngay": 4.821789955392507
+      },
+      "Thấp (0,5-2)": {
+        "n_pairs": 126,
+        "fill_tb": 0.8945720255322517,
+        "ty_le_duoi_nguong": 0.1984126984126984,
+        "chi_phi_cap_ngay": 7.599328059899694
+      },
+      "Trung bình (2-10)": {
+        "n_pairs": 54,
+        "fill_tb": 0.9079904441032263,
+        "ty_le_duoi_nguong": 0.09259259259259259,
+        "chi_phi_cap_ngay": 18.309233931343552
+      },
+      "Cao (>=10)": {
+        "n_pairs": 15,
+        "fill_tb": 0.9493247552976983,
+        "ty_le_duoi_nguong": 0.0,
+        "chi_phi_cap_ngay": 115.18231246798638
+      }
+    },
+    "EOQ": {
+      "Rất thấp (<0,5)": {
+        "n_pairs": 105,
+        "fill_tb": 0.8801599659054563,
+        "ty_le_duoi_nguong": 0.20952380952380953,
+        "chi_phi_cap_ngay": 5.88711801161515
+      },
+      "Thấp (0,5-2)": {
+        "n_pairs": 126,
+        "fill_tb": 0.9241170933024266,
+        "ty_le_duoi_nguong": 0.06349206349206349,
+        "chi_phi_cap_ngay": 9.782084198192974
+      },
+      "Trung bình (2-10)": {
+        "n_pairs": 54,
+        "fill_tb": 0.9125837356374755,
+        "ty_le_duoi_nguong": 0.09259259259259259,
+        "chi_phi_cap_ngay": 25.293753276713957
+      },
+      "Cao (>=10)": {
+        "n_pairs": 15,
+        "fill_tb": 0.8875216552474013,
+        "ty_le_duoi_nguong": 0.13333333333333333,
+        "chi_phi_cap_ngay": 125.03328575120683
+      }
+    },
+    "(s,S)": {
+      "Rất thấp (<0,5)": {
+        "n_pairs": 105,
+        "fill_tb": 0.8671595502116995,
+        "ty_le_duoi_nguong": 0.22857142857142856,
+        "chi_phi_cap_ngay": 5.2260710721042996
+      },
+      "Thấp (0,5-2)": {
+        "n_pairs": 126,
+        "fill_tb": 0.8871676127244046,
+        "ty_le_duoi_nguong": 0.09523809523809523,
+        "chi_phi_cap_ngay": 7.561577429422359
+      },
+      "Trung bình (2-10)": {
+        "n_pairs": 54,
+        "fill_tb": 0.8655086980929829,
+        "ty_le_duoi_nguong": 0.25925925925925924,
+        "chi_phi_cap_ngay": 18.753052224648854
+      },
+      "Cao (>=10)": {
+        "n_pairs": 15,
+        "fill_tb": 0.863186827326173,
+        "ty_le_duoi_nguong": 0.13333333333333333,
+        "chi_phi_cap_ngay": 116.38992253392658
+      }
+    },
+    "Newsvendor": {
+      "Rất thấp (<0,5)": {
+        "n_pairs": 105,
+        "fill_tb": 0.7726351877294892,
+        "ty_le_duoi_nguong": 0.9428571428571428,
+        "chi_phi_cap_ngay": 5.055536362955393
+      },
+      "Thấp (0,5-2)": {
+        "n_pairs": 126,
+        "fill_tb": 0.8197633671342901,
+        "ty_le_duoi_nguong": 0.8809523809523809,
+        "chi_phi_cap_ngay": 7.515434313744788
+      },
+      "Trung bình (2-10)": {
+        "n_pairs": 54,
+        "fill_tb": 0.8484447847439774,
+        "ty_le_duoi_nguong": 0.48148148148148145,
+        "chi_phi_cap_ngay": 18.73888063154837
+      },
+      "Cao (>=10)": {
+        "n_pairs": 15,
+        "fill_tb": 0.8935847438649417,
+        "ty_le_duoi_nguong": 0.13333333333333333,
+        "chi_phi_cap_ngay": 114.02032269973996
+      }
+    },
+    "(s,S) biết sức chứa": {
+      "Rất thấp (<0,5)": {
+        "n_pairs": 105,
+        "fill_tb": 0.8183565793517649,
+        "ty_le_duoi_nguong": 0.580952380952381,
+        "chi_phi_cap_ngay": 5.569015157049251
+      },
+      "Thấp (0,5-2)": {
+        "n_pairs": 126,
+        "fill_tb": 0.853730313498552,
+        "ty_le_duoi_nguong": 0.3412698412698413,
+        "chi_phi_cap_ngay": 8.026982124012942
+      },
+      "Trung bình (2-10)": {
+        "n_pairs": 54,
+        "fill_tb": 0.8529128346837019,
+        "ty_le_duoi_nguong": 0.37037037037037035,
+        "chi_phi_cap_ngay": 19.70738803645597
+      },
+      "Cao (>=10)": {
+        "n_pairs": 15,
+        "fill_tb": 0.8626255946802499,
+        "ty_le_duoi_nguong": 0.3333333333333333,
+        "chi_phi_cap_ngay": 114.9957418602941
+      }
+    },
+    "Newsvendor dự báo": {
+      "Rất thấp (<0,5)": {
+        "n_pairs": 105,
+        "fill_tb": 0.7872059743616813,
+        "ty_le_duoi_nguong": 0.8476190476190476,
+        "chi_phi_cap_ngay": 4.935460909831532
+      },
+      "Thấp (0,5-2)": {
+        "n_pairs": 126,
+        "fill_tb": 0.8527139623285718,
+        "ty_le_duoi_nguong": 0.4603174603174603,
+        "chi_phi_cap_ngay": 7.166375386214344
+      },
+      "Trung bình (2-10)": {
+        "n_pairs": 54,
+        "fill_tb": 0.8696461363416902,
+        "ty_le_duoi_nguong": 0.25925925925925924,
+        "chi_phi_cap_ngay": 16.783722287076102
+      },
+      "Cao (>=10)": {
+        "n_pairs": 15,
+        "fill_tb": 0.9067588069431518,
+        "ty_le_duoi_nguong": 0.06666666666666667,
+        "chi_phi_cap_ngay": 102.77339298543954
+      }
+    },
+    "EOQ theo nhóm": {
+      "Rất thấp (<0,5)": {
+        "n_pairs": 105,
+        "fill_tb": 0.6077135873144036,
+        "ty_le_duoi_nguong": 0.9904761904761905,
+        "chi_phi_cap_ngay": 4.740143842618499
+      },
+      "Thấp (0,5-2)": {
+        "n_pairs": 126,
+        "fill_tb": 0.7639968100564801,
+        "ty_le_duoi_nguong": 0.9603174603174603,
+        "chi_phi_cap_ngay": 7.406128971391881
+      },
+      "Trung bình (2-10)": {
+        "n_pairs": 54,
+        "fill_tb": 0.9119439550696558,
+        "ty_le_duoi_nguong": 0.037037037037037035,
+        "chi_phi_cap_ngay": 20.376478126306456
+      },
+      "Cao (>=10)": {
+        "n_pairs": 15,
+        "fill_tb": 0.9234507886502058,
+        "ty_le_duoi_nguong": 0.0,
+        "chi_phi_cap_ngay": 112.95550527759525
+      }
+    },
+    "(s,S) theo nhóm": {
+      "Rất thấp (<0,5)": {
+        "n_pairs": 105,
+        "fill_tb": 0.7940608451386364,
+        "ty_le_duoi_nguong": 0.8761904761904762,
+        "chi_phi_cap_ngay": 4.716352985711182
+      },
+      "Thấp (0,5-2)": {
+        "n_pairs": 126,
+        "fill_tb": 0.8868094750174009,
+        "ty_le_duoi_nguong": 0.07936507936507936,
+        "chi_phi_cap_ngay": 7.5381408089003115
+      },
+      "Trung bình (2-10)": {
+        "n_pairs": 54,
+        "fill_tb": 0.8674902246426861,
+        "ty_le_duoi_nguong": 0.2222222222222222,
+        "chi_phi_cap_ngay": 18.53157126649531
+      },
+      "Cao (>=10)": {
+        "n_pairs": 15,
+        "fill_tb": 0.8668012133369383,
+        "ty_le_duoi_nguong": 0.06666666666666667,
+        "chi_phi_cap_ngay": 115.14328544604615
+      }
+    },
+    "Newsvendor theo nhóm": {
+      "Rất thấp (<0,5)": {
+        "n_pairs": 105,
+        "fill_tb": 0.6955410203511022,
+        "ty_le_duoi_nguong": 1.0,
+        "chi_phi_cap_ngay": 4.871420378704693
+      },
+      "Thấp (0,5-2)": {
+        "n_pairs": 126,
+        "fill_tb": 0.7898689591723754,
+        "ty_le_duoi_nguong": 0.9920634920634921,
+        "chi_phi_cap_ngay": 7.444930710216472
+      },
+      "Trung bình (2-10)": {
+        "n_pairs": 54,
+        "fill_tb": 0.8356529700594988,
+        "ty_le_duoi_nguong": 0.7592592592592593,
+        "chi_phi_cap_ngay": 17.945105734926543
+      },
+      "Cao (>=10)": {
+        "n_pairs": 15,
+        "fill_tb": 0.895602464776715,
+        "ty_le_duoi_nguong": 0.13333333333333333,
+        "chi_phi_cap_ngay": 113.42997537672477
+      }
+    },
+    "EOQ (cùng mức PV)": {
+      "Rất thấp (<0,5)": {
+        "n_pairs": 105,
+        "fill_tb": 0.8896706338197544,
+        "ty_le_duoi_nguong": 0.19047619047619047,
+        "chi_phi_cap_ngay": 6.212595527650622
+      },
+      "Thấp (0,5-2)": {
+        "n_pairs": 126,
+        "fill_tb": 0.9313929945602127,
+        "ty_le_duoi_nguong": 0.06349206349206349,
+        "chi_phi_cap_ngay": 10.323344211906655
+      },
+      "Trung bình (2-10)": {
+        "n_pairs": 54,
+        "fill_tb": 0.9220215787886574,
+        "ty_le_duoi_nguong": 0.09259259259259259,
+        "chi_phi_cap_ngay": 26.44025069785262
+      },
+      "Cao (>=10)": {
+        "n_pairs": 15,
+        "fill_tb": 0.8981755317627322,
+        "ty_le_duoi_nguong": 0.13333333333333333,
+        "chi_phi_cap_ngay": 133.06434832387336
+      }
+    },
+    "EOQ theo nhóm (cùng mức PV)": {
+      "Rất thấp (<0,5)": {
+        "n_pairs": 105,
+        "fill_tb": 0.8836562816948637,
+        "ty_le_duoi_nguong": 0.1619047619047619,
+        "chi_phi_cap_ngay": 5.79170940140474
+      },
+      "Thấp (0,5-2)": {
+        "n_pairs": 126,
+        "fill_tb": 0.8832616648683612,
+        "ty_le_duoi_nguong": 0.1349206349206349,
+        "chi_phi_cap_ngay": 8.123231604245353
+      },
+      "Trung bình (2-10)": {
+        "n_pairs": 54,
+        "fill_tb": 0.9002029900049391,
+        "ty_le_duoi_nguong": 0.14814814814814814,
+        "chi_phi_cap_ngay": 21.584053627329286
+      },
+      "Cao (>=10)": {
+        "n_pairs": 15,
+        "fill_tb": 0.928570835425825,
+        "ty_le_duoi_nguong": 0.06666666666666667,
+        "chi_phi_cap_ngay": 122.48181986224789
+      }
+    }
+  },
+  "cong_C": {
+    "ty_le_duoi_nguong_2_nhom_thap": 0.354978354978355,
+    "ippo_kem_baseline": true,
+    "kich_hoat_C_phay": true
+  }
+}

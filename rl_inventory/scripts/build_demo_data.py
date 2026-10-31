@@ -75,7 +75,7 @@ def main():
         sys.exit(f"LOI: chua co {params} -> chay `python run.py baseline` truoc.")
 
     env = make_env(cfg, data, mode="test")
-    pols = make_policies(cfg, env, a.checkpoint, include_iso=False, include_group=False)
+    pols = make_policies(cfg, env, a.checkpoint, include_iso=False, include_group=False, du_bao=False)
     seed = int(cfg["eval"].get("seed", 1000))
     v0 = env.val_day
     meta_pre = json.loads((ROOT / cfg["paths"]["data_dir"] / "env_config.json")

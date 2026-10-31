@@ -64,9 +64,9 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from env.inventory_env import MultiWarehouseInventoryEnv
-from agents.ppo_agent import PPOAgent
+from agents.ppo_agent import PPOAgent, pair_groups
 from agents.rollout_buffer import RolloutBuffer
-from ket_qua import dinh_dang_train, ghi_ket_qua
+from build_results import dinh_dang_train, ghi_ket_qua
 
 try:
     from torch.utils.tensorboard import SummaryWriter
@@ -160,8 +160,12 @@ def train():
 
     agent = PPOAgent(obs_per_pair=env.obs_per_pair, n_pairs=env.n_pairs,
                      n_action_levels=env.n_action_levels, config=ppo_cfg, device=device)
+    if agent.param_groups:
+        agent.set_groups(pair_groups(agent.param_groups, env))
+    if env.lagrange_dim:
+        agent.lagrange_env = env
     buffer = RolloutBuffer(buffer_size=n_steps, obs_per_pair=env.obs_per_pair,
-                           n_pairs=env.n_pairs, device=device,
+                           n_pairs=env.n_pairs, device=device, group_size=env.n_skus,
                            normalize_per_pair=ppo_cfg.get("normalize_adv_per_pair", True))
 
     suffix = f"_{args.tag}" if args.tag else ""
@@ -182,7 +186,7 @@ def train():
     if args.resume:
         rp = ROOT / args.resume
         if rp.exists():
-            agent.load(str(rp), load_optimizer=True)
+            agent.load(str(rp), load_optimizer=True, env=env)
             print(f"[V2-27] Da nap trong so + optimizer tu {rp} de hoc tiep.")
             if state_path.exists():
                 st = json.loads(state_path.read_text(encoding="utf-8"))
@@ -218,13 +222,15 @@ def train():
         huan luyen, khong phai chi phi van hanh thuc te (dung cong thuc
         giong scripts/evaluate.py de hai noi nhat quan)."""
         rewards, costs, fills = [], [], []
+        if eval_env.lagrange_dim:
+            eval_env.set_lagrange(env.get_lagrange())
         for i in range(eval_n_episodes):
             o, _ = eval_env.reset(seed=90000 + i)
             ep_r, ep_cost = 0.0, 0.0
             ep_demand, ep_stockout = 0.0, 0.0
             while True:
                 a, _, _ = agent.select_action(o, deterministic=True)
-                o, _, term, trunc, inf = eval_env.step(a)
+                o, _, term, trunc, inf = eval_env.step(agent.env_action(a, eval_env))
                 ep_r    += inf["raw_reward"]
                 ep_cost += (inf["cost_holding"] + inf["cost_stockout"]
                            + inf["cost_ordering"] + inf["cost_overflow"])
@@ -258,7 +264,8 @@ def train():
     tiep_noi_log = da_resume and log_path.exists()
     log_file = open(log_path, "a" if tiep_noi_log else "w",
                     newline="", encoding="utf-8")
-    log_writer = csv.DictWriter(log_file, fieldnames=LOG_FIELDS)
+    cot_log = LOG_FIELDS + (["lam_tb", "lam_cham_tran"] if env.lagrange_dim else [])
+    log_writer = csv.DictWriter(log_file, fieldnames=cot_log)
     if not tiep_noi_log:
         log_writer.writeheader()
 
@@ -301,7 +308,7 @@ def train():
 
         for _ in range(n_steps):
             action, log_prob, value = agent.select_action(obs)
-            next_obs, reward, terminated, truncated, info = env.step(action)
+            next_obs, reward, terminated, truncated, info = env.step(agent.env_action(action, env))
 
             # [V2-12] O buoc cuoi episode (cat vi het gio), V(s_{t+1}) van ton
             # tai va phai duoc bootstrap -> tinh va dua thang cho buffer.
@@ -353,7 +360,7 @@ def train():
                         agent.save(str(checkpoint_dir / f"best_model{suffix}.pth"))
                         print(f"         -> luu best_model (fallback, CHUA feasible, fill={det_f:.3f})")
 
-                row = {f: "" for f in LOG_FIELDS}
+                row = {f: "" for f in cot_log}
                 row.update({
                     "episode": episode_count, "global_step": global_step,
                     "elapsed_s": round(time.time() - t0, 1),
@@ -372,6 +379,9 @@ def train():
                     "eval_fill": last_eval[2], "eval_feasible": eval_feasible,
                 })
                 row.update(ep_costs)
+                if env.lagrange_dim:
+                    row.update(lam_tb=float(env.lam.mean()),
+                               lam_cham_tran=float((env.lam >= env.lag_max - 1e-6).mean()))
                 log_writer.writerow(row)
                 log_file.flush()
 
@@ -441,7 +451,7 @@ def train():
         if episode_count // 200 > last_ckpt_ep // 200:
             agent.save(str(checkpoint_dir / f"checkpoint_ep{episode_count}{suffix}.pth"))
             last_ckpt_ep = episode_count
-        # Checkpoint "moi nhat" moi ~25 episode: khi Colab ngat giua chung,
+        # Checkpoint "moi nhat" moi ~25 episode: khi bi ngat giua chung,
         # --resume chi mat toi da ~25 episode thay vi toi da 200.
         if episode_count - last_latest_ep >= 25:
             agent.save(str(checkpoint_dir / f"checkpoint_latest{suffix}.pth"))

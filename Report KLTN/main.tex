@@ -28,21 +28,15 @@
     \include{content/C3}
     \include{content/C4}
     \include{content/C5}
-    % \printbibheading[heading=bibcenter, title={TÀI LIỆU THAM KHẢO}]
-
-    % \printbibliography[keyword=viet, heading=subbib, title={Tiếng Việt}]
-    % \printbibliography[keyword=anh, heading=subbib, title={Tiếng Anh}]
-
-    \newpage
-    \input{phuluc_nguon}
-    \newpage
-    \input{phuluc_mcp}
-
-    % Định nghĩa tiêu đề "TÀI LIỆU THAM KHẢO" căn giữa
+    % Tiêu đề "TÀI LIỆU THAM KHẢO" căn giữa, có trong mục lục
     \printbibheading[heading=bibcenter, title={TÀI LIỆU THAM KHẢO}]
-    
-    % In toàn bộ nội dung ra (không dùng filter keyword nữa cho chắc ăn)
-    \printbibliography[heading=none]
-    
-    
+
+    % In theo nhóm chủ đề (khai báo trong preamble.tex), đánh số liên tục [1], [2], ...
+    \printbibliography[category=tonkho, heading=subbib, title={Lý thuyết tồn kho}]
+    \printbibliography[category=rl, heading=subbib, title={Học tăng cường}]
+    \printbibliography[category=marl, heading=subbib, title={Học tăng cường đa tác tử}]
+    \printbibliography[category=rltonkho, heading=subbib, title={Học tăng cường cho quản lý tồn kho}]
+    \printbibliography[category=dubao, heading=subbib, title={Dự báo nhu cầu và bộ dữ liệu M5}]
+    \printbibliography[category=danhgia, heading=subbib, title={Môi trường mô phỏng và đánh giá}]
+
 \end{document}

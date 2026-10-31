@@ -85,6 +85,25 @@ def test_chi_so_soc_ngay_ve_lai():
     assert core.shock_metrics(mai, b, 20, 5, 0.85)["ve_lai"] == float("inf")
 
 
+def test_phieu_mua_sam_du_dong_va_ngay_can_hang():
+    from datetime import date
+    day, ngay = 30, date(2015, 2, 17)
+    dong = core.dong_de_nghi("IPPO", day)
+    df = core.lap_phieu(dong, ngay)
+    assert len(df) == int((core.state_at("IPPO", day)["action"] > 0).sum())
+    assert df["Mã phiếu"].str.fullmatch(r"PR-20150217-K\d\d-001").all()
+    assert (df.groupby("Mã phiếu")["Kho"].nunique() == 1).all()         # mỗi kho một phiếu
+    tt = core.tom_tat_phieu(df)
+    assert tt["Số dòng"].sum() == len(df) and len(tt) == df["Kho"].nunique()
+    df.loc[df.index[0], "Trạng thái"] = "Đã bỏ"              # dòng đã bỏ không tính vào tổng
+    tt2 = core.tom_tat_phieu(df)
+    assert tt2["Số dòng"].sum() == len(df) - 1
+    assert tt2["Tổng số lượng"].sum() == df["Số lượng đề nghị"].sum() - df["Số lượng đề nghị"].iloc[0]
+
+    mau = dong.head(2).assign(**{"Tồn kho": [10.0, 0.0], "Nhu cầu TB 7 ngày": [2.0, 0.0]})
+    assert core.lap_phieu(mau, ngay)["Ngày cần hàng"].tolist() == ["22/02/2015", "18/02/2015"]
+
+
 def test_app_khong_import_train():
     mau = re.compile(r"^\s*(from|import)\s+(scripts\.)?train\b|scripts[/\\.]train\b", re.M)
     tep = list(APP.rglob("*.py"))

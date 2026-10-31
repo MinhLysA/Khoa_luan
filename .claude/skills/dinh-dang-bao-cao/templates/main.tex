@@ -1,0 +1,45 @@
+\input{preamble}
+
+\begin{document}
+    % --- TRANG BÌA + PHỤ BÌA (không đánh số) ---
+    \input{frontmatter/titlepage}
+
+    % --- PHẦN MỞ ĐẦU: số La Mã ---
+    \pagenumbering{roman}
+    \pagestyle{fancy}
+    \setcounter{page}{1}
+
+    \input{frontmatter/acknowledgment}   % Lời cảm ơn
+    \newpage
+    \input{frontmatter/declaration}      % Trang cam đoan theo mẫu mới của Trường
+    \input{frontmatter/cofirm}           % Xác nhận và đánh giá của giảng viên
+    \input{frontmatter/abstract}         % Tóm tắt tiếng Việt (1 trang, không số liệu)
+    \input{frontmatter/abstract_english} % Abstract (1 trang, không số liệu)
+    \input{frontmatter/lists}            % Mục lục, danh mục hình, bảng, chữ viết tắt
+    \clearpage
+
+    % --- NỘI DUNG CHÍNH: số Ả Rập ---
+    \pagenumbering{arabic}
+    \pagestyle{fancy}
+    \include{content/C1}
+    \include{content/C2}
+    \include{content/C3}
+    \include{content/C4}
+    \include{content/C5}
+
+    % Tiêu đề "TÀI LIỆU THAM KHẢO" căn giữa, có trong mục lục
+    \printbibheading[heading=bibcenter, title={TÀI LIỆU THAM KHẢO}]
+    % In theo nhóm chủ đề khai báo trong preamble.tex, đánh số liên tục [1], [2], ...
+    \printbibliography[category=tonkho, heading=subbib, title={Lý thuyết tồn kho}]
+    \printbibliography[category=rl, heading=subbib, title={Học tăng cường}]
+    \printbibliography[category=marl, heading=subbib, title={Học tăng cường đa tác tử}]
+    \printbibliography[category=rltonkho, heading=subbib, title={Học tăng cường cho quản lý tồn kho}]
+    \printbibliography[category=dubao, heading=subbib, title={Dự báo nhu cầu và bộ dữ liệu M5}]
+    \printbibliography[category=danhgia, heading=subbib, title={Môi trường mô phỏng và đánh giá}]
+
+    % --- PHỤ LỤC: sau tài liệu tham khảo, mỗi phụ lục một trang mới ---
+    \newpage
+    \input{phuluc_nguon}
+    \newpage
+    \input{phuluc_mcp}
+\end{document}

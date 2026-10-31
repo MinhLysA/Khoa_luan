@@ -26,6 +26,7 @@ import json
 import numpy as np
 
 from common import ROOT, load_config, load_data, make_env, make_policies
+from forecast_demand import du_bao_lai
 from evaluate import paired_test
 
 KICH_BAN = {
@@ -74,8 +75,10 @@ def main():
         cfg["env"].update(env_over)
         dem = data["demand_data"].astype(np.float32).copy()
         dem[cfg["env"]["val_day"]:] *= he_so_cau          # chi doi nhu cau mien test
-        env = make_env(cfg, data, demand_override=dem)
-        pols = make_policies(cfg, env, a.checkpoint, include_iso=False)
+        F = None if he_so_cau == 1 else du_bao_lai(cfg, data, dem)
+        env = make_env(cfg, data, demand_override=dem, forecast=F)
+        pols = make_policies(cfg, env, a.checkpoint, include_iso=False,
+                             du_bao=True if he_so_cau == 1 else F or False)
         res = {n: chay(env, fn, seeds) for n, fn in pols.items()}
         c_ippo = res["IPPO"][0]
         out[ten] = {n: {"cost": float(c.mean()), "fill": f,

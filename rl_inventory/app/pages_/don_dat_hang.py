@@ -1,4 +1,4 @@
-"""Trang 2 - Đơn đặt hàng đề xuất: chọn ngày, kho -> bảng cần đặt gì, kèm tính tiền, duyệt."""
+"""Trang 2 - Phiếu mua sắm: mỗi kho mỗi ngày một phiếu, duyệt cả phiếu hoặc bỏ từng dòng."""
 import streamlit as st
 
 import core
@@ -6,104 +6,77 @@ import core
 meta, arr = core.load_demo()
 dates = core.test_dates(meta)
 P = core.pairs(meta)
-cp_dh = float(meta["env"]["cp_dh"])
 store_of = dict(zip(P["Kho"], P["Cửa hàng"]))
 
-LINE_COLS = ["Kho", "SKU", "Ngành", "Tồn kho", "Hàng đang về", "Nhu cầu TB 7 ngày",
-             "Số lượng đề xuất", "Đơn giá ($)", "Thành tiền ($)", "Chi phí đặt hàng", "Trạng thái"]
+LINE_COLS = ["SKU", "Ngành", "Tồn kho", "Hàng đang về", "Nhu cầu TB 7 ngày", "Số lượng đề nghị",
+             "Ngày cần hàng", "Đơn giá ($)", "Thành tiền ($)", "Trạng thái"]
 FMT = {"Tồn kho": "%.1f", "Hàng đang về": "%.1f", "Nhu cầu TB 7 ngày": "%.1f",
-       "Số lượng đề xuất": "%d", "Đơn giá ($)": "%.2f", "Thành tiền ($)": "%.2f",
-       "Chi phí đặt hàng": "%.0f", "Số dòng": "%d"}
+       "Số lượng đề nghị": "%d", "Đơn giá ($)": "%.2f", "Thành tiền ($)": "%.2f",
+       "Số dòng": "%d", "Tổng số lượng": "%d"}
 COLCFG = {c: st.column_config.NumberColumn(c, format=f) for c, f in FMT.items()}
-COLCFG["Chọn"] = st.column_config.CheckboxColumn("Chọn", width="small")
+COLCFG["Bỏ dòng"] = st.column_config.CheckboxColumn("Bỏ dòng", width="small")
 
-core.tieu_de(f"Đơn đặt hàng · {len(store_of)} cửa hàng × {len(meta['skus'])} mặt hàng",
-             "Đơn đặt hàng từ mô hình IPPO",
+core.tieu_de(f"Phiếu mua sắm · {len(store_of)} cửa hàng × {len(meta['skus'])} mặt hàng",
+             "Phiếu đề nghị đặt hàng từ mô hình IPPO",
              f"Chọn một ngày trong giai đoạn {dates[0]:%d/%m/%Y} – {dates[-1]:%d/%m/%Y}: mô phỏng chạy tới ngày đó, "
-             "chính sách đã chọn cho biết cần đặt bao nhiêu cho từng mặt hàng.")
+             "mỗi kho có một phiếu gồm các mặt hàng chính sách đề nghị đặt.")
 
 with st.form("loc"):
     c1, c2, c3, c4 = st.columns([1.1, 2.2, 2, 1.2])
-    ngay = c1.date_input("Ngày", value=dates[-1], min_value=dates[0], max_value=dates[-1],
+    ngay = c1.date_input("Ngày lập", value=dates[-1], min_value=dates[0], max_value=dates[-1],
                          format="DD/MM/YYYY")
-    kho = c2.multiselect("Cửa hàng", list(store_of), default=list(store_of)[:1],
+    kho = c2.multiselect("Cửa hàng", list(store_of), default=list(store_of),
                          format_func=lambda k: f"{k} · {store_of[k]}")
     nganh = c3.multiselect("Ngành hàng", core.CATEGORIES, default=core.CATEGORIES)
     cs = c4.selectbox("Chính sách", meta["policies"])
-    sinh = st.form_submit_button("Sinh đơn nháp", type="primary")
+    sinh = st.form_submit_button("Lập phiếu", type="primary")
 
 if sinh:
     if not kho or not nganh:
         st.warning("Chọn ít nhất một kho và một ngành hàng.")
     else:
-        day = (ngay - dates[0]).days
-        s = core.state_at(cs, day)
-        df = P.assign(**{"Tồn kho": s["inv"], "Hàng đang về": s["pipe"],
-                         "Nhu cầu TB 7 ngày": s["dem7"], "Số lượng đề xuất": s["qty"],
-                         "Đơn giá ($)": arr["price"][day].reshape(-1)})
-        df = df[(df["Số lượng đề xuất"] > 0) & df["Kho"].isin(kho) & df["Ngành"].isin(nganh)]
-        so = ["Tồn kho", "Hàng đang về", "Nhu cầu TB 7 ngày", "Số lượng đề xuất", "Đơn giá ($)"]
-        df = df.astype({c: float for c in so}).round(2)
-        df = df.assign(**{"Thành tiền ($)": (df["Số lượng đề xuất"] * df["Đơn giá ($)"]).round(2),
-                          "Chi phí đặt hàng": cp_dh, "Trạng thái": "Nháp"})
-        st.session_state.don = {"ngay": ngay, "cs": cs, "df": df.reset_index(drop=True)}
+        dong = core.dong_de_nghi(cs, (ngay - dates[0]).days)
+        dong = dong[dong["Kho"].isin(kho) & dong["Ngành"].isin(nganh)]
+        st.session_state.phieu = {"ngay": ngay, "cs": cs, "df": core.lap_phieu(dong, ngay)}
         st.session_state.ver = st.session_state.get("ver", 0) + 1
 
-don = st.session_state.get("don")
-if don is None:
-    st.info("Chọn bộ lọc rồi bấm “Sinh đơn nháp”.")
+phieu = st.session_state.get("phieu")
+if phieu is None:
+    st.info("Chọn bộ lọc rồi bấm “Lập phiếu”.")
     st.stop()
 
-df = don["df"]
-the = st.container(border=True, key="the_don_nhap")
-with the:
-    core.muc(1, "Đơn nháp", f"{don['cs']} · ngày {don['ngay']:%d/%m/%Y}")
+df = phieu["df"]
 if df.empty:
-    st.info("Chính sách không đề xuất đặt hàng cho kho và ngành hàng đã chọn trong ngày này.")
+    st.info("Chính sách không đề nghị đặt hàng cho kho và ngành hàng đã chọn trong ngày này.")
     st.stop()
 
-with the:
-    gom = st.toggle("Gom phiếu theo cửa hàng × ngành hàng")
-    if gom:
-        view = (df.groupby(["Kho", "Ngành"], as_index=False)
-                  .agg(**{"Số dòng": ("SKU", "size"),
-                          "Số lượng đề xuất": ("Số lượng đề xuất", "sum"),
-                          "Thành tiền ($)": ("Thành tiền ($)", "sum"),
-                          "Chi phí đặt hàng": ("Chi phí đặt hàng", "sum"),
-                          "Trạng thái": ("Trạng thái",
-                                         lambda x: x.iloc[0] if x.nunique() == 1 else "Hỗn hợp")}))
-        view.insert(0, "Phiếu", "PH-" + view["Kho"] + "-" + view["Ngành"])
-    else:
-        view = df[LINE_COLS].copy()
-    view.insert(0, "Chọn", False)
+with st.container(border=True, key="ds_phieu"):
+    core.muc(1, "Danh sách phiếu", f"{phieu['cs']} · lập ngày {phieu['ngay']:%d/%m/%Y}")
+    st.dataframe(core.tom_tat_phieu(df), hide_index=True, column_config=COLCFG)
 
+ma = st.selectbox("Mở phiếu", list(df["Mã phiếu"].unique()))
+mo = df[df["Mã phiếu"] == ma]
+with st.container(border=True, key="chi_tiet_phieu"):
+    core.muc(2, "Chi tiết phiếu", ma)
+    view = mo[LINE_COLS].copy()
+    view.insert(0, "Bỏ dòng", mo["Trạng thái"] == "Đã bỏ")
     ed = st.data_editor(view, hide_index=True, column_config=COLCFG,
-                        disabled=[c for c in view.columns if c != "Chọn"],
-                        key=f"ed_{gom}_{st.session_state.get('ver', 0)}")
-    st.dataframe(
-        [{"": "Tổng", "Số dòng": len(df), "Số lượng đề xuất": int(df["Số lượng đề xuất"].sum()),
-          "Thành tiền ($)": df["Thành tiền ($)"].sum(), "Chi phí đặt hàng": df["Chi phí đặt hàng"].sum()}],
-        hide_index=True, column_config=COLCFG)
+                        disabled=[c for c in view.columns if c != "Bỏ dòng"],
+                        key=f"ed_{ma}_{st.session_state.get('ver', 0)}")
 
-picked = ed[ed["Chọn"]]
-b1, b2, b3 = st.columns([1, 1, 5])
-for col, nut, trang_thai in ((b1, "Duyệt", "Đã duyệt"), (b2, "Từ chối", "Từ chối")):
-    if col.button(nut, disabled=picked.empty, type="primary" if nut == "Duyệt" else "secondary"):
-        if gom:
-            chon = set(zip(picked["Kho"], picked["Ngành"]))
-            mask = [k in chon for k in zip(df["Kho"], df["Ngành"])]
-        else:
-            mask = df.index.isin(picked.index)
-        df.loc[mask, "Trạng thái"] = trang_thai
+b1, b2, _ = st.columns([1, 1, 5])
+for col, nut, trang_thai in ((b1, "Duyệt phiếu", "Đã duyệt"), (b2, "Từ chối phiếu", "Từ chối")):
+    if col.button(nut, type="primary" if nut == "Duyệt phiếu" else "secondary"):
+        bo = ed["Bỏ dòng"].to_numpy()
+        df.loc[mo.index[bo], "Trạng thái"] = "Đã bỏ"
+        df.loc[mo.index[~bo], "Trạng thái"] = trang_thai
         st.session_state.ver += 1
         st.rerun()
-dem = df["Trạng thái"].value_counts()
-b3.markdown(" · ".join(f"{k}: <span class='num'>{dem.get(k, 0)}</span>"
-                       for k in ("Nháp", "Đã duyệt", "Từ chối")), unsafe_allow_html=True)
 
-st.caption("Phạm vi dừng ở bước gửi yêu cầu sang phòng mua hàng.")
-duyet = df[df["Trạng thái"] == "Đã duyệt"].assign(Ngày=f"{don['ngay']:%Y-%m-%d}",
-                                                   **{"Chính sách": don["cs"]})
-st.download_button("Tải đơn đã duyệt (CSV)", disabled=duyet.empty,
-                   data=duyet[["Ngày", "Chính sách"] + LINE_COLS].to_csv(index=False).encode("utf-8-sig"),
-                   file_name=f"don_da_duyet_{don['ngay']:%Y%m%d}.csv", mime="text/csv")
+st.caption("Phạm vi dừng ở phiếu gửi phòng mua hàng. Báo giá, chọn nhà cung cấp và gửi đơn do phòng mua hàng thực hiện.")
+duyet = df[df["Trạng thái"] == "Đã duyệt"].assign(**{"Ngày lập": f"{phieu['ngay']:%Y-%m-%d}",
+                                                     "Chính sách": phieu["cs"]})
+st.download_button("Tải các dòng đã duyệt (CSV)", disabled=duyet.empty,
+                   data=duyet[["Mã phiếu", "Ngày lập", "Kho", "Chính sách"] + LINE_COLS]
+                   .to_csv(index=False).encode("utf-8-sig"),
+                   file_name=f"phieu_da_duyet_{phieu['ngay']:%Y%m%d}.csv", mime="text/csv")

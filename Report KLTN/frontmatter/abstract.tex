@@ -1,47 +1,16 @@
+% [SO-MOI] Cap nhat doi thu va ket luan theo ket qua moi
 \newpage
 \begin{center}
-{\fontsize{16pt}{19.2pt}\selectfont \textbf{XÂY DỰNG MÔ HÌNH HỌC TĂNG CƯỜNG TỐI ƯU HÓA CHÍNH SÁCH ĐẶT HÀNG LẠI TRONG QUẢN LÝ TỒN KHO ĐA KHO}\par}
+{\fontsize{15pt}{18pt}\selectfont \textbf{XÂY DỰNG MÔ HÌNH HỌC TĂNG CƯỜNG TỐI ƯU HÓA CHÍNH SÁCH ĐẶT HÀNG LẠI TRONG QUẢN LÝ TỒN KHO ĐA KHO}\par}
 \vspace{0.5cm}
 {\fontsize{16pt}{19.2pt}\selectfont \textbf{TÓM TẮT}\par}
 \end{center}
 \vspace{0.2cm}
 
-Quản lý tồn kho trong mạng lưới bán lẻ nhiều kho, nhiều mặt hàng là bài toán ra
-quyết định tuần tự dưới bất định: phải cân bằng chi phí lưu kho, thiếu hàng, đặt
-hàng và tràn kho trong khi vẫn giữ mức phục vụ khách hàng. Các chính sách cổ điển
-như EOQ, $(s, S)$ và Newsvendor dựa trên giả định nhu cầu dừng, thời gian giao
-hàng cố định và không ràng buộc sức chứa, nên khó giữ tính tối ưu khi các giả
-định này bị vi phạm.
+Quản lý tồn kho trong mạng lưới bán lẻ nhiều kho, nhiều mặt hàng là bài toán ra quyết định tuần tự dưới bất định. Doanh nghiệp phải cân bằng chi phí lưu kho, thiếu hàng, đặt hàng và tràn kho mà vẫn giữ mức phục vụ khách hàng. Các chính sách cổ điển như EOQ, $(s, S)$ và Newsvendor dựa trên giả định nhu cầu dừng, thời gian giao hàng cố định và không có ràng buộc sức chứa. Khi các giả định này không còn đúng, các chính sách đó khó giữ được tính tối ưu.
 
-Khóa luận mô hình hóa $10$ kho $\times$ $30$ mặt hàng thành $300$ tác tử, mỗi
-tác tử quyết định lượng đặt hàng cho một cặp kho--mặt hàng từ quan sát cục bộ,
-và các tác tử trong cùng kho chia sẻ một sức chứa hữu hạn. Các tác tử được huấn
-luyện bằng IPPO với chia sẻ tham số (PS-IPPO), dùng phần thưởng phân rã cục bộ
-theo từng cặp, chuẩn hóa theo quy mô chi phí của từng cặp, và mục tiêu mức phục
-vụ $85\%$ triển khai dưới dạng ràng buộc mềm.
+Đề tài mô hình hóa mạng lưới 10 kho và 30 mặt hàng thành 300 tác tử. Mỗi tác tử quyết định lượng đặt hàng cho một cặp kho--mặt hàng từ quan sát cục bộ, và các tác tử trong cùng kho dùng chung một sức chứa hữu hạn. Các tác tử được huấn luyện bằng IPPO với chia sẻ tham số (PS-IPPO). Phần thưởng được phân rã cục bộ theo từng cặp và chuẩn hóa theo quy mô chi phí của cặp. Mục tiêu mức phục vụ tối thiểu được đưa vào dưới dạng ràng buộc mềm.
 
-Môi trường mô phỏng dùng nhu cầu thực tế của bộ dữ liệu M5 Walmart ($1.941$
-ngày), chia thành ba miền huấn luyện, validation và kiểm tra, với thời gian giao
-hàng ngẫu nhiên từ một đến ba ngày. PS-IPPO được so sánh với ba chính sách cổ
-điển đã tinh chỉnh trên miền validation, qua nhiều hạt giống huấn luyện và kiểm
-định thống kê theo cặp.
+Môi trường mô phỏng dùng nhu cầu thực tế của bộ dữ liệu M5 Walmart, chia theo thời gian thành ba miền huấn luyện, xác thực và kiểm thử, với thời gian giao hàng ngẫu nhiên. PS-IPPO được so sánh với các chính sách cổ điển và chính sách dự báo rồi tối ưu đã tinh chỉnh trên miền xác thực, qua nhiều hạt giống huấn luyện và kiểm định thống kê theo cặp. Phép so sánh được thực hiện cả khi mỗi phương pháp dùng cấu hình tốt nhất của mình lẫn ở cùng mức phục vụ.
 
-Kết quả (mô hình chính $10.000$ episode $\times$ $3$ hạt giống) cho thấy ở điểm
-vận hành mà mỗi phương pháp tự chọn, PS-IPPO có tổng chi phí xấp xỉ các chính
-sách cổ điển tốt nhất --- thấp hơn $(s, S)$ $1{,}7\%$ và EOQ $17{,}8\%$, ngang các
-phiên bản tinh chỉnh theo nhóm quy mô cầu --- nhưng với mức phục vụ cao hơn
-khoảng $4$--$5$ điểm phần trăm ($90{,}9\%$ so với $85{,}8$--$86{,}2\%$). Khi các
-chính sách cổ điển được buộc đạt mức phục vụ tương đương ($\approx 90\%$), chúng
-đắt hơn PS-IPPO $17{,}3$--$25{,}7\%$ (cận trên do lưới tham số thô), còn EOQ không
-đạt được mức đó. Khi nhu cầu ổn định, chính sách cổ điển tinh chỉnh theo nhóm
-ngang hoặc rẻ hơn; ưu thế của PS-IPPO tập trung ở giai đoạn nhu cầu biến động
-(ngày có sự kiện, cuối tuần, sốc cầu). Chia sẻ tham số duy trì hiệu năng tốt ở
-nhóm mặt hàng có nhu cầu trung bình và cao, nhưng mức phục vụ ở nhóm nhu cầu thấp
-chưa đạt ngưỡng ($28{,}7\%$ số cặp dưới $85\%$). Đóng góp của khóa luận là một
-khung PS-IPPO có ràng buộc sức chứa dùng chung trên dữ liệu bán lẻ thực tế, một
-giao thức đánh giá tách biệt rõ chi phí vận hành, mức phục vụ và tín hiệu huấn
-luyện, và một ứng dụng mô phỏng đề xuất đơn đặt hàng từ mô hình đã huấn luyện.
-
-\vspace{0.3cm}
-\noindent\textbf{Từ khóa:} quản lý tồn kho; học tăng cường đa tác tử; IPPO; chia
-sẻ tham số; M5.
+Kết quả cho thấy PS-IPPO rẻ hơn các chính sách cổ điển khi so ở cùng mức phục vụ, nhưng chính sách dùng dự báo nhu cầu vẫn rẻ hơn. Thông tin về nhu cầu tương lai là yếu tố ảnh hưởng lớn nhất đến chi phí. Đề tài đóng góp một khung PS-IPPO có sức chứa dùng chung trên dữ liệu bán lẻ thực tế. Đề tài cũng đề xuất một giao thức đánh giá tách rõ chi phí vận hành, mức phục vụ và tín hiệu huấn luyện, cùng một ứng dụng mô phỏng đề xuất phiếu đặt hàng từ mô hình đã huấn luyện.

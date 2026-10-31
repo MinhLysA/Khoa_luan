@@ -7,109 +7,93 @@
 \subsection{Mô hình tồn kho và các thành phần chi phí}
 \label{subsec:moHinhTonKho}
 
-Bài toán kiểm soát tồn kho xoay quanh việc xác định thời điểm và số lượng đặt
-hàng bổ sung nhằm cân bằng giữa chi phí phát sinh khi dự trữ quá nhiều và rủi
-ro khi dự trữ quá ít \parencite{zipkin2000}. Xét một hệ thống đơn kho -- đơn
-mặt hàng hoạt động theo chu kỳ rời rạc. Gọi $I_t$ là mức tồn kho tại đầu kỳ
-$t$, $a_t$ là số lượng đặt hàng, $D_t$ là nhu cầu phát sinh trong kỳ $t$ (biến
-ngẫu nhiên) và $L_t$ là thời gian giao hàng. Chi phí vận hành mỗi kỳ bao gồm:
-
+Bài toán kiểm soát tồn kho xác định thời điểm và số lượng đặt hàng bổ sung để cân bằng giữa chi phí khi dự trữ quá nhiều và rủi ro khi dự trữ quá ít \parencite{zipkin2000}. Xét một hệ thống một kho, một mặt hàng hoạt động theo chu kỳ rời rạc. Gọi $I_t$ là mức tồn kho đầu kỳ $t$, $a_t$ là số lượng đặt hàng, $D_t$ là nhu cầu ngẫu nhiên trong kỳ $t$ và $L_t$ là thời gian giao hàng. Chi phí vận hành mỗi kỳ gồm bốn thành phần:
 \begin{itemize}
-    \item Chi phí lưu kho $C_{\text{hold}} = c_{lk} \cdot \max(I_t, 0)$:
-    chi phí tỷ lệ với lượng hàng tồn dương trong kho, bao gồm chi phí vốn,
-    bảo quản và kho bãi.
-
-    \item Chi phí thiếu hàng $C_{\text{stock}} = c_{th} \cdot \max(D_t - I_t, 0)$:
-    chi phí phát sinh khi nhu cầu vượt quá lượng hàng có sẵn. Trong mô hình
-    mất đơn hàng (lost sales), phần nhu cầu không được đáp ứng bị mất hoàn toàn
-    thay vì chuyển sang kỳ sau \parencite{zipkin2008}.
-
-    \item Chi phí đặt hàng cố định $C_{\text{order}} = c_{dh} \cdot \mathbb{1}(a_t > 0)$:
-    chi phí phát sinh mỗi khi hệ thống phát lệnh đặt hàng, bất kể số lượng đặt.
-
-    \item Phạt tràn kho $C_{\text{over}} = p_{tk} \cdot \max(I_t + q_t - W, 0)$:
-    chi phí phát sinh khi tổng lượng hàng tồn và hàng nhập vượt quá sức chứa
-    $W$ của kho, trong đó $q_t$ là lượng hàng nhập kho trong kỳ.
-
+    \item Chi phí lưu kho $C_{\text{hold}} = c_{lk} \cdot \max(I_t, 0)$ tỷ lệ với lượng hàng tồn dương trong kho, gồm chi phí vốn, bảo quản và kho bãi.
+    \item Chi phí thiếu hàng $C_{\text{stock}} = c_{th} \cdot \max(D_t - I_t, 0)$ phát sinh khi nhu cầu vượt lượng hàng có sẵn. Trong mô hình mất đơn hàng (\textit{lost sales}), phần nhu cầu không được đáp ứng bị mất hẳn thay vì chuyển sang kỳ sau \parencite{zipkin2008}.
+    \item Chi phí đặt hàng cố định $C_{\text{order}} = c_{dh} \cdot \mathbb{1}(a_t > 0)$ phát sinh mỗi lần hệ thống đặt hàng, bất kể số lượng đặt.
+    \item Phạt tràn kho $C_{\text{over}} = p_{tk} \cdot \max(I_t + q_t - W, 0)$ phát sinh khi tổng hàng tồn và hàng nhập vượt sức chứa $W$ của kho, với $q_t$ là lượng hàng nhập kho trong kỳ.
 \end{itemize}
 
-Tổng chi phí vận hành của một cặp kho--mặt hàng trong kỳ $t$ gồm bốn thành
-phần trên:
+Tổng chi phí vận hành của một cặp kho--mặt hàng trong kỳ $t$ là tổng bốn thành phần trên:
 \begin{equation}
     C_t = C_{\text{hold}} + C_{\text{stock}} + C_{\text{order}} + C_{\text{over}}.
     \label{eq:tongchiphi}
 \end{equation}
-Bên cạnh chi phí, doanh nghiệp đặt một mục tiêu mức phục vụ: tỷ lệ đáp ứng nhu
-cầu (fill rate) $\text{FR}_t^{(w)}$ trên cửa sổ trượt $w$ ngày không thấp hơn
-ngưỡng $\tau$. Mục tiêu này là một \emph{ràng buộc} chứ không phải một khoản chi
-phí; trong khóa luận, nó được đưa vào tín hiệu huấn luyện dưới dạng hình phạt
-$P_t = \phi_{dv} \cdot \max\bigl(\tau - \text{FR}_t^{(w)},\; 0\bigr)$ (ràng buộc
-mềm, Mục~\ref{subsec:fillRate}), và không được cộng vào chi phí vận hành báo cáo.
+Bên cạnh chi phí, doanh nghiệp đặt một mục tiêu mức phục vụ: tỷ lệ đáp ứng nhu cầu (\textit{fill rate}) $\text{FR}_t^{(w)}$ trên cửa sổ trượt $w$ ngày không được thấp hơn ngưỡng $\tau$. Mục tiêu này là một ràng buộc. Khi huấn luyện, nó được đưa vào dưới dạng hình phạt $P_t = \phi_{dv} \cdot \max\bigl(\tau - \text{FR}_t^{(w)},\; 0\bigr)$ và không được cộng vào chi phí vận hành.
 
 \subsection{Các chính sách đặt hàng lại cổ điển}
 \label{subsec:chinhSachCoDien}
 
-Ba chính sách cổ điển được sử dụng làm phương pháp đối chứng trong khóa luận.
+Ba chính sách cổ điển dưới đây được dùng làm phương pháp đối chứng.
 
-Lượng đặt hàng kinh tế (EOQ). Harris \cite{harris1913} đề xuất công thức
-tối ưu hóa tần suất đặt hàng dưới giả định nhu cầu xác định và đều:
+Chính sách thứ nhất là lượng đặt hàng kinh tế (EOQ). Harris \cite{harris1913} đề xuất công thức tối ưu hóa tần suất đặt hàng khi nhu cầu xác định và đều:
 \begin{equation}
     Q^* = \sqrt{\frac{2 D \cdot c_{dh}}{c_{lk}}}
     \label{eq:eoq}
 \end{equation}
-trong đó $D$ là nhu cầu trung bình hàng năm. Mô hình giả định không có thiếu
-hàng, thời gian giao hàng cố định và không có ràng buộc sức chứa.
+trong đó $D$ là nhu cầu trung bình hằng năm. Mô hình giả định không có thiếu hàng, thời gian giao hàng cố định và không có ràng buộc sức chứa.
 
-Chính sách $(s, S)$. Scarf \cite{scarf1960} chứng minh rằng chính sách
-dạng $(s, S)$ --- đặt hàng để nâng mức tồn kho lên $S$ khi mức hiện tại giảm
-xuống dưới $s$ --- là tối ưu cho hệ đơn kho với nhu cầu ngẫu nhiên, chi phí đặt
-hàng cố định, và cơ chế giữ đơn hàng chờ (backorder). Ngưỡng $s$ thường được
-tính dựa trên nhu cầu trung bình và độ lệch chuẩn trong thời gian giao hàng:
+Chính sách thứ hai là $(s, S)$: khi mức tồn kho giảm xuống dưới $s$, hệ thống đặt hàng để nâng mức tồn kho lên $S$. Scarf \cite{scarf1960} chứng minh chính sách này tối ưu cho hệ một kho với nhu cầu ngẫu nhiên, chi phí đặt hàng cố định và cơ chế giữ đơn hàng chờ (\textit{backorder}). Ngưỡng $s$ thường được tính từ nhu cầu trung bình và độ lệch chuẩn trong thời gian giao hàng:
 \begin{equation}
     s = \mu_L + z_\alpha \cdot \sigma_L
     \label{eq:sSPolicy}
 \end{equation}
-trong đó $\mu_L$ và $\sigma_L$ là kỳ vọng và độ lệch chuẩn của nhu cầu tích
-lũy trong thời gian giao hàng, $z_\alpha$ là phân vị chuẩn tương ứng với mức
-phục vụ mong muốn.
+trong đó $\mu_L$ và $\sigma_L$ là kỳ vọng và độ lệch chuẩn của nhu cầu tích lũy trong thời gian giao hàng, $z_\alpha$ là phân vị chuẩn ứng với mức phục vụ mong muốn.
 
-Mô hình Newsvendor. Arrow và cộng sự \cite{arrow1951} đề xuất mô hình cho bài toán
-đặt hàng đơn kỳ, trong đó lượng đặt hàng tối ưu là:
+Chính sách thứ ba là mô hình người bán báo (Newsvendor). Arrow và cộng sự \cite{arrow1951} đề xuất mô hình cho bài toán đặt hàng một kỳ, với lượng đặt hàng tối ưu:
 \begin{equation}
     Q^* = F^{-1}\!\left(\frac{c_{th}}{c_{th} + c_{lk}}\right)
     \label{eq:newsvendor}
 \end{equation}
-với $F^{-1}$ là hàm phân vị của phân phối nhu cầu. Mô hình chỉ tối ưu cho một
-chu kỳ duy nhất, không xét lượng hàng đang trên đường vận chuyển.
+trong đó $F^{-1}$ là hàm phân vị của phân phối nhu cầu. Mô hình chỉ tối ưu cho một chu kỳ và không xét lượng hàng đang trên đường.
 
-Cả ba chính sách trên đều được xây dựng cho bài toán đơn kho -- đơn mặt hàng
-và không tối ưu hóa đồng thời ràng buộc sức chứa dùng chung, phạt tràn kho và
-mức phục vụ --- những đặc trưng quan trọng trong bài toán đa kho -- đa mặt
-hàng mà khóa luận xét \parencite{zipkin2000, silver2016}.
+Cả ba chính sách đều được xây dựng cho bài toán một kho, một mặt hàng. Chúng không tối ưu đồng thời ràng buộc sức chứa dùng chung, phạt tràn kho và mức phục vụ, là những đặc trưng quan trọng của bài toán mà đề tài xét \parencite{zipkin2000, silver2016}.
 
 \subsection{Các thước đo mức phục vụ trong quản lý tồn kho}
 \label{subsec:thuocDoMucPhucVu}
 
-Trong quản lý tồn kho ngẫu nhiên, mức phục vụ (service level) được đánh giá thông qua ba thước đo phổ biến \parencite{silver2016, zipkin2000}:
+Trong quản lý tồn kho ngẫu nhiên, mức phục vụ (\textit{service level}) thường được đo bằng ba thước đo \parencite{silver2016, zipkin2000}:
 \begin{itemize}
-    \item \textit{Mức phục vụ theo chu kỳ} ($\alpha$ -- Cycle Service Level / Type-1): xác suất không xảy ra hiện tượng thiếu hàng trong một chu kỳ bổ sung tồn kho, tức $P(D_L \le s)$ trong đó $D_L$ là nhu cầu tích lũy trong thời gian giao hàng $L$ và $s$ là điểm đặt hàng lại. Tỷ số tới hạn trong mô hình Newsvendor (\ref{eq:newsvendor}) phản ánh chính xác phân vị $z_\alpha$ của thước đo này.
-    \item \textit{Tỷ lệ đáp ứng nhu cầu} ($\beta$ -- Fill Rate / Type-2): tỷ lệ phần trăm tổng nhu cầu của khách hàng được đáp ứng ngay lập tức từ lượng hàng sẵn có trong kho.
-    \item \textit{Tỷ lệ sẵn sàng} ($\gamma$ -- Ready Rate): tỷ lệ thời gian mà mức tồn kho khả dụng duy trì giá trị dương.
+    \item Mức phục vụ theo chu kỳ ($\alpha$, \textit{cycle service level} hay Type-1) là xác suất không thiếu hàng trong một chu kỳ bổ sung, bằng $P(D_L \le s)$. Ở đây $D_L$ là nhu cầu tích lũy trong thời gian giao hàng $L$ và $s$ là điểm đặt hàng lại. Tỷ số tới hạn trong mô hình Newsvendor (công thức~\ref{eq:newsvendor}) ứng đúng với phân vị $z_\alpha$ của thước đo này.
+    \item Tỷ lệ đáp ứng nhu cầu ($\beta$, \textit{fill rate} hay Type-2) là tỷ lệ phần trăm tổng nhu cầu được đáp ứng ngay từ lượng hàng có sẵn trong kho.
+    \item Tỷ lệ sẵn sàng ($\gamma$, \textit{ready rate}) là tỷ lệ thời gian mà mức tồn kho khả dụng còn dương.
 \end{itemize}
 
-Cần lưu ý rạch ròi rằng tỷ số chi phí $c_{th}/(c_{th} + c_{lk})$ xác định mức phục vụ chu kỳ $\alpha$, chứ không phải tỷ lệ fill rate $\beta$. Trong điều kiện nhu cầu ổn định và biến động vừa phải, $\beta$ thường cao hơn $\alpha$. Tuy nhiên, dưới tác động của nhu cầu gián đoạn (intermittent demand) và thời gian giao hàng ngẫu nhiên như trong dữ liệu M5 Walmart, mối quan hệ này không còn mang tính tuyệt đối và $\beta$ có thể sụt giảm thấp hơn $\alpha$ \parencite{silver2016}.
+Tỷ số $c_{th}/(c_{th} + c_{lk})$ trong công thức Newsvendor cho biết mức phục vụ chu kỳ $\alpha$ nên đạt, chứ không phải tỷ lệ đáp ứng $\beta$. Hai thước đo này có thể khác nhau nhiều khi nhu cầu gián đoạn và thời gian giao hàng ngẫu nhiên như dữ liệu M5 \parencite{silver2016}. Vì vậy trong môi trường nhiều kỳ, tham số Newsvendor tốt nhất có thể khác xa giá trị tính theo lý thuyết.
 
-Một quan sát thực nghiệm liên quan: với bộ tham số chi phí $c_{th} = 10{,}0$ và
-$c_{lk} = 1{,}0$ sử dụng trong thực nghiệm, tỷ số tới hạn lý thuyết của Newsvendor
-là $c_{th}/(c_{th}+c_{lk}) = 10/11 \approx 0{,}909$. Tuy nhiên, tìm kiếm lưới
-trên môi trường mô phỏng cho tham số tối ưu $CR^* = 0{,}85$ --- thấp hơn nhưng
-không lệch quá xa lý thuyết. Chênh lệch còn lại không xuất phát từ sai lệch triển khai mà phản
-ánh sự khác biệt khái niệm
-căn bản: tỷ số tới hạn cổ điển tối ưu cho mức phục vụ chu kỳ $\alpha$ trong bài
-toán \textit{một kỳ} không có hàng đang vận chuyển, còn môi trường thực nghiệm
-là bài toán \textit{đa kỳ} với pipeline $3$ ngày, ràng buộc sức chứa kho và hàm
-mục tiêu fill rate trên cửa sổ trượt. Khoảng cách này được ghi nhận và phân tích
-trong mục thảo luận kết quả (Mục~\ref{subsec:isoService}).
+\subsection{Chính sách mức đặt mục tiêu và hướng dự báo rồi tối ưu}
+\label{subsec:duBaoToiUu}
+
+Chính sách mức đặt mục tiêu (\textit{base-stock} hay \textit{order-up-to}) đặt hàng để đưa vị thế tồn kho lên một mức $S$ cho trước, trong đó vị thế tồn kho gồm tồn kho hiện có cộng hàng đang về \parencite{zipkin2000}. Lượng đặt tại kỳ $t$ được tính như sau:
+\begin{equation}
+    q_t = \max\bigl(0,\; S_t - \text{IP}_t\bigr),
+    \qquad
+    S_t = \hat{\mu}_{t:t+L} + z \cdot \hat{\sigma}_{t} \sqrt{L + 1},
+    \label{eq:baseStock}
+\end{equation}
+trong đó:
+\begin{itemize}
+    \item $\text{IP}_t$ là vị thế tồn kho.
+    \item $\hat{\mu}_{t:t+L}$ là tổng nhu cầu dự báo trong $L + 1$ ngày tới.
+    \item $\hat{\sigma}_{t}$ là độ lệch chuẩn của sai số dự báo một ngày.
+    \item $z$ là hệ số an toàn.
+\end{itemize}
+
+Phần $\hat{\mu}_{t:t+L}$ giúp có đủ hàng bán trong thời gian chờ hàng về. Phần còn lại là tồn kho an toàn, dùng để phòng trường hợp nhu cầu cao hơn dự báo.
+
+Cách làm này được gọi là dự báo rồi tối ưu (\textit{predict-then-optimize}). Bước đầu tiên dự báo nhu cầu, bước thứ hai dùng dự báo để tính lượng đặt. Ưu điểm là hai bước độc lập nên dễ thay đổi từng bước. Hạn chế là mô hình dự báo được huấn luyện để giảm sai số dự báo chứ không trực tiếp giảm chi phí. Để khắc phục hạn chế này, Elmachtoub và Grigas \cite{elmachtoub2022} huấn luyện mô hình theo sai số của quyết định, còn Ban và Rudin \cite{banrudin2019} học trực tiếp lượng đặt từ các đặc trưng trong bài toán Newsvendor.
+
+Trong cuộc thi M5, các phương pháp đứng đầu học chung trên nhiều chuỗi bằng cây tăng cường gradient, phổ biến nhất là LightGBM \parencite{makridakis2022accuracy}. LightGBM \parencite{ke2017lightgbm} xây dựng lần lượt nhiều cây quyết định, trong đó cây sau học phần sai số của các cây trước. Mô hình này huấn luyện nhanh nên phù hợp với dữ liệu lớn.
+
+Để so sánh độ chính xác giữa các chuỗi có quy mô khác nhau, đề tài dùng chỉ số RMSSE \parencite{makridakis2022background}:
+\begin{equation}
+    \text{RMSSE} = \sqrt{
+    \frac{\frac{1}{h}\sum_{t=n+1}^{n+h} \bigl(D_t - \hat{D}_t\bigr)^2}
+         {\frac{1}{n-1}\sum_{t=2}^{n} \bigl(D_t - D_{t-1}\bigr)^2}},
+    \label{eq:rmsse}
+\end{equation}
+trong đó $n$ là số ngày huấn luyện và $h$ là số ngày đánh giá. Mẫu số là sai số trên miền huấn luyện khi lấy nhu cầu hôm trước làm dự báo cho hôm sau. RMSSE nhỏ hơn 1 nghĩa là sai số của mô hình nhỏ hơn sai số của cách dự báo đơn giản này.
 
 \section{Nền tảng học tăng cường}
 \label{sec:nenTangRL}
@@ -117,15 +101,13 @@ trong mục thảo luận kết quả (Mục~\ref{subsec:isoService}).
 \subsection{Quá trình quyết định Markov (MDP)}
 \label{subsec:mdp}
 
-Bài toán ra quyết định tuần tự dưới bất định được mô hình hóa bằng quá trình
-quyết định Markov \parencite{puterman1994}, xác định bởi bộ năm
-$(S, A, P, R, \gamma)$ trong đó:
+Bài toán ra quyết định tuần tự dưới bất định được mô hình hóa bằng quá trình quyết định Markov \parencite{puterman1994}. Quá trình này xác định bởi bộ năm $(S, A, P, R, \gamma)$, trong đó:
 \begin{itemize}
-    \item $S$: không gian trạng thái (state space).
-    \item $A$: không gian hành động (action space).
-    \item $P(s' \mid s, a)$: hàm xác suất chuyển trạng thái.
-    \item $R(s, a)$: hàm phần thưởng (reward function).
-    \item $\gamma \in [0, 1)$: hệ số chiết khấu (discount factor).
+    \item $S$ là không gian trạng thái (\textit{state space}).
+    \item $A$ là không gian hành động (\textit{action space}).
+    \item $P(s' \mid s, a)$ là hàm xác suất chuyển trạng thái.
+    \item $R(s, a)$ là hàm phần thưởng (\textit{reward function}).
+    \item $\gamma \in [0, 1)$ là hệ số chiết khấu (\textit{discount factor}).
 \end{itemize}
 
 Mục tiêu của tác tử là tìm chính sách $\pi^*$ cực đại hóa lợi tức kỳ vọng:
@@ -138,40 +120,33 @@ Mục tiêu của tác tử là tìm chính sách $\pi^*$ cực đại hóa lợ
 \subsection{Hàm giá trị và phương trình Bellman}
 \label{subsec:hamGiaTri}
 
-Hàm giá trị trạng thái $V^\pi(s) = \mathbb{E}_\pi[\sum_{t=0}^{\infty} \gamma^t
-R_t \mid s_0 = s]$ và hàm giá trị hành động $Q^\pi(s, a)$ thỏa mãn phương trình
-Bellman \parencite{sutton2018}. Hàm lợi thế (advantage function) được định nghĩa:
+Hàm giá trị trạng thái $V^\pi(s)$ là tổng phần thưởng kỳ vọng nhận được khi bắt đầu từ trạng thái $s$ và đi theo chính sách $\pi$. Hàm giá trị hành động $Q^\pi(s, a)$ tương tự, nhưng hành động đầu tiên được cố định là $a$. Hàm giá trị thỏa mãn phương trình Bellman \parencite{sutton2018}:
 \begin{equation}
-    A^\pi(s, a) = Q^\pi(s, a) - V^\pi(s)
+    V^\pi(s) = \mathbb{E}_\pi \bigl[ R(s, a) + \gamma V^\pi(s') \bigr].
+    \label{eq:bellman}
+\end{equation}
+Phương trình này cho biết giá trị của một trạng thái bằng phần thưởng ngay lập tức cộng với giá trị đã chiết khấu của trạng thái kế tiếp. Từ hai hàm giá trị, hàm lợi thế (\textit{advantage function}) được định nghĩa như sau:
+\begin{equation}
+    A^\pi(s, a) = Q^\pi(s, a) - V^\pi(s).
     \label{eq:advantage}
 \end{equation}
-đo mức độ tốt hơn (hoặc kém hơn) của hành động $a$ so với hành vi trung bình
-của chính sách $\pi$ tại trạng thái $s$.
+Hàm này đo hành động $a$ tốt hơn hay kém hơn bao nhiêu so với mức trung bình của chính sách $\pi$ tại trạng thái $s$.
 
 \subsection{Ước lượng lợi thế tổng quát (GAE)}
 \label{subsec:gae}
 
-Schulman và cộng sự \cite{schulman2016gae} đề xuất phương pháp ước lượng lợi thế tổng quát
-(Generalized Advantage Estimation -- GAE) nhằm kiểm soát đánh đổi giữa thiên
-lệch (bias) và phương sai (variance) trong ước lượng gradient chính sách:
+Schulman và cộng sự \cite{schulman2016gae} đề xuất ước lượng lợi thế tổng quát (\textit{generalized advantage estimation}, GAE) để kiểm soát đánh đổi giữa độ chệch (\textit{bias}) và phương sai (\textit{variance}) khi ước lượng gradient chính sách:
 \begin{equation}
     \hat{A}_t^{\text{GAE}(\gamma, \lambda)} = \sum_{l=0}^{\infty}
     (\gamma \lambda)^l \delta_{t+l}
     \label{eq:gae}
 \end{equation}
-trong đó $\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)$ là sai số TD (temporal
-difference) và $\lambda \in [0, 1]$ là tham số kiểm soát đánh đổi. Khi
-$\lambda = 0$, GAE suy biến thành ước lượng một bước (thiên lệch cao, phương sai
-thấp); khi $\lambda = 1$, GAE tương đương Monte-Carlo (không thiên lệch, phương
-sai cao). Khóa luận sử dụng $\lambda = 0{,}95$ theo khuyến nghị thực nghiệm
-phổ biến.
+trong đó $\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)$ là sai số sai phân thời gian (\textit{temporal difference}, TD) và $\lambda \in [0, 1]$ là tham số kiểm soát đánh đổi. Khi $\lambda = 0$, GAE trở thành ước lượng một bước, có độ chệch cao và phương sai thấp. Khi $\lambda = 1$, GAE tương đương ước lượng Monte-Carlo, không chệch nhưng phương sai cao. Nhóm dùng $\lambda = 0{,}95$ theo khuyến nghị thực nghiệm phổ biến.
 
 \subsection{Thuật toán PPO (Proximal Policy Optimization)}
 \label{subsec:ppo}
 
-Schulman và cộng sự \cite{schulman2017ppo} đề xuất PPO nhằm khắc phục nhược điểm của phương
-pháp tối ưu hóa chính sách: các bước cập nhật quá lớn có thể phá hủy chính
-sách đã học. PPO sử dụng hàm mục tiêu cắt (clipped surrogate objective):
+Với các phương pháp tối ưu hóa chính sách, một bước cập nhật quá lớn có thể phá hỏng chính sách đã học. Schulman và cộng sự \cite{schulman2017ppo} đề xuất PPO để khắc phục nhược điểm này. PPO dùng hàm mục tiêu cắt (\textit{clipped surrogate objective}):
 \begin{equation}
     L^{\text{CLIP}}(\theta) = \mathbb{E}_t \left[ \min\!\left(
     r_t(\theta) \hat{A}_t, \;
@@ -179,15 +154,9 @@ sách đã học. PPO sử dụng hàm mục tiêu cắt (clipped surrogate obje
     \right) \right]
     \label{eq:ppoclip}
 \end{equation}
-trong đó $r_t(\theta) = \frac{\pi_\theta(a_t \mid s_t)}{\pi_{\theta_{\text{old}}}(a_t \mid s_t)}$
-là tỷ lệ xác suất giữa chính sách mới và cũ, và $\epsilon$ (thường bằng
-$0{,}2$) giới hạn biên độ thay đổi tối đa. PPO kết hợp cập nhật on-policy, hiệu
-quả tính toán cao và tính ổn định, phù hợp cho bài toán có không gian hành động
-rời rạc hoặc liên tục.
+trong đó $r_t(\theta) = \frac{\pi_\theta(a_t \mid s_t)}{\pi_{\theta_{\text{old}}}(a_t \mid s_t)}$ là tỷ lệ xác suất giữa chính sách mới và cũ, còn $\epsilon$ (thường bằng 0,2) giới hạn mức thay đổi tối đa. PPO cập nhật theo chính sách hiện hành (\textit{on-policy}), tính toán hiệu quả và ổn định. Thuật toán phù hợp cho cả không gian hành động rời rạc lẫn liên tục.
 
-Ý tưởng cốt lõi của TRPO \parencite{schulman2015trpo} --- giới hạn bước cập
-nhật trong vùng tin cậy --- được PPO thực hiện đơn giản hơn qua phép cắt, giúp
-cài đặt dễ dàng và huấn luyện nhanh hơn trên thực tế.
+TRPO \parencite{schulman2015trpo} giới hạn bước cập nhật trong một vùng tin cậy. PPO thực hiện ý tưởng này đơn giản hơn bằng phép cắt, nên dễ cài đặt và huấn luyện nhanh hơn.
 
 \section{Học tăng cường đa tác tử}
 \label{sec:marl}
@@ -195,140 +164,103 @@ cài đặt dễ dàng và huấn luyện nhanh hơn trên thực tế.
 \subsection{Mô hình Dec-POMDP}
 \label{subsec:decPomdp}
 
-Khi hệ thống có nhiều tác tử ra quyết định đồng thời, bài toán được mô hình hóa
-bằng quá trình quyết định Markov phi tập trung có quan sát bộ phận (Decentralized
-Partially Observable Markov Decision Process -- Dec-POMDP)
-\parencite{oliehoek2016}. Trong mô hình này, mỗi tác tử $i$ chỉ quan sát được
-một phần trạng thái toàn cục thông qua hàm quan sát $o_i = O(s, i)$ và ra quyết
-định dựa trên quan sát cục bộ. Bài toán tìm chính sách chung tối ưu cho tất cả
-tác tử đã được chứng minh thuộc lớp NEXP-đầy đủ \parencite{bernstein2002},
-nên các lời giải chính xác không khả thi ở quy mô lớn.
+Khi nhiều tác tử cùng ra quyết định, bài toán được mô hình hóa bằng quá trình quyết định Markov phi tập trung có quan sát bộ phận (\textit{decentralized partially observable Markov decision process}, Dec-POMDP) \parencite{oliehoek2016}. Trong mô hình này, mỗi tác tử $i$ chỉ quan sát một phần trạng thái toàn cục qua hàm quan sát $o_i = O(s, i)$ và ra quyết định dựa trên quan sát cục bộ đó. Bài toán tìm chính sách chung tối ưu cho mọi tác tử đã được chứng minh thuộc lớp NEXP-đầy đủ \parencite{bernstein2002}. Vì vậy lời giải chính xác không khả thi ở quy mô lớn.
 
-Trong Dec-POMDP chuẩn, mọi tác tử cùng theo đuổi một mục tiêu hợp tác duy
-nhất. Khóa luận giữ nguyên mục tiêu hợp tác đó ở cấp toàn mạng lưới:
+Trong đề tài, mục tiêu chung của các tác tử là tối đa tổng phần thưởng của cả mạng lưới:
 \begin{equation}
     R_t^{\text{team}} = \sum_{i=1}^{300} r_{i,t},
     \qquad
-    \max_{\theta}\; \mathbb{E}\Bigl[\sum_{t} \gamma^{t} R_t^{\text{team}}\Bigr],
+    \max_{\theta}\; \mathbb{E}\Bigl[\sum_{t} \gamma^{t} R_t^{\text{team}}\Bigr].
     \label{eq:mucTieuDoi}
 \end{equation}
-nhưng tín hiệu dùng để \emph{huấn luyện} được phân rã thành các phần thưởng cục
-bộ $r_{i,t}$ của từng cặp kho--mặt hàng (Mục~\ref{subsec:rewardDecomposition}).
-Nói cách khác, hệ thống có mục tiêu hợp tác ở cấp toàn mạng lưới, còn phần
-thưởng cục bộ là một cách phân rã tín hiệu học nhằm giảm phương sai và giảm khó
-khăn gán tín dụng. Vì các cặp trong cùng kho tương tác qua sức chứa chung, tối
-ưu riêng từng $r_{i,t}$ không tự động bảo đảm tối ưu $R^{\text{team}}$; việc
-phân rã này có thật sự có lợi hay không là nội dung của Câu hỏi nghiên cứu 3.
+Khi huấn luyện, mỗi tác tử dùng phần thưởng $r_{i,t}$ của riêng cặp mình (mục~\ref{subsec:rewardDecomposition}). Các cặp trong cùng kho ảnh hưởng tới nhau qua sức chứa, nên mỗi tác tử tối ưu phần của mình chưa chắc đã tối ưu cho cả hệ thống. Câu hỏi 3 kiểm tra vấn đề này.
 
-Bài toán tồn kho đa kho đa mặt hàng được mô hình hóa tự nhiên dưới dạng Dec-POMDP
-vì bốn đặc điểm cấu trúc phù hợp với lớp bài toán này:
-\begin{enumerate}
-    \item \textbf{Quyết định tuần tự, hệ quả trễ}. Đơn đặt hàng hôm nay ảnh hưởng
-    tồn kho $1$--$3$ ngày sau. Không phải bài toán một bước.
-    \item \textbf{Trạng thái thay đổi theo hành động}. Đặt hàng làm đổi tồn
-    kho, thay đổi luôn bài toán của ngày mai.
-    \item \textbf{Không có nhãn hành động}. Không tồn tại nhãn hành động tối
-    ưu quan sát trực tiếp cho từng ngày; chỉ quan sát được chi phí sau khi hành
-    động được thực hiện. Đây là lý do không dùng học có giám sát.
-    \item \textbf{Mục tiêu dài hạn}. Tối thiểu chi phí cả năm, không phải
-    chỉ hôm nay. Tích trữ hôm nay tốn tiền nhưng tránh mất doanh thu ngày mai.
-\end{enumerate}
+Bài toán tồn kho nhiều kho, nhiều mặt hàng phù hợp với mô hình Dec-POMDP vì các lý do sau:
+\begin{itemize}
+    \item Quyết định có hệ quả trễ. Đơn đặt hôm nay ảnh hưởng tới tồn kho sau 1--3 ngày.
+    \item Hành động làm thay đổi trạng thái. Đặt hàng hôm nay làm thay đổi tồn kho của ngày hôm sau.
+    \item Không có nhãn hành động tối ưu cho từng ngày, chỉ biết chi phí sau khi đã hành động. Vì vậy không dùng được học có giám sát.
+    \item Mục tiêu là dài hạn. Tích trữ hôm nay tốn chi phí nhưng tránh được thiếu hàng ngày mai.
+\end{itemize}
 
-Quy hoạch động không khả dụng vì không gian trạng thái liên tục $44$ chiều
-$\times\,300$ tác tử và phân phối nhu cầu M5 không có dạng đóng --- đây
-là ``lời nguyền số chiều'' mà các phương pháp bảng tra (tabular) không vượt qua
-được \parencite{bellman1957}.
+Quy hoạch động không áp dụng được vì mỗi tác tử có trạng thái liên tục 44 chiều, có tới 300 tác tử và phân phối nhu cầu M5 không có dạng đóng. Các phương pháp dạng bảng (\textit{tabular}) không giải được bài toán có số chiều lớn như vậy \parencite{bellman1957}.
 
 \subsection{Học độc lập (Independent Learning)}
 \label{subsec:hocDocLap}
 
-Tan \cite{tan1993} đề xuất phương pháp học độc lập: mỗi tác tử coi các tác tử
-khác là một phần của môi trường và áp dụng thuật toán RL đơn tác tử riêng rẽ.
-Hạn chế lý thuyết chính là môi trường trở nên không dừng (non-stationary) do các
-tác tử khác cũng đang thay đổi chính sách. Tuy nhiên, các nghiên cứu thực
-nghiệm cho thấy phương pháp này đạt hiệu quả bất ngờ trên nhiều bài toán hợp
-tác \parencite{dewitt2020ippo}.
+Tan \cite{tan1993} đề xuất phương pháp học độc lập. Mỗi tác tử coi các tác tử khác là một phần của môi trường và chạy riêng một thuật toán học tăng cường một tác tử. Hạn chế lý thuyết chính là môi trường trở nên không dừng (\textit{non-stationary}), vì các tác tử khác cũng đang thay đổi chính sách. Tuy vậy, các nghiên cứu thực nghiệm cho thấy phương pháp này hiệu quả trên nhiều bài toán hợp tác \parencite{dewitt2020ippo}.
 
-\subsection{IPPO — Independent Multi-Agent PPO}
+\subsection{Thuật toán IPPO}
 \label{subsec:ippo}
 
-IPPO là biến thể đa tác tử của PPO trong đó mỗi tác tử $i$ chạy PPO độc lập
-dựa trên quan sát cục bộ $o_i^t$ và phần thưởng riêng $r_i^t$
-\parencite{dewitt2020ippo}. Yu và cộng sự \cite{yu2022mappo} đánh giá hệ thống trên nhiều
-môi trường hợp tác và kết luận rằng IPPO đạt hiệu năng cạnh tranh hoặc vượt
-trội so với các phương pháp phức tạp hơn như QMIX hay MAPPO trong nhiều kịch bản.
+IPPO là biến thể đa tác tử của PPO. Mỗi tác tử $i$ chạy PPO độc lập dựa trên quan sát cục bộ $o_i^t$ và phần thưởng riêng $r_i^t$ \parencite{dewitt2020ippo}. Yu và cộng sự \cite{yu2022mappo} đánh giá trên nhiều môi trường hợp tác và kết luận rằng IPPO đạt hiệu năng ngang hoặc tốt hơn các phương pháp phức tạp hơn như QMIX hay MAPPO trong nhiều kịch bản.
 
-Đặc điểm quan trọng của IPPO khiến nó phù hợp cho bài toán tồn kho:
+IPPO phù hợp cho bài toán tồn kho vì các lý do sau:
 \begin{itemize}
-    \item Không yêu cầu trạng thái toàn cục: mỗi tác tử (cặp kho--mặt hàng)
-    chỉ cần quan sát cục bộ.
-    \item Khả năng mở rộng: không gian hành động của mỗi tác tử có kích thước
-    $K$ cố định, không phụ thuộc số tác tử.
-    \item Tính đơn giản: cài đặt dựa trên PPO chuẩn, không cần mixing network
-    hay cơ chế truyền thông.
+    \item IPPO không cần trạng thái toàn cục. Mỗi tác tử là một cặp kho--mặt hàng và chỉ cần quan sát cục bộ.
+    \item IPPO mở rộng được. Không gian hành động của mỗi tác tử có kích thước $K$ cố định, không phụ thuộc số tác tử.
+    \item IPPO đơn giản. Thuật toán dựa trên PPO chuẩn, không cần mạng trộn (\textit{mixing network}) hay cơ chế truyền thông.
 \end{itemize}
 
-Cần phân biệt rõ ba tầng nghĩa của ``independent'' trong IPPO, vì chúng
-hàm ý khác nhau:
+Trong đề tài, chữ ``độc lập'' của IPPO được hiểu như sau:
 \begin{itemize}
-    \item \textit{Độc lập về ra quyết định}: mỗi tác tử chọn hành động chỉ dựa
-    trên quan sát cục bộ của mình, không nhận thông tin từ tác tử khác. Đúng.
-    \item \textit{Độc lập về tính lợi thế}: GAE tính riêng theo trục thời gian
-    cho từng cặp $i$, sử dụng phần thưởng riêng $r_i^t$ và giá trị riêng $V(o_i^t)$.
-    Đúng.
-    \item \textit{Độc lập về tham số}: mỗi tác tử có bộ trọng số riêng. Không
-    --- đây là điểm chia sẻ tham số (parameter sharing) được khảo sát ở
-    Mục~\ref{subsec:paramSharing}.
+    \item Độc lập khi ra quyết định: mỗi tác tử chọn hành động chỉ từ quan sát của mình.
+    \item Độc lập khi tính lợi thế: GAE được tính riêng cho từng cặp $i$, dùng phần thưởng riêng $r_i^t$ và giá trị riêng $V(o_i^t)$.
+    \item Không độc lập về tham số: các tác tử dùng chung trọng số (mục~\ref{subsec:paramSharing}).
 \end{itemize}
 
-Hai cặp ở hai trạng thái khác nhau sẽ hành động khác nhau dù cùng $\theta$
---- vì đầu vào khác nhau. Mỗi tác tử có chính sách riêng theo nghĩa hàm
-$\pi(a \mid o_i)$ nhận quan sát riêng và cho ra phân phối riêng, nhưng
-tham số $\theta$ dùng chung.
+Dù dùng chung tham số $\theta$, hai cặp ở hai trạng thái khác nhau vẫn hành động khác nhau vì đầu vào khác nhau.
 
 \subsection{Chia sẻ tham số (Parameter Sharing)}
 \label{subsec:paramSharing}
 
-Gupta và cộng sự \cite{gupta2017} chỉ ra rằng khi các tác tử có cùng không gian quan sát và
-hành động, một mạng nơ-ron duy nhất có thể được chia sẻ giữa tất cả tác tử.
-Mỗi tác tử vẫn ra quyết định dựa trên quan sát riêng nhưng dùng chung bộ trọng
-số. Lợi ích:
+Gupta và cộng sự \cite{gupta2017} chỉ ra rằng khi các tác tử có cùng không gian quan sát và hành động, có thể dùng một mạng nơ-ron duy nhất cho mọi tác tử. Mỗi tác tử vẫn ra quyết định từ quan sát riêng nhưng dùng chung bộ trọng số. Cách này có các lợi ích sau:
 \begin{itemize}
-    \item Số tham số cần học không tăng theo số tác tử (ở đây: $300$).
-    \item Mỗi bước cập nhật sử dụng dữ liệu từ tất cả tác tử, tăng hiệu quả mẫu.
-    \item Chính sách học được có khả năng tổng quát hóa cho các mặt hàng có quy
-    mô nhu cầu khác nhau.
+    \item Số tham số cần học không tăng theo số tác tử.
+    \item Mỗi bước cập nhật dùng dữ liệu của mọi tác tử, nên học hiệu quả hơn.
+    \item Chính sách học được có thể dùng cho các mặt hàng có quy mô nhu cầu khác nhau.
 \end{itemize}
 
-Chẩn đáng lưu ý: chia sẻ tham số không tương đương với việc gộp $300$ tác tử
-thành một tác tử duy nhất. Nếu gộp, không gian hành động sẽ là $6^{300}$,
-không thể học được trên thực tế. Với kiến trúc chia sẻ tham số hiện tại,
-mạng nhận batch $(300, 44)$ và forward một lần, nhưng mỗi tác tử chỉ xử lý
-$K = 6$ hành động --- không gian cố định và có thể giải quyết được.
+Chia sẻ tham số khác với việc gộp 300 tác tử thành một tác tử. Nếu gộp, không gian hành động sẽ là $6^{300}$. Khi chia sẻ tham số, mạng nhận một lô kích thước $(300, 44)$, còn mỗi tác tử chỉ chọn trong $K = 6$ hành động.
 
-\subsection{Phần thưởng phân rã cục bộ và bài toán gán tín dụng}
+Tuy nhiên, chia sẻ toàn bộ tham số có thể không tốt khi các tác tử khác nhau nhiều. Christianos và cộng sự \cite{christianos2021seps} đề xuất chia sẻ chọn lọc: chia các tác tử thành nhóm và chỉ dùng chung tham số trong từng nhóm.
+
+\subsection{Phần thưởng cục bộ và bài toán xác định đóng góp}
 \label{subsec:rewardDecomposition}
 
-Trong hệ đa tác tử, việc sử dụng phần thưởng toàn cục (tổng chi phí của toàn bộ
-hệ thống) cho mọi tác tử gây ra vấn đề gán tín dụng (credit assignment): tác tử
-khó phân biệt được đóng góp cá nhân trong tín hiệu tổng hợp
-\parencite{wolpert2001}. Wolpert và Tumer đề xuất \emph{phần thưởng chênh lệch}
-(difference reward) $D_i = G(z) - G(z_{-i})$, trong đó $G(z_{-i})$ là giá trị
-của hệ thống khi loại bỏ đóng góp của tác tử $i$ --- một đại lượng phản thực
-(counterfactual) phải được tính thêm.
+Nếu mọi tác tử cùng nhận một phần thưởng chung là tổng chi phí của cả hệ thống, mỗi tác tử khó biết hành động của mình đóng góp bao nhiêu vào kết quả chung. Đây là bài toán xác định đóng góp (\textit{credit assignment}) \parencite{wolpert2001}. Wolpert và Tumer đề xuất phần thưởng chênh lệch (\textit{difference reward}) $D_i = G(z) - G(z_{-i})$, so sánh kết quả của hệ thống khi có và khi không có đóng góp của tác tử $i$. Cách này phải tính thêm một giá trị giả định cho từng tác tử ở mỗi bước nên rất tốn kém.
 
-Khóa luận \emph{không} cài đặt phần thưởng chênh lệch theo đúng nghĩa này. Thay
-vào đó, khóa luận dùng \emph{phần thưởng phân rã cục bộ} (local factored
-reward): mỗi tác tử nhận $r_{i,t} = -(C_{i,t} + P_{i,t})$, gồm chi phí vận hành
-$C_{i,t}$ và hình phạt mức phục vụ $P_{i,t}$ của chính cặp kho--mặt hàng mà nó
-quản lý, với $\sum_i r_{i,t} = R_t^{\text{team}}$ (công thức~\ref{eq:mucTieuDoi}).
-Cách phân rã này dựa trên cùng động cơ giảm khó khăn gán tín dụng như phân tích
-của Wolpert và Tumer. Nó khả thi ở đây vì phần lớn chi phí của một cặp (lưu kho,
-thiếu hàng, đặt hàng) do chính quyết định của cặp đó gây ra; riêng phần tràn kho
---- đại lượng thực sự ghép nối giữa các cặp --- được phân bổ theo tỷ trọng hàng
-mới về của từng cặp (Mục~\ref{subsec:sucChua}).
+Nhóm dùng cách đơn giản hơn là phần thưởng phân rã cục bộ (\textit{local factored reward}). Mỗi tác tử nhận $r_{i,t} = -(C_{i,t} + P_{i,t})$, gồm chi phí vận hành $C_{i,t}$ và hình phạt mức phục vụ $P_{i,t}$ của chính cặp mà nó quản lý. Tổng phần thưởng của các tác tử bằng phần thưởng chung ở công thức~(\ref{eq:mucTieuDoi}). Cách này dùng được vì phần lớn chi phí của một cặp, gồm lưu kho, thiếu hàng và đặt hàng, do chính quyết định của cặp đó gây ra. Riêng chi phí tràn kho phụ thuộc nhiều cặp, nên được chia theo tỷ trọng hàng mới về của từng cặp.
 
-Khung lý thuyết định hình phần thưởng bảo toàn thế năng (Potential-Based Reward Shaping -- PBRS) do Ng và cộng sự \cite{ng1999} chứng minh khẳng định rằng: một hàm biến đổi phần thưởng $F(s,a,s')$ bảo toàn tập chính sách tối ưu của MDP gốc khi và chỉ khi nó có dạng chênh lệch thế năng $F(s,a,s') = \gamma\Phi(s') - \Phi(s)$. Khung lý thuyết này sau đó được mở rộng sang hệ đa tác tử bởi Devlin và Kudenko \cite{devlin2011potential} cũng như ứng dụng trong tồn kho bởi De Moor và cộng sự \cite{demoor2022reward}.
+Ngoài ra, phần thưởng có thể được bổ sung thêm để hướng dẫn quá trình học, gọi là định hình phần thưởng (\textit{reward shaping}). Ng và cộng sự \cite{ng1999} chứng minh phần bổ sung $F(s,a,s')$ chỉ giữ nguyên chính sách tối ưu khi có dạng chênh lệch thế năng $F(s,a,s') = \gamma\Phi(s') - \Phi(s)$ (\textit{potential-based reward shaping}, PBRS). Devlin và Kudenko \cite{devlin2011potential} mở rộng kết quả này sang hệ đa tác tử, còn De Moor và cộng sự \cite{demoor2022reward} áp dụng cho bài toán tồn kho.
+
+\subsection{Học tăng cường có ràng buộc}
+\label{subsec:cmdp}
+
+Yêu cầu tỷ lệ đáp ứng tối thiểu là một ràng buộc, nên bài toán thuộc dạng quá trình quyết định Markov có ràng buộc (\textit{constrained MDP}, CMDP) \parencite{altman1999}. Mục tiêu là tìm chính sách có chi phí kỳ vọng $J_C(\pi)$ nhỏ nhất mà vẫn đạt mức phục vụ $J_F(\pi)$ từ $\tau$ trở lên:
+\begin{equation}
+    \min_{\pi}\; J_C(\pi) \quad \text{thỏa mãn} \quad J_F(\pi) \ge \tau.
+    \label{eq:cmdp}
+\end{equation}
+Cách phổ biến để giải bài toán này là đưa ràng buộc vào hàm mục tiêu bằng nhân tử Lagrange $\lambda \ge 0$:
+\begin{equation}
+    \mathcal{L}(\pi, \lambda) = J_C(\pi) + \lambda \bigl(\tau - J_F(\pi)\bigr).
+    \label{eq:lagrange}
+\end{equation}
+Khi ràng buộc bị vi phạm, $\lambda$ được tăng lên để phạt nặng hơn. Khi ràng buộc đã thỏa, $\lambda$ được giảm xuống. Nếu chỉ cộng dồn sai số để cập nhật thì $\lambda$ dễ tăng quá mức rồi dao động. Stooke và cộng sự \cite{stooke2020} cập nhật $\lambda$ bằng bộ điều khiển PID để giảm dao động:
+\begin{equation}
+    \lambda_k = \max\Bigl(0,\; K_P\, e_k + K_I \sum_{l \le k} e_l + K_D\, (e_k - e_{k-1})\Bigr),
+    \qquad e_k = \tau - J_F(\pi_k),
+    \label{eq:pid}
+\end{equation}
+trong đó $e_k$ là mức vi phạm ràng buộc ở bước $k$, còn $K_P$, $K_I$, $K_D$ là các hệ số của bộ điều khiển. Nếu giữ $\lambda$ không đổi trong suốt quá trình học thì $\lambda$ trở thành một hệ số phạt cố định.
+
+\subsection{Huấn luyện tập trung, thực thi phi tập trung}
+\label{subsec:ctde}
+
+Huấn luyện tập trung, thực thi phi tập trung (CTDE) là cách làm trong đó Actor chỉ dùng quan sát cục bộ, còn Critic được dùng thêm thông tin của các tác tử khác trong lúc huấn luyện. Khi chạy thực tế chỉ cần Actor, nên các tác tử vẫn ra quyết định độc lập. MAPPO là thuật toán tiêu biểu của cách làm này, với Critic nhận trạng thái toàn cục \parencite{yu2022mappo}. Hạn chế là đầu vào của Critic tăng theo số tác tử.
+
+Nếu thứ tự các tác tử không quan trọng, đầu vào của Critic có thể xử lý bằng một hàm không phụ thuộc thứ tự. Zaheer và cộng sự \cite{zaheer2017deepsets} đưa ra cách làm là mã hóa từng phần tử rồi gộp lại bằng một phép tính không phụ thuộc thứ tự, ví dụ phép tổng. Khi đó kích thước đầu vào không phụ thuộc số phần tử.
 
 \section{Các công trình nghiên cứu liên quan}
 \label{sec:congTrinh}
@@ -336,77 +268,52 @@ Khung lý thuyết định hình phần thưởng bảo toàn thế năng (Poten
 \subsection{Học tăng cường trong quản lý tồn kho}
 \label{subsec:rlTonKho}
 
-Oroojlooyjadid và cộng sự \cite{oroojlooyjadid2022} áp dụng Deep Q-Network (DQN) cho trò chơi phân phối bia (beer game) --- một bài toán chuỗi cung ứng 4 cấp cổ điển --- và cho thấy DQN có thể học được chính sách giảm hiệu ứng bullwhip. Tuy nhiên, nghiên cứu giới hạn ở hệ đơn mặt hàng, bốn tác tử.
+Oroojlooyjadid và cộng sự \cite{oroojlooyjadid2022} áp dụng mạng Q sâu (\textit{deep Q-network}, DQN) cho trò chơi phân phối bia (\textit{beer game}), một bài toán chuỗi cung ứng bốn cấp cổ điển. DQN học được chính sách làm giảm hiệu ứng roi da, trên bài toán một mặt hàng và bốn tác tử.
 
-Gijsbrechts và cộng sự \cite{gijsbrechts2022} đánh giá hệ thống khả năng của DRL trên ba lớp bài toán tồn kho: mất đơn hàng, hai nguồn cung và đa cấp. Kết quả cho thấy DRL đạt hiệu năng ngang hoặc tốt hơn chính sách cổ điển trong hầu hết trường hợp, nhưng tất cả thực nghiệm đều ở quy mô nhỏ (dưới 10 SKU).
+Gijsbrechts và cộng sự \cite{gijsbrechts2022} đánh giá có hệ thống học tăng cường sâu (DRL) trên ba lớp bài toán tồn kho: mất đơn hàng, hai nguồn cung và đa cấp. DRL đạt hiệu năng ngang hoặc tốt hơn chính sách cổ điển trong hầu hết trường hợp, nhưng mọi thực nghiệm đều dưới 10 mã hàng (SKU).
 
-Hubbs và cộng sự \cite{hubbs2020orgym} giới thiệu bộ thư viện OR-Gym đóng vai trò là môi trường benchmark chuẩn cho các bài toán Vận trù học bằng RL, bao gồm cả mô hình Newsvendor và quản lý tồn kho đa cấp lost-sales.
+Boute và cộng sự \cite{boute2022} tổng hợp lộ trình áp dụng học tăng cường sâu cho kiểm soát tồn kho, từ khâu thiết kế tới cách diễn giải chính sách học được. Vanvuchelen và cộng sự \cite{vanvuchelen2020} dùng PPO cho bài toán bổ sung hàng chung nhiều mặt hàng. Lợi thế của DRL so với chính sách cổ điển mạnh phụ thuộc bối cảnh. Trong bài toán một kho trung tâm nhiều nhà bán lẻ, Kaynov và cộng sự \cite{kaynov2024} báo cáo mức cải thiện khoảng 1--3\% khi thiếu hàng làm mất đơn, 12--20\% khi đặt chậm một phần, và không ổn định khi đặt chậm hoàn toàn. Phép so sánh do đó cần cho chính sách cổ điển cùng thông tin với tác tử học tăng cường.
 
-Nghiên cứu của Ding và cộng sự \cite{ding2022cdppo} (CD-PPO) phát biểu chính xác bài toán tồn kho đơn cửa hàng nhiều SKU dưới dạng tài nguyên kho dùng chung làm ghép nối các tác tử vốn độc lập. Họ so sánh trực tiếp IPPO và MAPPO có chia sẻ tham số (parameter sharing), báo cáo hiệu quả cao hơn các phương pháp đối chứng khi quản lý tài nguyên kho chung.
+Một hướng khác là đưa cấu trúc của chính sách cổ điển vào quá trình học. Maggiar và cộng sự \cite{maggiar2025} dùng cấu trúc của bài toán để định hướng học tăng cường sâu cho quản lý tồn kho, còn Madeka và cộng sự \cite{madeka2022} đề xuất cách huấn luyện từ dữ liệu lịch sử.
 
-Yang và cộng sự \cite{yang2023mabim} phát triển MABIM --- bộ benchmark MARL đa dạng cho tồn kho. MABIM coi mỗi SKU tại mỗi điểm lưu trữ là một tác tử độc lập, sử dụng dữ liệu nhu cầu thực tế của hơn 2.000 SKU với 51 tác vụ thử nghiệm (bao gồm nhóm tác vụ mở rộng quy mô scaling up), thử nghiệm các thuật toán MARL bao gồm IPPO dưới ràng buộc sức chứa dùng chung.
+Hubbs và cộng sự \cite{hubbs2020orgym} giới thiệu thư viện OR-Gym, một bộ môi trường chuẩn cho các bài toán vận trù học bằng học tăng cường. Thư viện có cả mô hình Newsvendor và mô hình tồn kho đa cấp mất đơn hàng.
 
-Kotecha và del Rio Chanona \cite{kotecha2024decentralized} tiến hành phân tích chuyên sâu các thuật toán MARL cho kiểm soát tồn kho phân tán, so sánh giữa IPPO thuần, IPPO chia sẻ tham số và MAPPO. Họ phát hiện rằng mặc dù parameter sharing giảm số lượng tham số cần học, hiệu năng của IPPO chia sẻ tham số có dấu hiệu giảm sút khi quy mô tác tử tăng lên rất lớn.
+Ding và cộng sự \cite{ding2022cdppo} đề xuất CD-PPO cho bài toán tồn kho một cửa hàng nhiều mã hàng. Trong bài toán này, tài nguyên kho dùng chung là yếu tố ghép nối các tác tử với nhau. Nhóm tác giả so sánh với các biến thể IPPO, và với MAPPO ở cấu hình 5 mã hàng. CD-PPO đạt lợi nhuận cao hơn IPPO ở 5 trong 6 cấu hình từ 50 đến 1.000 mã hàng, nhưng chính sách $(s,S)$ dùng làm mốc trần vẫn cao hơn CD-PPO ở cả 6 cấu hình.
 
-Gần đây nhất, Liu và cộng sự \cite{liu2025happo} áp dụng thuật toán Heterogeneous-Agent PPO (HAPPO) cho tồn kho đa cấp. Đáng chú ý, các tác giả phát hiện việc kết hợp chi phí cục bộ và chi phí toàn hệ thống vào tín hiệu thưởng thu được chính sách có độ ổn định và hiệu năng cao hơn so với chỉ dùng chi phí toàn hệ thống thuần túy.
+Yang và cộng sự \cite{yang2023mabim} xây dựng MABIM, một bộ đánh giá chuẩn học tăng cường đa tác tử cho tồn kho. MABIM coi mỗi mã hàng tại mỗi điểm lưu trữ là một tác tử độc lập và dùng dữ liệu nhu cầu thực tế của hơn 2.000 mã hàng. Bộ đánh giá gồm 51 tác vụ, trong đó có nhóm tác vụ mở rộng quy mô, và thử nghiệm các thuật toán như IPPO dưới ràng buộc sức chứa dùng chung.
+
+Mousa và cộng sự \cite{kotecha2024decentralized} phân tích các thuật toán học tăng cường đa tác tử cho kiểm soát tồn kho phân tán. Nhóm tác giả so sánh IPPO không chia sẻ tham số, IPPO chia sẻ tham số và MAPPO. Kết quả cho thấy chia sẻ tham số giảm số tham số cần học, nhưng hiệu năng của IPPO chia sẻ tham số có dấu hiệu giảm khi số tác tử tăng rất lớn.
+
+Liu và cộng sự \cite{liu2025happo} áp dụng Heterogeneous-Agent PPO (HAPPO) cho tồn kho đa cấp. Nhóm tác giả nhận thấy kết hợp chi phí cục bộ với chi phí toàn hệ thống trong tín hiệu thưởng cho chính sách ổn định và hiệu quả hơn so với chỉ dùng chi phí toàn hệ thống.
 
 \subsection{Hai công trình gần nhất cùng bối cảnh}
 \label{subsec:congTrinhGanNhat}
 
-Hai công trình công bố gần đây có bối cảnh gần với khóa luận nhất và vì vậy cần
-được đối chiếu chi tiết.
+Hai công trình gần đây có bối cảnh gần với đề tài nhất nên được đối chiếu chi tiết.
 
-Zhu và Wu \cite{zhu2026spatiotemporal} đề xuất khung DC-STGN-MARL kết hợp một
-mạng đồ thị không--thời gian cho dự báo nhu cầu với học tăng cường đa tác tử
-theo hướng phân rã hàm giá trị, đánh giá trên chính bộ dữ liệu M5. Công trình
-báo cáo mức giảm $13{,}6\%$ tổng chi phí so với học tăng cường đơn tác tử và
-mức phục vụ $95{,}8\%$. Điểm cần lưu ý đối với khóa luận nằm ở khảo sát loại
-trừ của họ: khi thay cơ chế phối hợp bằng học độc lập, chi phí tăng từ $125{,}4$
-lên $152{,}7$ và mức phục vụ giảm từ $95{,}8\%$ xuống $92{,}1\%$. Kết quả này
-đặt ra câu hỏi trực tiếp về lựa chọn học độc lập của khóa luận.
+Zhu và Wu \cite{zhu2026spatiotemporal} đề xuất khung DC-STGN-MARL, kết hợp mạng đồ thị không gian--thời gian để dự báo nhu cầu với học tăng cường đa tác tử theo hướng phân rã hàm giá trị. Công trình được đánh giá trên chính bộ dữ liệu M5. Nhóm tác giả báo cáo tổng chi phí giảm 13,6\% so với học tăng cường một tác tử, với mức phục vụ 95,8\%. Thí nghiệm loại trừ của công trình có liên quan trực tiếp tới đề tài. Khi thay cơ chế phối hợp bằng học độc lập, chi phí tăng từ 125,4 lên 152,7 và mức phục vụ giảm từ 95,8\% xuống 92,1\%. Kết quả này đặt ra câu hỏi về lựa chọn học độc lập.
 
-Tuy nhiên, bối cảnh của hai nghiên cứu khác nhau ở một điểm mấu chốt. Môi
-trường của Zhu và Wu giả định năng lực cung ứng không giới hạn và không đưa sức
-chứa kho vào hàm mục tiêu, nên các tác tử chỉ ghép nối với nhau qua hàm phần
-thưởng chung chứ không qua một nguồn lực vật lý hữu hạn. Trong khóa luận, sức
-chứa kho dùng chung là một ràng buộc cứng và cũng chính là kênh phối hợp gián
-tiếp (Mục~\ref{subsec:phoiHop}); mức độ cần thiết của phối hợp tường minh trong
-bối cảnh này vì vậy là một câu hỏi thực nghiệm mở, chứ không thể suy trực tiếp
-từ kết quả của họ. Ngoài ra, một số chi tiết trong công trình cần được tiếp
-nhận thận trọng: các so sánh chi phí được thực hiện giữa những cấu hình có mức
-phục vụ khác nhau, và số lượng tác tử không được xác định rõ ràng --- bài viết
-mô tả $N$ tác tử ``đại diện cho $N$ kho hoặc nhóm sản phẩm'' mà không xác định cụ thể.
+Môi trường của Zhu và Wu giả định năng lực cung ứng không giới hạn và không đưa sức chứa kho vào hàm mục tiêu. Các tác tử chỉ ghép nối qua phần thưởng chung. Trong đề tài, sức chứa kho dùng chung là ràng buộc cứng và cũng là kênh phối hợp gián tiếp, nên kết quả của Zhu và Wu chưa cho biết phối hợp tường minh có cần thiết trong bối cảnh này hay không. Các so sánh chi phí trong công trình cũng được thực hiện giữa những cấu hình có mức phục vụ khác nhau.
 
-Ở hướng thứ hai, một khung làm việc dựa trên kiến trúc hướng sự kiện kết hợp
-tác tử xếp vị trí lưu trữ và tác tử bổ sung hàng đã được đề xuất
-\cite{jeong2026alca}, với đóng góp chính là cơ chế \textit{gán công liên kết
-hành động}: phần thưởng chỉ được tính khi lô hàng thực nhập kho sau thời gian
-giao hàng, rồi được quy ngược về đúng cặp trạng thái--hành động đã phát lệnh
-đặt. Đây là một cách xử lý trực diện độ trễ giữa quyết định và hệ quả của nó.
-Khảo sát loại trừ của công trình cho thấy khi bỏ cơ chế này, tỷ lệ thiếu hàng
-tăng đáng kể. Cần lưu ý rằng biến thể đối chứng của họ sử dụng trạng thái
-dự đoán tại thời điểm ra quyết định, chứ không phải ước lượng lợi thế
-tổng quát như khóa luận sử dụng; do đó con số của họ không thể chuyển trực tiếp
-sang bối cảnh này. Hạn chế của công trình là chỉ xét một kho duy nhất, trên dữ
-liệu tổng hợp, và hàm phần thưởng không quy về đơn vị tiền tệ.
+Ở hướng thứ hai, Nam và cộng sự \cite{jeong2026alca} đề xuất một khung làm việc hướng sự kiện, kết hợp tác tử xếp vị trí lưu trữ với tác tử bổ sung hàng. Đóng góp chính là cơ chế xác định đóng góp theo hành động (\textit{action-linked credit assignment}). Phần thưởng chỉ được tính khi lô hàng thực sự về kho sau thời gian giao hàng, rồi được quy ngược về đúng cặp trạng thái--hành động đã đặt hàng. Thí nghiệm loại trừ của công trình cho thấy tỷ lệ thiếu hàng tăng đáng kể khi bỏ cơ chế này. Biến thể đối chứng của họ dùng trạng thái dự đoán tại thời điểm ra quyết định, không dùng ước lượng lợi thế tổng quát, nên kết quả này không chuyển trực tiếp sang đề tài được. Hạn chế của công trình là chỉ xét một kho, dùng dữ liệu tổng hợp và hàm phần thưởng không quy về đơn vị tiền tệ.
 
-Bảng~\ref{tab:soSanhCongTrinh} tóm tắt đối chiếu.
+Khác biệt chính giữa đề tài và hai công trình trên nằm ở số kho, cách xét sức chứa, chính sách đối chứng và cách so sánh mức phục vụ.
 
-\begin{table}[htbp]
+\begin{table}[H]
     \centering
-    \caption{Đối chiếu khóa luận với hai công trình gần nhất cùng bối cảnh}
+    \caption{Đối chiếu với hai công trình gần nhất}
     \label{tab:soSanhCongTrinh}
     \small
-    \begin{tabular}{|p{3.6cm}|c|c|c|}
+    \begin{tabular}{|>{\raggedright\arraybackslash}p{2.9cm}|c|c|c|}
         \hline
-        \textbf{Tiêu chí} & \textbf{\cite{jeong2026alca}} &
-        \textbf{\cite{zhu2026spatiotemporal}} & \textbf{Khóa luận} \\
+        Tiêu chí & \cite{jeong2026alca} & \cite{zhu2026spatiotemporal} & Đề tài \\
         \hline
-        Số kho & $1$ & $4$ & $10$ \\ \hline
+        Số kho & 1 & 4 & 10 \\ \hline
         Ràng buộc sức chứa & một kho & không xét & riêng từng kho \\ \hline
         Nguồn dữ liệu & tổng hợp & M5 & M5 \\ \hline
         Hàm mục tiêu & không quy về tiền & chi phí & chi phí \\ \hline
         Ghép nối giữa tác tử & không & phần thưởng chung & sức chứa dùng chung \\ \hline
+        Chính sách đối chứng & \tbc{quy tắc ABC,}{điểm đặt hàng lại} & \tbc{dự báo + $(s,S)$,}{DRL, DQN độc lập} & \tbc{EOQ, $(s,S)$, Newsvendor,}{biết sức chứa, có dự báo} \\ \hline
         So sánh cùng mức phục vụ & không & không & có \\
         \hline
     \end{tabular}
@@ -415,12 +322,12 @@ Bảng~\ref{tab:soSanhCongTrinh} tóm tắt đối chiếu.
 \subsection{Khoảng trống nghiên cứu và định vị đóng góp}
 \label{subsec:khoangTrong}
 
-Bảng~\ref{tab:tongQuanCongTrinh} tóm tắt so sánh tổng quan giữa khóa luận này và các công trình nghiên cứu liên quan tiêu biểu.
+So với các công trình liên quan, đề tài vừa dùng chia sẻ tham số vừa dùng dữ liệu bán lẻ thực tế trên mạng lưới 10 kho song song.
 
 \begin{table}[htbp]
     \centering
     \small
-    \caption{So sánh tổng quan các công trình nghiên cứu liên quan}
+    \caption{Tổng quan các công trình liên quan}
     \label{tab:tongQuanCongTrinh}
     \setlength{\tabcolsep}{4pt}
     \renewcommand{\arraystretch}{1.25}
@@ -433,23 +340,26 @@ Bảng~\ref{tab:tongQuanCongTrinh} tóm tắt so sánh tổng quan giữa khóa 
         |>{\hsize=1.2\hsize\centering\arraybackslash}X|
     }
         \hline
-        \textbf{Nghiên cứu} & \textbf{Cấu trúc mạng} & \textbf{Số SKU} & \textbf{Chia sẻ tham số} & \textbf{Dữ liệu thực} & \textbf{Thuật toán} \\
+        Nghiên cứu & Cấu trúc mạng & Số SKU & Chia sẻ tham số & Dữ liệu thực & Thuật toán \\
         \hline
-        Oroojlooyjadid (2022) & 4 cấp chuỗi & 1 & Không & Không & DQN \\ \hline
-        Gijsbrechts (2022) & 2 cấp / đa cấp & $<10$ & Không & Không & A2C / PPO \\ \hline
-        Hubbs et al. (2020) & Đa cấp lost-sales & Biến đổi & Không & Không & DQN / PPO \\ \hline
-        Ding et al. (2022) & 1 cửa hàng & Nhiều SKU & Có & Không & CD-PPO / IPPO \\ \hline
-        Yang et al. (2023) & Đa cấp / Đa kho & $>2000$ & Có & Có & IPPO / MAPPO \\ \hline
-        Kotecha (2024) & Đa điểm phân tán & Biến đổi & Có & Không & IPPO / MAPPO \\ \hline
-        Liu et al. (2025) & Đa cấp phức tạp & Nhiều SKU & Có & Có & HAPPO \\ \hline
-        Khóa luận này & 10 kho song song & 30 & Có & M5 Walmart & IPPO \\
+        Oroojlooyjadid \cite{oroojlooyjadid2022} & 4 cấp chuỗi & 1 & Không & Không & DQN \\ \hline
+        Gijsbrechts \cite{gijsbrechts2022} & 2 cấp / đa cấp & $<10$ & Không & Không & A2C / PPO \\ \hline
+        Hubbs \cite{hubbs2020orgym} & Đa cấp mất đơn hàng & Biến đổi & Không & Không & DQN / PPO \\ \hline
+        Ding \cite{ding2022cdppo} & 1 cửa hàng & Nhiều SKU & Có & Không & CD-PPO / IPPO \\ \hline
+        Yang \cite{yang2023mabim} & Đa cấp / đa kho & $>2000$ & Có & Có & IPPO / MAPPO \\ \hline
+        Mousa \cite{kotecha2024decentralized} & Đa điểm phân tán & Biến đổi & Có & Không & IPPO / MAPPO \\ \hline
+        Liu \cite{liu2025happo} & Đa cấp phức tạp & Nhiều SKU & Có & Có & HAPPO \\ \hline
+        Đề tài & 10 kho song song & 30 & Có & M5 Walmart & IPPO \\
         \hline
     \end{tabularx}
 \end{table}
 
-Đóng góp của khóa luận được định vị theo hướng tái lập và mở rộng có kiểm soát đối với ứng dụng học tăng cường đa tác tử trong kiểm soát tồn kho, tập trung vào ba trọng tâm sau:
-\begin{enumerate}
-    \item Khảo sát cấu hình 10 kho song song thuần túy (non-multi-echelon) với ràng buộc sức chứa kho dùng chung ở quy mô $300$ cặp kho--mặt hàng, tạo điểm đối sánh trực tiếp với các mô hình đa cấp (multi-echelon) của MABIM \parencite{yang2023mabim} và Liu và cộng sự \parencite{liu2025happo}.
-    \item Thực hiện khảo sát loại trừ có hệ thống nhằm định lượng tác động của tín hiệu phần thưởng phân rã cục bộ kèm ràng buộc tỷ lệ đáp ứng trên cửa sổ trượt, làm rõ cơ chế gán tín dụng và tốc độ hội tụ của IPPO ở quy mô 300 tác tử.
-    \item Hiệu chỉnh môi trường mô phỏng lost-sales trực tiếp từ dữ liệu bán lẻ thực tế M5 Walmart và thực hiện kiểm chứng đối chứng có kiểm định thống kê với các chính sách cổ điển EOQ, $(s,S)$ và Newsvendor.
-\end{enumerate}
+Từ các nhận xét trên, đề tài tập trung vào ba điểm:
+\begin{itemize}
+    \item Cấu hình 10 kho song song có sức chứa dùng chung, quy mô 300 cặp kho--mặt hàng, trên dữ liệu bán lẻ thực tế M5.
+    \item Các thí nghiệm loại trừ để đo tác động của phần thưởng cục bộ và chuẩn hóa theo cặp tới độ ổn định huấn luyện.
+    \item So sánh với các chính sách đối chứng có cùng thông tin về sức chứa và dự báo, ở cùng mức phục vụ.
+\end{itemize}
+
+\FloatBarrier
+Các chính sách cổ điển không xử lý được đồng thời sức chứa dùng chung và nhu cầu gián đoạn, còn IPPO với chia sẻ tham số và phần thưởng phân rã cục bộ mở rộng được tới 300 tác tử. Các công trình gần nhất chưa xét đồng thời nhiều kho, sức chứa dùng chung và so sánh ở cùng mức phục vụ với chính sách đối chứng có cùng thông tin. Chương~\ref{chap:chapter3} trình bày mô hình của đề tài.

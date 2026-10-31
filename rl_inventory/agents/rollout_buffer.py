@@ -24,12 +24,14 @@ class RolloutBuffer:
     """Bo dem thu thap du lieu rollout cho IPPO."""
 
     def __init__(self, buffer_size: int, obs_per_pair: int, n_pairs: int,
-                 device: str = "cpu", normalize_per_pair: bool = True):
+                 device: str = "cpu", normalize_per_pair: bool = True,
+                 group_size: int = 1):
         self.buffer_size = buffer_size
         self.obs_per_pair = obs_per_pair
         self.n_pairs = n_pairs
         self.device = torch.device(device)
         self.normalize_per_pair = normalize_per_pair
+        self.group_size = group_size      # so SKU moi kho, cho mode="warehouse"
         self.reset()
 
     def reset(self):
@@ -123,13 +125,22 @@ class RolloutBuffer:
             "total":      total,
         }
 
-    def get_batches(self, batch_size: int) -> Generator[Dict[str, torch.Tensor], None, None]:
+    def get_batches(self, batch_size: int,
+                    mode: str = "flat") -> Generator[Dict[str, torch.Tensor], None, None]:
+        """mode: "flat" xao tron tung mau; "time" giu nguyen ca 300 cap cua moi
+        buoc [Muc chia se tham so]; "warehouse" giu nguyen 30 SKU cua moi (buoc, kho) [Critic theo kho]. Hai
+        che do sau tra lo (n_nhom, co_nhom, ...) va batch_size tinh theo so mau."""
         if self._flat_cache is None:
             raise RuntimeError("Phai goi compute_gae() truoc khi goi get_batches().")
         total = self._flat_cache["total"]
-        indices = torch.randperm(total, device=self.device)
-        for start in range(0, total, batch_size):
-            idx = indices[start:start + batch_size]
-            yield {k: self._flat_cache[k][idx]
-                   for k in ("states", "actions", "log_probs",
-                             "advantages", "returns", "values")}
+        co_nhom = {"flat": 1, "time": self.n_pairs, "warehouse": self.group_size}[mode]
+        keys = ("states", "actions", "log_probs", "advantages", "returns", "values")
+        tensors = {k: self._flat_cache[k] for k in keys}
+        if mode != "flat":
+            tensors = {k: v.view(total // co_nhom, co_nhom, *v.shape[1:])
+                       for k, v in tensors.items()}
+        indices = torch.randperm(total // co_nhom, device=self.device)
+        step = max(batch_size // co_nhom, 1)
+        for start in range(0, len(indices), step):
+            idx = indices[start:start + step]
+            yield {k: v[idx] for k, v in tensors.items()}

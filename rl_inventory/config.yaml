@@ -47,6 +47,8 @@ env:
   warm_start_history: false
   obs_drop: []
   include_event_lookahead: false
+  include_forecast: false         # [U1] them 2 chieu du bao (can scripts/forecast_demand.py)
+  lagrange_per_pair: false        # [C'] thay phi_dv bang lambda_i theo cap, them 1 chieu
   sku_indices: null
   reward_mode: local
   test_full_horizon: true
@@ -88,6 +90,10 @@ ppo:
   min_fill_to_save:    0.85
   normalize_adv_per_pair: true
   shared_trunk: false
+  action_mode: direct             # [U2] direct | base_stock
+  batch_mode: flat                # flat | time [U4] | warehouse [U3]
+  param_groups: null              # [U4] 1 | 4 | 10 | 300 mang theo nhom
+  critic_context: null            # [U3] warehouse
   total_episodes: 10000
 
 eval:
