@@ -247,20 +247,12 @@ Cách phổ biến để giải bài toán này là đưa ràng buộc vào hàm
     \mathcal{L}(\pi, \lambda) = J_C(\pi) + \lambda \bigl(\tau - J_F(\pi)\bigr).
     \label{eq:lagrange}
 \end{equation}
-Khi ràng buộc bị vi phạm, $\lambda$ được tăng lên để phạt nặng hơn. Khi ràng buộc đã thỏa, $\lambda$ được giảm xuống. Nếu chỉ cộng dồn sai số để cập nhật thì $\lambda$ dễ tăng quá mức rồi dao động. Stooke và cộng sự \cite{stooke2020} cập nhật $\lambda$ bằng bộ điều khiển PID để giảm dao động:
-\begin{equation}
-    \lambda_k = \max\Bigl(0,\; K_P\, e_k + K_I \sum_{l \le k} e_l + K_D\, (e_k - e_{k-1})\Bigr),
-    \qquad e_k = \tau - J_F(\pi_k),
-    \label{eq:pid}
-\end{equation}
-trong đó $e_k$ là mức vi phạm ràng buộc ở bước $k$, còn $K_P$, $K_I$, $K_D$ là các hệ số của bộ điều khiển. Nếu giữ $\lambda$ không đổi trong suốt quá trình học thì $\lambda$ trở thành một hệ số phạt cố định.
+Khi ràng buộc bị vi phạm, $\lambda$ được tăng lên để phạt nặng hơn. Khi ràng buộc đã thỏa, $\lambda$ được giảm xuống. Nếu giữ $\lambda$ không đổi trong suốt quá trình học thì $\lambda$ trở thành một hệ số phạt cố định.
 
 \subsection{Huấn luyện tập trung, thực thi phi tập trung}
 \label{subsec:ctde}
 
 Huấn luyện tập trung, thực thi phi tập trung (CTDE) là cách làm trong đó Actor chỉ dùng quan sát cục bộ, còn Critic được dùng thêm thông tin của các tác tử khác trong lúc huấn luyện. Khi chạy thực tế chỉ cần Actor, nên các tác tử vẫn ra quyết định độc lập. MAPPO là thuật toán tiêu biểu của cách làm này, với Critic nhận trạng thái toàn cục \parencite{yu2022mappo}. Hạn chế là đầu vào của Critic tăng theo số tác tử.
-
-Nếu thứ tự các tác tử không quan trọng, đầu vào của Critic có thể xử lý bằng một hàm không phụ thuộc thứ tự. Zaheer và cộng sự \cite{zaheer2017deepsets} đưa ra cách làm là mã hóa từng phần tử rồi gộp lại bằng một phép tính không phụ thuộc thứ tự, ví dụ phép tổng. Khi đó kích thước đầu vào không phụ thuộc số phần tử.
 
 \section{Các công trình nghiên cứu liên quan}
 \label{sec:congTrinh}

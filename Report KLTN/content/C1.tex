@@ -66,7 +66,7 @@ Mục tiêu chung của đề tài là xây dựng một mô hình học tăng c
     \item Thiết kế phần thưởng riêng cho từng cặp kho--mặt hàng, kèm hình phạt mức phục vụ tính trên cửa sổ trượt.
     \item Cài đặt và huấn luyện thuật toán IPPO (\textit{Independent Proximal Policy Optimization}) với chia sẻ tham số cho 300 cặp kho--mặt hàng.
     \item Đánh giá mô hình so với các chính sách cổ điển, chính sách biết sức chứa và chính sách dự báo rồi tối ưu, với nhiều lần huấn luyện độc lập và kiểm định thống kê.
-    \item Kiểm tra lợi thế của mô hình khi điều kiện vận hành thay đổi, gồm trường hợp các kho cùng lấy hàng từ một nguồn cung có giới hạn và các mức sức chứa khác nhau.
+    \item Kiểm tra độ bền của mô hình đã huấn luyện khi điều kiện vận hành thay đổi, gồm nguồn cung có giới hạn dùng chung giữa các kho và các mức sức chứa khác nhau, mà không huấn luyện lại.
     \item Xây dựng ứng dụng mô phỏng để xem kết quả, phiếu đề nghị đặt hàng và kịch bản tăng cầu.
 \end{itemize}
 
@@ -79,7 +79,7 @@ Mục tiêu chung của đề tài là xây dựng một mô hình học tăng c
     \item Chia sẻ tham số có giữ được hiệu năng trên các cặp có quy mô nhu cầu khác nhau không, và chính sách học được có dùng được cho mặt hàng chưa gặp khi huấn luyện không?
     \item Thiết kế phần thưởng ảnh hưởng thế nào đến độ ổn định huấn luyện và hiệu năng? Câu hỏi này so phần thưởng theo từng cặp với phần thưởng toàn mạng lưới, và so có với không chuẩn hóa phần thưởng theo cặp.
     \item Thêm dự báo nhu cầu vào quan sát, hoặc cho tác tử chọn hệ số an toàn thay vì chọn trực tiếp mức đặt, có giúp PS-IPPO tốt hơn không?
-    \item Khi các kho phải cạnh tranh một nguồn cung chung hoặc sức chứa thay đổi, lợi thế của PS-IPPO so với chính sách dùng dự báo thay đổi thế nào?
+    \item Khi điều kiện vận hành thay đổi, gồm nguồn cung chung giữa các kho và sức chứa kho, mô hình PS-IPPO đã huấn luyện (không huấn luyện lại) còn giữ được lợi thế so với chính sách đối chứng không?
 \end{enumerate}
 
 Câu hỏi 1 là câu hỏi chính. Mức 85\% là mục tiêu nghiệp vụ được đặt trước khi thực nghiệm.
@@ -98,7 +98,7 @@ Câu hỏi 1 là câu hỏi chính. Mức 85\% là mục tiêu nghiệp vụ đ�
 Phạm vi dữ liệu và thực nghiệm của đề tài như sau:
 \begin{itemize}
     \item Hệ thống gồm 10 kho và 30 mặt hàng, tạo thành 300 cặp ra quyết định. Mỗi tập huấn luyện dài 365 ngày. Thời gian giao hàng ngẫu nhiên từ một đến ba ngày.
-    \item Trong mô hình chính, các kho hoạt động song song và độc lập về nguồn cung. Ràng buộc giữa các mặt hàng đến từ sức chứa kho dùng chung. Một thí nghiệm riêng xét trường hợp các kho cùng lấy hàng từ một nguồn cung có giới hạn.
+    \item Trong mô hình chính, các kho hoạt động song song và độc lập về nguồn cung. Ràng buộc giữa các mặt hàng đến từ sức chứa kho dùng chung. Nguồn cung chung giữa các kho chỉ được xét ở phần đánh giá độ bền, khi mô hình đã huấn luyện được chạy trong môi trường có nguồn cung giới hạn.
     \item Dữ liệu là bộ M5, gồm doanh số theo ngày, giá bán và lịch có ngày lễ, ngày trợ cấp thực phẩm SNAP.
     \item Đầu ra của mô hình là yêu cầu đặt hàng lại, gồm số lượng và thời điểm đặt cho từng cặp kho--mặt hàng.
     \item Phương pháp đối chứng gồm EOQ, $(s, S)$, Newsvendor, phiên bản $(s, S)$ biết sức chứa và phiên bản Newsvendor dùng dự báo nhu cầu. Tham số của mọi chính sách được chọn trên miền xác thực.
@@ -113,6 +113,7 @@ Các nội dung sau nằm ngoài phạm vi đề tài:
     \item Tồn kho đa cấp với quan hệ cung ứng giữa các kho.
     \item Điều chuyển hàng giữa các kho và tối ưu tuyến vận chuyển.
     \item Nghiên cứu mô hình dự báo học sâu. Dự báo nhu cầu trong đề tài chỉ là đầu vào cho so sánh.
+    \item Huấn luyện lại mô hình dưới nguồn cung chung hoặc sức chứa khác. Các điều kiện này chỉ được đánh giá trên mô hình đã huấn luyện.
     \item Truyền thông trực tiếp giữa các tác tử.
     \item Triển khai thời gian thực và tích hợp với hệ thống quản trị doanh nghiệp.
     \item Các bước sau phiếu đề nghị đặt hàng, gồm hỏi báo giá, chọn nhà cung cấp và gửi đơn. Bộ dữ liệu M5 không có thông tin nhà cung cấp.

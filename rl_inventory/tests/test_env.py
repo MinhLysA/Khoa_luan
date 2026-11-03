@@ -860,18 +860,27 @@ def test_chon_theo_nhom_moi_nhom_lay_cau_hinh_re_nhat_theo_gia_bong():
     assert iso.chon_theo_nhom(C, T, [100.0]) == {(1, 1)}  # gia bong cao: ca hai nhom giu hang
 
 
-def test_chon_phi_dung_cac_lan_danh_gia_val_khac_nhau(tmp_path, monkeypatch):
+def test_fill_val_cuoi_chi_tinh_mot_lan_ket_qua_lap_lai(tmp_path, monkeypatch):
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
     import run_experiments as campaign
     monkeypatch.setattr(campaign, "ROOT", tmp_path)
     (tmp_path / "results").mkdir()
-    for p, f in zip(campaign.PHI, (0.70, 0.86, 0.90, 0.93, 0.97)):
-        (tmp_path / "results" / f"train_log_penalty{p}_trial.csv").write_text(
-            f"episode,eval_fill\n1,\n2,{f}\n3,{f}\n", encoding="utf-8")
-    assert campaign.chon_phi() == ["10", "60"]
     (tmp_path / "results" / "train_log_x.csv").write_text(
         "episode,eval_fill\n1,0.5\n2,0.5\n3,0.5\n4,0.9\n", encoding="utf-8")
     assert campaign.fill_val_cuoi("x") == pytest.approx(0.7)   # 0.5 lap lai chi tinh mot lan
+
+
+def test_phuong_an_rut_gon_3_seed_va_bo_nhom_da_cat():
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+    import run_experiments as campaign
+    assert campaign.MAIN_SEEDS == (42, 1, 2) and set(campaign.MAIN) == {"main_s42", "main_s1", "main_s2"}
+    cat = ("wh_critic", "networks_", "pair_penalty", "scale_1000", "tuning_", "shared_supply", "capacity_")
+    assert not [t for t in campaign.RUNS if t.startswith(cat)]
+    assert set(campaign.NHOM_MO_RONG) == {"penalty_trial", "forecast_obs", "safety_factor", "forecast_safety"}
+    assert not [t for t in campaign.RUNS if t.startswith("penalty") and not t.endswith("_trial")]
+    assert set(campaign.DIEU_KIEN) == {"shared_supply_tight", "shared_supply_mild", "capacity_3", "capacity_8"}
+    for ten in campaign.DIEU_KIEN:
+        assert (campaign.ROOT / "configs" / f"{ten}.yaml").exists()
 
 
 def test_chi_phi_van_hanh_theo_cap_khong_gom_phat_sla():
@@ -958,6 +967,14 @@ def test_nguon_cung_chung_gioi_han_toan_mang_va_tin_hieu():
     cot = obs[:, env.obs_groups["supply"][0]].reshape(env.n_warehouses, env.n_skus)
     assert np.allclose(cot, cot[0]) and cot.max() < 1.0
     assert np.allclose(goc.action_to_qty(a).reshape(don.shape) * cot, don, atol=1e-3)
+
+
+def test_an_chieu_nguon_cung_van_cat_don_nhung_giu_44_chieu():
+    an, goc = make_env(supply_cover=0.5, supply_hide_obs=True), make_env()
+    assert an.obs_per_pair == goc.obs_per_pair and "supply" not in an.obs_groups
+    an.reset(seed=0)
+    _, _, _, _, inf = an.step(np.full(an.n_pairs, an.n_action_levels - 1))
+    assert inf["order_requested"] > inf["order_qty"]
 
 
 def test_khong_bat_nguon_cung_thi_khong_cat_don():

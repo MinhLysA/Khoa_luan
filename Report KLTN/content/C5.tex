@@ -5,7 +5,7 @@
 \label{sec:tongKet}
 
 % [SO-MOI] Toan bo chuong viet lai theo ket qua moi: so hat giong, ket luan Cau hoi 1, 4, dong gop, han che ve du bao, phoi hop va cac muc mo rong chua lam
-Đề tài đã hoàn thành cả năm mục tiêu đặt ra ở mục~\ref{subsec:muctieu}.
+Đề tài đã hoàn thành cả sáu mục tiêu đặt ra ở mục~\ref{subsec:muctieu}.
 
 \begin{table}[H]
     \centering
@@ -20,7 +20,9 @@
         2 & Phần thưởng phân rã cục bộ kèm phạt mức phục vụ & Phần thưởng theo từng cặp, chuẩn hóa theo cặp, phạt mức phục vụ trên cửa sổ trượt 30 ngày. Thí nghiệm loại trừ xác nhận thiết kế này là cần thiết \\ \hline
         3 & Cài đặt và huấn luyện IPPO chia sẻ tham số & 300 tác tử dùng chung một mạng, huấn luyện 10.000 tập với 3 hạt giống, hội tụ ổn định ở cả 3 hạt giống \\ \hline
         4 & Đánh giá so với các chính sách đối chứng & So sánh trực tiếp và ở cùng mức phục vụ, có kiểm định thống kê, phân tích theo giai đoạn nhu cầu, độ nhạy đơn giá và độ bền \\ \hline
-        5 & Ứng dụng mô phỏng & Ứng dụng nạp mô hình đã huấn luyện, chạy trên miền kiểm thử, hiển thị kết quả, diễn biến từng cặp, kịch bản tăng cầu và phiếu đề nghị đặt hàng \\
+        5 & Độ bền của mô hình khi điều kiện vận hành thay đổi & Đánh giá mô hình chính đã huấn luyện, không huấn luyện lại, khi đổi sức chứa, thời gian giao hàng và mức nhu cầu \\ \hline
+        % [SO-MOI] Them nguon cung chung va suc chua 3, 8 ngay vao dong 5 khi co ket qua
+        6 & Ứng dụng mô phỏng & Ứng dụng nạp mô hình đã huấn luyện, chạy trên miền kiểm thử, hiển thị kết quả, diễn biến từng cặp, kịch bản tăng cầu và phiếu đề nghị đặt hàng \\
         \hline
     \end{tabular}
 \end{table}
@@ -39,6 +41,9 @@ Với Câu hỏi 2, một bộ trọng số dùng chung điều khiển được
 
 Với Câu hỏi 3, phần thưởng phân rã cục bộ có chuẩn hóa theo cặp là cần thiết. Thay bằng phần thưởng toàn cục hoặc bỏ chuẩn hóa đều làm chi phí tăng hơn gấp ba ở cả 3 hạt giống.
 
+Với Câu hỏi 5, mô hình đã huấn luyện vẫn rẻ hơn $(s, S)$ và EOQ khi sức chứa và thời gian giao hàng thay đổi, nhưng đắt hơn năm trong sáu chính sách đối chứng khi nhu cầu giảm. Nguyên nhân là mô hình tiếp tục giữ mức phục vụ cao. Nhóm không huấn luyện lại mô hình dưới các điều kiện này, nên kết luận chỉ nói về độ bền của mô hình đã có.
+% [SO-MOI] Bo sung ket luan nguon cung chung va suc chua 3, 8 ngay khi co ket qua
+
 Từ các kết quả trên, đề tài có bốn đóng góp. Thứ nhất, đề tài xây dựng một môi trường mô phỏng tồn kho 10 kho, 30 mặt hàng hiệu chỉnh từ dữ liệu bán lẻ thực tế. Trong môi trường này, sức chứa dùng chung là yếu tố tạo nên bản chất đa tác tử của bài toán. Thứ hai, đề tài thiết kế và kiểm chứng phần thưởng phân rã cục bộ có chuẩn hóa theo cặp, giúp 300 tác tử với quy mô rất khác nhau học ổn định trên cùng một mạng. Thứ ba, đề tài cho thấy PS-IPPO rẻ hơn các chính sách cổ điển ở cùng mức phục vụ, và tự học được cách thu hẹp lô hàng khi kho chật. Đề tài cũng chỉ ra giới hạn của cách tiếp cận này khi so với chính sách dùng dự báo. Thứ tư, đề tài áp dụng một giao thức đánh giá có kiểm soát, gồm so sánh ở cùng mức phục vụ, nhiều hạt giống, kiểm định theo cặp và phân tích theo giai đoạn nhu cầu. Giao thức này giúp kết luận không bị sai lệch khi các phương pháp nằm ở những điểm khác nhau trên đường đánh đổi giữa chi phí và mức phục vụ.
 
 Về ứng dụng, kết quả gợi ý doanh nghiệp nên đầu tư vào dự báo nhu cầu trước, vì đây là phần mang lại lợi ích lớn nhất. Chính sách cổ điển vẫn đủ tốt cho nhóm hàng có nhu cầu ổn định. Ứng dụng mô phỏng của đề tài cho phép người quản lý xem trước tác động của chính sách trước khi áp dụng.
@@ -50,11 +55,11 @@ Các hạn chế dưới đây được xếp theo mức ảnh hưởng tới k�
 
 Hạn chế thứ hai là mức phục vụ không đồng đều giữa các mặt hàng. Dù đã dùng hình phạt chuẩn hóa, 28,7\% số cặp vẫn có tỷ lệ đáp ứng dưới 85\%, tập trung ở nhóm bán chậm. Mục tiêu mức phục vụ chỉ được đáp ứng ở cấp hệ thống. Hạn chế này ảnh hưởng tới việc áp dụng trong thực tế, khi doanh nghiệp cần cam kết mức phục vụ cho từng mặt hàng.
 
-Hạn chế thứ ba là số hạt giống của từng phân tích. Kết quả chính được kiểm chứng với 3 hạt giống, nhưng các phân tích sâu chỉ dùng mô hình của một hạt giống. Phần lớn thí nghiệm loại trừ chỉ có một hạt giống và 1.000 tập. Do đó các kết luận từ những thí nghiệm này, nhất là vai trò của tín hiệu cấp kho, mới ở mức gợi ý.
+Hạn chế thứ ba là số hạt giống của từng phân tích. Kết quả chính được kiểm chứng với 3 hạt giống, nên khoảng tin cậy giữa các hạt giống còn rộng. Các phân tích sâu chỉ dùng mô hình của một hạt giống. Phần lớn thí nghiệm loại trừ chỉ có một hạt giống và 1.000 tập. Do đó các kết luận từ những thí nghiệm này, nhất là vai trò của tín hiệu cấp kho, mới ở mức gợi ý.
 
 Hạn chế thứ tư là đề tài chưa so sánh với phối hợp tường minh. Các tác tử chỉ phối hợp gián tiếp qua tín hiệu sức chứa. Vì vậy chưa định lượng được giá trị mà một Critic tập trung theo hướng CTDE \parencite{yu2022mappo} có thể mang lại. Câu hỏi này đáng quan tâm vì Zhu và Wu \cite{zhu2026spatiotemporal} báo cáo hiệu năng giảm đáng kể khi bỏ cơ chế phối hợp trong khung của họ.
 
-Hạn chế thứ năm thuộc về phạm vi mô hình. Mô hình chính gồm các kho song song, chỉ có một thí nghiệm riêng xét nguồn cung chung với một cách chia theo tỷ lệ. Đề tài chưa xét cấu trúc đa cấp \parencite{clark1960} hay điều chuyển hàng giữa các kho. Không gian hành động chỉ có 6 mức đặt hàng. Tác tử dùng trực tiếp lịch sử nhu cầu, chưa tích hợp mô hình dự báo. Các đặc trưng lịch và giá gần như không được khai thác, và IPPO yếu nhất ở mùa lễ.
+Hạn chế thứ năm thuộc về phạm vi mô hình. Mô hình chính gồm các kho song song. Nguồn cung chung giữa các kho chỉ được xét ở phần đánh giá không huấn luyện lại, với một cách chia theo tỷ lệ. Đề tài không huấn luyện lại mô hình dưới nguồn cung chung hay sức chứa khác, không khảo sát mức chia sẻ tham số, quy mô trên 300 tác tử và độ nhạy siêu tham số. Đề tài chưa xét cấu trúc đa cấp \parencite{clark1960} hay điều chuyển hàng giữa các kho. Không gian hành động chỉ có 6 mức đặt hàng. Tác tử dùng trực tiếp lịch sử nhu cầu, chưa tích hợp mô hình dự báo. Các đặc trưng lịch và giá gần như không được khai thác, và IPPO yếu nhất ở mùa lễ.
 
 Hạn chế cuối cùng thuộc về dữ liệu và môi trường đánh giá. Dữ liệu M5 là dữ liệu bán lẻ của Walmart tại Hoa Kỳ. M5 ghi doanh số chứ không ghi nhu cầu thật và không đánh dấu ngày hết hàng, nên nhu cầu đầu vào có thể thấp hơn thực tế ở mức chưa đo được. Mười kho của đề tài là mười cửa hàng của M5 được xem như các điểm lưu trữ độc lập, và sức chứa là giả định. Đơn giá chi phí cũng là giả định của đề tài, và phân tích độ nhạy giữ nguyên chính sách đã học. Mô hình mới được kiểm chứng trên môi trường mô phỏng, chưa trên dữ liệu vận hành trực tiếp. Mô hình học từ dữ liệu nên khi áp dụng cho Việt Nam cần huấn luyện lại trên dữ liệu bán hàng trong nước và thay vector lịch Hoa Kỳ bằng lịch lễ Việt Nam. Kiến trúc mô hình và quy trình huấn luyện có thể giữ nguyên.
 
@@ -77,11 +82,12 @@ Các hướng dưới đây cần dữ liệu hoặc hệ thống thật, hoặc
     1 & Triển khai trên hệ thống quản lý kho thật và thử nghiệm đối chứng tại doanh nghiệp & Cần quyền truy cập hệ thống và dữ liệu vận hành & Phiếu mua sắm, bản thử nghiệm Model Context Protocol (mục~\ref{subsec:mcp}) \\ \hline
     2 & Dữ liệu Việt Nam và hiệu chỉnh chi phí thật & Không có dữ liệu. M5 không có giá vốn, chi phí đặt hàng, chi phí lưu kho & Độ nhạy theo 36 bộ đơn giá. Giữ nguyên kiến trúc, thay vector lịch \\ \hline
     3 & Khôi phục nhu cầu bị cắt do hết hàng & Cần cờ hết hàng hoặc tồn kho theo ngày, M5 không có & Kịch bản nhu cầu tăng 20\%, nêu rõ ở hạn chế \\ \hline
-    4 & Chuyển hàng ngang giữa kho và mạng nhiều tầng có kho trung tâm & Đổi lớp bài toán. Cần chi phí, thời gian chuyển hàng mà M5 không có, và phải thiết kế lại môi trường, chính sách đối chứng và phép so sánh & Thí nghiệm nguồn cung chung giữa các kho (mục~\ref{subsec:bienTheNguonCung}) \\ \hline
+    4 & Chuyển hàng ngang giữa kho và mạng nhiều tầng có kho trung tâm & Đổi lớp bài toán. Cần chi phí, thời gian chuyển hàng mà M5 không có, và phải thiết kế lại môi trường, chính sách đối chứng và phép so sánh & Đánh giá không huấn luyện lại với nguồn cung chung giữa các kho (mục~\ref{subsec:bienTheNguonCung}) \\ \hline
     5 & Học tăng cường ngoại tuyến từ nhật ký quyết định & Cần nhật ký quyết định và kết quả thật & Ứng dụng mô phỏng ghi lại quyết định theo ngày \\ \hline
     6 & Bảo đảm hình thức cho ràng buộc mức phục vụ & Cần khung lý thuyết có chặn xác suất vi phạm. Đề tài chỉ xử lý ràng buộc mềm & Khảo sát thực nghiệm hệ số phạt mức phục vụ \\ \hline
     7 & Tương tác với nhà cung cấp: giá động, số lượng tối thiểu, hợp đồng, nhiều nguồn cung & Sản phẩm của đề tài dừng ở phiếu gửi phòng mua hàng. Thiếu dữ liệu & Ghi chú phạm vi trên trang phiếu \\ \hline
     8 & Nghiên cứu người dùng với nhân viên mua hàng & Cần người dùng thật & Luồng duyệt phiếu trong ứng dụng \\ \hline
-    9 & Critic tập trung trên toàn mạng 300 cặp & Các cặp chỉ liên kết qua sức chứa trong từng kho. Đầu vào khoảng 13.200 chiều với một quỹ đạo mỗi bước làm giảm hiệu quả mẫu & Tín hiệu cấp kho trong quan sát \\
+    9 & Critic tập trung trên toàn mạng 300 cặp & Các cặp chỉ liên kết qua sức chứa trong từng kho. Đầu vào khoảng 13.200 chiều với một quỹ đạo mỗi bước làm giảm hiệu quả mẫu & Tín hiệu cấp kho trong quan sát \\ \hline
+    10 & Huấn luyện lại dưới nguồn cung chung hoặc sức chứa khác, mở rộng quy mô, khảo sát mức chia sẻ tham số và độ nhạy siêu tham số & Mỗi nội dung cần huấn luyện riêng, nằm ngoài phạm vi của đề tài & Cấu hình môi trường và đánh giá không huấn luyện lại \\
     \hline
 \end{longtable}

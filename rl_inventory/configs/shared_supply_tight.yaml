@@ -70,6 +70,7 @@ env:
   - 40
   - 50
   supply_cover: 2.0
+  supply_hide_obs: true
 preprocess:
   stores:
   - CA_1

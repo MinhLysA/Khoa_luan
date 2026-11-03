@@ -321,7 +321,9 @@ class MultiWarehouseInventoryEnv(gym.Env):
         # [Nguon cung chung] Moi mat hang co san luong ngay gioi han tren toan mang. Cac kho
         # canh tranh cung nguon, thieu thi chia theo ty le don. Them 1 chieu: ty le hom qua.
         self.supply_cover = self.config.get("supply_cover")
-        self.supply_dim = 1 if self.supply_cover else 0
+        # supply_hide_obs: van ap tran nguon cung nhung KHONG dua ty le cung vao quan sat, de mo hinh
+        # 44 chieu (train khong co tran) danh gia zero-shot duoc. Mac dinh tat.
+        self.supply_dim = 1 if self.supply_cover and not self.config.get("supply_hide_obs", False) else 0
         self.obs_per_pair = (1 + 1 + self.lookback + self.lead_time_max
                              + 1 + 1 + 1 + 1 + self.price_signal_dim
                              + self.event_lookahead_dim + self.forecast_dim
@@ -367,7 +369,7 @@ class MultiWarehouseInventoryEnv(gym.Env):
         self.scale_feat = np.clip(
             np.log1p(self.mean_demand) / np.log1p(150.0), 0.0, 1.0).astype(np.float32)
         self.nguon_cung = (self.supply_cover * self.mean_demand.reshape(
-            self.n_warehouses, self.n_skus).sum(axis=0) if self.supply_dim else None)
+            self.n_warehouses, self.n_skus).sum(axis=0) if self.supply_cover else None)
         self.ty_le_cung = np.ones(self.n_skus, dtype=np.float32)
 
         # [P3-2] Danh gia cuoi tren TOAN BO quy dao test [val_day, T): mot chuoi

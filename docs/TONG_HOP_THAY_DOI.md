@@ -3,13 +3,15 @@
 - **Đề tài:** Xây dựng mô hình học tăng cường tối ưu hóa chính sách đặt hàng lại trong quản lý tồn kho đa kho
 - **Sinh viên:** Lê Minh Lý (52300220), Sử Thị Yến Linh (52300218)
 - **Giảng viên hướng dẫn:** TS. Hồ Thị Linh
-- **Cập nhật:** 31/10/2026. "Trước" là bản đến commit `fcd1673`, "sau" là bản hiện tại.
+- **Cập nhật:** 01/11/2026. "Trước" là bản đến commit `fcd1673`, "sau" là bản hiện tại.
+- **Phương án rút gọn (01/11/2026):** nhóm chọn 3 hạt giống và bỏ sáu nhóm thí nghiệm để đủ thời gian train. **Chưa được giảng viên duyệt**, xem mục 1, 4 và 7. Lệnh làm theo phương án: `PROMPT_PHUONG_AN_3SEED.md`.
 
 ## 1. Tóm tắt
 
 - **Đã đổi hướng câu hỏi chính.** Từ "IPPO có tốt hơn chính sách cổ điển không" sang "so với dự báo rồi tối ưu, học tăng cường thêm được gì và trong điều kiện nào".
 - **Lý do đổi:** khi thêm chính sách đối chứng dùng dự báo nhu cầu, chính sách này rẻ hơn IPPO. Giữ luận điểm cũ sẽ không bảo vệ được trước hội đồng.
-- **Đã bổ sung:** so sánh ở cùng mức phục vụ, chính sách đối chứng mạnh hơn, các biến thể có dự báo, nguồn cung chung giữa các kho và thống kê chặt hơn.
+- **Đã bổ sung:** so sánh ở cùng mức phục vụ, chính sách đối chứng mạnh hơn, các biến thể có dự báo và thống kê chặt hơn. Nguồn cung chung giữa các kho giờ chỉ dùng để đánh giá zero-shot (không train lại).
+- **Phương án rút gọn:** mô hình chính và U5 chạy 3 hạt giống (42, 1, 2), không phải 5. Bỏ U3 (Critic theo kho), U4 (số mạng), C' (phạt Lagrange theo cặp), E2 (1.000 tác tử), E3 (độ nhạy siêu tham số) và việc train điều kiện vận hành. Giữ U1, U2, U5, ablation, hold-out và mọi phép đánh giá không cần train. Khối lượng train giảm từ khoảng 480.000 xuống khoảng 141.000 tập (xem mục 4).
 - **Trạng thái:** lý thuyết, phương pháp và code đã xong. **Kết quả cuối chưa có**, mọi số trong tài liệu này là số sơ bộ của một hạt giống (seed 42), 10.000 tập, chỉ đánh giá lại trên mô hình đã có.
 - **Kết quả sơ bộ:** ở cùng mức phục vụ, IPPO rẻ hơn mọi chính sách cổ điển từ 7,3% đến 22,3%, nhưng đắt hơn chính sách dự báo 4,3%. Kết hợp IPPO với dự báo rút khoảng cách còn 1,0%, chưa vượt được.
 
@@ -17,13 +19,13 @@
 
 | Nội dung | Trước | Sau |
 |---|---|---|
-| Câu hỏi nghiên cứu | 3 câu, câu chính hỏi IPPO có rẻ hơn ở mức 85% không | 5 câu. Câu 1 so với đối chứng có cùng thông tin, ở cùng mức phục vụ. Thêm Câu 4 về dự báo và cấu trúc hành động, Câu 5 về điều kiện vận hành |
+| Câu hỏi nghiên cứu | 3 câu, câu chính hỏi IPPO có rẻ hơn ở mức 85% không | 5 câu. Câu 1 so với đối chứng có cùng thông tin, ở cùng mức phục vụ. Câu 2 chỉ còn quy mô nhu cầu và mặt hàng chưa gặp. Thêm Câu 4 về dự báo và cấu trúc hành động. Câu 5 là độ bền khi đổi điều kiện vận hành, đánh giá zero-shot |
 | Chính sách đối chứng | EOQ, (s,S), Newsvendor | Thêm (s,S) biết sức chứa, Newsvendor dùng dự báo LightGBM, mốc biết trước nhu cầu |
 | Cách so sánh | Tổng chi phí, mỗi chính sách ở một mức phục vụ khác nhau; lưới tham số thô | Thêm so sánh ở cùng mức phục vụ trên đường biên chi phí–mức phục vụ; lưới mịn; chỉ chọn tham số trên miền xác thực |
-| Tính đa kho | Các kho chỉ chia sức chứa nội bộ, không ảnh hưởng lẫn nhau | Thêm thí nghiệm nguồn cung chung: mỗi mặt hàng có trần cung ứng toàn mạng, thiếu thì mọi kho bị cắt theo tỷ lệ |
-| Mô hình | Một mô hình PS-IPPO | Giữ mô hình chính làm mốc, thêm 6 biến thể, mỗi biến thể đổi một thành phần |
+| Tính đa kho | Các kho chỉ chia sức chứa nội bộ, không ảnh hưởng lẫn nhau | Thêm điều kiện nguồn cung chung: mỗi mặt hàng có trần cung ứng toàn mạng, thiếu thì mọi kho bị cắt theo tỷ lệ. Chỉ **đánh giá zero-shot** mô hình chính, không train lại trong điều kiện này |
+| Mô hình | Một mô hình PS-IPPO | Giữ mô hình chính làm mốc, thêm 3 biến thể (U1, U2, U5), mỗi biến thể đổi một thành phần. Kế hoạch đầu là 6 biến thể, nay bỏ U3, U4, C' |
 | Sốc cầu | Chưa so với chính sách dự báo | Dự báo được tính lại trên nhu cầu đã đổi để so được |
-| Thống kê | 3 hạt giống, p-value theo cặp | 5 hạt giống, IQM, bootstrap phân tầng theo khối 7 và 30 ngày |
+| Thống kê | 3 hạt giống, p-value theo cặp | 3 hạt giống (phương án rút gọn; kế hoạch đầu là 5), IQM, bootstrap phân tầng theo khối 7 và 30 ngày. Với 3 seed khoảng tin cậy rộng hơn |
 | Quy trình chạy | Chạy tay trên Colab | Train local bằng một lệnh, tự nối tiếp khi bị ngắt |
 | Báo cáo | Kết luận IPPO rẻ hơn rõ rệt, dựa trên lưới thô | Trình bày theo từng câu hỏi nghiên cứu, kết luận theo số đo mới; các chỗ chờ số có đánh dấu `[SO-MOI]` |
 
@@ -88,42 +90,63 @@
 
 ## 4. Thí nghiệm sẽ chạy
 
+Theo phương án rút gọn 01/11/2026 (chờ giảng viên duyệt):
+
 | Câu hỏi | Thí nghiệm | Mục đích |
 |---|---|---|
-| 1 | Mô hình chính, 5 hạt giống | Có số cuối, có khoảng tin cậy |
-| 2 | Theo quy mô nhu cầu, mặt hàng chưa gặp, 1.000 tác tử | Kiểm tra chia sẻ tham số |
+| 1 | Mô hình chính, 3 hạt giống | Có số cuối, có khoảng tin cậy (rộng hơn bản 5 seed) |
+| 2 | Theo quy mô nhu cầu, mặt hàng chưa gặp (hold-out) | Kiểm tra chia sẻ tham số. Bỏ phần 1.000 tác tử (E2) |
 | 3 | Phần thưởng toàn cục, bỏ chuẩn hóa, 3 hạt giống | Vai trò của thiết kế phần thưởng |
-| 4 | 6 biến thể, trong đó hệ số an toàn trên nền dự báo chạy 5 hạt giống | Dự báo và cấu trúc hành động có giúp không |
-| 5 | Nguồn cung chung ρ = 2 và 3; sức chứa 3 và 8 ngày | Lợi thế thay đổi thế nào theo điều kiện vận hành |
+| 4 | 3 biến thể: U1 (quan sát có dự báo), U2 (hệ số an toàn của (s,S)), U5 (hệ số an toàn trên nền dự báo), mỗi biến thể 3 hạt giống | Dự báo và cấu trúc hành động có giúp không |
+| 5 | **Zero-shot, không train:** mô hình chính đánh giá dưới nguồn cung chung ρ = 2 và 3, sức chứa 3 và 8 ngày; giữ phần độ bền zero-shot sẵn có (sức chứa, lead time, nhu cầu ±20%) | Lợi thế thay đổi thế nào khi điều kiện vận hành đổi. Đây là giới hạn: mô hình chưa từng được huấn luyện trong các điều kiện này |
+
+**Đã bỏ so với kế hoạch đầu:** U3 (Critic theo kho), U4 (1, 4, 10, 300 mạng), C' (phạt Lagrange theo cặp), E2 (1.000 tác tử), E3 (độ nhạy siêu tham số) và train điều kiện vận hành.
+
+**Lựa chọn rút gọn có thể đổi lại (`phi_dv`):** chỉ giữ 5 lần chạy thử 1.000 tập để làm bằng chứng, bỏ giai đoạn train lại hai giá trị đã chọn × 3 hạt giống (khoảng 60.000 tập, 18 giờ T4). Đây là lựa chọn của nhóm khi rút gọn, không phải yêu cầu của giảng viên. Nếu muốn khôi phục thì thêm lại giai đoạn này vào `train_full`.
 
 Hai mức ρ chọn bằng cách chạy thử chính sách có sẵn: ρ = 3 làm tỷ lệ đáp ứng giảm khoảng 2 điểm, ρ = 2 giảm khoảng 4 điểm, ρ = 1,5 giảm gần 6 điểm.
 
-Khối lượng: khoảng 480.000 tập, tương đương 160 giờ trên GPU cỡ T4 hoặc 320 giờ trên CPU 4 nhân, chưa kể phần quét lưới chính sách đối chứng.
+Khối lượng (giờ T4 tính theo 1,1 giây mỗi tập):
+
+| Phương án | Số tập | GPU cỡ T4 | CPU 4 nhân |
+|---|---:|---:|---:|
+| Kế hoạch đầu (5 seed, đủ các nhóm) | 480.000 | khoảng 160 giờ | khoảng 320 giờ |
+| Rút gọn, bỏ train lại `phi_dv` (mặc định) | khoảng 141.000 | khoảng 43 giờ | khoảng 86 giờ |
+| Rút gọn, giữ train lại `phi_dv` | khoảng 201.000 | khoảng 61 giờ | khoảng 122 giờ |
+
+Chưa kể phần quét lưới chính sách đối chứng và các phép đánh giá. Cận dưới khoảng 41 giờ (không chạy thử `phi_dv`), cận trên khoảng 61 giờ (giữ train lại `phi_dv`).
 
 ## 5. Hạn chế và rủi ro
 
 - **Chưa có kết quả cuối.** Số hiện tại của một hạt giống. Trung bình 3 hạt giống và kết quả loại trừ trong báo cáo cũ không còn file gốc, phải chạy lại.
 - **IPPO có thể không vượt được chính sách dự báo.** Khi đó kết luận là dự báo rồi tối ưu đã đủ tốt trong bối cảnh này, học tăng cường không thêm được về chi phí. Kết luận này vẫn có giá trị vì được so sánh công bằng.
-- **Nguồn cung chung có thể làm IPPO tệ đi,** vì cách chia theo tỷ lệ tạo động cơ đặt dư. Nhóm đo thêm hệ số roi da để phân tích hiện tượng này.
-- **Chưa có máy GPU.** Máy hiện tại chỉ có CPU.
+- **Nguồn cung chung có thể làm IPPO tệ đi,** vì cách chia theo tỷ lệ tạo động cơ đặt dư. Nhóm đo thêm hệ số roi da để phân tích hiện tượng này. Theo phương án rút gọn, mô hình chính chỉ được đánh giá zero-shot trong điều kiện này, nên kết quả xấu không chứng minh được IPPO không học được nếu train lại.
+- **GPU:** `run.py check` ngày 01/11 báo máy hiện tại có NVIDIA RTX 3050 Laptop và torch chạy trên cuda (ghi chú cũ "chỉ có CPU" đã lỗi thời). Chưa đo tốc độ thật, các ước tính giờ vẫn tính theo T4.
 - **Toàn bộ dây chuyền chưa chạy trọn trên bản code cuối.** Sẽ chạy thử nhanh trước khi train.
+- **Phương án rút gọn có giá phải trả:**
+  - Mất Câu 5 dạng train, mất train nguồn cung chung, mất 1.000 tác tử, mất U3, U4, C', E3.
+  - Nguồn cung chung là thí nghiệm duy nhất làm các kho ảnh hưởng lẫn nhau. Mô hình chính chỉ chia sức chứa nội bộ, nên hội đồng có thể hỏi "đa kho ở chỗ nào". Câu trả lời dựa vào đánh giá zero-shot và tín hiệu cấp kho trong quan sát (xem `van_dap.md`).
+  - 3 hạt giống làm khoảng tin cậy và IQM kém chặt hơn 5 hạt giống. Giao thức cũ cũng dùng 3 hạt giống.
+  - Số "6 biến thể" của kế hoạch đầu giả định gồm U1–U5 và C'. Nếu cách đếm khác thì số biến thể còn lại có thể khác 3.
 - **Phạm vi còn giới hạn:** chưa xét mạng đa cấp và điều chuyển hàng giữa các kho, dữ liệu M5 là doanh số chứ không phải nhu cầu thật, sức chứa và đơn giá chi phí là giả định.
 
 ## 6. Kế hoạch tiếp theo
 
-1. Xin ý kiến giảng viên về các điểm ở mục 7.
-2. Chốt máy GPU, chạy thử nhanh cả dây chuyền.
-3. Train toàn bộ, ưu tiên mô hình chính, biến thể hệ số an toàn trên nền dự báo, rồi nguồn cung chung ρ = 2.
-4. Thay số vào báo cáo, viết phần kết quả Câu hỏi 4 và 5, chốt kết luận.
-5. Hoàn thiện ứng dụng demo, poster, tài liệu vấn đáp. Hạn nộp 23/01/2027.
+1. Xin ý kiến giảng viên về phương án rút gọn ở mục 7.
+2. Sửa code theo phương án rút gọn (`PROMPT_PHUONG_AN_3SEED.md`), chạy thử nhanh cả dây chuyền.
+3. Train theo thứ tự: mô hình chính (3 seed) → U5 → U1 → U2 → chạy thử `phi_dv` → ablation. Bị ngắt thì chạy lại, tự nối tiếp.
+4. Đánh giá zero-shot dưới nguồn cung chung và sức chứa 3, 8 ngày.
+5. Thay số vào báo cáo, viết phần kết quả Câu 4 và 5, chốt kết luận.
+6. Hoàn thiện ứng dụng demo, poster, tài liệu vấn đáp. Hạn nộp 23/01/2027.
 
 ## 7. Điểm cần xin ý kiến giảng viên
 
 - Đồng ý đổi câu hỏi chính sang "so với dự báo rồi tối ưu, học tăng cường thêm được gì" không?
-- Năm câu hỏi và sáu biến thể có quá rộng không, nếu cần rút gọn thì giữ phần nào?
+- Phương án rút gọn có chấp nhận được không: mô hình chính và U5 chỉ 3 hạt giống; bỏ U3 (Critic theo kho), U4 (số mạng), C' (phạt theo cặp), E2 (1.000 tác tử), E3 (độ nhạy siêu tham số) và train điều kiện vận hành?
+- Câu 5 chuyển thành đánh giá zero-shot (mô hình chính chạy dưới nguồn cung chung và sức chứa khác, không train lại) có chấp nhận được không?
+- Nếu bỏ train nguồn cung chung thì tính "đa kho" của đề tài có đủ không?
 - Nếu IPPO không vượt được chính sách dự báo, kết luận theo hướng ở mục 5 có chấp nhận được không?
-- Nếu thiếu thời gian train, có thể giảm từ 5 xuống 3 hạt giống cho mô hình chính không?
-- Giả định nguồn cung chung (trần theo từng mặt hàng, chia theo tỷ lệ) có phù hợp không?
+- Giả định nguồn cung chung (trần theo từng mặt hàng, chia theo tỷ lệ) dùng cho đánh giá zero-shot có phù hợp không?
 
 ---
 
@@ -140,12 +163,9 @@ Phần này dành cho nhóm, ghi chi tiết để tra cứu.
 | U5 | Hệ số an toàn trên nền dự báo | `forecast_safety` | `forecast_safety_factor.yaml` |
 | U1 | Quan sát có dự báo | `forecast_obs` | `forecast_observation.yaml` |
 | U2 | Hệ số an toàn của (s,S) | `safety_factor` | `safety_factor.yaml` |
-| Gói C | Hệ số phạt mức phục vụ | `penalty_trial` | `service_penalty_*.yaml` |
-| E3 | Độ nhạy siêu tham số | `tuning` | `tuning_*.yaml` |
-| U4 | Số mạng | `networks` | `networks_*.yaml` |
-| U3 | Critic theo kho | `wh_critic` | `warehouse_critic.yaml` |
-| C' | Phạt Lagrange theo cặp | `pair_penalty_trial` | `pair_penalty_*.yaml` |
-| E2 | 1.000 tác tử | `scale_1000` | `scale_1000_agents.yaml` |
+| Gói C | Hệ số phạt mức phục vụ (chỉ chạy thử 1.000 tập) | `penalty_trial` | `service_penalty_*.yaml` |
+
+Theo phương án rút gọn 01/11, các mã **U3, U4, C', E2, E3** và train điều kiện vận hành bị bỏ khỏi đợt thực nghiệm (nhóm `wh_critic`, `networks`, `pair_penalty_trial`, `scale_1000`, `tuning`, `dieu_kien`).
 
 | Script cũ | Script mới |
 |---|---|
@@ -162,7 +182,7 @@ Cấu trúc thư mục: thêm `README.md` ở gốc; `TIEN_DO.md`, `TONG_HOP_THA
 
 ### Tính năng mới
 
-Mọi tính năng nằm sau cờ, tắt mặc định, mô hình chính giữ 44 chiều.
+Mọi tính năng nằm sau cờ, tắt mặc định, mô hình chính giữ 44 chiều. Các mã U3, U4, C', E2 đã bỏ khỏi đợt thực nghiệm (phương án rút gọn 01/11) nên không còn trong bảng này. Danh sách lỗi đã sửa bên dưới là lịch sử và vẫn nhắc tới C', E2.
 
 | Mã | Nội dung | File chính |
 |---|---|---|
@@ -171,22 +191,18 @@ Mọi tính năng nằm sau cờ, tắt mặc định, mô hình chính giữ 44
 | B2 | (s,S) biết sức chứa | `baselines/traditional_policies.py` |
 | B3 | Tỷ lệ đáp ứng và chi phí vận hành theo nhóm cầu | `scripts/service_by_group.py` |
 | B4 | Dự báo LightGBM ngoài mẫu, Newsvendor dự báo | `scripts/forecast_demand.py` |
-| B5 | 5 seed, IQM, bootstrap phân tầng | `scripts/multi_seed_stats.py` |
+| B5 | 3 seed (phương án rút gọn; code hỗ trợ nhiều hơn), IQM, bootstrap phân tầng | `scripts/multi_seed_stats.py` |
 | E1 | Cấu trúc chính sách học được | `scripts/policy_structure.py` |
 | U1 | Thêm dự báo vào quan sát (46 chiều) | `env/inventory_env.py` |
 | U2 | Tác tử chọn hệ số an toàn của (s,S) | `agents/ppo_agent.py` |
-| U3 | Critic có ngữ cảnh theo kho | `agents/ppo_agent.py` |
-| U4 | 1, 4, 10, 300 mạng | `agents/ppo_agent.py` |
 | U5 | **Mới:** tác tử chọn hệ số an toàn trên nền dự báo | `baselines/traditional_policies.py`, `configs/forecast_safety_factor.yaml` |
-| C' | Lagrange PID theo cặp, λ giữ qua các tập, lưu kèm checkpoint | `env/inventory_env.py` |
-| E2 | 1.000 tác tử | `configs/scale_1000_agents.yaml` |
 | A5 | Trang phiếu mua sắm | `app/core.py`, `app/pages_/don_dat_hang.py` |
 | Mới | Mốc biết trước nhu cầu | `scripts/perfect_demand_benchmark.py` |
-| Mới | Nguồn cung chung (`supply_cover`), thêm 1 chiều quan sát | `env/inventory_env.py` |
+| Mới | Nguồn cung chung (`supply_cover`), thêm 1 chiều quan sát; chỉ dùng để đánh giá zero-shot | `env/inventory_env.py` |
 | Mới | Dự báo tính lại khi đổi nhu cầu (`du_bao_lai`) | `scripts/forecast_demand.py` |
 | Mới | Chính sách kết hợp theo nhóm | `scripts/hybrid_policy.py` |
 | Mới | Hệ số roi da | `scripts/evaluate.py` |
-| Mới | 4 điều kiện vận hành, 12 lần train | `configs/make_configs.py`, `scripts/run_experiments.py` |
+| Mới | 4 điều kiện vận hành (nguồn cung chung ρ = 2 và 3, sức chứa 3 và 8 ngày), chỉ đánh giá zero-shot, không train | `configs/make_configs.py`, `scripts/run_experiments.py` |
 
 ### Lỗi đã sửa
 
@@ -249,27 +265,25 @@ cd rl_inventory
 pip install -r requirements.txt
 python run.py check          # dòng GPU phải là [OK]
 python run.py full --quick   # thử cả dây chuyền
-python run.py full           # train thật
+python run.py full           # train thật (phương án rút gọn: khoảng 43 giờ T4)
 ```
 
 Bị ngắt thì chạy lại đúng lệnh, tự nối tiếp. Kết quả nằm ở `results/KET_QUA.txt`.
 
-Thứ tự train: mô hình chính → U5 → U1 → U2 → `phi_dv` → siêu tham số → ablation → U4 → U3 → C' → E2 → điều kiện vận hành.
+Thứ tự train (phương án rút gọn): mô hình chính → U5 → U1 → U2 → `phi_dv` (chỉ chạy thử) → ablation. Sau đó đánh giá, trong đó có phần zero-shot dưới nguồn cung chung và sức chứa 3, 8 ngày.
 
 | Nhóm | Episode | GPU cỡ T4 | CPU 4 nhân |
 |---|---:|---:|---:|
-| Mô hình chính, 5 seed | 50.000 | 15 giờ | 31 giờ |
-| U5, 5 seed | 50.000 | 15 giờ | 31 giờ |
+| Mô hình chính, 3 seed | 30.000 | 9 giờ | 18 giờ |
+| U5, 3 seed | 30.000 | 9 giờ | 18 giờ |
 | U1, U2, mỗi biến thể 3 seed | 60.000 | 18 giờ | 37 giờ |
-| `phi_dv` | 65.000 | 20 giờ | 40 giờ |
-| Siêu tham số | 6.000 | 2 giờ | 4 giờ |
-| Ablation | 16.000 | 5 giờ | 10 giờ |
-| U4 | 40.000 | 12 giờ | 24 giờ |
-| U3 | 30.000 | 11 giờ | 21 giờ |
-| C' | 33.000 | 10 giờ | 20 giờ |
-| E2 | 10.000 | 9–25 giờ | 18–50 giờ |
-| Điều kiện vận hành | 120.000 | 36 giờ | 72 giờ |
-| **Tổng** | **480.000** | **khoảng 160 giờ** | **khoảng 320 giờ** |
+| `phi_dv`, chỉ chạy thử 5 giá trị × 1.000 tập | 5.000 | 1,5 giờ | 3 giờ |
+| Ablation, RQ3, hold-out | 16.000 | 5 giờ | 10 giờ |
+| **Tổng (mặc định)** | **141.000** | **khoảng 43 giờ** | **khoảng 86 giờ** |
+| Nếu giữ train lại `phi_dv` (2 giá trị × 3 seed) | +60.000 | +18 giờ | +37 giờ |
+| **Tổng (giữ train lại `phi_dv`)** | **201.000** | **khoảng 61 giờ** | **khoảng 122 giờ** |
+
+Giờ T4 tính theo 1,1 giây mỗi tập. So với kế hoạch đầu: bỏ siêu tham số (2 giờ), U4 (12 giờ), U3 (11 giờ), C' (10 giờ), E2 (9–25 giờ), điều kiện vận hành (36 giờ); mô hình chính và U5 xuống 3 seed (tiết kiệm 12 giờ).
 
 ## E. Chạy thử trên miền xác thực
 
@@ -296,7 +310,8 @@ Cấu hình đã chốt: `z` thuộc {0; 0,2; 0,4; 0,6; 0,8; 1,2}, hệ số ent
 - [x] Mọi script trong `scripts/` khởi động được, tham số `run_experiments.py` truyền vào khớp với từng script.
 - [x] 82 test pass, báo cáo 105 trang, không tràn lề, không tham chiếu lỗi.
 - [ ] Dự báo tính lại mới có test trên dữ liệu giả, chưa chạy trên mô hình dự báo thật vì `forecast_model.txt` chỉ sinh ra khi chạy lại `forecast_demand.py`.
-- [ ] Biến thể nguồn cung chung mới chạy với chính sách có sẵn, IPPO chưa được train trong điều kiện này.
+- [ ] Nguồn cung chung mới chạy với chính sách có sẵn. Theo phương án rút gọn IPPO không được train trong điều kiện này, chỉ đánh giá zero-shot mô hình chính; phần zero-shot này chưa chạy.
+- [ ] Code đổi theo phương án rút gọn (3 seed, gỡ các nhóm đã bỏ, bước zero-shot): làm theo `PROMPT_PHUONG_AN_3SEED.md`, chưa kiểm tra.
 - [ ] `run.py full --quick` chưa chạy trọn trên code cuối. Lượt gần nhất qua 121 lệnh rồi dừng ở lỗi số 5 của vòng rà 3. Phần đánh giá thí nghiệm mở rộng và tổng hợp sau chỗ đó mới được đọc code, chưa chạy nối tiếp. Lượt chạy lại đã dừng theo yêu cầu không train.
 
 Bằng chứng số đo seed 42 nằm ở `docs/ket_qua_seed42_31-10/`.

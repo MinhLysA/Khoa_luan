@@ -17,7 +17,7 @@ python run.py test                   # phải toàn passed
 
 `train.py` tự dùng GPU khi PyTorch thấy CUDA; các bước đánh giá luôn chạy trên CPU. Dữ liệu đã
 xử lý có sẵn trong `data/processed/`. Ba file CSV gốc trong `data/raw/` không nằm trong git: nếu train
-ở máy khác thì chép sang, nếu thiếu thì `run.py full` bỏ qua thí nghiệm 1.000 tác tử. Muốn tiền xử lý lại: đặt 3 file CSV M5 vào `data/raw/`
+ở máy khác thì chép sang, chỉ cần khi tiền xử lý lại. Muốn tiền xử lý lại: đặt 3 file CSV M5 vào `data/raw/`
 rồi `python run.py data`.
 
 Demo, không cần train:
@@ -37,7 +37,7 @@ python run.py full --quick           # thử cả dây chuyền, mỗi lần tra
 python run.py full                   # test -> dự báo -> train toàn bộ -> đánh giá -> results/KET_QUA.txt
 ```
 
-`run.py full` tự làm hết, kể cả chọn hai giá trị `phi_dv` và bộ PID trên miền xác thực (không bao giờ dùng miền kiểm thử để chọn). Thứ tự train theo mức quan trọng với kết luận: mô hình chính → hệ số an toàn trên nền dự báo → quan sát có dự báo → hệ số an toàn → hệ số phạt mức phục vụ → siêu tham số → ablation → số mạng → Critic theo kho → phạt theo cặp → 1.000 tác tử. Nếu phải dừng giữa chừng, phần quan trọng nhất đã có.
+`run.py full` tự làm hết, không bao giờ dùng miền kiểm thử để chọn tham số. **Phương án rút gọn 01/11 (3 seed):** thứ tự train theo mức quan trọng với kết luận: mô hình chính → hệ số an toàn trên nền dự báo → quan sát có dự báo → hệ số an toàn → chạy thử hệ số phạt mức phục vụ → ablation. Sau đó đánh giá, gồm phần zero-shot dưới nguồn cung chung và sức chứa 3, 8 ngày. Nếu phải dừng giữa chừng, phần quan trọng nhất đã có. Các nhóm U3, U4, C', E2, E3 và train điều kiện vận hành đã bỏ (xem `../docs/TONG_HOP_THAY_DOI.md` mục 4).
 
 Bị ngắt (tắt máy, mất điện, Ctrl+C) thì chạy lại đúng lệnh đó: mỗi lần chạy tự train tiếp từ
 checkpoint gần nhất, lần đã xong tự bỏ qua. Tắt chế độ ngủ của máy trước khi để chạy qua đêm.
@@ -49,7 +49,7 @@ Chạy từng phần:
 
 ```bash
 python scripts/run_experiments.py status             # tiến độ từng lần chạy
-python scripts/run_experiments.py train main         # 5 seed × 10.000 episode
+python scripts/run_experiments.py train main         # 3 seed × 10.000 episode
 python scripts/run_experiments.py train ablations    # 16 lần × 1.000 episode
 python scripts/run_experiments.py train <ten>        # một lần chạy, vd main_s42, abl_ref
 python scripts/run_experiments.py train full         # chỉ phần train của run.py full, mở được nhiều terminal
@@ -57,7 +57,7 @@ python scripts/run_experiments.py eval               # toàn bộ pipeline đán
 python scripts/run_experiments.py tonghop            # dựng lại KET_QUA.txt từ kết quả đã có
 ```
 
-`eval` chạy lần lượt: dự báo (nếu chưa có) → tune baseline → eval 5 seed → iso-service →
+`eval` chạy lần lượt: dự báo (nếu chưa có) → tune baseline → eval 3 seed → iso-service →
 regime → behavior → quy mô cầu → độ nhạy → độ bền → ablation → hold-out → phần mở rộng →
 `results/multiseed_main.json` → `results/rq3_multiseed.json`. Lần đầu mất thêm khoảng 1,5 giờ để
 quét đường biên baseline; kết quả lưu ở `results/baseline_frontier.json` và được dùng lại. Đổi
@@ -76,17 +76,14 @@ i5-1135G7. Đo máy của bạn bằng `python scripts/train.py --episodes 30 --
 
 | Nhóm | Episode | GPU cỡ T4 | CPU 4 nhân |
 |---|---|---:|---:|
-| Mô hình chính, 5 seed | 50.000 | 15 giờ | 31 giờ |
-| Hệ số an toàn trên nền dự báo, 5 seed | 50.000 | 15 giờ | 31 giờ |
+| Mô hình chính, 3 seed | 30.000 | 9 giờ | 18 giờ |
+| Hệ số an toàn trên nền dự báo, 3 seed | 30.000 | 9 giờ | 18 giờ |
 | Quan sát có dự báo, hệ số an toàn, mỗi biến thể 3 seed | 60.000 | 18 giờ | 37 giờ |
-| Chạy thử hệ số phạt + 2 giá trị đã chọn, 3 seed | 65.000 | 20 giờ | 40 giờ |
-| Độ nhạy siêu tham số | 6.000 | 2 giờ | 4 giờ |
+| Chạy thử hệ số phạt (5 giá trị × 1.000 tập) | 5.000 | 1,5 giờ | 3 giờ |
 | Ablation, RQ3, hold-out | 16.000 | 5 giờ | 10 giờ |
-| Số mạng (4 biến thể) | 40.000 | 12 giờ | 24 giờ |
-| Critic theo kho, 3 seed | 30.000 | 11 giờ | 21 giờ |
-| Phạt theo cặp (chạy thử + 3 seed) | 33.000 | 10 giờ | 20 giờ |
-| 1.000 tác tử | 10.000 | 9–25 giờ | 18–50 giờ |
-| **Tổng cộng** | **360.000** | **khoảng 125 giờ** | **khoảng 250 giờ** |
+| **Tổng cộng (phương án rút gọn)** | **141.000** | **khoảng 43 giờ** | **khoảng 86 giờ** |
+
+Nếu khôi phục giai đoạn train lại hai giá trị `phi_dv` × 3 seed (lựa chọn rút gọn có thể đổi lại) thì thêm 60.000 tập, khoảng 18 giờ T4, tổng khoảng 61 giờ.
 
 Thiếu thời gian thì dừng lại ở bất kỳ đâu rồi chạy `python run.py eval_all`: `eval` đánh giá mọi lần chạy đã có checkpoint.
 
@@ -161,7 +158,7 @@ Báo cáo LaTeX: `../Report KLTN/`, biên dịch bằng `compile.bat` (XeLaTeX +
 
 ## 4. Thí nghiệm mở rộng
 
-Mỗi biến thể là một cờ trong `config.yaml` và một file trong `configs/` (sinh bằng `python configs/make_configs.py`). `run.py full` đã chạy hết các biến thể. Muốn chạy riêng một nhóm: `python scripts/run_experiments.py train <nhóm>`, rồi `python scripts/run_experiments.py eval_mo_rong`.
+Mỗi biến thể là một cờ trong `config.yaml` và một file trong `configs/` (sinh bằng `python configs/make_configs.py`). `run.py full` đã chạy hết các biến thể còn lại sau khi rút gọn. Muốn chạy riêng một nhóm: `python scripts/run_experiments.py train <nhóm>`, rồi `python scripts/run_experiments.py eval_mo_rong`.
 
 | Nhóm | Cấu hình | Nội dung |
 |---|---|---|
@@ -169,13 +166,10 @@ Mỗi biến thể là một cờ trong `config.yaml` và một file trong `conf
 | `forecast_obs` | `forecast_observation.yaml` | IPPO nhận dự báo trong quan sát |
 | `safety_factor` | `safety_factor.yaml` | Tác tử chọn hệ số an toàn của (s,S) |
 | `penalty_trial` | `service_penalty_*.yaml` | Chạy thử hệ số phạt mức phục vụ |
-| `tuning` | `tuning_*.yaml` | Độ nhạy siêu tham số PPO |
-| `networks` | `networks_*.yaml` | 1, 4, 10, 300 mạng |
-| `wh_critic` | `warehouse_critic.yaml` | Critic có ngữ cảnh theo kho |
-| `pair_penalty_trial` | `pair_penalty_*.yaml` | Chạy thử phạt Lagrange theo từng cặp |
-| `scale_1000` | `scale_1000_agents.yaml` | 10 kho × 100 mặt hàng |
 
-Giá trị `phi_dv` và bộ PID được chọn từ cột `eval_fill` trong `results/train_log_*.csv`, tức miền xác thực. Không dùng số trong `KET_QUA.txt` để chọn vì đó là miền kiểm thử.
+Đã bỏ khỏi đợt thực nghiệm (phương án rút gọn 01/11): `tuning`, `networks`, `wh_critic`, `pair_penalty_trial`, `scale_1000` và train điều kiện vận hành. Điều kiện vận hành (`shared_supply_*`, `capacity_3`, `capacity_8`) chỉ dùng để **đánh giá zero-shot** mô hình chính, không train.
+
+Hệ số `phi_dv` chọn từ cột `eval_fill` trong `results/train_log_*.csv`, tức miền xác thực. Không dùng số trong `KET_QUA.txt` để chọn vì đó là miền kiểm thử.
 
 Kết quả nằm trong mục 5b của `results/KET_QUA.txt`, chi tiết ở `results/same_service_<tag>.json`,
 `service_by_group_<tag>.json`, `baseline_frontier.json`, `cost_service_frontier.json`, `multi_seed_stats.json`,

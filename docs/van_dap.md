@@ -519,7 +519,7 @@ Kèm KPI của cặp (số ngày thiếu hàng, fill rate, tổng chi phí, tổ
 
 ## Phần V — Bổ sung theo góp ý buổi họp 04/10/2026
 
-*Số liệu lấy từ `results/KET_QUA.txt` (cập nhật 20/10/2026), đợt cuối: mô hình chính 10.000 episode × 3 seed.*
+*Số liệu lấy từ `results/KET_QUA.txt` (cập nhật 20/10/2026), đợt cuối: mô hình chính 10.000 episode × 3 seed. Từ 01/11/2026 nhóm chuyển sang phương án rút gọn (3 seed, bỏ U3, U4, C', E2, E3 và train điều kiện vận hành), xem mục 37 và 38. Các số trong phần này sẽ được thay khi train xong.*
 
 ### 28. 300 tác tử thì rối lắm — có phải 300 mô hình không?
 
@@ -653,6 +653,48 @@ dùng để báo cáo kết quả cuối.
 
 ---
 
+### 37. Tại sao chỉ 3 seed?
+
+**Trả lời ngắn.** Do giới hạn thời gian train. Kế hoạch đầu là 5 seed cho mô hình chính;
+nhóm rút xuống **3 seed (42, 1, 2)** cho mô hình chính và biến thể U5 để đủ thời gian
+train cả dây chuyền (khoảng 43 giờ GPU cỡ T4 thay vì khoảng 160 giờ). Đây là phương án
+rút gọn của nhóm, **chưa được giảng viên duyệt**.
+
+**Giải thích.** Ba seed đủ để báo cáo trung bình, độ lệch giữa seed và kiểm định theo
+cặp (giao thức cũ cũng dùng 3 seed), nhưng khoảng tin cậy rộng hơn và IQM, bootstrap kém
+chặt hơn so với 5 seed. Vì vậy kết luận chỉ nên nói ở mức "nhất quán ở 3/3 seed" hoặc
+"không nhất quán", không nói chênh lệch nhỏ là có ý nghĩa nếu nằm trong độ lệch giữa
+seed. Các ablation chỉ 1 seed, phép so sánh chênh lệch nhỏ hơn dao động giữa seed
+thì chưa kết luận được.
+
+**Bằng chứng.** `docs/TONG_HOP_THAY_DOI.md` mục 4 (bảng khối lượng) và mục 5;
+`results/KET_QUA.txt` (số mới sau khi train xong, các số hiện có là sơ bộ).
+
+---
+
+### 38. Nếu bỏ thí nghiệm nguồn cung chung train thì "đa kho" ở chỗ nào?
+
+**Trả lời ngắn.** Mô hình chính là bài toán **đa kho theo nghĩa vận hành**: 10 kho, mỗi
+kho có sức chứa riêng, các kho cùng dùng một chính sách, và mỗi tác tử nhận **tín hiệu
+cấp kho** (mức đầy `util`, tỷ trọng `share`) để cảm nhận tải của kho. Các kho **không
+ảnh hưởng lẫn nhau** về nguồn cung trong mô hình chính, và đề tài nói thẳng điều này.
+
+**Giải thích.** Để kiểm tra khi các kho phụ thuộc nhau, đề tài có điều kiện nguồn cung
+chung: mỗi mặt hàng có trần cung ứng toàn mạng, thiếu thì mọi kho bị cắt theo tỷ lệ. Theo
+phương án rút gọn, nhóm **không train lại** trong điều kiện này mà **đánh giá zero-shot**
+mô hình chính (ρ = 2 và 3). Hệ quả cần nói rõ khi bị hỏi:
+- Kết quả cho biết mô hình chính **bền đến đâu** khi gặp điều kiện mới, không cho biết
+  IPPO **học được gì** nếu được train trong điều kiện đó.
+- Nếu kết quả xấu đi thì chưa kết luận được là IPPO không học được; chỉ kết luận là
+  mô hình chưa từng thấy điều kiện này.
+- Phối hợp tường minh giữa các kho và điều chuyển hàng ngang giữa kho là hướng phát triển
+  (cần dữ liệu M5 không có).
+
+**Bằng chứng.** `docs/TONG_HOP_THAY_DOI.md` mục 4 (Câu 5) và mục 5; mục "Độ bền zero-shot"
+trong `results/KET_QUA.txt` (chưa có số cuối).
+
+---
+
 ## Phụ lục — Những điểm dễ bị hỏi vặn
 
 | Câu hỏi | Trả lời gọn |
@@ -675,15 +717,15 @@ Chỉ dùng số trong `results/KET_QUA.txt`. Nếu kết quả ngược với k
 |---|---|
 | Vì sao chênh lệch chi phí cùng mức phục vụ đổi so với bản trước? | Bản trước dùng lưới thô nên baseline đạt fill 92,65% và 92,28%, cao hơn mục tiêu 90,15%. Với lưới mịn và dải ±0,2 điểm, chênh lệch là [X]% (CI [..]). |
 | IPPO có hơn nhờ biết sức chứa không? | Đã thêm (s,S) biết sức chứa. Ở cùng mức phục vụ, chênh lệch còn lại là [Y]%. |
-| "Đa kho" ở đâu, các kho có ảnh hưởng nhau không? | Mô hình chính thì không: kho chỉ chia sức chứa nội bộ. Vì vậy đề tài thêm thí nghiệm nguồn cung chung, mỗi mặt hàng có trần cung ứng toàn mạng và các kho bị cắt theo tỷ lệ. Kết quả ở Câu hỏi 5. |
+| "Đa kho" ở đâu, các kho có ảnh hưởng nhau không? | Mô hình chính thì không: kho chỉ chia sức chứa nội bộ. Vì vậy đề tài thêm điều kiện nguồn cung chung, mỗi mặt hàng có trần cung ứng toàn mạng và các kho bị cắt theo tỷ lệ. Theo phương án rút gọn, điều kiện này chỉ **đánh giá zero-shot** mô hình chính (không train lại). Kết quả ở Câu hỏi 5; xem thêm mục 38. |
 | Học tăng cường thêm được gì so với dự báo? | Trên seed 42 thì chưa thêm được về chi phí. Dự báo tốt hơn ở nhóm bán chậm; ở nhóm bán nhanh IPPO tiến gần dự báo nhất. Kết hợp hai chính sách rẻ hơn IPPO 3,2% nhưng vẫn đắt hơn dự báo 1,0%. |
 | Vì sao không dự báo rồi tối ưu? | Đã thử LightGBM + Newsvendor: [Z]. Khi IPPO nhận cùng dự báo (U1), chênh lệch là [W]. |
 | Vì sao fill của IPPO là 90,7–90,9% khi mục tiêu là 85%? | Điểm vận hành phụ thuộc `phi_dv`. Đã chạy `phi_dv` ∈ {…} và vẽ đường biên; tại 85%, IPPO [..] so với baseline. |
-| Vì sao 28,7% cặp dưới 85%? | Chủ yếu ở nhóm cầu thấp (bảng phân rã [..]); mục tiêu 85% chỉ được đáp ứng ở cấp hệ thống. [Nếu làm C': kết quả Lagrange PID là [..].] |
+| Vì sao 28,7% cặp dưới 85%? | Chủ yếu ở nhóm cầu thấp (bảng phân rã [..]); mục tiêu 85% chỉ được đáp ứng ở cấp hệ thống. |
 | Doanh số có phải nhu cầu không? | Không. M5 ghi doanh số, có thể thấp hơn nhu cầu thật khi hết hàng; M5 không đánh dấu hết hàng nên chưa đo được; dẫn độ nhạy cầu +20%. |
 | Vì sao lịch và giá đóng góp ít, mùa lễ yếu? | Xáo trộn nhóm lịch làm chi phí tăng 5,3%, tín hiệu giá dưới 1%. Giả thuyết là lịch sử nhu cầu ngắn hạn đã chứa phần lớn tín hiệu mùa vụ; ablation 1 seed phù hợp nhưng chưa đủ kết luận. Mùa lễ chỉ có 9 tuần. [Nếu có U1: so sánh có và không có dự báo.] |
-| Các agent có phối hợp không? | Không có kênh phối hợp tường minh trong mô hình chính; các cặp liên kết qua chia sẻ gradient và tín hiệu cấp kho. [Nếu làm U3: critic có ngữ cảnh kho cho kết quả [..].] |
-| Vì sao 300 agent mà chỉ 1 mạng? | Chia sẻ tham số: một bộ trọng số dùng chung, quan sát 300 cặp xếp thành một lô. [U4: so sánh 1, 4, 10, 300 mạng cho kết quả [..].] |
-| Xử lý pseudoreplication thế nào? | Các episode 365 ngày chồng lấn trong 491 ngày test nên p-value theo cặp lạc quan. Kết quả chính dùng 5 seed và bootstrap theo khối; bootstrap giảm chứ không loại bỏ tự tương quan. |
+| Các agent có phối hợp không? | Không có kênh phối hợp tường minh trong mô hình chính; các cặp liên kết qua chia sẻ gradient và tín hiệu cấp kho. |
+| Vì sao 300 agent mà chỉ 1 mạng? | Chia sẻ tham số: một bộ trọng số dùng chung, quan sát 300 cặp xếp thành một lô. |
+| Xử lý pseudoreplication thế nào? | Các episode 365 ngày chồng lấn trong 491 ngày test nên p-value theo cặp lạc quan. Kết quả chính dùng 3 seed và bootstrap theo khối; bootstrap giảm chứ không loại bỏ tự tương quan. |
 | Áp dụng cho Việt Nam thế nào? | Không dùng lại trọng số; huấn luyện lại trên dữ liệu bán hàng Việt Nam và thay vector lịch. Kiến trúc và quy trình giữ nguyên. |
 | Sao không làm chuyển hàng ngang giữa kho? | Đó là lớp bài toán khác: cần chi phí và thời gian chuyển hàng mà M5 không có, và phải thiết kế lại môi trường, baseline và toàn bộ so sánh. |

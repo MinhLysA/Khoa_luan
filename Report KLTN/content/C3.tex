@@ -366,7 +366,7 @@ Ví dụ, nếu kho còn 100 chỗ trống mà có 150 đơn vị hàng mới v�
 \subsection{Cơ chế phối hợp giữa các tác tử}
 \label{subsec:phoiHop}
 
-Hệ thống không có tác tử điều phối trung tâm, và các tác tử không trao đổi thông tin trực tiếp với nhau. Về nghiệp vụ, quyết định đặt hàng lại được đưa ra cho từng mã hàng tại từng kho. Về thuật toán, mô hình chính dùng học độc lập để kiểm tra xem phối hợp gián tiếp đã đủ hay chưa. Trường hợp Critic có thêm thông tin của kho được xét ở mục~\ref{subsec:bienTheCritic}.
+Hệ thống không có tác tử điều phối trung tâm, và các tác tử không trao đổi thông tin trực tiếp với nhau. Về nghiệp vụ, quyết định đặt hàng lại được đưa ra cho từng mã hàng tại từng kho. Về thuật toán, mô hình chính dùng học độc lập để kiểm tra xem phối hợp gián tiếp đã đủ hay chưa.
 
 Về thiết kế, các tác tử liên hệ gián tiếp với nhau qua ba kênh:
 \begin{itemize}
@@ -377,7 +377,7 @@ Về thiết kế, các tác tử liên hệ gián tiếp với nhau qua ba kên
 
 Các kênh này chỉ tạo điều kiện để tác tử tính đến nhau. Tác tử có thực sự dùng chúng hay không được kiểm tra bằng thực nghiệm ở Chương~\ref{chap:chapter4}.
 
-Trong mô hình chính, ràng buộc sức chứa chỉ nối các mặt hàng trong cùng một kho, còn giữa các kho không có ràng buộc trực tiếp. Biến thể nguồn cung chung (mục~\ref{subsec:bienTheNguonCung}) bổ sung ràng buộc này.
+Trong mô hình chính, ràng buộc sức chứa chỉ nối các mặt hàng trong cùng một kho, còn giữa các kho không có ràng buộc trực tiếp. Điều kiện nguồn cung chung (mục~\ref{subsec:bienTheNguonCung}) bổ sung ràng buộc này, nhưng chỉ dùng để đánh giá mô hình đã huấn luyện.
 
 Kết quả của các tác tử được tổng hợp cho người quản lý ở một lớp báo cáo riêng, không gửi thông tin ngược lại cho tác tử (mục~\ref{subsec:chucNangUngDung}).
 
@@ -573,7 +573,7 @@ Quy trình huấn luyện gồm năm bước:
     \item Tính GAE. Lợi thế $\hat{A}_t^{(i)}$ của từng tác tử $i$ được ước lượng bằng công thức~(\ref{eq:gae}) với $\gamma = 0{,}99$ và $\lambda = 0{,}95$.
     \item Chuẩn hóa lợi thế theo từng cặp. $\hat{A}_t^{(i)}$ được chuẩn hóa theo trung bình và độ lệch chuẩn tính riêng cho mỗi cặp kho--mặt hàng $i$, để các cặp có quy mô chi phí khác nhau đóng góp cân bằng vào gradient.
     \item Cập nhật PPO. Hàm mục tiêu có cắt (công thức~\ref{eq:ppoclip}) được tối ưu tối đa $E = 4$ lượt (\textit{epoch}) trên toàn bộ dữ liệu vừa thu. Quá trình dừng sớm khi độ lệch KL xấp xỉ vượt 1,5 lần ngưỡng $\text{KL}_{\text{target}} = 0{,}02$. Tốc độ học của Actor là $\eta_a = 3 \times 10^{-4}$ và của Critic là $\eta_c = 1 \times 10^{-3}$. Cả hai giảm tuyến tính theo tiến độ huấn luyện.
-    \item Lặp lại. Các bước 1--4 được lặp trong 10.000 tập với mô hình chính và 1.000 tập với các thí nghiệm loại trừ. Toàn bộ quy trình được lặp với năm hạt giống huấn luyện độc lập.
+    \item Lặp lại. Các bước 1--4 được lặp trong 10.000 tập với mô hình chính và 1.000 tập với các thí nghiệm loại trừ. Mô hình chính được huấn luyện lặp với ba hạt giống độc lập.
 \end{enumerate}
 
 \begin{table}[H]
@@ -596,7 +596,7 @@ Quy trình huấn luyện gồm năm bước:
             & $\gamma$ & 0,99 \\ \cline{2-3}
             & $\lambda_{\text{GAE}}$ & 0,95 \\ \cline{2-3}
             & Hệ số cắt $\epsilon$ & 0,2 \\ \cline{2-3}
-            & Tổng số tập & \tbc{10.000 (mô hình chính), 5 hạt giống}{1.000 (thí nghiệm loại trừ)} \\
+            & Tổng số tập & \tbc{10.000 (mô hình chính), 3 hạt giống}{1.000 (thí nghiệm loại trừ)} \\
         \hline
         Mạng & Lớp ẩn (mỗi mạng) & $2 \times 128$ \\ \cline{2-3}
              & Actor, Critic & hai mạng tách rời \\ \cline{2-3}
@@ -663,56 +663,10 @@ Nếu mọi tác tử luôn chọn cùng một giá trị $z$, biến thể này
 
 Tín hiệu học ở biến thể này nhỏ hơn mô hình chính, vì hai giá trị $z$ gần nhau chỉ làm lượng đặt khác nhau một ít. Do đó nhóm dùng hệ số entropy nhỏ hơn (0,005 giảm dần về 0,0005) và hệ số phạt $\phi_{dv} = 1$. Tập giá trị $z$, hệ số entropy và hệ số phạt đều được chọn trên miền xác thực.
 
-\subsection{Mức chia sẻ tham số}
-\label{subsec:bienTheChiaSe}
-
-Mô hình chính dùng một mạng cho cả 300 tác tử. Biến thể này tăng số mạng lên $K$ để xem mức chia sẻ tham số ảnh hưởng thế nào:
-\begin{itemize}
-    \item $K = 1$: một mạng chung, như mô hình chính.
-    \item $K = 4$: mỗi nhóm quy mô nhu cầu một mạng.
-    \item $K = 10$: mỗi kho một mạng.
-    \item $K = 300$: mỗi cặp một mạng.
-\end{itemize}
-
-Mỗi mạng gồm Actor 23.046 tham số và Critic 22.401 tham số, nên tổng số tham số là $45.447\,K$. Khi $K = 300$, mỗi mạng chỉ học từ dữ liệu của một cặp.
-
-Do cách cài đặt, các biến thể này lấy minibatch theo bước thời gian thay vì xáo trộn toàn bộ mẫu. Vì vậy $K = 1$ cũng được chạy lại với cùng cách lấy mẫu để so sánh.
-
-\subsection{Critic có ngữ cảnh theo kho}
-\label{subsec:bienTheCritic}
-
-Ở mô hình chính, Critic chỉ nhận quan sát của một cặp. Biến thể này cho Critic biết thêm tình trạng của các mặt hàng khác trong cùng kho, vì các cặp chỉ ảnh hưởng tới nhau qua sức chứa của kho. Ngữ cảnh của kho $w$ được tính như sau:
-\begin{equation}
-    c_w^t = \Bigl[\frac{1}{M}\sum_{j \in w} h(o_j^t),\ \max_{j \in w} h(o_j^t)\Bigr],
-    \qquad
-    V_i^t = V_\phi\bigl(o_i^t,\ c_{w(i)}^t\bigr),
-    \label{eq:criticNguCanh}
-\end{equation}
-trong đó $h$ là một lớp tuyến tính 44 $\rightarrow$ 64 với hàm kích hoạt Tanh, nên $c_w^t$ có 128 chiều. Phép trung bình và phép lớn nhất không phụ thuộc thứ tự, nên đổi thứ tự mặt hàng trong kho không làm đổi $c_w^t$.
-
-Actor không thay đổi nên khi ra quyết định, tác tử vẫn chỉ dùng quan sát của mình. Mỗi minibatch giữ đủ 30 mặt hàng của một kho tại một bước để tính được ngữ cảnh.
-
-\subsection{Nhân tử Lagrange theo từng cặp}
-\label{subsec:bienTheLagrange}
-
-Ở mô hình chính, mọi cặp dùng chung hệ số phạt $\phi_{dv}$, nên mục tiêu 85\% chỉ đạt ở mức toàn hệ thống. Biến thể này cho mỗi cặp một hệ số phạt riêng $\lambda_i$, thay cho $\phi_{dv}$ trong công thức~(\ref{eq:phatChuanHoa}).
-
-Hệ số $\lambda_i$ được cập nhật mỗi 30 ngày bằng bộ điều khiển PID (công thức~\ref{eq:pid}). Cặp nào có tỷ lệ đáp ứng dưới 85\% thì hệ số phạt tăng, cặp nào vượt 85\% thì hệ số phạt giảm. Với sai số $e_i = \tau - \text{FR}^{(i, 30)}$, công thức cập nhật là:
-\begin{equation}
-    \begin{split}
-    \Sigma_i &\leftarrow \mathrm{clip}\bigl(\Sigma_i + e_i,\ 0,\ \lambda_{\max}/K_I\bigr), \\
-    \lambda_i &= \mathrm{clip}\bigl(K_I \Sigma_i + K_P\, e_i + K_D\, (e_i - e_i^{\text{trước}}),\ 0,\ \lambda_{\max}\bigr),
-    \end{split}
-    \label{eq:pidCap}
-\end{equation}
-trong đó $\Sigma_i$ là tổng sai số đã tích lũy và $\lambda_{\max} = 20$ là giá trị lớn nhất của hệ số phạt. Tỷ lệ đáp ứng được lấy trên cửa sổ 30 ngày vì ngày không có nhu cầu thì không tính được tỷ lệ theo ngày. Thành phần $\lambda_i / \lambda_{\max}$ được thêm vào quan sát, nên quan sát có 45 chiều.
-
-Hệ số $\lambda_i$ bắt đầu bằng $\phi_{dv}$, được giữ qua các tập huấn luyện và lưu cùng mô hình. Khi đánh giá, mỗi lần chạy bắt đầu từ giá trị $\lambda_i$ đã học. Hệ số $K_I$ được chọn nhỏ để $\lambda_i$ thay đổi chậm, giúp chính sách kịp thích nghi. Nếu $\lambda_i$ của một cặp tăng tới giá trị lớn nhất mà vẫn không đạt 85\%, cặp đó có thể không đạt được mục tiêu với sức chứa hiện tại.
-
-\subsection{Nguồn cung chung giữa các kho}
+\subsection{Nguồn cung chung giữa các kho (điều kiện đánh giá)}
 \label{subsec:bienTheNguonCung}
 
-Ở mô hình chính, quyết định của kho này không ảnh hưởng tới kho khác. Thực tế, các kho thường cùng lấy hàng từ một nhà cung cấp có năng lực giới hạn, nên khi một kho đặt nhiều thì kho khác có thể nhận ít đi. Biến thể này thêm ràng buộc đó vào môi trường để các kho thực sự cạnh tranh với nhau.
+Ở mô hình chính, quyết định của kho này không ảnh hưởng tới kho khác. Thực tế, các kho thường cùng lấy hàng từ một nhà cung cấp có năng lực giới hạn, nên khi một kho đặt nhiều thì kho khác có thể nhận ít đi. Điều kiện này thêm ràng buộc đó vào môi trường để các kho cạnh tranh với nhau. Nhóm không huấn luyện lại mô hình dưới điều kiện này mà chỉ chạy mô hình chính đã huấn luyện trong môi trường có nguồn cung giới hạn (không huấn luyện lại, \textit{zero-shot}). Vì vậy kết quả cho biết độ bền của mô hình, chưa cho biết mô hình học được gì khi được huấn luyện trong điều kiện này.
 
 Mỗi mặt hàng $m$ có sản lượng cung ứng một ngày trên toàn mạng lưới là:
 \begin{equation}
@@ -728,7 +682,7 @@ trong đó $\rho$ là hệ số nguồn cung, $\bar{D}^{(w,m)}$ là nhu cầu tr
 \end{equation}
 Bước này diễn ra ngay sau khi ánh xạ hành động, nên chi phí đặt hàng và hàng đợi giao đều tính theo lượng $\tilde{q}$ đã cắt. Ví dụ, một mặt hàng có $G_m = 80$ và ba kho đặt 60, 40 và 20 đơn vị. Tổng đặt là 120 nên $g_m^t = 2/3$, kho thứ nhất nhận 40 đơn vị, kho thứ hai nhận 26,7 đơn vị và kho thứ ba nhận 13,3 đơn vị.
 
-Quan sát của mỗi tác tử có thêm một chiều là tỷ lệ $g_m^{t-1}$ của ngày trước đó. Tác tử không thấy lượng đặt của kho khác, nên tín hiệu này cho biết nguồn cung đang căng hay không. Các chính sách đối chứng không dùng tín hiệu này, nhưng phần bị cắt làm vị thế tồn kho thấp hơn nên chúng tự đặt bù vào ngày sau.
+Mô hình chính giữ 44 chiều quan sát và không nhận tỷ lệ $g_m^{t-1}$ làm đầu vào, nên khi đánh giá nó chỉ biết nguồn cung bị cắt qua vị thế tồn kho thấp hơn. Các chính sách đối chứng cũng chỉ biết qua vị thế tồn kho, nên phần bị cắt khiến chúng tự đặt bù vào ngày sau.
 
 Cách chia theo tỷ lệ còn tạo ra động cơ đặt dư để được chia nhiều hơn. Đây là một nguyên nhân của hiệu ứng roi da \parencite{lee1997}. Vì vậy biến thể này được đánh giá thêm bằng hệ số roi da, tính trên lượng đặt trước khi bị cắt.
 

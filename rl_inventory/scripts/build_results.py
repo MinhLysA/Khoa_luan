@@ -448,35 +448,25 @@ def _mo_rong(res):
               "    " + "  ".join(f"{n}: {'—' if c is None else format(c, ',.0f')}" for n, c in h["tai_muc_ippo"].items()),
               "    IPPO dùng cho: " + (", ".join(h["cau_hinh_gan_nhat"]["nhom_dung_ippo"]) or "không nhóm nào")]
     rows = []
-    for p in sorted([*res.glob("summary_*.json"), *res.glob("scale_1000/summary_*.json"),
-                     *res.glob("shared_supply_*/summary_*.json"), *res.glob("capacity_*/summary_*.json")]):
+    for p in sorted([*res.glob("summary_*.json"), *res.glob("shared_supply_*/summary_*.json"),
+                     *res.glob("capacity_*/summary_*.json")]):
         t2 = p.stem[len("summary_"):]
-        if t2.startswith(("penalty", "tuning_", "forecast_", "safety_factor", "wh_critic", "networks_", "pair_penalty", "scale_1000",
-                           "shared_supply", "capacity_")):
+        if t2.startswith(("penalty", "forecast_", "safety_factor", "zeroshot_")):
             s = _doc_json(p)
-            if s:
+            if s and any(r["policy"] == "IPPO" for r in s["summary"]):
                 ip, per = _ippo(s), s["stat"].get("per_baseline", {})
                 iso = (_doc_json(p.parent / f"same_service_{t2}.json") or {}).get("ket_qua", {})
                 cung = iso.get("Newsvendor dự báo", {}).get("delta_ippo_percent")
-                rows.append(f"    {t2:<26}{ip['total_cost_mean']:>12,.0f}{ip['fill_rate_mean']:>7.1%}"
+                rows.append(f"    {t2:<34}{ip['total_cost_mean']:>12,.0f}{ip['fill_rate_mean']:>7.1%}"
                             f"{_o_delta(per.get('(s,S)'))}{_o_delta(per.get('Newsvendor theo nhóm'))}"
                             f"{_o_delta(per.get('Newsvendor dự báo'))}"
                             + (f"{'—':>10}" if cung is None else f"{cung:>+10.1f}")
                             + f"{ip.get('bullwhip_mean', float('nan')):>10.2f}")
     if rows:
-        L += ["", f"  e) Các biến thể - {'Lần chạy':<9}",
-              f"    {'':<26}{'Tổng CP':>12}{'Fill':>7}{'Δ (s,S)':>9}{'Δ NV-N':>9}{'Δ NV-DB':>9}{'Cùng mức':>10}{'Roi da':>10}"] + rows
+        L += ["", f"  e) Các biến thể và điều kiện vận hành - {'Lần chạy':<9}",
+              f"    {'':<34}{'Tổng CP':>12}{'Fill':>7}{'Δ (s,S)':>9}{'Δ NV-N':>9}{'Δ NV-DB':>9}{'Cùng mức':>10}{'Roi da':>10}"] + rows
         L.append("    Cùng mức = Δ% so với Newsvendor dự báo ở cùng mức phục vụ. Roi da = phương sai lượng đặt / phương sai nhu cầu.")
-    import pandas as pd
-    cp = []
-    for p in sorted(res.glob("train_log_pair_penalty_*.csv")):
-        d = pd.read_csv(p)
-        cuoi = d.tail(max(2, len(d) // 5))
-        cp.append(f"    {p.stem[len('train_log_'):]:<16}{cuoi.lam_tb.mean():>8.2f}"
-                  f"{cuoi.lam_tb.std():>8.3f}{cuoi.lam_cham_tran.mean():>11.1%}")
-    if cp:
-        L += ["", "  f) Lagrange theo cặp, 20% episode cuối (SD lớn = dao động):",
-              f"    {'':<16}{'λ TB':>8}{'SD':>8}{'Chạm trần':>11}", *cp]
+        L.append("    zeroshot_* = mô hình chính (main_s42) đánh giá dưới điều kiện vận hành khác, KHÔNG huấn luyện lại.")
     return L or ["  (chưa có)"]
 
 

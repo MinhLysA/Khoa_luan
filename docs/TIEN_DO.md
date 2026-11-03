@@ -1,10 +1,22 @@
 # Theo dõi tiến độ khóa luận (PS-IPPO tồn kho đa kho)
 
-Cập nhật: 31/10/2026 · Chú thích: ✅ xong · 🟡 đang triển khai / chờ train · ⬜ chưa làm · ⚠️ cần tự kiểm tra
+Cập nhật: 01/11/2026 · Chú thích: ✅ xong · 🟡 đang triển khai / chờ train · ⬜ chưa làm · ⚠️ cần tự kiểm tra
 
 > **[25/09/2026] Quyết định thiết kế:** Bật `include_price_signal: true` → môi trường dùng **44 chiều** (thêm tín hiệu giảm giá [V3-4]). Cần cập nhật Chương 3 báo cáo (Bảng đối chiếu biến trạng thái, công thức obs\_per\_pair, mô tả đặc trưng giá) trước khi nộp.
 
-> Từ 31/10 nhóm train local, đã bỏ hai notebook Colab. Của đợt 10.000 episode (19 lần chạy, 3 seed, số trong C4 hiện tại), trên máy chỉ còn mô hình seed 42 ở `app/demo_data/best_model.pth`; code hiện tại tái lập đúng 2.052.496 và 90,65% của C4. Hai seed còn lại, ablation và log học không còn; `KLTN_final` chia sẻ trên Drive chỉ có `results/` của đợt 4.000 episode (01/10). `python run.py full` sẽ train lại 5 seed và 16 ablation, số trong C4 sẽ đổi theo. Nếu còn bản 10.000 episode đầy đủ (`checkpoints/`, `results/`), chép vào `rl_inventory/` trước khi chạy, các lần đã xong tự bỏ qua.
+> Từ 31/10 nhóm train local, đã bỏ hai notebook Colab. Của đợt 10.000 episode (19 lần chạy, 3 seed, số trong C4 hiện tại), trên máy chỉ còn mô hình seed 42 ở `app/demo_data/best_model.pth`; code hiện tại tái lập đúng 2.052.496 và 90,65% của C4. Hai seed còn lại, ablation và log học không còn; `KLTN_final` chia sẻ trên Drive chỉ có `results/` của đợt 4.000 episode (01/10). `python run.py full` sẽ train lại (theo phương án rút gọn 01/11: 3 seed và 16 ablation), số trong C4 sẽ đổi theo. Nếu còn bản 10.000 episode đầy đủ (`checkpoints/`, `results/`), chép vào `rl_inventory/` trước khi chạy, các lần đã xong tự bỏ qua.
+
+## 0a. Phương án rút gọn 01/11 (chờ giảng viên duyệt)
+
+Để đủ thời gian train, nhóm chọn: mô hình chính và U5 chỉ **3 seed** (42, 1, 2); **bỏ** U3 (Critic theo kho), U4 (số mạng), C' (phạt Lagrange theo cặp), E2 (1.000 tác tử), E3 (độ nhạy siêu tham số) và train điều kiện vận hành. **Giữ** mô hình chính, U1, U2, U5, ablation, hold-out và mọi phép đánh giá không train. Câu 5 (điều kiện vận hành) chuyển thành đánh giá zero-shot mô hình chính dưới nguồn cung chung và sức chứa 3, 8 ngày. `phi_dv` chỉ giữ 5 lần chạy thử 1.000 tập (lựa chọn rút gọn, có thể đổi lại). Khối lượng khoảng 141.000 tập (khoảng 43 giờ GPU cỡ T4) thay vì 480.000 tập (khoảng 160 giờ). Chi tiết: `TONG_HOP_THAY_DOI.md` mục 4, 5, 7; lệnh làm: `PROMPT_PHUONG_AN_3SEED.md`. **Các dòng U3, U4, C', E2, E3 ở bảng mục 0 bên dưới là kế hoạch cũ, nay đã bỏ.**
+
+| Việc | Trạng thái |
+|---|---|
+| Sửa code theo phương án (3 seed, gỡ nhóm đã bỏ, bước zero-shot) | ⬜ làm theo `PROMPT_PHUONG_AN_3SEED.md` |
+| `run.py check` | ✅ 01/11: GPU RTX 3050 Laptop (cuda), đã cài `lightgbm`; thiếu `data/raw` (không chặn dự báo) |
+| `run.py full --quick` trên code cuối | ⬜ lượt 01/11 dừng giữa chừng ở bước U5 theo chủ ý, chưa chạy trọn |
+| Train thật theo phương án | ⬜ |
+| Thay số vào C4, C5, abstract (các chỗ `[SO-MOI]`) | ⬜ sau khi train |
 
 ## 0. Phương án 31/10: code đã xong, chờ chạy
 
@@ -19,13 +31,13 @@ Mọi tính năng mới nằm sau cờ, tắt mặc định; mô hình chính gi
 | A6 đồng bộ số | 🟡 `export_tex_numbers.py` sinh `so_lieu.tex` và quét số cũ | Cần `KET_QUA.txt` sau khi train xong |
 | B1 lưới mịn | ✅ `compare_same_service.py --grid fine` | Thay 25,7%, 17,3% ở C4, C5, abstract |
 | B2 (s,S) biết sức chứa | ✅ `CapacityAwareSs`, tune, evaluate, common, test | Bảng, phương pháp đối chứng C4 |
-| B3 fill theo nhóm | ✅ `service_by_group.py` (có cổng C') | Bảng C4, C5 |
+| B3 fill theo nhóm | ✅ `service_by_group.py` | Bảng C4, C5 |
 | B4 dự báo rồi tối ưu | ✅ `forecast_demand.py`, `ForecastNewsvendor` | Bảng C4 |
-| B5 seed 3, 4, thống kê | ✅ `run_experiments.py`, `multi_seed_stats.py` | Train 2 seed; mục thống kê C4; p-value xuống phụ lục |
-| Gói C `phi_dv` | ✅ 5 config, `cost_service_frontier.py` | `train phi_thu`, chọn 2 giá trị, train 10.000 ep |
+| B5 seed 3, 4, thống kê | ✅ `run_experiments.py`, `multi_seed_stats.py` | Đã đổi: chỉ 3 seed (bỏ seed 3, 4); mục thống kê C4; p-value xuống phụ lục |
+| Gói C `phi_dv` | ✅ 5 config, `cost_service_frontier.py` | `train phi_thu` (chỉ chạy thử 1.000 tập); bỏ bước chọn 2 giá trị và train 10.000 tập (rút gọn) |
 | Gói D tái lập | ✅ README, `.gitignore` (gỡ `graphify-out/` khỏi git), đánh dấu file lỗi thời | Release `v1.0-final` |
-| U1, U2, E1, E3 | ✅ cờ, config, test, `policy_structure.py` | Train, viết C4 |
-| U4, U3, C', E2 | ✅ cờ, config, test. C': λ giữ qua các tập, lưu kèm checkpoint, val/test xuất phát từ λ đã học | Train theo cổng, viết C4 |
+| U1, U2, E1 | ✅ cờ, config, test, `policy_structure.py` | Train U1, U2 (E1 chỉ phân tích), viết C4. E3 đã bỏ |
+| ~~U4, U3, C', E2~~ | Đã bỏ khỏi đợt thực nghiệm (01/11). Code từng xong; không train, không báo cáo | — |
 | C2, tài liệu tham khảo | ✅ thêm 8 nguồn, đã đối chiếu tác giả, trang, DOI; bảng so sánh có hàng chính sách đối chứng; sửa câu CD-PPO theo bài gốc | Maggiar 2025 là poster workshop NeurIPS, không viết là hội nghị chính |
 | C5 hướng phát triển | ✅ bảng 9 hướng | Thêm mục X chưa làm kèm lý do; viết lại hạn chế theo kết quả mới |
 | Lý thuyết và phương pháp C1–C4 | ✅ 31/10: thêm lý thuyết dự báo, CMDP, CTDE, biến thể mở rộng, hai đối thủ mới, giao thức đường biên, thống kê | — |
@@ -115,7 +127,7 @@ Mọi tính năng mới nằm sau cờ, tắt mặc định; mô hình chính gi
 
 Chạy: `python scripts/run_experiments.py train main` → `train ablations` → `eval` (≈ 8–10 giờ GPU T4).
 
-Đợt cuối đã chạy xong 19/19 lần (20/10), xem mục 1. Hai seed thêm và các biến thể: mục 0.
+Đợt cuối đã chạy xong 19/19 lần (20/10), xem mục 1. Các biến thể và phương án rút gọn: mục 0a và 0.
 
 Rủi ro đã biết: Newsvendor tune theo nhóm có thể rẻ hơn IPPO → kết luận RQ1 phải viết theo số liệu thật.
 
@@ -162,7 +174,7 @@ Rủi ro đã biết: Newsvendor tune theo nhóm có thể rẻ hơn IPPO → k�
 ---
 
 ## 5. Ngoài phạm vi (ghi vào "Hướng phát triển")
-Xem bảng hướng phát triển ở C5 (9 hướng cần dữ liệu, hệ thống thật hoặc đổi lớp bài toán). Lagrange theo cặp, dự báo, Critic theo kho đã chuyển vào phạm vi thực hiện.
+Xem bảng hướng phát triển ở C5 (9 hướng cần dữ liệu, hệ thống thật hoặc đổi lớp bài toán). Dự báo đã chuyển vào phạm vi thực hiện. Lagrange theo cặp, Critic theo kho, 1.000 tác tử, số mạng bỏ khỏi đợt thực nghiệm (phương án rút gọn 01/11), có thể nêu thành hướng phát triển.
 
 ---
 

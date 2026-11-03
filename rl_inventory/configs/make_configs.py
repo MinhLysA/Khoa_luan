@@ -47,17 +47,6 @@ for _k, _v in PHI.items():
     ABLATIONS[f"service_penalty_{_k}"] = (f"He so phat muc phuc vu phi_dv = {_v}",
                               lambda c, v=_v: c["env"].update(phi_dv=v))
 
-# [E3] Do nhay sieu tham so PPO, moi lan doi mot tham so so voi abl_ref
-for _ten, _h in [("05", 0.5), ("2", 2.0)]:
-    ABLATIONS[f"tuning_lr_x{_ten}"] = (f"Do nhay: lr_actor x{_h}",
-                                   lambda c, h=_h: c["ppo"].update(lr_actor=c["ppo"]["lr_actor"] * h))
-    ABLATIONS[f"tuning_entropy_x{_ten}"] = (f"Do nhay: ent_coef x{_h}",
-                                    lambda c, h=_h: c["ppo"].update(ent_coef=c["ppo"]["ent_coef"] * h,
-                                                                    ent_coef_end=c["ppo"]["ent_coef_end"] * h))
-for _n in (512, 2048):
-    ABLATIONS[f"tuning_rollout_{_n}"] = (f"Do nhay: n_steps = {_n}",
-                                    lambda c, n=_n: c["ppo"].update(n_steps=n))
-
 ABLATIONS["forecast_observation"] = ("IPPO nhan du bao trong quan sat",
                             lambda c: c["env"].update(include_forecast=True))
 # z_levels co 6 muc de giu nguyen n_action_levels; lead_time, q_factor nhu (s,S) tinh chinh
@@ -77,42 +66,20 @@ ABLATIONS["forecast_safety_factor"] = ("Tac tu chon he so an toan tren nen du ba
                                                        ent_coef_end=0.0005,
                                                        base_stock=dict(z_levels=[0.0, 0.2, 0.4, 0.6, 0.8, 1.2],
                                                                        lead_time=3.0, du_bao=True))))
-ABLATIONS["warehouse_critic"] = ("Critic co ngu canh theo kho",
-                              lambda c: c["ppo"].update(critic_context="warehouse", batch_mode="warehouse",
-                                                        warehouse_skus=c["env"]["n_skus"]))
-for _k in (1, 4, 10, 300):
-    ABLATIONS[f"networks_{_k}"] = (f"{_k} mang theo nhom, lay mau theo buoc thoi gian",
-                              lambda c, k=_k: c["ppo"].update(param_groups=k, batch_mode="time"))
-# [Phat theo tung cap] Ba bo (KP, KI, KD) chay thu truoc khi chay du seed
-# KI nho vi lambda giu qua cac tap va cap nhat 12 lan moi tap: phai cham hon toc do
-# chinh sach thay doi (khoang 50-100 tap), neu khong se cham tran truoc khi kip phan ung.
-for _ten, _p in {"a": (0.5, 0.02, 0.0), "b": (1.0, 0.05, 0.0), "c": (1.0, 0.05, 0.5)}.items():
-    ABLATIONS[f"pair_penalty_{_ten}"] = (f"Lagrange PID theo cap (KP, KI, KD) = {_p}",
-                                   lambda c, p=_p: c["env"].update(
-                                       lagrange_per_pair=True,
-                                       lagrange=dict(kp=p[0], ki=p[1], kd=p[2], lambda_max=20.0)))
-ABLATIONS["scale_1000_agents"] = ("Mo rong 10 kho x 100 SKU (1.000 tac tu), du lieu va ket qua rieng",
-                          lambda c: (c["env"].update(n_skus=100),
-                                     c["preprocess"].update(n_skus=100),
-                                     c["paths"].update(data_dir="data/processed_100sku",
-                                                       results_dir="results/scale_1000")))
-
-
 
 def dieu_kien(ten, mo_ta, **env):
-    """Dieu kien van hanh: mo hinh chinh va ban he so an toan tren nen du bao, thu muc ket qua rieng."""
+    """Dieu kien van hanh chi dung de DANH GIA zero-shot mo hinh chinh (khong train lai), ket qua o thu muc rieng.
+    supply_hide_obs: giu 44 chieu quan sat cua mo hinh chinh, tran nguon cung van ap dung."""
     def cap_nhat(c):
         c["env"].update(env)
         c["paths"].update(results_dir=f"results/{ten}")
     ABLATIONS[ten] = (mo_ta, cap_nhat)
-    ABLATIONS[f"{ten}_fs"] = (f"{mo_ta}, tac tu chon he so an toan tren nen du bao",
-                              lambda c: (ABLATIONS["forecast_safety_factor"][1](c), cap_nhat(c)))
 
 
 # Muc nguon cung do bang chinh sach co san: 2 lan cau TB lam fill giam khoang 4 diem, duoi 1,5 lan
 # thi khong chinh sach nao giu duoc 85% vi don dat theo lo hay vuot tran ngay
-dieu_kien("shared_supply_tight", "Nguon cung chung cang", supply_cover=2.0)
-dieu_kien("shared_supply_mild", "Nguon cung chung vua", supply_cover=3.0)
+dieu_kien("shared_supply_tight", "Nguon cung chung cang", supply_cover=2.0, supply_hide_obs=True)
+dieu_kien("shared_supply_mild", "Nguon cung chung vua", supply_cover=3.0, supply_hide_obs=True)
 dieu_kien("capacity_3", "Suc chua bang 3 ngay cau", capacity_cover_days=3.0)
 dieu_kien("capacity_8", "Suc chua bang 8 ngay cau", capacity_cover_days=8.0)
 
