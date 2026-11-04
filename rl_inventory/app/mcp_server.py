@@ -189,8 +189,7 @@ def _kpi(kq):
 def ket_qua_tong_hop() -> str:
     """Ket qua danh gia chinh thuc (results/*.json) de LLM trich dan so lieu."""
     out = {}
-    for name in ["iso_service.json", "summary_main_s42.json", "summary_seed42.json",
-                 "regime_analysis.json"]:
+    for name in ["same_service_main_s42.json", "summary_main_s42.json", "regime_analysis_main.json"]:
         p = ROOT / "results" / name
         if p.exists():
             out[name] = json.loads(p.read_text(encoding="utf-8"))

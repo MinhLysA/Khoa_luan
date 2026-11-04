@@ -163,8 +163,14 @@ Mọi chương, mục, bảng, hình, công thức, thuật toán đều có `\l
 - Không nối mệnh đề bằng dấu chấm phẩy trong văn xuôi. Hạn chế gạch ngang " -- " chèn ý và ngoặc lồng nhau.
 - Không in đậm trong thân bài, nhãn liệt kê, chú thích, mã giả. Nhấn mạnh bằng cách đặt ý ở đầu câu.
 - Mỗi ý nói một lần ở chỗ phù hợp nhất; chỗ khác dẫn "xem mục X.Y".
-- Không mở đoạn bằng "Bảng X liệt kê/trình bày...". Mở bằng nhận xét hoặc mục đích, rồi dẫn bảng trong ngoặc hoặc
-  giữa câu: "Bốn mô hình có đặc trưng đứng đầu (Bảng 4.2)."
+- Không mở đoạn bằng "Bảng X liệt kê/trình bày...". Mở bằng nhận xét hoặc mục đích, rồi dẫn bảng giữa câu.
+- Chuẩn dẫn chiếu (người dùng chốt 03/11/2026, vì bản in phải tự đọc hiểu được):
+  + Bảng, hình: mọi bảng/hình phải có một câu dẫn ngay trước nó, nói rõ bảng/hình chứa gì: "Chi phí và tỷ lệ đáp ứng
+    của từng chính sách khi đạt mức phục vụ của IPPO được trình bày ở Bảng 4.9." Không dẫn trong ngoặc "(Bảng 4.9)".
+  + Mục: không trỏ số mục trong văn xuôi ("ở mục 3.1.3", "(mục 4.5.1)"). Nhắc lại nội dung ngắn gọn, hoặc gọi tên
+    phần ("như phần kiểm tra chính sách đã học cho thấy"), hoặc dẫn tới chương ("mô tả ở Chương 3"). Chỉ cột tra cứu
+    trong bảng tổng hợp mới được ghi số mục.
+  + Công thức: ghi số trong ngoặc tròn như chuẩn toán học, "theo công thức (3.4)".
 - Tránh dấu hiệu văn AI: ", tức", "Đáng chú ý", "Như vậy", "vốn", cấu trúc "không phải ... mà ...", câu tự hạ thấp
   đóng góp.
 - Chủ ngữ: "nhóm" cho việc đã làm ("Nhóm chọn ..."), "đề tài" cho kết quả và đóng góp ("Đề tài cho thấy ...").

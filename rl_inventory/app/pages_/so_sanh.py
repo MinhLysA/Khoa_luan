@@ -7,7 +7,7 @@ import core
 meta, _ = core.load_demo()
 muc_dv = float(meta["env"]["muc_dv"])
 sm = core.summary(meta)
-iso = core.read_results("iso_service.json")
+iso = core.read_results("same_service_main_s42.json")
 MAU = ["var(--bar)", "#EF8A3C", "#4361F5", "#9B7BE0"]          # lưu kho, thiếu hàng, đặt hàng, tràn kho
 
 core.tieu_de("So sánh · số liệu chi tiết", "So sánh chi tiết",
@@ -58,21 +58,20 @@ elif iso is None:
     core.no_data("so sánh khi các cách khác phục vụ ngang IPPO")
 else:
     ip = iso["ket_qua"]["IPPO"]
-    dong, vuot = [dict(ten="IPPO", phu=f"đáp ứng {core.pct(ip['fill'])}", v=ip["cost"], nhan=core.num(ip["cost"]), me=True)], False
+    dong = [dict(ten="IPPO", phu=f"đáp ứng {core.pct(ip['fill'])}", v=ip["cost"], nhan=core.num(ip["cost"]), me=True)]
     for p, r in iso["ket_qua"].items():
         if p == "IPPO":
             continue
         if r.get("cost") is None:
             dong.append(dict(ten=p, phu="không đạt được mức đáp ứng này", v=0, nhan="—"))
             continue
-        vuot |= r["fill"] > iso["target_fill"] + 0.01
         g = (ip["cost"] / r["cost"] - 1) * 100
         dong.append(dict(ten=p, phu=f"đáp ứng {core.pct(r['fill'])}", v=r["cost"], nhan=core.num(r["cost"]),
                          chip=core.chip(f"IPPO {'rẻ hơn' if g < 0 else 'đắt hơn'} {core.num(abs(g), 1)}%",
                                         "good" if g < 0 else "warn")))
     core.the_hoi("iso", "Nếu các cách khác cũng phục vụ khách tốt như IPPO thì sao?",
-                 f"Các cách truyền thống được chỉnh để đáp ứng ít nhất {core.pct(iso['target_fill'])} nhu cầu như IPPO; "
-                 "khi đó chúng tốn hơn nhiều.",
+                 f"Các cách khác được chỉnh thông số để đáp ứng khoảng {core.pct(iso['target_fill'])} nhu cầu, ngang IPPO, "
+                 "rồi so chi phí.",
                  core.thanh(dong),
-                 "Các cách này đáp ứng cao hơn mục tiêu một chút (bước chỉnh thông số còn thô), "
-                 "nên mức chênh ở đây có phần nghiêng về IPPO." if vuot else "")
+                 "Thông số chọn trên miền kiểm định (val), chi phí đo trên miền kiểm thử (test). "
+                 "Khi không có cấu hình đáp ứng đúng mức này, chi phí được nội suy trên đường biên.")

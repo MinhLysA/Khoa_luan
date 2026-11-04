@@ -20,7 +20,7 @@ B2 - Soc cau nhan tao: nhan cau cua mot cua so ngay trong mien test voi mot
      truoc - trong - sau soc va toc do hoi phuc.
 
 Cac chinh sach: IPPO, 3 baseline tinh chinh truc tiep, va cac baseline da
-chinh o CUNG MUC PHUC VU voi IPPO (tu iso_service.json) - chi so sanh chi phi
+chinh o CUNG MUC PHUC VU voi IPPO (tu same_service_main_s42.json) - chi so sanh chi phi
 giua cac chinh sach co fill rate tuong duong moi cong bang.
 
 Cach dung:

@@ -1,4 +1,3 @@
-% [SO-MOI] Cap nhat doi thu va ket luan theo ket qua moi
 \newpage
 \begin{center}
 {\fontsize{15pt}{18pt}\selectfont \textbf{BUILDING A REINFORCEMENT LEARNING MODEL FOR OPTIMIZING REORDER POLICY IN MULTI-WAREHOUSE INVENTORY MANAGEMENT}\par}
@@ -13,4 +12,4 @@ This thesis models a network of 10 warehouses and 30 products as 300 agents. Eac
 
 The simulation uses the real demand of the M5 Walmart dataset, split in time into training, validation and test periods, with stochastic lead times. PS-IPPO is compared with classical policies and a predict-then-optimize policy tuned on the validation period, over several training seeds and with paired statistical tests. The comparison is made both with each method at its best configuration and at a common service level.
 
-The results show that PS-IPPO is cheaper than the classical policies at a common service level, but the policy that uses demand forecasts remains cheaper. Information about future demand has the largest effect on cost. The contributions are a PS-IPPO framework with shared warehouse capacity on real retail data, an evaluation protocol that separates operating cost, service level and the training signal, and a simulation application that proposes purchase requests from the trained model.
+The results show that PS-IPPO is cheaper than the classical policies at a common service level, including their per-group and capacity-aware versions. When the agents choose a safety factor on top of a demand forecast, the model matches the cost of the predict-then-optimize policy and is cheaper than every classical policy. Information about future demand has the largest effect on cost. The contributions are a PS-IPPO framework with shared warehouse capacity on real retail data, an evaluation protocol that separates operating cost, service level and the training signal, and a simulation application that proposes purchase requests from the trained model.

@@ -860,27 +860,47 @@ def test_chon_theo_nhom_moi_nhom_lay_cau_hinh_re_nhat_theo_gia_bong():
     assert iso.chon_theo_nhom(C, T, [100.0]) == {(1, 1)}  # gia bong cao: ca hai nhom giu hang
 
 
-def test_fill_val_cuoi_chi_tinh_mot_lan_ket_qua_lap_lai(tmp_path, monkeypatch):
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-    import run_experiments as campaign
-    monkeypatch.setattr(campaign, "ROOT", tmp_path)
-    (tmp_path / "results").mkdir()
-    (tmp_path / "results" / "train_log_x.csv").write_text(
-        "episode,eval_fill\n1,0.5\n2,0.5\n3,0.5\n4,0.9\n", encoding="utf-8")
-    assert campaign.fill_val_cuoi("x") == pytest.approx(0.7)   # 0.5 lap lai chi tinh mot lan
-
-
 def test_phuong_an_rut_gon_3_seed_va_bo_nhom_da_cat():
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
     import run_experiments as campaign
     assert campaign.MAIN_SEEDS == (42, 1, 2) and set(campaign.MAIN) == {"main_s42", "main_s1", "main_s2"}
-    cat = ("wh_critic", "networks_", "pair_penalty", "scale_1000", "tuning_", "shared_supply", "capacity_")
+    cat = ("wh_critic", "networks_", "pair_penalty", "scale_1000", "tuning_", "shared_supply", "capacity_",
+           "forecast_obs", "safety_factor")
     assert not [t for t in campaign.RUNS if t.startswith(cat)]
-    assert set(campaign.NHOM_MO_RONG) == {"penalty_trial", "forecast_obs", "safety_factor", "forecast_safety"}
-    assert not [t for t in campaign.RUNS if t.startswith("penalty") and not t.endswith("_trial")]
-    assert set(campaign.DIEU_KIEN) == {"shared_supply_tight", "shared_supply_mild", "capacity_3", "capacity_8"}
-    for ten in campaign.DIEU_KIEN:
+    assert set(campaign.NHOM_LAN_CHAY_MO_RONG) == {"penalty_trial", "forecast_safety"}
+    assert campaign.DIEU_KIEN_ZERO_SHOT == ("shared_supply_tight", "shared_supply_mild")
+    for tag, (cfg, *_r) in campaign.RUNS.items():
+        assert (campaign.ROOT / cfg).exists(), tag
+    for ten in campaign.DIEU_KIEN_ZERO_SHOT:
         assert (campaign.ROOT / "configs" / f"{ten}.yaml").exists()
+
+
+def test_buoc_danh_gia_bo_qua_khi_ket_qua_moi_hon_dau_vao(tmp_path):
+    import os
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+    import run_experiments as campaign
+    vao, ra = tmp_path / "ck.pth", tmp_path / "summary.json"
+    assert campaign.can_chay(ra, vao)                  # chua co ket qua -> chay
+    vao.write_text("x"); ra.write_text("y")
+    os.utime(vao, (1000, 1000)); os.utime(ra, (2000, 2000))
+    assert not campaign.can_chay(ra, vao, tmp_path / "khong_co")   # ket qua moi hon -> bo qua
+    os.utime(vao, (3000, 3000))
+    assert campaign.can_chay(ra, vao)                  # checkpoint moi hon -> chay lai
+
+
+def test_buoc_bo_qua_voi_duong_dan_tuong_doi(tmp_path, monkeypatch, capsys):
+    """Loi that 03/11: buoc() nhan 'results/...' tuong doi, nhanh bo qua phai in duoc ma khong loi."""
+    import os
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+    import run_experiments as campaign
+    monkeypatch.setattr(campaign, "ROOT", tmp_path)
+    monkeypatch.setattr(campaign, "sh", lambda cmd: pytest.fail("khong duoc chay lai"))
+    (tmp_path / "results").mkdir()
+    vao, ra = tmp_path / "results" / "log.csv", tmp_path / "results" / "hinh.png"
+    vao.write_text("x"); ra.write_text("y")
+    os.utime(vao, (1000, 1000)); os.utime(ra, (2000, 2000))
+    campaign.buoc("results/hinh.png", ["results/log.csv"], ["lenh"])
+    assert "[bo qua] results/hinh.png" in capsys.readouterr().out
 
 
 def test_chi_phi_van_hanh_theo_cap_khong_gom_phat_sla():
@@ -984,12 +1004,6 @@ def test_khong_bat_nguon_cung_thi_khong_cat_don():
     assert inf["order_requested"] == pytest.approx(inf["order_qty"]) and "supply" not in env.obs_groups
 
 
-def test_tron_chinh_sach_theo_nhom():
-    from hybrid_policy import tron
-    fn = tron([lambda o, e: np.full(3, 7), lambda o, e: np.full(3, 8)], np.array([0, 1, 0]))
-    assert fn(None, None).tolist() == [7, 8, 7]
-
-
 def test_du_bao_lai_phan_ung_voi_soc_tu_ngay_hom_sau(tmp_path):
     pytest.importorskip("lightgbm")
     from forecast_demand import du_bao_lai, features, fit, targets, sai_so_truot, HORIZONS
@@ -1021,15 +1035,6 @@ def test_du_bao_lai_phan_ung_voi_soc_tu_ngay_hom_sau(tmp_path):
     assert not np.allclose(F2[101:], F0[101:])
     assert sigma2[115:].mean() > sigma0[115:].mean()
     assert du_bao_lai(dict(cfg, paths=dict(results_dir=str(tmp_path / "khong"))), data, sot) is None
-
-
-def test_bootstrap_phan_tang_dau_dung():
-    from multi_seed_stats import bootstrap_phan_tang
-    C_base = np.ones(70) * 100
-    C_ippo = np.stack([C_base * 0.9, C_base * 0.92, C_base * 0.88])
-    r = bootstrap_phan_tang(C_ippo, C_base, 7, 200, np.random.default_rng(0))
-    assert r["tb_percent"] == pytest.approx(-10.0)
-    assert r["co_y_nghia"] and r["ci95_high"] < 0
 
 
 # --------------------------------------------------------------------------- #

@@ -31,30 +31,26 @@ def so(x, d=1):
     return s.replace(",", "@").replace(".", ",").replace("@", ".")
 
 
-def lenh(multi, iso, tk):
+def lenh(multi, iso, du_bao):
+    """multi, du_bao: multiseed_main.json, multiseed_forecast_safety.json; iso: same_service_main_s42.json."""
     L = {}
-    if multi:
-        L["chiPhiIPPO"] = so(multi["ippo_cost_mean"], 0)
-        L["fillIPPO"] = so(100 * multi["ippo_fill_mean"]) + r"\%"
-        L["soHatGiong"] = str(len(multi["seeds"]))
-        for ten, ma in [("(s,S)", "SS"), ("Newsvendor theo nhóm", "NVNhom"),
-                        ("(s,S) biết sức chứa", "SSKho"), ("Newsvendor dự báo", "NVDuBao")]:
-            g = multi["gap_vs_baseline"].get(ten)
+    for d, tien_to in ((multi, ""), (du_bao, "DuBao")):
+        if not d:
+            continue
+        L[f"chiPhiIPPO{tien_to}"] = so(d["ippo_cost_mean"], 0)
+        L[f"fillIPPO{tien_to}"] = so(100 * d["ippo_fill_mean"]) + r"\%"
+        L[f"soHatGiong{tien_to}"] = str(len(d["seeds"]))
+        for ten, ma in [("(s,S)", "SS"), ("EOQ", "EOQ"), ("Newsvendor", "NV"), ("Newsvendor theo nhóm", "NVNhom"),
+                        ("(s,S) theo nhóm", "SSNhom"), ("(s,S) biết sức chứa", "SSKho"), ("Newsvendor dự báo", "NVDuBao")]:
+            g = d["gap_vs_baseline"].get(ten)
             if g:
-                L[f"delta{ma}"] = so(g["mean"]) + r"\%"
+                L[f"delta{tien_to}{ma}"] = so(g["mean"]) + r"\%"
     if iso:
         for ten, ma in [("(s,S)", "SS"), ("Newsvendor", "NV"), ("(s,S) biết sức chứa", "SSKho"),
                         ("Newsvendor dự báo", "NVDuBao")]:
             r = iso["ket_qua"].get(ten)
             if r and r.get("delta_ippo_percent") is not None:
                 L[f"cungMuc{ma}"] = so(r["delta_ippo_percent"]) + r"\%"
-    if tk:
-        for ten, ma in [("(s,S)", "SS"), ("Newsvendor theo nhóm", "NVNhom")]:
-            r = tk["gap_chi_phi"].get(ten, {}).get("khoi_7")
-            if r:
-                L[f"iqm{ma}"] = so(r["iqm_percent"]) + r"\%"
-                L[f"ciThap{ma}"] = so(r["ci95_low"]) + r"\%"
-                L[f"ciCao{ma}"] = so(r["ci95_high"]) + r"\%"
     return L
 
 
@@ -72,7 +68,7 @@ def quet():
 
 
 def main():
-    L = lenh(doc("multiseed_main.json"), doc("same_service_main_s42.json"), doc("multi_seed_stats.json"))
+    L = lenh(doc("multiseed_main.json"), doc("same_service_main_s42.json"), doc("multiseed_forecast_safety.json"))
     if L:
         out = REPORT / "so_lieu.tex"
         out.write_text("% SINH TU DONG boi scripts/export_tex_numbers.py - KHONG sua tay.\n"

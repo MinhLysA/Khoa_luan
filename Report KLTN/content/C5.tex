@@ -4,24 +4,22 @@
 \section{Kết quả đạt được}
 \label{sec:tongKet}
 
-% [SO-MOI] Toan bo chuong viet lai theo ket qua moi: so hat giong, ket luan Cau hoi 1, 4, dong gop, han che ve du bao, phoi hop va cac muc mo rong chua lam
-Đề tài đã hoàn thành cả sáu mục tiêu đặt ra ở mục~\ref{subsec:muctieu}.
+Đề tài đã hoàn thành cả sáu mục tiêu đặt ra ở Chương~\ref{chap:tongquan}. Kết quả ứng với từng mục tiêu được đối chiếu ở Bảng~\ref{tab:doiChieuMucTieu}.
 
 \begin{table}[H]
     \centering
     \caption{Đối chiếu mục tiêu và kết quả}
     \label{tab:doiChieuMucTieu}
     \small
-    \begin{tabular}{|c|p{5.0cm}|p{8.2cm}|}
+    \begin{tabular}{|c|>{\raggedright\arraybackslash}p{5.0cm}|>{\raggedright\arraybackslash}p{8.2cm}|}
         \hline
         STT & Mục tiêu & Kết quả \\
         \hline
         1 & Môi trường mô phỏng nhiều kho, nhiều mặt hàng theo chuẩn Gymnasium & Môi trường 10 kho, 30 mặt hàng (300 cặp) với nhu cầu M5, thời gian giao hàng 1--3 ngày, sức chứa riêng từng kho, bốn thành phần chi phí và hình phạt mức phục vụ tách khỏi chi phí vận hành \\ \hline
         2 & Phần thưởng phân rã cục bộ kèm phạt mức phục vụ & Phần thưởng theo từng cặp, chuẩn hóa theo cặp, phạt mức phục vụ trên cửa sổ trượt 30 ngày. Thí nghiệm loại trừ xác nhận thiết kế này là cần thiết \\ \hline
-        3 & Cài đặt và huấn luyện IPPO chia sẻ tham số & 300 tác tử dùng chung một mạng, huấn luyện 10.000 tập với 3 hạt giống, hội tụ ổn định ở cả 3 hạt giống \\ \hline
-        4 & Đánh giá so với các chính sách đối chứng & So sánh trực tiếp và ở cùng mức phục vụ, có kiểm định thống kê, phân tích theo giai đoạn nhu cầu, độ nhạy đơn giá và độ bền \\ \hline
-        5 & Độ bền của mô hình khi điều kiện vận hành thay đổi & Đánh giá mô hình chính đã huấn luyện, không huấn luyện lại, khi đổi sức chứa, thời gian giao hàng và mức nhu cầu \\ \hline
-        % [SO-MOI] Them nguon cung chung va suc chua 3, 8 ngay vao dong 5 khi co ket qua
+        3 & Cài đặt và huấn luyện IPPO chia sẻ tham số & 300 tác tử dùng chung một mạng, huấn luyện 10.000 tập với 3 hạt giống, hội tụ ổn định ở cả 3 hạt giống. Biến thể kết hợp dự báo cũng được huấn luyện với 3 hạt giống \\ \hline
+        4 & Đánh giá so với các chính sách đối chứng & So sánh trực tiếp và ở cùng mức phục vụ với chính sách cổ điển, chính sách biết sức chứa và chính sách dự báo rồi tối ưu, có kiểm định thống kê, phân tích theo giai đoạn nhu cầu và độ nhạy đơn giá \\ \hline
+        5 & Độ bền của mô hình khi điều kiện vận hành thay đổi & Đánh giá mô hình chính đã huấn luyện, không huấn luyện lại, khi đổi sức chứa, thời gian giao hàng, mức nhu cầu và khi có nguồn cung chung giữa các kho \\ \hline
         6 & Ứng dụng mô phỏng & Ứng dụng nạp mô hình đã huấn luyện, chạy trên miền kiểm thử, hiển thị kết quả, diễn biến từng cặp, kịch bản tăng cầu và phiếu đề nghị đặt hàng \\
         \hline
     \end{tabular}
@@ -30,28 +28,28 @@
 \section{Kết luận}
 \label{subsec:traLoiCauHoi}
 
-Trên mạng lưới nhiều kho có sức chứa dùng chung, học tăng cường đa tác tử với chia sẻ tham số rẻ hơn các chính sách cổ điển khi so ở cùng mức phục vụ. Tuy nhiên, mô hình chưa vượt được chính sách dùng dự báo nhu cầu.
+Trên mạng lưới nhiều kho có sức chứa dùng chung, học tăng cường đa tác tử với chia sẻ tham số rẻ hơn các chính sách cổ điển khi so ở cùng mức phục vụ. Khi được kết hợp với dự báo nhu cầu, mô hình đạt chi phí của chính sách dự báo rồi tối ưu và rẻ hơn mọi chính sách cổ điển.
 
-Với Câu hỏi 1, ở cùng mức phục vụ IPPO rẻ hơn các chính sách cổ điển từ 7,3\% đến 22,3\%, kể cả các phiên bản theo nhóm. Tuy nhiên, chính sách dùng dự báo vẫn rẻ hơn IPPO 4,3\% ở cùng mức phục vụ. Mốc biết trước nhu cầu cho thấy thông tin về tương lai là phần có giá trị lớn nhất. Ưu thế của IPPO so với chính sách cổ điển tập trung ở các giai đoạn nhu cầu biến động, ở ngày sự kiện, cuối tuần và khi hồi phục sau sốc cầu. Khi nhu cầu ổn định, chính sách cổ điển tinh chỉnh theo nhóm vẫn cạnh tranh được.
-
-% [SO-MOI] So cua hat giong 1
-Khi dùng IPPO cho nhóm nhu cầu cao và chính sách dự báo cho các nhóm còn lại, chi phí giảm 3,2\% so với IPPO ở cùng mức phục vụ, và khoảng cách với chính sách dự báo còn 1,0\%. Ở nhóm bán chậm, quy tắc đặt hàng theo dự báo là đủ. Nhóm bán nhanh là nơi IPPO tiến gần chính sách dự báo nhất nhưng chưa vượt được.
+% [SO-MOI] Cap nhat so cung muc phuc vu theo KET_QUA.txt muc 1 sau khi chay eval_all
+Với Câu hỏi 1, ở cùng mức phục vụ IPPO rẻ hơn các chính sách cổ điển từ 7,3\% đến 22,3\%, kể cả các phiên bản theo nhóm và phiên bản biết sức chứa. Khi mỗi phương pháp dùng cấu hình tốt nhất của mình, IPPO rẻ hơn $(s, S)$ và EOQ ở cả ba hạt giống và giữ mức phục vụ cao hơn 4--5 điểm phần trăm. Ưu thế của IPPO tập trung ở ngày có sự kiện, cuối tuần và khi có sốc cầu. Khi nhu cầu ổn định, chính sách cổ điển tinh chỉnh theo nhóm vẫn cạnh tranh được.
 
 Với Câu hỏi 2, một bộ trọng số dùng chung điều khiển được 300 cặp có nhu cầu chênh nhau hơn ba bậc độ lớn. Ở nhóm nhu cầu trung bình và cao, IPPO tốt hơn $(s, S)$ cả về chi phí lẫn mức phục vụ. Chính sách học được cũng áp dụng được cho mặt hàng chưa gặp khi huấn luyện mà không suy giảm. Ở nhóm bán chậm, IPPO hạ mức phục vụ vì đó là lựa chọn rẻ hơn theo hàm mục tiêu cấp hệ thống.
 
 Với Câu hỏi 3, phần thưởng phân rã cục bộ có chuẩn hóa theo cặp là cần thiết. Thay bằng phần thưởng toàn cục hoặc bỏ chuẩn hóa đều làm chi phí tăng hơn gấp ba ở cả 3 hạt giống.
 
-Với Câu hỏi 5, mô hình đã huấn luyện vẫn rẻ hơn $(s, S)$ và EOQ khi sức chứa và thời gian giao hàng thay đổi, nhưng đắt hơn năm trong sáu chính sách đối chứng khi nhu cầu giảm. Nguyên nhân là mô hình tiếp tục giữ mức phục vụ cao. Nhóm không huấn luyện lại mô hình dưới các điều kiện này, nên kết luận chỉ nói về độ bền của mô hình đã có.
-% [SO-MOI] Bo sung ket luan nguon cung chung va suc chua 3, 8 ngay khi co ket qua
+Với Câu hỏi 4, kết hợp dự báo giảm chi phí của PS-IPPO 7,7\% so với mô hình chính. Khi tác tử chọn hệ số an toàn trên nền dự báo LightGBM, PS-IPPO rẻ hơn mọi chính sách cổ điển từ 6,2\% đến 24,1\% và ngang Newsvendor dự báo ở cả ba hạt giống. Phần lớn lợi thế này đến từ dự báo. Học tăng cường cho phép tích hợp dự báo mà không đổi môi trường hay thuật toán, và tự chọn mức an toàn thay cho việc quét lưới tham số.
 
-Từ các kết quả trên, đề tài có bốn đóng góp. Thứ nhất, đề tài xây dựng một môi trường mô phỏng tồn kho 10 kho, 30 mặt hàng hiệu chỉnh từ dữ liệu bán lẻ thực tế. Trong môi trường này, sức chứa dùng chung là yếu tố tạo nên bản chất đa tác tử của bài toán. Thứ hai, đề tài thiết kế và kiểm chứng phần thưởng phân rã cục bộ có chuẩn hóa theo cặp, giúp 300 tác tử với quy mô rất khác nhau học ổn định trên cùng một mạng. Thứ ba, đề tài cho thấy PS-IPPO rẻ hơn các chính sách cổ điển ở cùng mức phục vụ, và tự học được cách thu hẹp lô hàng khi kho chật. Đề tài cũng chỉ ra giới hạn của cách tiếp cận này khi so với chính sách dùng dự báo. Thứ tư, đề tài áp dụng một giao thức đánh giá có kiểm soát, gồm so sánh ở cùng mức phục vụ, nhiều hạt giống, kiểm định theo cặp và phân tích theo giai đoạn nhu cầu. Giao thức này giúp kết luận không bị sai lệch khi các phương pháp nằm ở những điểm khác nhau trên đường đánh đổi giữa chi phí và mức phục vụ.
+Với Câu hỏi 5, mô hình đã huấn luyện vẫn rẻ hơn $(s, S)$ và EOQ khi sức chứa và thời gian giao hàng thay đổi, và rẻ hơn mọi chính sách đối chứng khi nhu cầu tăng 20\%. Khi nhu cầu giảm, mô hình đắt hơn phần lớn chính sách đối chứng vì tiếp tục giữ mức phục vụ cao. Nhóm không huấn luyện lại mô hình dưới các điều kiện này, nên kết luận chỉ nói về độ bền của mô hình đã có.
+% [SO-MOI] Bo sung ket luan nguon cung chung (KET_QUA.txt muc 5b) khi co ket qua
 
-Về ứng dụng, kết quả gợi ý doanh nghiệp nên đầu tư vào dự báo nhu cầu trước, vì đây là phần mang lại lợi ích lớn nhất. Chính sách cổ điển vẫn đủ tốt cho nhóm hàng có nhu cầu ổn định. Ứng dụng mô phỏng của đề tài cho phép người quản lý xem trước tác động của chính sách trước khi áp dụng.
+Từ các kết quả trên, đề tài có bốn đóng góp. Thứ nhất, đề tài xây dựng một môi trường mô phỏng tồn kho 10 kho, 30 mặt hàng hiệu chỉnh từ dữ liệu bán lẻ thực tế. Trong môi trường này, sức chứa dùng chung là yếu tố tạo nên bản chất đa tác tử của bài toán. Thứ hai, đề tài thiết kế và kiểm chứng phần thưởng phân rã cục bộ có chuẩn hóa theo cặp, giúp 300 tác tử với quy mô rất khác nhau học ổn định trên cùng một mạng. Thứ ba, đề tài cho thấy PS-IPPO rẻ hơn các chính sách cổ điển ở cùng mức phục vụ và tự học được cách thu hẹp lô hàng khi kho chật. Khi kết hợp với dự báo nhu cầu, mô hình đạt chi phí của chính sách dự báo tốt nhất. Thứ tư, đề tài áp dụng một giao thức đánh giá có kiểm soát. Giao thức gồm so sánh ở cùng mức phục vụ, chính sách đối chứng chia theo loại thông tin, nhiều hạt giống, kiểm định theo cặp và phân tích theo giai đoạn nhu cầu. Giao thức này giúp kết luận không bị sai lệch khi các phương pháp nằm ở những điểm khác nhau trên đường đánh đổi giữa chi phí và mức phục vụ.
+
+Về ứng dụng, kết quả gợi ý doanh nghiệp nên đầu tư vào dự báo nhu cầu trước, vì đây là phần mang lại lợi ích lớn nhất. Khi đã có dự báo, học tăng cường có thể đảm nhận việc chọn mức an toàn cho từng mặt hàng có tính tới sức chứa kho, thay cho việc chỉnh tay tham số. Chính sách cổ điển vẫn đủ tốt cho nhóm hàng có nhu cầu ổn định. Ứng dụng mô phỏng của đề tài cho phép người quản lý xem trước tác động của chính sách trước khi áp dụng.
 
 \section{Hạn chế}
 \label{sec:hanChe}
 
-Các hạn chế dưới đây được xếp theo mức ảnh hưởng tới kết luận. Hạn chế ảnh hưởng nhiều nhất là mô hình chính chưa khai thác được thông tin về nhu cầu tương lai. Chính sách dùng dự báo vẫn rẻ hơn IPPO ở cùng mức phục vụ, nên đề tài chưa thể kết luận học tăng cường thay được dự báo rồi tối ưu.
+Các hạn chế dưới đây được xếp theo mức ảnh hưởng tới kết luận. Hạn chế ảnh hưởng nhiều nhất là phần đóng góp riêng của học tăng cường khi đã có dự báo còn nhỏ. Biến thể kết hợp dự báo đạt chi phí ngang Newsvendor dự báo nhưng chưa rẻ hơn rõ rệt, và mô hình được chọn nằm ở giai đoạn đầu của quá trình huấn luyện. Mô hình chính không nhận dự báo nên đắt hơn chính sách dự báo. Vì vậy đề tài chưa thể kết luận học tăng cường thay được dự báo rồi tối ưu, mà chỉ cho thấy hai cách tiếp cận kết hợp được với nhau.
 
 Hạn chế thứ hai là mức phục vụ không đồng đều giữa các mặt hàng. Dù đã dùng hình phạt chuẩn hóa, 28,7\% số cặp vẫn có tỷ lệ đáp ứng dưới 85\%, tập trung ở nhóm bán chậm. Mục tiêu mức phục vụ chỉ được đáp ứng ở cấp hệ thống. Hạn chế này ảnh hưởng tới việc áp dụng trong thực tế, khi doanh nghiệp cần cam kết mức phục vụ cho từng mặt hàng.
 
@@ -59,16 +57,16 @@ Hạn chế thứ ba là số hạt giống của từng phân tích. Kết qu�
 
 Hạn chế thứ tư là đề tài chưa so sánh với phối hợp tường minh. Các tác tử chỉ phối hợp gián tiếp qua tín hiệu sức chứa. Vì vậy chưa định lượng được giá trị mà một Critic tập trung theo hướng CTDE \parencite{yu2022mappo} có thể mang lại. Câu hỏi này đáng quan tâm vì Zhu và Wu \cite{zhu2026spatiotemporal} báo cáo hiệu năng giảm đáng kể khi bỏ cơ chế phối hợp trong khung của họ.
 
-Hạn chế thứ năm thuộc về phạm vi mô hình. Mô hình chính gồm các kho song song. Nguồn cung chung giữa các kho chỉ được xét ở phần đánh giá không huấn luyện lại, với một cách chia theo tỷ lệ. Đề tài không huấn luyện lại mô hình dưới nguồn cung chung hay sức chứa khác, không khảo sát mức chia sẻ tham số, quy mô trên 300 tác tử và độ nhạy siêu tham số. Đề tài chưa xét cấu trúc đa cấp \parencite{clark1960} hay điều chuyển hàng giữa các kho. Không gian hành động chỉ có 6 mức đặt hàng. Tác tử dùng trực tiếp lịch sử nhu cầu, chưa tích hợp mô hình dự báo. Các đặc trưng lịch và giá gần như không được khai thác, và IPPO yếu nhất ở mùa lễ.
+Hạn chế thứ năm thuộc về phạm vi mô hình. Mô hình chính gồm các kho song song. Nguồn cung chung giữa các kho chỉ được xét ở phần đánh giá không huấn luyện lại, với một cách chia theo tỷ lệ. Đề tài không huấn luyện lại mô hình dưới nguồn cung chung hay sức chứa khác, không khảo sát mức chia sẻ tham số, quy mô trên 300 tác tử và độ nhạy siêu tham số. Đề tài chưa xét cấu trúc đa cấp \parencite{clark1960} hay điều chuyển hàng giữa các kho. Không gian hành động chỉ có 6 mức đặt hàng. Mô hình chính dùng trực tiếp lịch sử nhu cầu, còn dự báo chỉ được tích hợp ở một biến thể. Các đặc trưng lịch và giá gần như không được khai thác, và IPPO yếu nhất ở mùa lễ.
 
 Hạn chế cuối cùng thuộc về dữ liệu và môi trường đánh giá. Dữ liệu M5 là dữ liệu bán lẻ của Walmart tại Hoa Kỳ. M5 ghi doanh số chứ không ghi nhu cầu thật và không đánh dấu ngày hết hàng, nên nhu cầu đầu vào có thể thấp hơn thực tế ở mức chưa đo được. Mười kho của đề tài là mười cửa hàng của M5 được xem như các điểm lưu trữ độc lập, và sức chứa là giả định. Đơn giá chi phí cũng là giả định của đề tài, và phân tích độ nhạy giữ nguyên chính sách đã học. Mô hình mới được kiểm chứng trên môi trường mô phỏng, chưa trên dữ liệu vận hành trực tiếp. Mô hình học từ dữ liệu nên khi áp dụng cho Việt Nam cần huấn luyện lại trên dữ liệu bán hàng trong nước và thay vector lịch Hoa Kỳ bằng lịch lễ Việt Nam. Kiến trúc mô hình và quy trình huấn luyện có thể giữ nguyên.
 
 \section{Hướng phát triển}
 \label{sec:huongPhatTrien}
 
-Các hướng dưới đây cần dữ liệu hoặc hệ thống thật, hoặc đổi sang một lớp bài toán khác, nên nằm ngoài những gì đề tài làm được với dữ liệu M5.
+Các hướng dưới đây cần dữ liệu hoặc hệ thống thật, hoặc đổi sang một lớp bài toán khác, nên nằm ngoài những gì đề tài làm được với dữ liệu M5. Bảng~\ref{tab:huongPhatTrien} nêu từng hướng, lý do chưa thực hiện và phần đề tài đã chuẩn bị.
 
-\begin{longtable}{|c|p{3.9cm}|p{5.1cm}|p{3.8cm}|}
+\begin{longtable}{|c|>{\raggedright\arraybackslash}p{3.9cm}|>{\raggedright\arraybackslash}p{5.1cm}|>{\raggedright\arraybackslash}p{3.8cm}|}
     \caption{Hướng phát triển và phần đề tài đã chuẩn bị}
     \label{tab:huongPhatTrien} \\
     \hline
@@ -79,10 +77,10 @@ Các hướng dưới đây cần dữ liệu hoặc hệ thống thật, hoặc
     STT & Hướng phát triển & Lý do chưa thực hiện & Phần đã chuẩn bị \\
     \hline
     \endhead
-    1 & Triển khai trên hệ thống quản lý kho thật và thử nghiệm đối chứng tại doanh nghiệp & Cần quyền truy cập hệ thống và dữ liệu vận hành & Phiếu mua sắm, bản thử nghiệm Model Context Protocol (mục~\ref{subsec:mcp}) \\ \hline
+    1 & Triển khai trên hệ thống quản lý kho thật và thử nghiệm đối chứng tại doanh nghiệp & Cần quyền truy cập hệ thống và dữ liệu vận hành & Phiếu mua sắm, bản thử nghiệm Model Context Protocol \\ \hline
     2 & Dữ liệu Việt Nam và hiệu chỉnh chi phí thật & Không có dữ liệu. M5 không có giá vốn, chi phí đặt hàng, chi phí lưu kho & Độ nhạy theo 36 bộ đơn giá. Giữ nguyên kiến trúc, thay vector lịch \\ \hline
     3 & Khôi phục nhu cầu bị cắt do hết hàng & Cần cờ hết hàng hoặc tồn kho theo ngày, M5 không có & Kịch bản nhu cầu tăng 20\%, nêu rõ ở hạn chế \\ \hline
-    4 & Chuyển hàng ngang giữa kho và mạng nhiều tầng có kho trung tâm & Đổi lớp bài toán. Cần chi phí, thời gian chuyển hàng mà M5 không có, và phải thiết kế lại môi trường, chính sách đối chứng và phép so sánh & Đánh giá không huấn luyện lại với nguồn cung chung giữa các kho (mục~\ref{subsec:bienTheNguonCung}) \\ \hline
+    4 & Chuyển hàng ngang giữa kho và mạng nhiều tầng có kho trung tâm & Đổi lớp bài toán. Cần chi phí, thời gian chuyển hàng mà M5 không có, và phải thiết kế lại môi trường, chính sách đối chứng và phép so sánh & Đánh giá không huấn luyện lại với nguồn cung chung giữa các kho \\ \hline
     5 & Học tăng cường ngoại tuyến từ nhật ký quyết định & Cần nhật ký quyết định và kết quả thật & Ứng dụng mô phỏng ghi lại quyết định theo ngày \\ \hline
     6 & Bảo đảm hình thức cho ràng buộc mức phục vụ & Cần khung lý thuyết có chặn xác suất vi phạm. Đề tài chỉ xử lý ràng buộc mềm & Khảo sát thực nghiệm hệ số phạt mức phục vụ \\ \hline
     7 & Tương tác với nhà cung cấp: giá động, số lượng tối thiểu, hợp đồng, nhiều nguồn cung & Sản phẩm của đề tài dừng ở phiếu gửi phòng mua hàng. Thiếu dữ liệu & Ghi chú phạm vi trên trang phiếu \\ \hline

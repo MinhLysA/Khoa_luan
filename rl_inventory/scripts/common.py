@@ -3,7 +3,7 @@ scripts/common.py
 =================
 Tien ich dung chung cho cac script phan tich hau nghiem (regime_analysis.py,
 policy_behavior.py): nap du lieu, tao moi truong, nap IPPO va cac baseline
-(ca ban tinh chinh truc tiep lan ban cung muc phuc vu tu iso_service.json).
+(ca ban tinh chinh truc tiep lan ban cung muc phuc vu tu same_service_main_s42.json).
 """
 import sys
 import json
@@ -58,8 +58,8 @@ def load_agent(cfg, env, checkpoint):
 def make_policies(cfg, env, checkpoint, include_iso=True, include_group=True,
                   du_bao=True, iso_tag="main_s42"):
     """dict ten -> action_fn(obs, env). Gom IPPO, 3 baseline tinh chinh truc
-    tiep (baseline_params.json) va - neu co iso_service.json - cac baseline
-    duoc chinh de dat CUNG MUC PHUC VU voi IPPO (so sanh chi phi cong bang)."""
+    tiep (baseline_params.json) va - neu co same_service_<iso_tag>.json (luoi min) - cac
+    baseline duoc chinh de dat CUNG MUC PHUC VU voi IPPO (so sanh chi phi cong bang)."""
     results = ROOT / cfg["paths"]["results_dir"]
     agent = load_agent(cfg, env, checkpoint)
     pols = {"IPPO": lambda obs, e: agent.env_action(
@@ -98,10 +98,8 @@ def make_policies(cfg, env, checkpoint, include_iso=True, include_group=True,
             if name in defaults:
                 pols[f"{name} theo nhóm"] = build(name, expand_group_params(by_group, gi))
 
-    # [Cung muc phuc vu] Uu tien luoi min cua seed chinh, roi moi den luoi tho
+    # [Cung muc phuc vu] Luoi min cua seed chinh (compare_same_service.py)
     p = results / f"same_service_{iso_tag}.json"
-    if not p.exists():
-        p = results / "iso_service.json"
     if include_iso and p.exists():
         iso = json.loads(p.read_text(encoding="utf-8"))
         for name, r in iso.get("ket_qua", {}).items():

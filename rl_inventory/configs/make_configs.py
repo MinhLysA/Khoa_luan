@@ -47,18 +47,8 @@ for _k, _v in PHI.items():
     ABLATIONS[f"service_penalty_{_k}"] = (f"He so phat muc phuc vu phi_dv = {_v}",
                               lambda c, v=_v: c["env"].update(phi_dv=v))
 
-ABLATIONS["forecast_observation"] = ("IPPO nhan du bao trong quan sat",
-                            lambda c: c["env"].update(include_forecast=True))
-# z_levels co 6 muc de giu nguyen n_action_levels; lead_time, q_factor nhu (s,S) tinh chinh
-ABLATIONS["safety_factor"] = ("Tac tu chon he so an toan z cua chinh sach (s,S)",
-                              lambda c: c["ppo"].update(
-                                  action_mode="base_stock",
-                                  base_stock=dict(z_levels=[-0.5, 0.0, 0.5, 1.0, 1.5, 2.5],
-                                                  lead_time=3.0, q_factor=1.0,
-                                                  ordering_cost=c["env"]["cp_dh"],
-                                                  holding_cost=c["env"]["cp_lk"])))
-# [He so an toan tren nen du bao] Co dinh z thi trung Newsvendor du bao, nen RL chi phai hoc phan dieu chinh theo
-# trang thai. z_levels, entropy va phi_dv chon tren mien val: luoi hep va entropy thap
+# [Cau 4: he so an toan tren nen du bao] Co dinh z thi trung Newsvendor du bao, nen RL chi phai hoc phan dieu
+# chinh theo trang thai. z_levels, entropy va phi_dv chon tren mien val: luoi hep va entropy thap
 # de tac tu khong chon z gan ngau nhien khi tin hieu loi the nho
 ABLATIONS["forecast_safety_factor"] = ("Tac tu chon he so an toan tren nen du bao",
                             lambda c: (c["env"].update(include_forecast=True, phi_dv=1.0),
@@ -66,6 +56,7 @@ ABLATIONS["forecast_safety_factor"] = ("Tac tu chon he so an toan tren nen du ba
                                                        ent_coef_end=0.0005,
                                                        base_stock=dict(z_levels=[0.0, 0.2, 0.4, 0.6, 0.8, 1.2],
                                                                        lead_time=3.0, du_bao=True))))
+
 
 def dieu_kien(ten, mo_ta, **env):
     """Dieu kien van hanh chi dung de DANH GIA zero-shot mo hinh chinh (khong train lai), ket qua o thu muc rieng.
@@ -80,8 +71,6 @@ def dieu_kien(ten, mo_ta, **env):
 # thi khong chinh sach nao giu duoc 85% vi don dat theo lo hay vuot tran ngay
 dieu_kien("shared_supply_tight", "Nguon cung chung cang", supply_cover=2.0, supply_hide_obs=True)
 dieu_kien("shared_supply_mild", "Nguon cung chung vua", supply_cover=3.0, supply_hide_obs=True)
-dieu_kien("capacity_3", "Suc chua bang 3 ngay cau", capacity_cover_days=3.0)
-dieu_kien("capacity_8", "Suc chua bang 8 ngay cau", capacity_cover_days=8.0)
 
 
 def main():

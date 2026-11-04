@@ -709,23 +709,23 @@ trong `results/KET_QUA.txt` (chưa có số cuối).
 
 ---
 
-## Khung trả lời cho phần mở rộng (điền số sau khi có kết quả)
+## Phần VI — Câu phản biện khó, trả lời bằng số (cập nhật 03/11/2026)
 
-Chỉ dùng số trong `results/KET_QUA.txt`. Nếu kết quả ngược với khung, sửa khung theo kết quả.
+Số lấy từ `rl_inventory/results/KET_QUA.txt` (mục ghi trong ngoặc). Ô có `[chờ eval_all]` thì điền sau khi chạy
+`py -3.12 run.py eval_all`. Nguyên tắc: nêu ưu điểm trước, điểm yếu thì nói thẳng kèm nguyên nhân và giới hạn kết luận.
 
-| Câu hỏi | Khung trả lời |
-|---|---|
-| Vì sao chênh lệch chi phí cùng mức phục vụ đổi so với bản trước? | Bản trước dùng lưới thô nên baseline đạt fill 92,65% và 92,28%, cao hơn mục tiêu 90,15%. Với lưới mịn và dải ±0,2 điểm, chênh lệch là [X]% (CI [..]). |
-| IPPO có hơn nhờ biết sức chứa không? | Đã thêm (s,S) biết sức chứa. Ở cùng mức phục vụ, chênh lệch còn lại là [Y]%. |
-| "Đa kho" ở đâu, các kho có ảnh hưởng nhau không? | Mô hình chính thì không: kho chỉ chia sức chứa nội bộ. Vì vậy đề tài thêm điều kiện nguồn cung chung, mỗi mặt hàng có trần cung ứng toàn mạng và các kho bị cắt theo tỷ lệ. Theo phương án rút gọn, điều kiện này chỉ **đánh giá zero-shot** mô hình chính (không train lại). Kết quả ở Câu hỏi 5; xem thêm mục 38. |
-| Học tăng cường thêm được gì so với dự báo? | Trên seed 42 thì chưa thêm được về chi phí. Dự báo tốt hơn ở nhóm bán chậm; ở nhóm bán nhanh IPPO tiến gần dự báo nhất. Kết hợp hai chính sách rẻ hơn IPPO 3,2% nhưng vẫn đắt hơn dự báo 1,0%. |
-| Vì sao không dự báo rồi tối ưu? | Đã thử LightGBM + Newsvendor: [Z]. Khi IPPO nhận cùng dự báo (U1), chênh lệch là [W]. |
-| Vì sao fill của IPPO là 90,7–90,9% khi mục tiêu là 85%? | Điểm vận hành phụ thuộc `phi_dv`. Đã chạy `phi_dv` ∈ {…} và vẽ đường biên; tại 85%, IPPO [..] so với baseline. |
-| Vì sao 28,7% cặp dưới 85%? | Chủ yếu ở nhóm cầu thấp (bảng phân rã [..]); mục tiêu 85% chỉ được đáp ứng ở cấp hệ thống. |
-| Doanh số có phải nhu cầu không? | Không. M5 ghi doanh số, có thể thấp hơn nhu cầu thật khi hết hàng; M5 không đánh dấu hết hàng nên chưa đo được; dẫn độ nhạy cầu +20%. |
-| Vì sao lịch và giá đóng góp ít, mùa lễ yếu? | Xáo trộn nhóm lịch làm chi phí tăng 5,3%, tín hiệu giá dưới 1%. Giả thuyết là lịch sử nhu cầu ngắn hạn đã chứa phần lớn tín hiệu mùa vụ; ablation 1 seed phù hợp nhưng chưa đủ kết luận. Mùa lễ chỉ có 9 tuần. [Nếu có U1: so sánh có và không có dự báo.] |
-| Các agent có phối hợp không? | Không có kênh phối hợp tường minh trong mô hình chính; các cặp liên kết qua chia sẻ gradient và tín hiệu cấp kho. |
-| Vì sao 300 agent mà chỉ 1 mạng? | Chia sẻ tham số: một bộ trọng số dùng chung, quan sát 300 cặp xếp thành một lô. |
-| Xử lý pseudoreplication thế nào? | Các episode 365 ngày chồng lấn trong 491 ngày test nên p-value theo cặp lạc quan. Kết quả chính dùng 3 seed và bootstrap theo khối; bootstrap giảm chứ không loại bỏ tự tương quan. |
-| Áp dụng cho Việt Nam thế nào? | Không dùng lại trọng số; huấn luyện lại trên dữ liệu bán hàng Việt Nam và thay vector lịch. Kiến trúc và quy trình giữ nguyên. |
-| Sao không làm chuyển hàng ngang giữa kho? | Đó là lớp bài toán khác: cần chi phí và thời gian chuyển hàng mà M5 không có, và phải thiết kế lại môi trường, baseline và toàn bộ so sánh. |
+| # | Câu hỏi | Trả lời |
+|---|---|---|
+| 1 | "RL chỉ rẻ hơn (s,S) 1–2%, có đáng không?" | Đó là so trực tiếp, khi IPPO đang phục vụ cao hơn 4,7 điểm (90,9% so với 86,2%). Giữ mức phục vụ cao hơn thì phải tốn hơn, vậy mà IPPO vẫn rẻ hơn (s,S) và EOQ ở 3/3 seed (mục 1). Khi bắt (s,S) đạt cùng mức phục vụ, nó đắt hơn IPPO khoảng 13% (seed 42; [chờ eval_all] cho 3 seed). |
+| 2 | "Chính sách dự báo rồi tối ưu rẻ hơn IPPO 8%?" | Mô hình chính không nhận dự báo, Newsvendor dự báo nhận dự báo LightGBM 3 ngày tới: hai bên khác loại thông tin. So cùng loại thông tin là Câu 4: IPPO kết hợp dự báo đạt 1.897.517, ngang Newsvendor dự báo (−0,1%; 2 seed không khác biệt, 1 seed rẻ hơn 0,4%) và rẻ hơn mọi chính sách cổ điển 6,2–24,1% ở 3/3 seed (mục 4). |
+| 3 | "Vậy RL đóng góp gì khi đã có dự báo?" | Nói thẳng: phần lớn lợi thế chi phí là của dự báo; cố định hệ số an toàn thì chính sách trùng Newsvendor dự báo. RL đóng góp (1) tự chọn hệ số an toàn theo từng cặp, từng ngày mà không phải quét lưới tham số, (2) tính tới trạng thái kho, (3) cho thấy khung PS-IPPO tích hợp được dự báo mà không đổi môi trường hay thuật toán. Mô hình được chọn ở tập 25–50 vì train tiếp làm fill tăng (lên ~89,5%) và chi phí tăng ~3%: tác tử đi dọc đường đánh đổi theo hình phạt mức phục vụ, không phải học hỏng. |
+| 4 | **"300 tác tử độc lập thì 'đa kho' ở đâu?"** | (1) Các cặp trong một kho chia chung sức chứa và chịu chi phí tràn kho: khi sức chứa đủ rộng (≥ 12 ngày cầu) bài toán suy biến thành 300 bài toán độc lập, nên sức chứa chung tạo ra tính đa tác tử (C4 mục 4.1.3). (2) Bỏ tín hiệu cấp kho khi huấn luyện làm chi phí tăng 141,5% (mục 6e). (3) Tác tử tự thu hẹp lô hàng khi kho chật, (s,S) không làm được. (4) Nguồn cung chung giữa các kho: [chờ eval_all, mục 5b]. |
+| 5 | "Baseline có bị làm yếu không?" | 9 chính sách đối chứng: 3 cổ điển, 3 bản theo nhóm quy mô cầu, (s,S) biết sức chứa, Newsvendor dự báo, mốc biết trước nhu cầu. Tất cả tinh chỉnh trên miền xác thực theo đúng tiêu chí chọn mô hình IPPO, cùng 6 mức đặt. So cả trực tiếp lẫn cùng mức phục vụ (lưới mịn ±0,2 điểm). |
+| 6 | "3 seed có đủ không?" | Kiểm định theo cặp riêng từng seed (30 lần đánh giá, cùng hạt giống lead time); kết luận chính chỉ nêu khi 3/3 seed cùng chiều. Độ lệch giữa seed nhỏ: mô hình chính ±14.358 (0,7%), Câu 4 ±4.312 (0,2%). Câu 3 cũng lặp 3 seed. Nêu thành hạn chế ở C5. |
+| 7 | "Chi phí là giả định, đổi đơn giá thì sao?" | Tính lại trên 36 bộ đơn giá (mục 6c): ở cùng mức phục vụ IPPO rẻ hơn (s,S) và Newsvendor ở 36/36 bộ [kiểm lại sau eval_all]. So trực tiếp thì phụ thuộc tỷ số c_th/c_lk: thiếu hàng càng đắt, IPPO càng có lợi. |
+| 8 | "Mặt hàng mới thì sao?" | Mô hình huấn luyện 24 SKU, đánh giá trên 6 SKU chưa gặp: chi phí chênh +0,1% (p = 0,67) so với mô hình đã thấy 6 SKU đó (mục 2b). |
+| 9 | "Thiết kế phần thưởng có quan trọng không?" | Rất quan trọng, 3/3 seed: phần thưởng toàn mạng làm chi phí tăng trung bình 420%, bỏ chuẩn hóa theo cặp tăng 214% (mục 3). Dao động giữa seed của mốc chỉ 1,6%. |
+| 10 | "Khi nào mô hình thua?" | Nêu chủ động: (1) mùa lễ T11–12 đắt hơn NV theo nhóm (9 tuần, ít dữ liệu); (2) nhu cầu giảm 20% thì đắt hơn 4–9% vì giữ tồn đệm cũ → cần huấn luyện lại định kỳ; (3) nhóm cầu rất thấp fill 74,2%, vì mục tiêu 85% đặt ở cấp hệ thống. Bù lại: ngày sự kiện −7,5%, cuối tuần −8,6% so với (s,S); nhu cầu +20% rẻ hơn mọi chính sách đối chứng; sốc cầu ×1,5 có chi phí/ngày thấp nhất (mục 6a, 6b, 5a). |
+| 11 | "Tại sao fill 90,9% khi mục tiêu chỉ 85%?" | Điểm vận hành do hệ số phạt φ quyết định. 5 lần thử φ (1.000 tập) cho thấy φ nhỏ hơn thì chi phí thấp hơn và fill gần 85% hơn (φ = 0,5: fill val 86,9%). Đường đánh đổi chi phí–fill: [chờ eval_all, mục 6d]. |
+| 12 | "Vì sao 28,7% cặp dưới 85%?" | Chủ yếu ở nhóm cầu < 2/ngày. Với hàng bán 0,3 đơn vị/ngày, một lần đặt (c_dh = 5) đắt ngang thiếu hàng gần 2 ngày; giữ fill cao cho nhóm này tốn hơn phần tránh được. Muốn cam kết fill từng mặt hàng thì phải đặt ràng buộc cấp cặp: hướng phát triển. |
+

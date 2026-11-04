@@ -1,27 +1,20 @@
 #!/usr/bin/env python
 """
-run.py — mot cua duy nhat de chay ca du an:  python run.py <lenh>
-cd rl_inventory; python run.py full
+run.py — mot cua duy nhat de chay ca du an:  py -3.12 run.py <lenh>   (trong thu muc rl_inventory)
 
-Dot thuc nghiem cuoi (so lieu bao cao; seed o scripts/run_experiments.py):
+Dot thuc nghiem cuoi (so lieu bao cao; danh sach lan chay o scripts/run_experiments.py):
     full             test -> train toan bo -> danh gia -> results/KET_QUA.txt
-                     --quick: thu ca day chuyen, moi lan train 3 episode
-                     Bi ngat thi chay lai, tu resume. Log tu ghi vao logs/<lenh>.txt
-                     (full, train_*, eval_all) - khong can 2>&1 / Tee-Object.
+                     --quick: thu ca day chuyen tren ban sao, moi lan train 3 episode
+    eval_all         chi danh gia + moi phan tich -> KET_QUA.txt (bo qua buoc da co ket qua moi)
+    tonghop          dung lai KET_QUA.txt tu ket qua da co (vai giay)
     status           tien do tung lan chay
-    train_main       chi train mo hinh chinh (5 seed x ppo.total_episodes)
-    train_ablations  chi train ablation, RQ3, hold-out (1.000 ep)
-    eval_all         danh gia + moi phan tich -> KET_QUA.txt
-    tonghop          dung lai KET_QUA.txt tu ket qua da co
-    forecast         du bao LightGBM (chay truoc khi tune baseline va train U1)
-    Nhom mo rong:    python scripts/run_experiments.py train <nhom>, xem NHOM_MO_RONG
+    train_main       chi train mo hinh chinh (3 seed x ppo.total_episodes)
+    train_ablations  chi train ablation, Cau 3, mat hang chua gap (1.000 episode)
+    forecast         du bao LightGBM (truoc khi tinh chinh baseline va train Cau 4)
+    Bi ngat thi chay lai cung lenh, tu noi tiep. Log ghi vao logs/<lenh>.txt.
 
 Chuan bi:  check | data (tien xu ly M5) | test
-Demo:      demo_data (dong goi app/demo_data/) | app (Streamlit, chi inference)
-
-Giao thuc cu / thu nhanh (khong dung cho ban nop):
-    all | baseline | train | eval | iso | summary | regime | behavior
-    Tuy chon: --episodes N, --quick (~5 phut), --checkpoint (regime/behavior)
+Demo:      demo_data (dong goi app/demo_data/) | app (Streamlit, chi suy luan)
 """
 import argparse
 import os
@@ -73,18 +66,9 @@ def sh(cmd):
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("lenh", choices=["full", "status", "train_main", "train_ablations",
-                                     "eval_all", "tonghop", "forecast",
-                                     "app", "demo_data", "all", "data", "baseline", "train",
-                                     "eval", "iso", "summary",
-                                     "regime", "behavior", "test", "check"])
-    ap.add_argument("--episodes", type=int, default=None)
-    ap.add_argument("--quick", action="store_true",
-                    help="Ban rut gon: 60 episode, 5 episode danh gia")
-    ap.add_argument("--n_skus", type=int, default=None)
-    ap.add_argument("--n_warehouses", type=int, default=None)
-    ap.add_argument("--checkpoint", default="checkpoints/best_model_main_s42.pth",
-                    help="Checkpoint IPPO cho lenh regime/behavior")
+    ap.add_argument("lenh", choices=["full", "status", "train_main", "train_ablations", "eval_all",
+                                     "tonghop", "forecast", "app", "demo_data", "data", "test", "check"])
+    ap.add_argument("--quick", action="store_true", help="full: thu ca day chuyen tren ban sao")
     a = ap.parse_args()
 
     if a.quick and a.lenh == "full" and not os.environ.get("KLTN_THU"):
@@ -107,27 +91,9 @@ def main():
 
     import yaml
     cfg = yaml.safe_load(open(ROOT / "config.yaml", encoding="utf-8"))
-    n_wh = a.n_warehouses or cfg["env"]["n_warehouses"]
-    n_sku = a.n_skus or cfg["env"]["n_skus"]
-    eps = a.episodes or (60 if a.quick else cfg["ppo"]["total_episodes"])
-    eval_eps = 5 if a.quick else cfg["eval"]["n_episodes"]
-    tune_eps = 1 if a.quick else 3
-
-    cmd_data = [PY, "scripts/data_preprocessing.py", "--m5",
-                "--n_warehouses", str(n_wh), "--n_skus", str(n_sku),
-                "--min_mean_demand", str(cfg["preprocess"].get("min_mean_demand", 0.2)),
-                # phai khop env.split_day: chi uoc luong gia/cau tu mien train
-                "--split_day", str(cfg["env"].get("split_day", 1050))]
-    cmd_base = [PY, "scripts/tune_baselines.py", "--episodes", str(tune_eps)]
-    cmd_train = [PY, "scripts/train.py", "--episodes", str(eps)]
-    cmd_eval = [PY, "scripts/evaluate.py", "--episodes", str(eval_eps)]
-    cmd_iso = [PY, "scripts/compare_same_service.py", "--tune_episodes", str(tune_eps),
-               "--eval_episodes", str(eval_eps)]
-    cmd_summary = [PY, "scripts/generate_summary.py"]
+    eval_eps = 2 if a.quick else cfg["eval"]["n_episodes"]
 
     if a.lenh == "full":
-        if a.quick:
-            eval_eps = 2
         sh([PY, "-c", "import lightgbm"])      # buoc eval can; bao loi ngay, khong doi het train
         sh([PY, "-m", "pytest", "tests/", "-q"])
         sh(CAMPAIGN + ["train", "full"])
@@ -151,28 +117,13 @@ def main():
     elif a.lenh == "demo_data":
         sh([PY, "scripts/build_demo_data.py"])
     elif a.lenh == "data":
-        sh(cmd_data)
-    elif a.lenh == "baseline":
-        sh(cmd_base)
-    elif a.lenh == "train":
-        sh(cmd_train)
-    elif a.lenh == "eval":
-        sh(cmd_eval)
-    elif a.lenh == "iso":
-        sh(cmd_iso)
-    elif a.lenh == "summary":
-        sh(cmd_summary)
-    elif a.lenh == "regime":
-        sh([PY, "scripts/regime_analysis.py", "--checkpoint", a.checkpoint]
-           + (["--episodes", "5"] if a.quick else []))
-    elif a.lenh == "behavior":
-        sh([PY, "scripts/policy_behavior.py", "--checkpoint", a.checkpoint]
-           + (["--episodes", "3"] if a.quick else []))
+        sh([PY, "scripts/data_preprocessing.py", "--m5",
+            "--n_warehouses", str(cfg["env"]["n_warehouses"]), "--n_skus", str(cfg["env"]["n_skus"]),
+            "--min_mean_demand", str(cfg["preprocess"].get("min_mean_demand", 0.2)),
+            # phai khop env.split_day: chi uoc luong gia/cau tu mien train
+            "--split_day", str(cfg["env"].get("split_day", 1050))])
     elif a.lenh == "test":
         sh([PY, "-m", "pytest", "tests/", "-q"])
-    elif a.lenh == "all":
-        sh(cmd_data); sh(cmd_base); sh(cmd_train); sh(cmd_eval); sh(cmd_iso); sh(cmd_summary)
-        print("\nXong. Mo bang dieu khien:  python run.py app")
     elif a.lenh == "check":
         ok = True
         for mod in ["torch", "gymnasium", "numpy", "pandas", "yaml",

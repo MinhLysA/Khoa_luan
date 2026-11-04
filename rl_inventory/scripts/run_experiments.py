@@ -1,31 +1,27 @@
 """
 scripts/run_experiments.py
-===================
-MOT noi dinh nghia TOAN BO dot thuc nghiem cuoi cung: moi lan huan luyen (mo
-hinh chinh + ablation) va pipeline danh gia. Moi lenh train TU RESUME tu
-checkpoint gan nhat neu bi ngat giua chung.
+==========================
+MOT noi dinh nghia TOAN BO dot thuc nghiem cuoi cung: moi lan huan luyen va pipeline
+danh gia. Ten lan chay (tag) -> ten day du: xem TEN_DAY_DU trong scripts/build_results.py.
 
     python scripts/run_experiments.py status              # tien do tung lan chay
     python scripts/run_experiments.py train main_s42      # train 1 lan chay (tu resume)
     python scripts/run_experiments.py train ablations     # lan luot moi ablation
-    python scripts/run_experiments.py train auto          # tu lay lan chay tiep theo (mo nhieu terminal)
+    python scripts/run_experiments.py train full          # toan bo lan chay, tuan tu
+    python scripts/run_experiments.py train forecast_safety  # mot nhom mo rong, xem NHOM_LAN_CHAY_MO_RONG
     python scripts/run_experiments.py eval                # toan bo pipeline danh gia
-    python scripts/run_experiments.py train full          # toan bo dot thuc nghiem, viec quan trong nhat truoc
-    python scripts/run_experiments.py train forecast_safety  # mot nhom mo rong, xem NHOM_MO_RONG
-    python scripts/run_experiments.py eval_mo_rong        # chi phan bo sung, khong chay lai ablation
+    python scripts/run_experiments.py tonghop             # chi dung lai KET_QUA.txt
 
-Nhom mo rong khong nam trong "main/ablations/all/auto". "full" chay ca chung (phuong an
-rut gon: 3 seed, bo U3/U4/C'/E2/E3, dieu kien van hanh chi danh gia zero-shot khong train).
-"eval" tu danh gia moi lan chay da co checkpoint.
+Train va eval deu CHAY NOI TIEP: bi ngat thi chay lai cung lenh. Train resume tu checkpoint
+gan nhat; eval bo qua buoc da co ket qua moi hon dau vao (checkpoint, tham so baseline,
+ket qua cung muc phuc vu). Muon chay lai mot buoc: xoa file ket qua cua buoc do.
 Bien KLTN_THU=N: moi lan train chi N episode, dung de thu ca day chuyen.
 """
 import argparse
 import json
 import os
-import random
 import re
 import shutil
-import socket
 import subprocess
 import sys
 import time
@@ -34,14 +30,13 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
+RESULTS = ROOT / "results"
 PY = sys.executable
 
-# Hat giong cho mo hinh chinh va RQ3 (seed dau = seed chinh, cac ablation khac
-# chi chay seed nay). Them/bot seed chi can sua dong nay.
+# Hat giong cho mo hinh chinh, cau hoi 3 (phan thuong) va cau hoi 4 (du bao). Seed dau = seed chinh,
+# cac ablation khac chi chay seed nay.
 SEEDS = (42, 1, 2)
-# [Nhieu seed] Phuong an rut gon: 3 seed. Muon them seed cho mo hinh chinh: dien vao day (vd (3, 4))
-EXTRA_MAIN_SEEDS = ()
-MAIN_SEEDS = SEEDS + EXTRA_MAIN_SEEDS
+MAIN_SEEDS = SEEDS
 
 # So episode mo hinh chinh = ppo.total_episodes trong config.yaml (mot nguon duy nhat)
 MAIN_EPISODES = int(yaml.safe_load(open(ROOT / "config.yaml", encoding="utf-8"))
@@ -51,45 +46,39 @@ MAIN_EPISODES = int(yaml.safe_load(open(ROOT / "config.yaml", encoding="utf-8"))
 MAIN = {f"main_s{s}": ("config.yaml", s, MAIN_EPISODES, f"Mo hinh chinh, seed {s}")
         for s in MAIN_SEEDS}
 ABLATIONS = {
-    "abl_ref":       ("config.yaml", 42, 1000, "Tham chieu 1000 episode (cung lich lr/entropy voi ablation)"),
-    "abl_global":    ("configs/ablation_global_reward.yaml", 42, 1000, "RQ3: phan thuong toan cuc (team reward)"),
-    "abl_q3":        ("configs/ablation_q3_no_reward_norm.yaml", 42, 1000, "RQ3: tat chuan hoa reward theo cap"),
-    "abl_reward_cu": ("configs/ablation_reward_demand_scaled.yaml", 42, 1000, "Phat SLA kieu cu"),
-    "abl_trunk":     ("configs/ablation_shared_trunk.yaml", 42, 1000, "Actor/Critic chung than"),
+    "abl_ref":       ("config.yaml", 42, 1000, "Moc so sanh: cau hinh chinh, 1.000 episode"),
+    "abl_global":    ("configs/ablation_global_reward.yaml", 42, 1000, "Cau 3: phan thuong toan mang luoi"),
+    "abl_q3":        ("configs/ablation_q3_no_reward_norm.yaml", 42, 1000, "Cau 3: tat chuan hoa phan thuong theo cap"),
+    "abl_reward_cu": ("configs/ablation_reward_demand_scaled.yaml", 42, 1000, "Phat muc phuc vu kieu cu"),
+    "abl_trunk":     ("configs/ablation_shared_trunk.yaml", 42, 1000, "Actor/Critic chung than mang"),
     "abl_nocal":     ("configs/ablation_drop_calendar.yaml", 42, 1000, "Bo dac trung lich"),
     "abl_nowh":      ("configs/ablation_drop_warehouse.yaml", 42, 1000, "Bo tin hieu cap kho"),
     "abl_event":     ("configs/ablation_event_lookahead.yaml", 42, 1000, "Them dac trung su kien sap toi"),
-    "abl_warm":      ("configs/ablation_warm_start.yaml", 42, 1000, "Warm-start lich su cau"),
-    "holdout":       ("configs/holdout_train.yaml", 42, 1000, "Hold-out: train 24 SKU"),
+    "abl_warm":      ("configs/ablation_warm_start.yaml", 42, 1000, "Khoi tao lich su cau bang du lieu that"),
+    "holdout":       ("configs/holdout_train.yaml", 42, 1000, "Mat hang chua gap: train 24 SKU"),
 }
-# [P4-2] RQ3 lap lai tren moi hat giong trong SEEDS (42 o tren + cac seed con
-# lai): moc, toan cuc, khong chuan hoa
+# Cau 3 lap lai tren moi hat giong: moc, phan thuong toan mang luoi, khong chuan hoa
 RQ3_CFG = {"abl_ref": "config.yaml", "abl_global": "configs/ablation_global_reward.yaml",
            "abl_q3": "configs/ablation_q3_no_reward_norm.yaml"}
 for _base, _cfg in RQ3_CFG.items():
     for _s in SEEDS[1:]:
-        ABLATIONS[f"{_base}_s{_s}"] = (_cfg, _s, 1000, f"RQ3 {_base}, seed {_s}")
+        ABLATIONS[f"{_base}_s{_s}"] = (_cfg, _s, 1000, f"Cau 3 {_base}, seed {_s}")
 
-# Cac lan chay mo rong theo phuong an trien khai (khong sua mo hinh chinh).
+# Lan chay mo rong (khong sua mo hinh chinh):
+#  - penalty*_trial: 5 lan chay thu he so phat muc phuc vu phi_dv (1.000 episode) -> duong danh doi chi phi-fill
+#  - forecast_safety_s*: Cau 4, tac tu chon he so an toan tren nen du bao LightGBM
 PHI = ("05", "10", "20", "60", "100")
-MO_RONG = {}
-for _p in PHI:
-    _cfg = f"configs/service_penalty_{_p}.yaml"
-    MO_RONG[f"penalty{_p}_trial"] = (_cfg, 42, 1000, f"Chay thu he so phat phi_dv {_p}")
-    # Phuong an rut gon: chi giu 5 lan chay thu 1.000 episode, bo buoc train lai hai gia tri x 3 seed
-for _s in SEEDS:
-    MO_RONG[f"forecast_obs_s{_s}"] = ("configs/forecast_observation.yaml", _s, MAIN_EPISODES, f"IPPO co du bao, seed {_s}")
-    MO_RONG[f"safety_factor_s{_s}"] = ("configs/safety_factor.yaml", _s, MAIN_EPISODES, f"He so an toan, seed {_s}")
+LAN_CHAY_MO_RONG = {f"penalty{p}_trial": (f"configs/service_penalty_{p}.yaml", 42, 1000,
+                                          f"Chay thu he so phat phi_dv {p}") for p in PHI}
 for _s in MAIN_SEEDS:
-    MO_RONG[f"forecast_safety_s{_s}"] = ("configs/forecast_safety_factor.yaml", _s, MAIN_EPISODES, f"He so an toan tren nen du bao, seed {_s}")
-# Dieu kien van hanh: KHONG train lai, chi danh gia zero-shot mo hinh chinh (main_s42) o thu muc ket qua rieng
-DIEU_KIEN = ("shared_supply_tight", "shared_supply_mild", "capacity_3", "capacity_8")
-NHOM_MO_RONG = {"penalty_trial": [t for t in MO_RONG if t.endswith("_trial") and t.startswith("penalty")],
-                "forecast_obs": [t for t in MO_RONG if t.startswith("forecast_obs_")],
-                "safety_factor": [t for t in MO_RONG if t.startswith("safety_factor_")],
-                "forecast_safety": [t for t in MO_RONG if t.startswith("forecast_safety_")]}
-RUNS = {**MAIN, **ABLATIONS, **MO_RONG}
-MO_HINH_DU_BAO = ROOT / "results" / "forecast_model.txt"
+    LAN_CHAY_MO_RONG[f"forecast_safety_s{_s}"] = ("configs/forecast_safety_factor.yaml", _s, MAIN_EPISODES,
+                                                  f"He so an toan tren nen du bao, seed {_s}")
+NHOM_LAN_CHAY_MO_RONG = {"penalty_trial": [t for t in LAN_CHAY_MO_RONG if t.startswith("penalty")],
+                         "forecast_safety": [t for t in LAN_CHAY_MO_RONG if t.startswith("forecast_safety_")]}
+# Cau 5: dieu kien van hanh KHONG train lai, chi danh gia zero-shot mo hinh chinh (main_s42)
+DIEU_KIEN_ZERO_SHOT = ("shared_supply_tight", "shared_supply_mild")
+RUNS = {**MAIN, **ABLATIONS, **LAN_CHAY_MO_RONG}
+MO_HINH_DU_BAO = RESULTS / "forecast_model.txt"
 THU = int(os.environ.get("KLTN_THU", 0))
 if THU:
     RUNS = {t: (c, s, THU, d) for t, (c, s, _, d) in RUNS.items()}
@@ -103,24 +92,24 @@ def sh(cmd, check=True):
     return r.returncode
 
 
+# ---------------------------------------------------------------------------
+# Huan luyen
+# ---------------------------------------------------------------------------
 def progress(tag):
     st = ROOT / "checkpoints" / f"train_state_{tag}.json"
     return json.loads(st.read_text(encoding="utf-8")).get("episode_count", 0) if st.exists() else 0
 
 
 def latest_checkpoint(tag):
-    """Checkpoint moi nhat de resume: file checkpoint_latest (luu moi ~25
-    episode) neu co, nguoc lai checkpoint_epNNN lon nhat; chon file ghi sau cung."""
-    cands = []
-    for p in (ROOT / "checkpoints").glob(f"checkpoint_*_{tag}.pth"):
-        if re.fullmatch(rf"checkpoint_(ep\d+|latest)_{re.escape(tag)}\.pth", p.name):
-            cands.append(p)
+    """Checkpoint moi nhat de resume: checkpoint_latest (luu moi ~25 episode) hoac
+    checkpoint_epNNN, lay file ghi sau cung."""
+    cands = [p for p in (ROOT / "checkpoints").glob(f"checkpoint_*_{tag}.pth")
+             if re.fullmatch(rf"checkpoint_(ep\d+|latest)_{re.escape(tag)}\.pth", p.name)]
     return max(cands, key=lambda p: p.stat().st_mtime) if cands else None
 
 
 def done(tag):
-    cfg, _, eps, _ = RUNS[tag]
-    return (ROOT / "checkpoints" / f"final_model_{tag}.pth").exists() and progress(tag) >= eps
+    return (ROOT / "checkpoints" / f"final_model_{tag}.pth").exists() and progress(tag) >= RUNS[tag][2]
 
 
 def ghi_phien_ban(tag):
@@ -137,10 +126,9 @@ def train(tag):
     if done(tag):
         print(f"[{tag}] da xong ({eps} episode) - bo qua.")
         return
-    cmd = [PY, "scripts/train.py", "--config", cfg, "--seed", seed,
-           "--episodes", eps, "--tag", tag]
-    if tag.startswith(("forecast_obs_", "forecast_safety_")) and not MO_HINH_DU_BAO.exists():
+    if tag.startswith("forecast_safety_") and not MO_HINH_DU_BAO.exists():
         sh([PY, "scripts/forecast_demand.py"])
+    cmd = [PY, "scripts/train.py", "--config", cfg, "--seed", seed, "--episodes", eps, "--tag", tag]
     ck = latest_checkpoint(tag)
     if ck:
         cmd += ["--resume", ck.relative_to(ROOT).as_posix()]
@@ -150,280 +138,161 @@ def train(tag):
     sh(cmd)
 
 
-# ---------------------------------------------------------------------------
-# Che do "auto": mo nhieu terminal tren cung may. Moi phien tu lay lan chay chua
-# xong va chua co phien nao dang chay, theo thu tu uu tien.
-# ---------------------------------------------------------------------------
-PRIORITY = (["main_s42", "abl_ref", "abl_global", "abl_q3"]
-            + [f"main_s{s}" for s in MAIN_SEEDS[1:]]
-            + [f"{b}_s{s}" for s in SEEDS[1:] for b in RQ3_CFG]
-            + ["abl_reward_cu", "holdout", "abl_trunk", "abl_nocal", "abl_nowh",
-               "abl_event", "abl_warm"])
-assert sorted(PRIORITY) == sorted({**MAIN, **ABLATIONS}), "PRIORITY phai chua dung MAIN + ABLATIONS"
-STALE_MIN = 20          # khoa khong co dau hieu song qua 20 phut = phien da chet
-ME = f"{socket.gethostname()}-{os.getpid()}"
-
-
-def _lock(tag):
-    return ROOT / "checkpoints" / f"lock_{tag}.json"
-
-
-def lock_owner(tag):
-    """Chu so huu khoa neu khoa con 'song', nguoc lai None. Dau hieu song: file
-    khoa hoac train_state (ghi moi 25 episode) duoc cap nhat trong STALE_MIN phut."""
-    lk = _lock(tag)
-    if not lk.exists():
-        return None
-    st = ROOT / "checkpoints" / f"train_state_{tag}.json"
-    last = max(lk.stat().st_mtime, st.stat().st_mtime if st.exists() else 0)
-    if time.time() - last > STALE_MIN * 60:
-        return None
-    try:
-        return json.loads(lk.read_text(encoding="utf-8")).get("owner")
-    except (json.JSONDecodeError, OSError):
-        return "?"
-
-
-def acquire(tag):
-    (ROOT / "checkpoints").mkdir(exist_ok=True)
-    _lock(tag).write_text(json.dumps({"owner": ME, "since": time.ctime()}), encoding="utf-8")
-    time.sleep(0 if THU else 2)        # roi kiem tra lai co bi phien khac chen khong
-    return lock_owner(tag) == ME
-
-
-def release(tag):
-    try:
-        if lock_owner(tag) in (ME, None):
-            _lock(tag).unlink()
-    except OSError:
-        pass
-
-
-def train_auto():
-    time.sleep(random.uniform(0, 3))        # tranh 2 phien khoi dong cung luc lay trung
-    while True:
-        con_lai = [t for t in PRIORITY if not done(t)]
-        if not con_lai:
-            print("\nTAT CA LAN CHAY DA XONG. Chay: python scripts/run_experiments.py eval")
-            return
-        rank = [t for t in con_lai if lock_owner(t) in (None, ME)]
-        if not rank:
-            print(f"Cac lan chay con lai deu dang duoc phien khac chay: {con_lai}. Dung.")
-            return
-        tag = rank[0]
-        if not acquire(tag):
-            continue
-        print(f"\n===== [{ME}] nhan lan chay: {tag} =====", flush=True)
-        try:
-            train(tag)
-        finally:
-            release(tag)
-
-
-def fill_val_cuoi(tag):
-    """Fill trung binh 5 lan danh gia val cuoi cua mot lan chay; None neu chua co."""
-    import pandas as pd
-    p = ROOT / "results" / f"train_log_{tag}.csv"
-    if not p.exists():
-        return None
-    e = pd.read_csv(p).eval_fill.dropna()
-    e = e[e != e.shift()]                         # moi dong lap lai ket qua danh gia gan nhat
-    return float(e.tail(5).mean()) if len(e) else None
-
-
-def train_co_khoa(tag):
-    """Lan chay dang co terminal khac giu thi bo qua, nen mo duoc nhieu terminal."""
-    if done(tag) or lock_owner(tag) not in (None, ME) or not acquire(tag):
-        return
-    try:
-        train(tag)
-    finally:
-        release(tag)
-
-
-def cho_xong(tags):
-    """Doi cac terminal khac chay xong. Lan chay cua terminal da chet thi khoa het
-    hieu luc sau STALE_MIN phut va duoc nhan lai tai day."""
-    while not all(done(t) for t in tags):
-        for t in tags:
-            train_co_khoa(t)
-        if not all(done(t) for t in tags):
-            time.sleep(60)
-
-
 def train_full():
-    """Toan bo dot thuc nghiem (phuong an rut gon). Viec quyet dinh ket luan dung truoc de neu
-    phai dung giua chung van co so lieu quan trong nhat. Bi ngat thi chay lai, tu noi tiep."""
-    if not MO_HINH_DU_BAO.exists():
-        sh([PY, "scripts/forecast_demand.py"])
-    # U1 (forecast_obs) va U2 (safety_factor) tam bo khoi dot train; muon train lai thi them
-    # *NHOM_MO_RONG["forecast_obs"], *NHOM_MO_RONG["safety_factor"] vao day (danh gia tu bo qua nhom chua co checkpoint)
-    dot1 = [*MAIN, *NHOM_MO_RONG["forecast_safety"], *NHOM_MO_RONG["penalty_trial"]]
-    for t in dot1:
-        train_co_khoa(t)
-    dot2 = [x for x in PRIORITY if x not in MAIN]           # ablation, RQ3, hold-out
-    for t in dot2:
-        train_co_khoa(t)
-    cho_xong(dot1 + dot2)                         # de buoc danh gia thay du moi lan chay
+    """Moi lan chay, viec quyet dinh ket luan truoc: mo hinh chinh, du bao, phi_dv, roi ablation."""
+    for tag in [*MAIN, *LAN_CHAY_MO_RONG, *ABLATIONS]:
+        train(tag)
 
 
 def status():
-    print(f"{'Lan chay':<15}{'Tien do':>14}  {'Dang chay boi':<22} Mo ta")
-    for tag, (cfg, seed, eps, desc) in RUNS.items():
-        if tag in MO_RONG and not progress(tag):
-            continue
-        mark = "XONG" if done(tag) else f"{progress(tag)}/{eps}"
-        print(f"{tag:<15}{mark:>14}  {(lock_owner(tag) or '-'):<22} {desc}")
+    print(f"{'Lan chay':<22}{'Tien do':>14}  Mo ta")
+    for tag, (_, _, eps, desc) in RUNS.items():
+        print(f"{tag:<22}{'XONG' if done(tag) else f'{progress(tag)}/{eps}':>14}  {desc}")
 
 
-def ck(tag):
+# ---------------------------------------------------------------------------
+# Danh gia
+# ---------------------------------------------------------------------------
+def duong_checkpoint(tag):
     p = ROOT / "checkpoints" / f"best_model_{tag}.pth"
     return p.relative_to(ROOT).as_posix() if p.exists() else None
 
 
-def chep_du_bao(thu_muc):
+def can_chay(ket_qua, *dau_vao):
+    """True neu file ket qua chua co hoac cu hon mot file dau vao dang co (buoc can chay lai)."""
+    ket_qua = Path(ket_qua)
+    if not ket_qua.exists():
+        return True
+    moc = ket_qua.stat().st_mtime
+    return any(Path(p).exists() and Path(p).stat().st_mtime > moc for p in dau_vao if p)
+
+
+def buoc(ket_qua, dau_vao, cmd):
+    ket_qua = ROOT / ket_qua          # chap nhan ca duong dan tuong doi ("results/...") lan tuyet doi
+    if can_chay(ket_qua, *[ROOT / p for p in dau_vao if p]):
+        sh(cmd)
+    else:
+        print(f"[bo qua] {ket_qua.relative_to(ROOT).as_posix()} da moi hon dau vao")
+
+
+def chep_du_bao_sang(thu_muc):
     """Dieu kien van hanh dung chung du bao cua mien du lieu goc."""
     (ROOT / thu_muc).mkdir(parents=True, exist_ok=True)
     for m in ("train_oof", "val", "test", "sigma"):
-        shutil.copy(ROOT / "results" / f"forecast_{m}.npy", ROOT / thu_muc)
+        shutil.copy(RESULTS / f"forecast_{m}.npy", ROOT / thu_muc)
 
 
 def evaluate_all(n_eval=30):
-    miss = [t for t in [*MAIN, *ABLATIONS] if not ck(t)]
+    R = "results/"
+    THAM_SO_BASELINE = (R + "baseline_params.json", R + "baseline_params_group.json")
+    it = ["--episodes", 1] if THU else []
+    tune_eps = 1 if THU else 3
+    miss = [t for t in RUNS if not duong_checkpoint(t)]
     if miss:
         print(f"CANH BAO: chua co checkpoint cho {miss} - cac buoc lien quan se bo qua.")
-    main = ck("main_s42")
 
-    # 0. [Du bao] Du bao dung chung cho baseline du bao va U1 (chi chay mot lan)
+    # 0. Du bao LightGBM dung chung cho Newsvendor du bao va Cau 4; tham so baseline tinh chinh tren VAL.
+    #    Muon tinh chinh lai: xoa results/baseline_params*.json
     if not MO_HINH_DU_BAO.exists():
         sh([PY, "scripts/forecast_demand.py"])
-    # 1. Baseline tinh chinh tren mien VAL
-    sh([PY, "scripts/tune_baselines.py", "--episodes", 1 if THU else 3, "--per_group"])
-    # 2. Danh gia moi seed mo hinh chinh (+ cua so co dinh cho seed 42)
+    if not all((ROOT / p).exists() for p in THAM_SO_BASELINE):
+        sh([PY, "scripts/tune_baselines.py", "--episodes", tune_eps, "--per_group"])
+
+    def danh_gia(tag, cfg="config.yaml", out_tag=None, thu_muc=R):
+        ck = duong_checkpoint(tag)
+        if ck:
+            out_tag = out_tag or tag
+            buoc(ROOT / thu_muc / f"summary_{out_tag}.json", [ck, *THAM_SO_BASELINE],
+                 [PY, "scripts/evaluate.py", "--config", cfg, "--checkpoint", ck,
+                  "--episodes", n_eval, "--tag", out_tag])
+
+    # 1. Cau 1: mo hinh chinh moi seed; Cau 4: he so an toan tren nen du bao moi seed
     for s in MAIN_SEEDS:
-        if ck(f"main_s{s}"):
-            sh([PY, "scripts/evaluate.py", "--checkpoint", ck(f"main_s{s}"),
-                "--episodes", n_eval, "--tag", f"main_s{s}"])
-            sh([PY, "scripts/plot_learning_curve.py", "--tag", f"main_s{s}"])
+        danh_gia(f"main_s{s}")
+        buoc(R + f"learning_curve_main_s{s}.png", [R + f"train_log_main_s{s}.csv"],
+             [PY, "scripts/plot_learning_curve.py", "--tag", f"main_s{s}"])
+        danh_gia(f"forecast_safety_s{s}", "configs/forecast_safety_factor.yaml")
+
+    # 2. Cau 5: zero-shot mo hinh chinh duoi nguon cung chung (khong train lai, so sanh truc tiep)
+    for ten in DIEU_KIEN_ZERO_SHOT if duong_checkpoint("main_s42") else ():
+        cfg = f"configs/{ten}.yaml"
+        thu_muc = yaml.safe_load(open(ROOT / cfg, encoding="utf-8"))["paths"]["results_dir"] + "/"
+        if not (ROOT / thu_muc / "forecast_test.npy").exists():
+            chep_du_bao_sang(thu_muc)
+        if not (ROOT / thu_muc / "baseline_params_group.json").exists():
+            sh([PY, "scripts/tune_baselines.py", "--config", cfg, "--episodes", tune_eps, "--per_group"])
+        danh_gia("main_s42", cfg, f"zeroshot_{ten}", thu_muc)
+
+    # 3. Cung muc phuc vu (luoi min). Duong bien baseline quet MOT lan, cache o baseline_frontier.json
+    #    (lau nhat: vai gio), cac seed va Cau 4 dung chung.
+    for tag, cfg in [*[(f"main_s{s}", "config.yaml") for s in MAIN_SEEDS],
+                     *[(f"forecast_safety_s{s}", "configs/forecast_safety_factor.yaml") for s in MAIN_SEEDS]]:
+        ck = duong_checkpoint(tag)
+        if ck:
+            buoc(R + f"same_service_{tag}.json", [ck],
+                 [PY, "scripts/compare_same_service.py", "--config", cfg, "--checkpoint", ck,
+                  "--tune_episodes", 1 if THU else 2, "--eval_episodes", n_eval, "--tag", tag])
+
+    # 4. Phan tich phu mo hinh chinh. "Cung muc PV" trong cac phan tich nay lay tu same_service_main_s42.json
+    main = duong_checkpoint("main_s42")
     if main:
-        # 3. Cung muc phuc vu -> 4. giai doan -> 5. hanh vi -> 6. quy mo -> 7. do nhay
-        it = ["--episodes", 1] if THU else []
-        # Luoi min truoc: cac phan tich sau dung baseline cung muc phuc vu tu ket qua nay
-        sh([PY, "scripts/compare_same_service.py", "--grid", "fine", "--checkpoint", main,
-            "--tune_episodes", 1 if THU else 2, "--eval_episodes", n_eval, "--tag", "main_s42"])
-        sh([PY, "scripts/compare_same_service.py", "--checkpoint", main,
-            "--tune_episodes", 1 if THU else 3, "--eval_episodes", n_eval])
-        sh([PY, "scripts/regime_analysis.py", "--checkpoint", main, "--tag", "main", *it])
-        sh([PY, "scripts/policy_behavior.py", "--checkpoint", main, "--tag", "main", *it])
-        sh([PY, "scripts/analyze_scale_groups.py", "--checkpoint", main, "--tag", "main"])
-        sh([PY, "scripts/sensitivity.py", "--checkpoint", main, "--tag", "main", *it])
-        sh([PY, "scripts/robustness.py", "--checkpoint", main, "--tag", "main", *it])
-    # 8. Ablation: danh gia tren mien test voi DUNG config da train
-    for tag, (cfg, *_rest) in ABLATIONS.items():
-        if tag == "holdout" or not ck(tag):
-            continue
-        sh([PY, "scripts/evaluate.py", "--config", cfg, "--checkpoint", ck(tag),
-            "--episodes", n_eval, "--tag", tag])
-    for tag in ("abl_ref", "abl_reward_cu"):          # phat SLA moi vs cu: fill tung cap
-        if ck(tag):
-            sh([PY, "scripts/policy_behavior.py", "--config", RUNS[tag][0],
-                "--checkpoint", ck(tag), "--tag", tag])
-    cmp = [t for t in ABLATIONS if t != "holdout" and not re.search(r"_s\d+$", t) and ck(t)]
+        cung_muc = R + "same_service_main_s42.json"
+        for script, ket_qua, them in [("regime_analysis.py", "regime_analysis_main.json", it),
+                                      ("sensitivity.py", "sensitivity_main.json", it),
+                                      ("robustness.py", "robustness_main.json", it),
+                                      ("analyze_scale_groups.py", "scale_group_v2_main.json", []),
+                                      ("policy_behavior.py", "policy_behavior_main.json", it)]:
+            buoc(R + ket_qua, [main, cung_muc, *THAM_SO_BASELINE],
+                 [PY, f"scripts/{script}", "--checkpoint", main, "--tag", "main", *them])
+    if duong_checkpoint("forecast_safety_s42"):
+        buoc(R + "regime_analysis_forecast_safety.json", [duong_checkpoint("forecast_safety_s42"), *THAM_SO_BASELINE],
+             [PY, "scripts/regime_analysis.py", "--config", "configs/forecast_safety_factor.yaml",
+              "--checkpoint", duong_checkpoint("forecast_safety_s42"), "--tag", "forecast_safety", *it])
+
+    # 5. Ablation, Cau 3, phi_dv: danh gia tren mien test voi DUNG config da train
+    for tag, (cfg, *_rest) in {**ABLATIONS, **{t: LAN_CHAY_MO_RONG[t] for t in NHOM_LAN_CHAY_MO_RONG["penalty_trial"]}}.items():
+        if tag != "holdout":
+            danh_gia(tag, cfg)
+    for tag in ("abl_ref", "abl_reward_cu"):          # phat muc phuc vu moi vs cu: fill tung cap
+        if duong_checkpoint(tag):
+            buoc(R + f"policy_behavior_{tag}.json", [duong_checkpoint(tag)],
+                 [PY, "scripts/policy_behavior.py", "--config", RUNS[tag][0],
+                  "--checkpoint", duong_checkpoint(tag), "--tag", tag])
+    cmp = [t for t in ABLATIONS if t != "holdout" and not re.search(r"_s\d+$", t) and duong_checkpoint(t)]
     if "abl_ref" in cmp and len(cmp) > 1:
         sh([PY, "scripts/plot_learning_curve.py", "--compare", *cmp, "--max_episode", 1000])
-    # 9. Hold-out: 6 SKU chua gap (so voi mo hinh cung 1000 episode da thay ca 30 SKU)
+
+    # 6. Cau 2: mat hang chua gap (so voi mo hinh cung 1.000 episode va mo hinh chinh da thay ca 30 SKU)
     for tag, out in [("holdout", "holdout_unseen"), ("abl_ref", "holdout_seen_ref"),
                      ("main_s42", "holdout_seen_main")]:
-        if ck(tag):
-            sh([PY, "scripts/evaluate.py", "--config", "configs/holdout_eval.yaml",
-                "--checkpoint", ck(tag), "--episodes", n_eval, "--tag", out])
-    danh_gia_mo_rong(n_eval)
-    tong_hop_da_hat_giong()
+        danh_gia(tag, "configs/holdout_eval.yaml", out)
+
+    # 7. Moc biet truoc nhu cau; duong danh doi chi phi - muc phuc vu
+    buoc(R + "perfect_demand.json", [R + "forecast_test.npy"],
+         [PY, "scripts/perfect_demand_benchmark.py", "--episodes", n_eval])
+    if (RESULTS / "baseline_frontier.json").exists():
+        diem = [t for t in ["main_s42", "forecast_safety_s42", "abl_ref", *NHOM_LAN_CHAY_MO_RONG["penalty_trial"]]
+                if (RESULTS / f"summary_{t}.json").exists()]
+        sh([PY, "scripts/cost_service_frontier.py", "--tags", *diem])
+
+    tong_hop()
+    print("\nXONG. So lieu tong: results/KET_QUA.txt")
+
+
+def tong_hop():
+    tong_hop_nhieu_seed("main", "multiseed_main.json")
+    tong_hop_nhieu_seed("forecast_safety", "multiseed_forecast_safety.json")
     tong_hop_rq3()
     sys.path.insert(0, str(ROOT / "scripts"))
     from build_results import ghi_ket_qua
     print("Da luu", ghi_ket_qua(ROOT))
-    print("\nXONG. So lieu tong: results/KET_QUA.txt")
-
-
-def eval_mo_rong(n_eval=30):
-    """Ket qua mo hinh chinh va ablation da co: chi tinh lai baseline moi va phan
-    bo sung, khong chay lai cac phan tich cu."""
-    if not MO_HINH_DU_BAO.exists():
-        sh([PY, "scripts/forecast_demand.py"])
-    sh([PY, "scripts/tune_baselines.py", "--episodes", 1 if THU else 3, "--per_group"])
-    for s in MAIN_SEEDS:
-        if ck(f"main_s{s}"):
-            sh([PY, "scripts/evaluate.py", "--checkpoint", ck(f"main_s{s}"),
-                "--episodes", n_eval, "--tag", f"main_s{s}"])
-    danh_gia_mo_rong(n_eval)
-    tong_hop_da_hat_giong()
-    sys.path.insert(0, str(ROOT / "scripts"))
-    from build_results import ghi_ket_qua
-    print("Da luu", ghi_ket_qua(ROOT))
-
-
-def danh_gia_mo_rong(n_eval):
-    """[Cung muc phuc vu][Fill theo nhom][Nhieu seed][Cau truc chinh sach] cho mo hinh chinh. Moi lan chay mo rong da co checkpoint:
-    danh gia voi dung config da train, so sanh cung muc phuc vu tren duong bien
-    dung chung, phan ra fill theo nhom."""
-    for s in MAIN_SEEDS:
-        if ck(f"main_s{s}"):
-            sh([PY, "scripts/compare_same_service.py", "--grid", "fine", "--checkpoint", ck(f"main_s{s}"),
-                "--tune_episodes", 1 if THU else 2, "--eval_episodes", n_eval, "--tag", f"main_s{s}"])
-            sh([PY, "scripts/service_by_group.py", "--checkpoint", ck(f"main_s{s}"),
-                "--episodes", n_eval, "--tag", f"main_s{s}"])
-    if ck("main_s42"):
-        sh([PY, "scripts/policy_structure.py", "--checkpoint", ck("main_s42"), "--tag", "main"])
-        sh([PY, "scripts/multi_seed_stats.py", "--seeds", *MAIN_SEEDS, "--episodes", n_eval,
-            "--n_boot", 50 if THU else 2000])
-    sh([PY, "scripts/perfect_demand_benchmark.py", "--episodes", n_eval])
-    for s in MAIN_SEEDS:
-        if ck(f"main_s{s}"):
-            sh([PY, "scripts/hybrid_policy.py", "--checkpoint", ck(f"main_s{s}"), "--tag", f"main_s{s}",
-                "--episodes", n_eval, "--tune_episodes", 1 if THU else 3])
-    if ck("forecast_safety_s42"):
-        sh([PY, "scripts/regime_analysis.py", "--config", "configs/forecast_safety_factor.yaml", "--checkpoint",
-            ck("forecast_safety_s42"), "--tag", "forecast_safety", *(["--episodes", 1] if THU else [])])
-    co = [t for t in MO_RONG if ck(t)]
-    da_tinh_chinh = set()
-    for tag in co:
-        cfg = MO_RONG[tag][0]
-        thu_muc = yaml.safe_load(open(ROOT / cfg, encoding="utf-8"))["paths"]["results_dir"]
-        if thu_muc != "results" and thu_muc not in da_tinh_chinh:
-            da_tinh_chinh.add(thu_muc)
-            sh([PY, "scripts/tune_baselines.py", "--config", cfg, "--episodes", 1 if THU else 3, "--per_group"])
-        sh([PY, "scripts/evaluate.py", "--config", cfg, "--checkpoint", ck(tag),
-            "--episodes", n_eval, "--tag", tag])
-        if not tag.endswith("_trial"):
-            sh([PY, "scripts/compare_same_service.py", "--grid", "fine", "--config", cfg, "--checkpoint", ck(tag),
-                "--tune_episodes", 1 if THU else 2, "--eval_episodes", n_eval, "--tag", tag])
-            sh([PY, "scripts/service_by_group.py", "--config", cfg, "--checkpoint", ck(tag),
-                "--episodes", n_eval, "--tag", tag])
-    if sum(bool(ck(f"forecast_safety_s{s}")) for s in MAIN_SEEDS) >= 2:
-        sh([PY, "scripts/multi_seed_stats.py", "--config", "configs/forecast_safety_factor.yaml", "--ten", "forecast_safety",
-            "--seeds", *MAIN_SEEDS, "--episodes", n_eval, "--n_boot", 50 if THU else 2000])
-    # [Cau 5] Dieu kien van hanh: danh gia ZERO-SHOT mo hinh chinh (main_s42), KHONG train lai
-    if ck("main_s42"):
-        for ten in DIEU_KIEN:
-            cfg = f"configs/{ten}.yaml"
-            thu_muc = yaml.safe_load(open(ROOT / cfg, encoding="utf-8"))["paths"]["results_dir"]
-            chep_du_bao(thu_muc)
-            sh([PY, "scripts/tune_baselines.py", "--config", cfg, "--episodes", 1 if THU else 3, "--per_group"])
-            sh([PY, "scripts/evaluate.py", "--config", cfg, "--checkpoint", ck("main_s42"),
-                "--episodes", n_eval, "--tag", f"zeroshot_{ten}"])
-            sh([PY, "scripts/compare_same_service.py", "--grid", "fine", "--config", cfg, "--checkpoint", ck("main_s42"),
-                "--tune_episodes", 1 if THU else 2, "--eval_episodes", n_eval, "--tag", f"zeroshot_{ten}"])
-    diem = ["main_s42"] + [t for t in co if t.startswith(("penalty", "forecast_obs_s42", "forecast_safety_s42")) and not t.endswith("_trial")]
-    if (ROOT / "results" / "baseline_frontier.json").exists() and ck("main_s42"):
-        sh([PY, "scripts/cost_service_frontier.py", "--tags", *diem])
 
 
 def tong_hop_rq3():
-    """[P4-2] RQ3 tren moi hat giong (SEEDS): moi bien the (toan cuc, khong chuan hoa) so
-    voi moc abl_ref CUNG hat giong. Hieu nang: kiem dinh theo cap tren 30 lan
-    danh gia test. On dinh huan luyen: tu train_log (episode dau tien dat fill
-    >= 85% tren val, chi phi / entropy / explained variance 100 episode cuoi)."""
+    """Cau 3 tren moi hat giong: moi bien the (toan mang luoi, khong chuan hoa) so voi moc abl_ref
+    CUNG hat giong. Hieu nang: kiem dinh theo cap tren 30 lan danh gia test. On dinh huan luyen:
+    tu train_log (episode dau tien dat fill >= 85% tren val; chi phi, entropy, explained variance
+    100 episode cuoi)."""
     import numpy as np
     import pandas as pd
     sys.path.insert(0, str(ROOT / "scripts"))
@@ -433,19 +302,19 @@ def tong_hop_rq3():
         return base if s == 42 else f"{base}_s{s}"
 
     def ippo_costs(t):
-        p = ROOT / "results" / f"all_episodes_{t}.csv"
+        p = RESULTS / f"all_episodes_{t}.csv"
         if not p.exists():
             return None
         d = pd.read_csv(p)
         return d[d.policy == "IPPO"].sort_values("episode")
 
     def on_dinh(t):
-        p = ROOT / "results" / f"train_log_{t}.csv"
+        p = RESULTS / f"train_log_{t}.csv"
         if not p.exists():
             return {}
         d = pd.read_csv(p)
-        ev = d.dropna(subset=["eval_fill"])
-        dat = ev[ev.eval_fill >= 0.85]
+        dat = d.dropna(subset=["eval_fill"])
+        dat = dat[dat.eval_fill >= 0.85]
         cuoi = d.tail(100)
         return {"episode_dat_85_val": int(dat.episode.iloc[0]) if len(dat) else None,
                 "cost_100_ep_cuoi": float(cuoi.cost_total.mean()),
@@ -460,8 +329,7 @@ def tong_hop_rq3():
             e = ippo_costs(t)
             if e is None:
                 continue
-            row = {"cost": float(e.total_cost.mean()), "fill": float(e.fill_rate.mean()),
-                   **on_dinh(t)}
+            row = {"cost": float(e.total_cost.mean()), "fill": float(e.fill_rate.mean()), **on_dinh(t)}
             ref = ippo_costs(tag("abl_ref", s))
             if base != "abl_ref" and ref is not None:
                 row["so_voi_ref"] = paired_test(e.total_cost.values, ref.total_cost.values)
@@ -473,24 +341,19 @@ def tong_hop_rq3():
                 r["so_voi_ref"]["gap_percent"] > 0 and r["so_voi_ref"]["p_paired"] < 0.05
                 for r in out[base]["seeds"].values() if "so_voi_ref" in r))
             out[base]["n_seeds"] = len(g)
-    (ROOT / "results" / "rq3_multiseed.json").write_text(
+    (RESULTS / "rq3_multiseed.json").write_text(
         json.dumps(out, indent=2, ensure_ascii=False, default=float), encoding="utf-8")
     print("Da luu results/rq3_multiseed.json")
-    for base, v in out.items():
-        if "gap_vs_ref_mean" in v:
-            print(f"  {base:<11}: chi phi so voi abl_ref {v['gap_vs_ref_mean']:+.1f}% (TB {v['n_seeds']} seed); "
-                  f"abl_ref re hon co y nghia o {v['n_seeds_ref_re_hon_co_y_nghia']}/{v['n_seeds']} seed")
 
 
-def tong_hop_da_hat_giong():
-    """Tong hop cac hat giong (SEEDS) DUNG CACH: kiem dinh theo cap tinh RIENG
-    tung hat giong (evaluate.py), roi bao cao trung binh +- do lech chuan GIUA
-    cac hat giong - khong gop moi lan danh gia IPPO cua cac seed voi 30 lan
-    baseline nhu quan sat doc lap."""
+def tong_hop_nhieu_seed(goc, ten_file):
+    """Tong hop cac hat giong DUNG CACH: kiem dinh theo cap tinh RIENG tung hat giong
+    (evaluate.py), roi bao cao trung binh +- do lech chuan GIUA cac hat giong - khong gop moi
+    lan danh gia cua cac seed nhu quan sat doc lap. goc: 'main' hoac 'forecast_safety'."""
     import numpy as np
     rows = {}
     for s in MAIN_SEEDS:
-        p = ROOT / "results" / f"summary_main_s{s}.json"
+        p = RESULTS / f"summary_{goc}_s{s}.json"
         if p.exists():
             d = json.loads(p.read_text(encoding="utf-8"))
             ippo = next(r for r in d["summary"] if r["policy"] == "IPPO")
@@ -503,52 +366,39 @@ def tong_hop_da_hat_giong():
            "ippo_cost_sd": float(np.std([r["cost"] for r in rows.values()], ddof=1)) if len(rows) > 1 else 0.0,
            "ippo_fill_mean": float(np.mean([r["fill"] for r in rows.values()])),
            "gap_vs_baseline": {}}
-    refs = set().union(*[r["per_baseline"] for r in rows.values()])
-    for ref in sorted(refs):
+    for ref in sorted(set().union(*[r["per_baseline"] for r in rows.values()])):
         g = [r["per_baseline"][ref]["gap_percent"] for r in rows.values() if ref in r["per_baseline"]]
         sig = [r["per_baseline"][ref]["p_paired"] < 0.05 for r in rows.values() if ref in r["per_baseline"]]
         out["gap_vs_baseline"][ref] = {"mean": float(np.mean(g)), "min": float(min(g)),
                                        "max": float(max(g)), "n_seeds_significant": int(sum(sig)),
-                                       # tach theo chieu: co y nghia nhung IPPO re hon / dat hon
                                        "n_seeds_re_hon": int(sum(s and x < 0 for s, x in zip(sig, g))),
                                        "n_seeds_dat_hon": int(sum(s and x > 0 for s, x in zip(sig, g))),
                                        "n_seeds": len(g)}
-    (ROOT / "results" / "multiseed_main.json").write_text(
-        json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
-    print("Da luu results/multiseed_main.json")
+    (RESULTS / ten_file).write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(f"Da luu results/{ten_file}")
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("lenh", choices=["status", "train", "eval", "eval_mo_rong", "tonghop"])
-    ap.add_argument("ten", nargs="?", help="ten lan chay, 'main', 'ablations' hoac 'all'")
+    ap.add_argument("lenh", choices=["status", "train", "eval", "tonghop"])
+    ap.add_argument("ten", nargs="?", help="ten lan chay, 'main', 'ablations', 'full' hoac nhom mo rong")
     ap.add_argument("--n_eval", type=int, default=30)
     a = ap.parse_args()
     if a.lenh == "status":
         status()
     elif a.lenh == "eval":
         evaluate_all(a.n_eval)
-    elif a.lenh == "eval_mo_rong":
-        eval_mo_rong(a.n_eval)
     elif a.lenh == "tonghop":
-        tong_hop_da_hat_giong()
-        tong_hop_rq3()
-        sys.path.insert(0, str(ROOT / "scripts"))
-        from build_results import ghi_ket_qua
-        print("Da luu", ghi_ket_qua(ROOT))
-    elif a.ten == "auto":
-        train_auto()
+        tong_hop()
     elif a.ten == "full":
         train_full()
     else:
-        # "all": mo hinh chinh truoc (RQ1/RQ2), roi ablation theo thu tu uu tien
-        nhom = {"main": list(MAIN), "ablations": list(ABLATIONS),
-                "all": list(MAIN) + [t for t in PRIORITY if t not in MAIN], **NHOM_MO_RONG}
+        nhom = {"main": list(MAIN), "ablations": list(ABLATIONS), **NHOM_LAN_CHAY_MO_RONG}
         tags = nhom.get(a.ten, [a.ten])
         bad = [t for t in tags if t not in RUNS]
         if bad:
-            sys.exit(f"Khong co lan chay {bad}. Chon: {list(RUNS)} hoac "
-                     f"main/ablations/all/{'/'.join(NHOM_MO_RONG)}")
+            sys.exit(f"Khong co lan chay {bad}. Chon: {list(RUNS)} hoac main/ablations/full/"
+                     f"{'/'.join(NHOM_LAN_CHAY_MO_RONG)}")
         for t in tags:
             train(t)
 

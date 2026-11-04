@@ -7,30 +7,41 @@
 \subsection{Quy trình nghiệp vụ và mô hình khái niệm}
 \label{subsec:nghiepVu}
 
-Thiết kế tác tử bắt đầu từ quy trình vận hành kho, theo thứ tự: quy trình nghiệp vụ $\rightarrow$ các quyết định cần đưa ra $\rightarrow$ người chịu trách nhiệm từng quyết định $\rightarrow$ nhiệm vụ $\rightarrow$ tác tử.
+Tác tử được thiết kế từ quy trình vận hành thực tế của kho. Nhóm xác định trong quy trình có những quyết định nào, ai chịu trách nhiệm từng quyết định, rồi giao mỗi quyết định cho một tác tử.
 
 \subsubsection{Quy trình vận hành một ngày}
 
-Tại mỗi kho, mỗi mã hàng có một chu kỳ vận hành hằng ngày gồm năm bước:
-\begin{enumerate}
-    \item Nhận hàng. Các đơn đặt trước đó đến hạn được giao tới kho. Kho chỉ nhập được trong phạm vi chỗ trống còn lại, phần hàng vượt sức chứa bị từ chối tại cửa nhập.
-    \item Kiểm tra tình trạng. Người phụ trách mã hàng xem tồn kho hiện có, lượng hàng đã đặt nhưng chưa về, lượng bán những ngày gần đây và mức đầy của kho.
-    \item Ra quyết định bổ sung. Người phụ trách quyết định hôm nay đặt thêm bao nhiêu đơn vị từ nhà cung cấp, có thể là không đặt. Đơn hàng sẽ về sau 1--3 ngày, không biết trước chính xác.
-    \item Bán hàng. Khách hàng mua hàng. Phần nhu cầu vượt tồn kho bị mất vì khách chuyển sang cửa hàng khác.
-    \item Ghi nhận kết quả. Hệ thống ghi chi phí lưu kho, chi phí đặt hàng, tổn thất do thiếu hàng, hàng bị từ chối vì tràn kho và mức phục vụ khách hàng.
-\end{enumerate}
+Mỗi ngày, công việc bổ sung hàng cho một mặt hàng tại một kho diễn ra qua năm bước nối tiếp nhau. Bảng~\ref{tab:quyTrinhNgay} đặt mỗi bước cạnh thành phần tương ứng của mô hình học tăng cường. Môi trường mô phỏng cũng thực hiện các bước này theo đúng thứ tự trên.
 
-\subsubsection{Từ quy trình đến tác tử}
+\begin{table}[H]
+    \centering
+    \caption{Quy trình một ngày và thành phần mô hình}
+    \label{tab:quyTrinhNgay}
+    \small
+    \begin{tabular}{|>{\raggedright\arraybackslash}p{2.6cm}|>{\raggedright\arraybackslash}p{6.4cm}|>{\raggedright\arraybackslash}p{4.4cm}|}
+        \hline
+        Bước & Diễn biến trong nghiệp vụ & Thành phần của mô hình \\
+        \hline
+        Kiểm tra tình trạng & Người phụ trách mặt hàng xem tồn kho, hàng đã đặt nhưng chưa về, lượng bán những ngày gần đây và mức đầy của kho & Quan sát $o_i^t$ của tác tử \\ \hline
+        Ra quyết định bổ sung & Quyết định hôm nay đặt thêm bao nhiêu đơn vị, có thể không đặt. Hàng về sau 1--3 ngày, không biết trước chính xác & Hành động $a_i^t$, chọn một trong sáu mức đặt \\ \hline
+        Nhận hàng & Đơn đến hạn được giao tới kho. Phần vượt chỗ trống còn lại bị từ chối tại cửa nhập & Hàm chuyển trạng thái, chi phí tràn kho \\ \hline
+        Bán hàng & Khách mua hàng. Phần nhu cầu vượt tồn kho bị mất vì khách sang cửa hàng khác & Nhu cầu thực tế từ M5, chi phí thiếu hàng \\ \hline
+        Ghi nhận kết quả & Ghi chi phí lưu kho, đặt hàng, thiếu hàng, tràn kho và mức phục vụ & Phần thưởng $r_i^t$ \\
+        \hline
+    \end{tabular}
+\end{table}
 
-Trong năm bước trên, chỉ có một quyết định cần tối ưu là lượng đặt bổ sung ở bước 3. Các bước còn lại là hệ quả vật lý hoặc ghi nhận. Quyết định này lặp lại cho từng mã hàng tại từng kho và do người phụ trách mã hàng đó chịu trách nhiệm. Vì vậy nhiệm vụ chung ``tối thiểu chi phí vận hành toàn mạng lưới dưới ràng buộc sức chứa và mức phục vụ'' được phân rã thành 300 nhiệm vụ con cùng loại. Mỗi nhiệm vụ con giao cho một tác tử ứng với một cặp (kho, mặt hàng). Căn cứ của cách phân rã này được trình bày ở mục~\ref{subsec:mdpDaTacTu}.
 
-\subsubsection{Phạm vi của quy trình}
+Trong năm bước, chỉ bước ra quyết định bổ sung là có thể tối ưu. Bước kiểm tra chỉ thu thập thông tin, còn ba bước sau do nhà cung cấp, khách hàng và quy định của kho quyết định. Quyết định bổ sung lặp lại cho từng mặt hàng tại từng kho và do người phụ trách mặt hàng đó đảm nhận, nên nhiệm vụ chung được phân rã thành 300 nhiệm vụ con cùng loại. Mỗi nhiệm vụ con giao cho một tác tử ứng với một cặp kho--mặt hàng.
 
-Đầu ra của mô hình là phiếu đề nghị đặt hàng gửi phòng mua hàng, gồm số lượng và thời điểm đặt cho từng cặp kho--mặt hàng. Các bước hỏi báo giá, chọn nhà cung cấp và gửi đơn nằm ngoài phạm vi (mục~\ref{subsec:phamvingoai}). Trong mô phỏng, nhà cung cấp được thay bằng thời gian giao hàng ngẫu nhiên $L \sim \mathrm{Uniform}\{1, 2, 3\}$ ngày.
+Các tác tử không độc lập với nhau. Ở bước nhận hàng, các mặt hàng trong cùng kho dùng chung chỗ trống, nên mặt hàng này đặt nhiều thì mặt hàng khác dễ bị từ chối nhập. Đây là lý do bài toán được mô hình hóa thành hệ đa tác tử thay vì 300 bài toán một mặt hàng riêng lẻ.
+
+
+Đầu ra của mô hình là phiếu đề nghị đặt hàng gửi phòng mua hàng, gồm số lượng và thời điểm đặt cho từng cặp kho--mặt hàng. Các bước hỏi báo giá, chọn nhà cung cấp và gửi đơn nằm ngoài phạm vi của đề tài, như đã nêu trong giới hạn phạm vi ở Chương~\ref{chap:tongquan}. Trong mô phỏng, nhà cung cấp được thay bằng thời gian giao hàng ngẫu nhiên $L \sim \mathrm{Uniform}\{1, 2, 3\}$ ngày.
 
 \subsubsection{Mô hình khái niệm}
 
-Ở mức nghiệp vụ, bài toán là một vòng lặp hằng ngày (Hình~\ref{fig:moHinhKhaiNiem}). Nhu cầu tác động lên kho và làm thay đổi trạng thái tồn kho. Hệ đa tác tử đọc trạng thái và ra quyết định bổ sung hàng. Quyết định đó sinh ra chi phí và mức phục vụ, đồng thời tạo trạng thái tồn kho mới cho ngày hôm sau.
+Ở mức nghiệp vụ, bài toán là một vòng lặp hằng ngày, được minh họa ở Hình~\ref{fig:moHinhKhaiNiem}. Nhu cầu tác động lên kho và làm thay đổi trạng thái tồn kho. Hệ đa tác tử đọc trạng thái và ra quyết định bổ sung hàng. Quyết định đó sinh ra chi phí và mức phục vụ, đồng thời tạo trạng thái tồn kho mới cho ngày hôm sau.
 
 \begin{figure}[htbp]
     \centering
@@ -70,21 +81,15 @@ Trong năm bước trên, chỉ có một quyết định cần tối ưu là l�
 \subsection{Mô tả mạng lưới}
 \label{subsec:mangLuoi}
 
-Mạng lưới có các đặc điểm sau:
-\begin{itemize}
-    \item Hệ thống gồm $N = 10$ kho hoạt động song song và độc lập về nguồn cung. Mỗi kho lưu trữ $M = 30$ mặt hàng, tạo thành 300 cặp kho--mặt hàng.
-    \item Mỗi kho có sức chứa hữu hạn $W_w$ dùng chung cho mọi mặt hàng trong kho. Khi một mặt hàng đặt quá nhiều, các mặt hàng khác có thể bị phạt tràn kho, nên bài toán không tách được thành 300 bài toán riêng lẻ.
-    \item Mỗi cặp đặt hàng từ nhà cung cấp bên ngoài với thời gian giao hàng ngẫu nhiên $L \sim \mathrm{Uniform}\{1, 2, 3\}$ ngày.
-    \item Nhu cầu hằng ngày $D_t^{(i)}$ của mỗi cặp lấy từ chuỗi doanh số thực tế của bộ dữ liệu M5 \parencite{makridakis2022background}.
-\end{itemize}
+Hệ thống gồm $N = 10$ kho hoạt động song song và độc lập về nguồn cung. Mỗi kho lưu trữ $M = 30$ mặt hàng, tạo thành 300 cặp kho--mặt hàng. Mỗi cặp đặt hàng từ nhà cung cấp bên ngoài với thời gian giao hàng ngẫu nhiên $L \sim \mathrm{Uniform}\{1, 2, 3\}$ ngày, còn nhu cầu hằng ngày $D_t^{(i)}$ của cặp lấy từ chuỗi doanh số thực tế của bộ dữ liệu M5 \parencite{makridakis2022background}. Mỗi kho có sức chứa hữu hạn $W_w$ dùng chung cho mọi mặt hàng trong kho.
 
-Mỗi kho trong đề tài là một trong 10 cửa hàng của M5, được xem như một điểm lưu trữ độc lập. Bộ dữ liệu không có thông tin về diện tích kho, nên sức chứa là giả định của đề tài, đặt theo số ngày nhu cầu của từng kho (mục~\ref{subsec:sucChua}).
+Mỗi kho trong đề tài là một trong 10 cửa hàng của M5, được xem như một điểm lưu trữ độc lập. Bộ dữ liệu không có thông tin về diện tích kho, nên sức chứa là giả định của đề tài, đặt theo số ngày nhu cầu của từng kho.
 
 M5 ghi doanh số, không ghi nhu cầu thật. Vào ngày hết hàng, doanh số thấp hơn nhu cầu thật, nhưng dữ liệu không đánh dấu ngày hết hàng nên chưa đo được mức chênh này. Kịch bản nhu cầu tăng 20\% ở Chương~\ref{chap:chapter4} là phép kiểm tra độ nhạy gần nhất với sai lệch đó.
 
 \subsubsection{Chia miền dữ liệu và các cửa sổ thời gian}
 
-Chuỗi 1.941 ngày của M5 được chia theo thời gian thành ba miền không chồng lấn (Hình~\ref{fig:trucThoiGian}). Miền huấn luyện dùng để học, miền xác thực dùng để chọn mô hình và tinh chỉnh chính sách đối chứng, còn miền kiểm thử chỉ dùng để báo cáo kết quả cuối.
+Chuỗi 1.941 ngày của M5 được chia theo thời gian thành ba miền không chồng lấn, thể hiện trên trục thời gian ở Hình~\ref{fig:trucThoiGian}. Miền huấn luyện dùng để học, miền xác thực dùng để chọn mô hình và tinh chỉnh chính sách đối chứng, còn miền kiểm thử chỉ dùng để báo cáo kết quả cuối.
 
 \begin{figure}[H]
     \centering
@@ -109,18 +114,12 @@ Chuỗi 1.941 ngày của M5 được chia theo thời gian thành ba miền kh�
     \label{fig:trucThoiGian}
 \end{figure}
 
-Ngoài ba miền dữ liệu, mô hình còn dùng các khoảng thời gian sau:
-\begin{itemize}
-    \item Quan sát chứa lịch sử nhu cầu 7 ngày gần nhất.
-    \item Tỷ lệ đáp ứng được tính trên cửa sổ trượt 30 ngày.
-    \item Mỗi tập (\textit{episode}) huấn luyện dài 365 ngày.
-    \item Mỗi vòng thu thập dữ liệu (\textit{rollout}) gồm 1024 bước.
-\end{itemize}
+Bên trong các miền dữ liệu, mô hình còn dùng một số khoảng thời gian cố định. Quan sát của tác tử chứa lịch sử nhu cầu 7 ngày gần nhất, còn tỷ lệ đáp ứng được tính trên cửa sổ trượt 30 ngày. Mỗi tập (\textit{episode}) huấn luyện dài 365 ngày, và mỗi vòng thu thập dữ liệu (\textit{rollout}) gồm 1024 bước.
 
 \subsection{Thiết lập bài toán dưới dạng MDP đa tác tử}
 \label{subsec:mdpDaTacTu}
 
-Bài toán có 300 tác tử nhưng chỉ có một mạng chính sách $\pi_\theta$ dùng chung, nên chỉ một bộ tham số được huấn luyện (Hình~\ref{fig:kienTrucDaTacTu}).
+Bài toán có 300 tác tử nhưng chỉ có một mạng chính sách $\pi_\theta$ dùng chung, nên chỉ một bộ tham số được huấn luyện. Hình~\ref{fig:kienTrucDaTacTu} minh họa kiến trúc này.
 
 \begin{figure}[H]
     \centering
@@ -165,18 +164,9 @@ Bài toán có 300 tác tử nhưng chỉ có một mạng chính sách $\pi_\th
 
 \subsubsection{Phân rã nhiệm vụ và thiết kế tác tử}
 
-Có hai cách chia nhiệm vụ cho các tác tử:
-\begin{itemize}
-    \item Chia theo chức năng (\textit{functional decomposition}): mỗi tác tử làm một khâu, ví dụ một tác tử tổng hợp thông tin và một tác tử điều phối.
-    \item Chia theo điểm ra quyết định (\textit{decision-point decomposition}): mỗi tác tử ứng với đúng một nơi cần ra quyết định.
-\end{itemize}
+Có hai cách chia nhiệm vụ cho các tác tử. Cách thứ nhất là chia theo chức năng (\textit{functional decomposition}), trong đó mỗi tác tử làm một khâu, ví dụ một tác tử tổng hợp thông tin và một tác tử điều phối. Cách thứ hai là chia theo điểm ra quyết định (\textit{decision-point decomposition}), trong đó mỗi tác tử ứng với đúng một nơi cần ra quyết định.
 
-Nhóm chọn cách thứ hai vì các lý do sau:
-\begin{itemize}
-    \item Trong thực tế, người phụ trách một mã hàng tại một kho là người quyết định đặt hàng cho mã hàng đó.
-    \item Chia theo chức năng cần thêm phần truyền thông giữa các tác tử, trong khi nghiệp vụ gốc không có thành phần này.
-    \item Hành động của mỗi tác tử chính là lượng đặt hàng, nên tác tử nhận đúng chi phí do quyết định của mình gây ra.
-\end{itemize}
+Nhóm chọn cách thứ hai vì ba lý do. Trong thực tế, người phụ trách một mặt hàng tại một kho chính là người quyết định đặt hàng cho mặt hàng đó. Chia theo chức năng lại cần thêm phần truyền thông giữa các tác tử, trong khi nghiệp vụ gốc không có thành phần này. Ngoài ra, khi hành động của mỗi tác tử chính là lượng đặt hàng, tác tử nhận đúng chi phí do quyết định của mình gây ra, nên tín hiệu học rõ ràng hơn.
 
 Do đó số tác tử bằng số cặp kho--mặt hàng, $N \times M = 300$.
 
@@ -184,7 +174,7 @@ Do đó số tác tử bằng số cặp kho--mặt hàng, $N \times M = 300$.
 
 Bài toán được mô hình hóa thành Dec-POMDP \parencite{oliehoek2016} với 300 tác tử. Mỗi tác tử $i$ có vector quan sát cục bộ $o_i^t \in \mathbb{R}^{44}$ tại ngày $t$, với mọi chiều được mã hóa về khoảng $[0, 1]$.
 
-Hai tín hiệu cấp kho là mức sử dụng sức chứa $u_t^{(w(i))} = \sum_{j \in w(i)} I_t^{(j)} / W_{w(i)}$ và tỷ trọng tồn kho $I_t^{(i)} / \sum_{j \in w(i)} I_t^{(j)}$ của cặp trong kho, với $w(i)$ là kho chứa cặp $i$. Phạt tràn kho phụ thuộc tổng tồn kho của cả kho, nên thiếu hai tín hiệu này thì tác tử bị phạt vì một đại lượng nó không quan sát được. Đây cũng là kênh ghép nối giữa các tác tử (mục~\ref{subsec:phoiHop}).
+Hai tín hiệu cấp kho là mức sử dụng sức chứa $u_t^{(w(i))} = \sum_{j \in w(i)} I_t^{(j)} / W_{w(i)}$ và tỷ trọng tồn kho $I_t^{(i)} / \sum_{j \in w(i)} I_t^{(j)}$ của cặp trong kho, với $w(i)$ là kho chứa cặp $i$. Phạt tràn kho phụ thuộc tổng tồn kho của cả kho, nên thiếu hai tín hiệu này thì tác tử bị phạt vì một đại lượng nó không quan sát được. Đây cũng là kênh ghép nối giữa các tác tử, được phân tích ở phần cơ chế phối hợp giữa các tác tử.
 
 Đặc trưng quy mô $\log(1 + \bar{D}^{(i)})$ giúp mạng dùng chung phân biệt các mặt hàng có quy mô nhu cầu khác nhau. Tín hiệu giảm giá $g_t^{(i)} = \mathrm{clip}\bigl(1 - p_t^{(i)} / \bar{p}^{(i)}, 0, 1\bigr)$ so giá bán $p_t^{(i)}$ với giá trung bình $\bar{p}^{(i)}$ trên miền huấn luyện. Đợt giảm giá thường đi trước hoặc trùng với lúc nhu cầu tăng, nên đặc trưng này là chỉ báo sớm của nhu cầu. Bối cảnh thời gian gồm thứ trong tuần và vector lịch 20 chiều, trong đó mỗi tác tử chỉ giữ cờ SNAP của bang chứa kho mình.
 
@@ -192,32 +182,30 @@ Hai tín hiệu cấp kho là mức sử dụng sức chứa $u_t^{(w(i))} = \su
     \centering
     \caption{Mã hóa các biến trạng thái trong vector quan sát}
     \label{tab:doiChieuState}
-    \footnotesize
-    \begin{tabular}{|p{1.7cm}|p{2.6cm}|c|p{3.6cm}|p{3.6cm}|}
+    \small
+    \begin{tabular}{|>{\raggedright\arraybackslash}p{2.0cm}|>{\raggedright\arraybackslash}p{3.1cm}|c|>{\raggedright\arraybackslash}p{4.4cm}|>{\raggedright\arraybackslash}p{3.4cm}|}
         \hline
         Nhóm & Biến & Chiều & Mã hóa, thang đo & Ghi chú \\
         \hline
-        Trạng thái của cặp & Tồn kho hiện có & 1 & Chia cho số ngày nhu cầu, thang $[0,1]$ & \\ \cline{2-5}
-         & Vị thế tồn kho (IP) & 1 & Tồn kho + hàng đang về, cùng thang & \\ \cline{2-5}
+        Trạng thái của cặp & Tồn kho hiện có & 1 & Quy đổi ra số ngày nhu cầu, thang $[0,1]$ & \\ \cline{2-5}
+         & Vị thế tồn kho & 1 & Tồn kho cộng hàng đang về, cùng thang & \\ \cline{2-5}
          & Hàng đang về & 3 & Lượng đến hạn theo từng ngày còn lại, cùng thang & Lịch về của các đơn đã đặt \\ \cline{2-5}
-         & Tình trạng thiếu hàng & 1 & Tỷ lệ đáp ứng trên cửa sổ trượt 30 ngày, $[0,1]$ & \\ \cline{2-5}
-         & Đặc trưng quy mô & 1 & $\log(1 + \bar{D}^{(i)})$ chuẩn hóa & Giúp mạng dùng chung phân biệt mã hàng \\ \cline{2-5}
-         & Mức sử dụng sức chứa kho & 1 & $u_t^{(w(i))} = \sum_{j \in w(i)} I_t^{(j)} / W_{w(i)}$ & Tín hiệu cấp kho \\ \cline{2-5}
-         & Tỷ trọng tồn kho trong kho & 1 & Tỷ trọng của cặp $i$ trong tổng tồn kho của kho, chuẩn hóa về $[0,1]$ & Tín hiệu cấp kho \\ \hline
+         & Tỷ lệ đáp ứng gần đây & 1 & Tính trên cửa sổ trượt 30 ngày, thang $[0,1]$ & \\ \cline{2-5}
+         & Quy mô nhu cầu & 1 & $\log(1 + \bar{D}^{(i)})$, chuẩn hóa & Phân biệt mặt hàng bán nhanh, bán chậm \\ \cline{2-5}
+         & Mức đầy của kho & 1 & Tổng tồn kho của kho chia cho sức chứa & Tín hiệu cấp kho \\ \cline{2-5}
+         & Tỷ trọng trong kho & 1 & Tồn kho của cặp chia cho tổng tồn kho của kho & Tín hiệu cấp kho \\ \hline
         Lịch sử nhu cầu & Nhu cầu 7 ngày gần nhất & 7 & Thang $\log(1+\cdot)$, chuẩn hóa theo quy mô của cặp & \\ \hline
-        Tín hiệu ngoại sinh & Giá bán, khuyến mãi & 1 & Liên tục: $g_t^{(i)} \in [0,1]$, mức giảm so với giá trung bình của cặp trên miền huấn luyện & Càng gần 1 càng giảm sâu \\ \cline{2-5}
-         & Ngày trong tuần & 7 & One-hot, $0/1$ & \\ \cline{2-5}
-         & Đặc trưng lịch & 20 & Cờ $0/1$: 3 SNAP (chỉ giữ cờ của bang chứa kho), 1 ``không sự kiện'', 4 loại sự kiện, 12 tháng & Mức tác động do mạng tự học qua trọng số \\ \hline
-        Không đưa vào & Nhu cầu hiện tại & 0 & --- & Có chủ ý: quyết định đặt hàng diễn ra trước khi nhu cầu ngày đó phát sinh, đưa vào sẽ rò rỉ thông tin tương lai \\ \cline{2-5}
-         & Thời gian giao hàng của đơn sắp đặt & 0 & --- & Chỉ biết sau khi đơn đã đặt (mục~\ref{subsubsec:leadTime}) \\
+        Tín hiệu bên ngoài & Mức giảm giá & 1 & Mức giảm so với giá trung bình của cặp, thang $[0,1]$ & Càng gần 1 càng giảm sâu \\ \cline{2-5}
+         & Ngày trong tuần & 7 & Mã hóa one-hot & \\ \cline{2-5}
+         & Lịch & 20 & Cờ 0/1: 3 SNAP, 1 không sự kiện, 4 loại sự kiện, 12 tháng & Chỉ giữ cờ SNAP của bang chứa kho \\ \hline
+        Không đưa vào & Nhu cầu của ngày hiện tại & 0 & --- & Phát sinh sau khi đặt hàng, đưa vào sẽ rò rỉ thông tin tương lai \\ \cline{2-5}
+         & Thời gian giao của đơn sắp đặt & 0 & --- & Chỉ biết sau khi đơn đã đặt \\
         \hline
     \end{tabular}
 \end{table}
 
 Với tín hiệu liên tục như mức giảm giá, độ mạnh nằm ngay trong giá trị quan sát. Với các cờ nhị phân (SNAP, sự kiện, tháng), quan sát chỉ cho biết có hay không, và mạng tự học mức tác động qua trọng số. Mức đóng góp của từng nhóm tín hiệu được đo ở Chương~\ref{chap:chapter4} bằng hai cách: xáo trộn từng nhóm đặc trưng và huấn luyện lại sau khi bỏ một nhóm.
 
-\subsubsection{Thời gian giao hàng}
-\label{subsubsec:leadTime}
 
 Môi trường bốc thời gian giao hàng $L \sim \mathrm{Uniform}\{1, 2, 3\}$ cho từng đơn. Khi đặt hàng, tác tử chưa biết đơn đó sẽ về sau bao nhiêu ngày. Sau khi đơn đã được đặt, tác tử thấy lượng hàng sẽ về theo từng ngày qua vector hàng đang về 3 chiều, giống việc nhà cung cấp báo lịch giao sau khi nhận đơn. Các chính sách cổ điển chỉ dùng tổng lượng hàng đang về.
 
@@ -234,26 +222,22 @@ trong đó $\bar{D}^{(i)}$ là nhu cầu trung bình một ngày của cặp $i$
 
 \subsubsection{Hàm chuyển trạng thái}
 
-Mỗi ngày, môi trường mô phỏng thực hiện sáu bước theo đúng thứ tự sau:
-\begin{enumerate}
-    \item Ánh xạ hành động. Hành động $a_i^t \in \{0,\ldots,5\}$ của mỗi tác tử được ánh xạ sang lượng đặt hàng $q_i(a_i^t)$ theo bảng mức tương đối (công thức~\ref{eq:orderTable}).
-    \item Nhận hàng. Hàng ở vị trí 0 của hàng đợi giao là hàng đến hạn ngày $t$ và được nhập kho.
-    \item Thực thi ràng buộc sức chứa. Nếu lượng hàng mới về kho $w$ vượt chỗ trống còn lại $W_w - \sum_{j \in w} I^{(j)}$, phần vượt của hàng mới về bị từ chối. Phần bị từ chối được chia theo tỷ trọng hàng về của từng mặt hàng (công thức~\ref{eq:tranKho}). Tồn kho cũ không bị ảnh hưởng.
-    \item Dịch hàng đợi và ghi đơn mới. Hàng đợi giao dịch trái một vị trí. Đơn hàng mới được ghi vào vị trí $L-1$ với $L \sim \mathrm{Uniform}\{1, 2, 3\}$. Đây là nguồn ngẫu nhiên thứ nhất.
-    \item Phát sinh nhu cầu. Nhu cầu $D_t^{(i)}$ lấy từ chuỗi M5 thực tế là nguồn ngẫu nhiên thứ hai. Kho bán $\min(I_t^{(i)}, D_t^{(i)})$, phần thiếu bị mất hoàn toàn.
-    \item Cập nhật lịch sử. Nhu cầu và lượng đáp ứng được ghi vào lịch sử 7 ngày, tỷ lệ đáp ứng trên cửa sổ trượt 30 ngày được cập nhật. Môi trường tính phần thưởng $r_i^t$ rồi chuyển sang ngày $t+1$.
-\end{enumerate}
+Mỗi ngày, môi trường mô phỏng cập nhật trạng thái theo một thứ tự cố định. Đầu tiên, hành động $a_i^t \in \{0,\ldots,5\}$ của mỗi tác tử được ánh xạ sang lượng đặt hàng $q_i(a_i^t)$ theo bảng mức tương đối ở công thức~(\ref{eq:orderTable}). Tiếp theo, hàng ở vị trí 0 của hàng đợi giao, là hàng đến hạn ngày $t$, được đưa vào kho.
+
+Ngay khi nhập hàng, ràng buộc sức chứa được áp dụng. Nếu lượng hàng mới về kho $w$ vượt chỗ trống còn lại $W_w - \sum_{j \in w} I^{(j)}$, phần vượt của hàng mới về bị từ chối và được chia theo tỷ trọng hàng về của từng mặt hàng, tính theo công thức~(\ref{eq:tranKho}). Tồn kho cũ không bị ảnh hưởng. Sau đó hàng đợi giao dịch trái một vị trí, và đơn hàng mới được ghi vào vị trí $L-1$ với $L \sim \mathrm{Uniform}\{1, 2, 3\}$. Thời gian giao hàng ngẫu nhiên này là nguồn ngẫu nhiên thứ nhất của môi trường.
+
+Nguồn ngẫu nhiên thứ hai là nhu cầu $D_t^{(i)}$, lấy từ chuỗi M5 thực tế. Kho bán $\min(I_t^{(i)}, D_t^{(i)})$ đơn vị, phần thiếu bị mất hoàn toàn. Cuối ngày, nhu cầu và lượng đáp ứng được ghi vào lịch sử 7 ngày, tỷ lệ đáp ứng trên cửa sổ trượt 30 ngày được cập nhật, rồi môi trường tính phần thưởng $r_i^t$ và chuyển sang ngày $t+1$.
 
 \subsubsection{Tổng hợp các thành phần MDP}
 
-Mỗi ngày, cả 300 tác tử cùng chạy một vòng tương tác $s_t \rightarrow a_t \rightarrow r_t, s_{t+1}$ với cùng tham số $\theta, \phi$ (Hình~\ref{fig:vongLapRL}). Các khái niệm chung của học tăng cường ứng với những thành phần cụ thể của hệ thống kho.
+Mỗi ngày, cả 300 tác tử cùng chạy một vòng tương tác $s_t \rightarrow a_t \rightarrow r_t, s_{t+1}$ với cùng tham số $\theta, \phi$, như minh họa ở Hình~\ref{fig:vongLapRL}. Các khái niệm chung của học tăng cường ứng với những thành phần cụ thể của hệ thống kho. Bảng~\ref{tab:anhXaMDP} nêu từng thành phần của mô hình học tăng cường, nội dung cụ thể trong hệ thống kho và nơi trình bày chi tiết.
 
 \begin{table}[htbp]
     \centering
     \caption{Các thành phần của mô hình học tăng cường}
     \label{tab:anhXaMDP}
     \small
-    \begin{tabular}{|p{2.5cm}|p{8.6cm}|p{2.9cm}|}
+    \begin{tabular}{|>{\raggedright\arraybackslash}p{2.5cm}|>{\raggedright\arraybackslash}p{8.6cm}|>{\raggedright\arraybackslash}p{2.9cm}|}
         \hline
         Thành phần & Định nghĩa trong đề tài & Công thức, mục \\
         \hline
@@ -298,13 +282,13 @@ Mỗi ngày, cả 300 tác tử cùng chạy một vòng tương tác $s_t \righ
     \label{fig:vongLapRL}
 \end{figure}
 
-Cả 300 tác tử có vai trò giống nhau và dùng chung một bộ trọng số, nên một bảng đặc tả duy nhất mô tả đầy đủ hệ thống.
+Cả 300 tác tử có vai trò giống nhau và dùng chung một bộ trọng số, nên một bảng đặc tả duy nhất mô tả đầy đủ hệ thống. Bảng~\ref{tab:dacTaTacTu} là bảng đặc tả đó.
 
 \begin{table}[htbp]
     \centering
     \caption{Đặc tả tác tử trong hệ thống đề xuất}
     \label{tab:dacTaTacTu}
-    \begin{tabular}{|l|p{10.2cm}|}
+    \begin{tabular}{|l|>{\raggedright\arraybackslash}p{10.2cm}|}
         \hline
         Thành phần & Nội dung \\
         \hline
@@ -316,7 +300,7 @@ Cả 300 tác tử có vai trò giống nhau và dùng chung một bộ trọng 
         Hành động & $a_i^t \in \{0, \ldots, 5\}$, ánh xạ sang lượng đặt hàng theo công thức~(\ref{eq:orderTable}) \\ \hline
         Chính sách & $\pi_\theta(a \mid o)$, mạng Actor dùng chung trọng số $\theta$ cho mọi tác tử \\ \hline
         Đầu ra & Yêu cầu đặt hàng $q_i(a_i^t)$, là phiếu đề nghị gửi phòng mua hàng, không đi tiếp tới nhà cung cấp \\ \hline
-        Tương tác & Không truyền thông trực tiếp. Phối hợp gián tiếp qua sức chứa kho dùng chung (mục~\ref{subsec:phoiHop}) \\
+        Tương tác & Không truyền thông trực tiếp. Phối hợp gián tiếp qua sức chứa kho dùng chung \\
         \hline
     \end{tabular}
 \end{table}
@@ -332,7 +316,7 @@ Mỗi kho $w$ có sức chứa hữu hạn $W_w$ dùng chung cho cả $M$ mặt 
 \end{equation}
 trong đó $\bar{D}^{(w,j)}$ là nhu cầu trung bình một ngày của mặt hàng $j$ tại kho $w$ trên miền huấn luyện.
 
-Sức chứa được tính riêng cho từng kho vì nhu cầu giữa các kho chênh nhau tới 4,5 lần. Với một sức chứa chung, kho lớn nhất chỉ tích trữ được khoảng 1,4 ngày nhu cầu trong khi hàng có thể về sau ba ngày. Khi đó không chính sách nào tránh được cùng lúc phạt tràn kho và phạt mức phục vụ.
+Sức chứa được tính riêng cho từng kho vì nhu cầu giữa các kho chênh nhau tới 4,5 lần. Với một sức chứa chung, kho lớn nhất chỉ tích trữ được khoảng 1,4 ngày nhu cầu trong khi hàng có thể về sau ba ngày. Khi đó không chính sách nào tránh được cùng lúc phạt tràn kho và phạt mức phục vụ. Nhu cầu trung bình và sức chứa tương ứng của từng kho được trình bày ở Bảng~\ref{tab:sucChuaKho}.
 
 \begin{table}[H]
     \centering
@@ -357,36 +341,27 @@ Ràng buộc được thực thi tại thời điểm nhập hàng. Gọi $A_t^{
     O_t^{(i)} = A_t^{(i)} \cdot \max\!\left(0,\; 1 - \frac{F_t^{(w(i))}}{\sum_{j \in w(i)} A_t^{(j)}}\right).
     \label{eq:tranKho}
 \end{equation}
-Ví dụ, nếu kho còn 100 chỗ trống mà có 150 đơn vị hàng mới về thì một phần ba lượng hàng về của mỗi mặt hàng bị từ chối. Cơ chế này có hai tính chất:
-\begin{itemize}
-    \item Tồn kho cũ không bị ảnh hưởng. Chỉ mặt hàng vừa về mới chịu phần bị từ chối.
-    \item Hàng bị từ chối ngay khi nhập kho, không nhập rồi mới hủy.
-\end{itemize}
+Ví dụ, nếu kho còn 100 chỗ trống mà có 150 đơn vị hàng mới về thì một phần ba lượng hàng về của mỗi mặt hàng bị từ chối. Với cơ chế này, tồn kho cũ không bị ảnh hưởng và chỉ mặt hàng vừa về mới chịu phần bị từ chối. Hàng bị từ chối ngay tại cửa nhập, không nhập vào kho rồi mới hủy, giống cách một kho thực tế xử lý khi không còn chỗ.
 
 \subsection{Cơ chế phối hợp giữa các tác tử}
 \label{subsec:phoiHop}
 
-Hệ thống không có tác tử điều phối trung tâm, và các tác tử không trao đổi thông tin trực tiếp với nhau. Về nghiệp vụ, quyết định đặt hàng lại được đưa ra cho từng mã hàng tại từng kho. Về thuật toán, mô hình chính dùng học độc lập để kiểm tra xem phối hợp gián tiếp đã đủ hay chưa.
+Hệ thống không có tác tử điều phối trung tâm, và các tác tử không trao đổi thông tin trực tiếp với nhau. Về nghiệp vụ, quyết định đặt hàng lại được đưa ra cho từng mặt hàng tại từng kho. Về thuật toán, mô hình chính dùng học độc lập để kiểm tra xem phối hợp gián tiếp đã đủ hay chưa.
 
-Về thiết kế, các tác tử liên hệ gián tiếp với nhau qua ba kênh:
-\begin{itemize}
-    \item Qua quan sát. Mỗi tác tử thấy mức sử dụng sức chứa $u_t^{(w(i))}$ của kho mình. Đại lượng này do môi trường tính từ tồn kho của 30 mặt hàng.
-    \item Qua phần thưởng. Phạt tràn kho được chia theo tỷ trọng hàng mới về (công thức~\ref{eq:tranKho}), nên tác tử đặt nhiều khi kho đã chật sẽ bị phạt nặng hơn.
-    \item Qua trọng số dùng chung. Kinh nghiệm của mọi tác tử cùng cập nhật một chính sách, nên điều một cặp học được cũng có ích cho các cặp khác.
-\end{itemize}
+Về thiết kế, các tác tử liên hệ gián tiếp với nhau qua ba kênh. Kênh thứ nhất là quan sát. Mỗi tác tử thấy mức sử dụng sức chứa $u_t^{(w(i))}$ của kho mình, một đại lượng do môi trường tính từ tồn kho của cả 30 mặt hàng. Kênh thứ hai là phần thưởng. Phạt tràn kho được chia theo tỷ trọng hàng mới về theo công thức~(\ref{eq:tranKho}), nên tác tử nào đặt nhiều khi kho đã chật sẽ bị phạt nặng hơn. Kênh thứ ba là trọng số dùng chung. Kinh nghiệm của mọi tác tử cùng cập nhật một chính sách, nên điều một cặp học được cũng có ích cho các cặp khác.
 
 Các kênh này chỉ tạo điều kiện để tác tử tính đến nhau. Tác tử có thực sự dùng chúng hay không được kiểm tra bằng thực nghiệm ở Chương~\ref{chap:chapter4}.
 
-Trong mô hình chính, ràng buộc sức chứa chỉ nối các mặt hàng trong cùng một kho, còn giữa các kho không có ràng buộc trực tiếp. Điều kiện nguồn cung chung (mục~\ref{subsec:bienTheNguonCung}) bổ sung ràng buộc này, nhưng chỉ dùng để đánh giá mô hình đã huấn luyện.
+Trong mô hình chính, ràng buộc sức chứa chỉ nối các mặt hàng trong cùng một kho, còn giữa các kho không có ràng buộc trực tiếp. Điều kiện nguồn cung chung, trình bày ở phần biến thể cuối chương này, bổ sung ràng buộc này, nhưng chỉ dùng để đánh giá mô hình đã huấn luyện.
 
-Kết quả của các tác tử được tổng hợp cho người quản lý ở một lớp báo cáo riêng, không gửi thông tin ngược lại cho tác tử (mục~\ref{subsec:chucNangUngDung}).
+Kết quả của các tác tử được tổng hợp cho người quản lý ở một lớp báo cáo riêng, không gửi thông tin ngược lại cho tác tử. Lớp báo cáo này thuộc ứng dụng mô phỏng, được mô tả ở cuối chương.
 
 \subsection{Cài đặt môi trường mô phỏng}
 \label{sec:moiTruong}
 
-Môi trường được xây dựng theo chuẩn Gymnasium \parencite{towers2024gymnasium}, kế thừa giao diện của OpenAI Gym \parencite{brockman2016gym}, với hai thao tác khởi tạo lại và thực hiện một bước. Môi trường quản lý ma trận tồn kho $\mathbf{I} \in \mathbb{R}^{N \times M}$, hàng đợi giao hàng của mỗi cặp, lịch sử nhu cầu, tỷ lệ đáp ứng trên cửa sổ trượt và hàm tính phần thưởng (công thức~\ref{eq:localReward}). Mỗi tập kéo dài 365 bước, tương đương một năm kinh doanh.
+Môi trường được xây dựng theo chuẩn Gymnasium \parencite{towers2024gymnasium}, kế thừa giao diện của OpenAI Gym \parencite{brockman2016gym}, với hai thao tác khởi tạo lại và thực hiện một bước. Môi trường quản lý ma trận tồn kho $\mathbf{I} \in \mathbb{R}^{N \times M}$, hàng đợi giao hàng của mỗi cặp, lịch sử nhu cầu, tỷ lệ đáp ứng trên cửa sổ trượt và hàm tính phần thưởng theo công thức~(\ref{eq:localReward}). Mỗi tập kéo dài 365 bước, tương đương một năm kinh doanh.
 
-Nhóm tự xây dựng môi trường vì OR-Gym \parencite{hubbs2020orgym} và MABIM \parencite{yang2023mabim} chưa hỗ trợ đủ cấu hình của đề tài, gồm 10 kho song song, sức chứa dùng chung giữa 30 mã hàng và phạt tỷ lệ đáp ứng trên cửa sổ trượt.
+Nhóm tự xây dựng môi trường vì OR-Gym \parencite{hubbs2020orgym} và MABIM \parencite{yang2023mabim} chưa hỗ trợ đủ cấu hình của đề tài, gồm 10 kho song song, sức chứa dùng chung giữa 30 mặt hàng và phạt tỷ lệ đáp ứng trên cửa sổ trượt.
 
 \section{Thiết kế hàm phần thưởng}
 \label{sec:hamThuong}
@@ -408,28 +383,11 @@ Mỗi tác tử $i$ nhận phần thưởng riêng dựa trên chi phí của ch
     \end{split}
     \label{eq:localReward}
 \end{equation}
-trong đó:
-\begin{itemize}
-    \item $I_t^{(i)+} = \max(I_t^{(i)}, 0)$ là mức tồn kho dương.
-    \item $U_t^{(i)} = \max(D_t^{(i)} - I_t^{(i)}, 0)$ là lượng nhu cầu không được đáp ứng.
-    \item $O_t^{(i)}$ là lượng hàng tràn kho, bằng phần vượt sức chứa.
-    \item $\text{FR}_t^{(i, w)}$ là tỷ lệ đáp ứng trên cửa sổ trượt $w = 30$ ngày.
-    \item $\bar{D}^{(i)}$ là nhu cầu trung bình một ngày của cặp $i$ trên miền huấn luyện, cùng đại lượng dùng trong bảng mức đặt hàng (công thức~\ref{eq:orderTable}).
-    \item $\tau = 0{,}85$ là ngưỡng mức phục vụ mục tiêu.
-\end{itemize}
+trong đó $I_t^{(i)+} = \max(I_t^{(i)}, 0)$ là mức tồn kho dương, $U_t^{(i)} = \max(D_t^{(i)} - I_t^{(i)}, 0)$ là lượng nhu cầu không được đáp ứng, và $O_t^{(i)}$ là lượng hàng tràn kho, bằng phần vượt sức chứa. $\text{FR}_t^{(i, w)}$ là tỷ lệ đáp ứng trên cửa sổ trượt $w = 30$ ngày và $\tau = 0{,}85$ là ngưỡng mức phục vụ mục tiêu. $\bar{D}^{(i)}$ là nhu cầu trung bình một ngày của cặp $i$ trên miền huấn luyện, cùng đại lượng dùng trong bảng mức đặt hàng ở công thức~(\ref{eq:orderTable}).
 
 \subsubsection{Ý nghĩa nghiệp vụ của từng thành phần}
 
-Mỗi thành phần có ý nghĩa nghiệp vụ riêng:
-\begin{itemize}
-    \item Chi phí lưu kho là chi phí cơ hội của tiền hàng tồn đọng và chi phí mặt bằng.
-    \item Chi phí thiếu hàng là doanh thu và thiện chí khách hàng bị mất.
-    \item Chi phí đặt hàng là chi phí cố định mỗi lần đặt đơn, gồm xử lý đơn và vận chuyển.
-    \item Phạt tràn kho là tổn thất khi hàng bị từ chối nhập vì kho đầy.
-    \item Phạt mức phục vụ thể hiện cam kết giữ tỷ lệ đáp ứng tối thiểu 85\%.
-\end{itemize}
-
-\subsubsection{Ý nghĩa của giá trị phần thưởng}
+Mỗi thành phần của phần thưởng ứng với một khoản chi phí thực tế của doanh nghiệp. Chi phí lưu kho là chi phí cơ hội của tiền hàng tồn đọng cộng với chi phí mặt bằng. Chi phí thiếu hàng là doanh thu và thiện chí khách hàng bị mất. Chi phí đặt hàng là chi phí cố định mỗi lần đặt đơn, gồm xử lý đơn và vận chuyển. Phạt tràn kho là tổn thất khi hàng bị từ chối nhập vì kho đầy. Riêng phạt mức phục vụ thể hiện cam kết giữ tỷ lệ đáp ứng tối thiểu 85\% và không được tính vào chi phí vận hành.
 
 Mọi thành phần chi phí đều không âm, nên phần thưởng luôn nhỏ hơn hoặc bằng 0. Giá trị âm không có nghĩa là mô hình kém. Phần thưởng tăng dần về 0 nghĩa là tổng chi phí giảm dần. Độ lớn tuyệt đối phụ thuộc đơn giá, quy mô nhu cầu, số tác tử và độ dài một tập, nên phần thưởng chỉ được so tương đối giữa các giai đoạn huấn luyện. Khi so với chính sách cổ điển, kết quả được quy đổi về chi phí vận hành.
 
@@ -441,12 +399,12 @@ Trong công thức~(\ref{eq:localReward}), hình phạt tỷ lệ với nhu cầ
     \cdot \max\bigl(\tau - \text{FR}_t^{(i, w)},\; 0\bigr).
     \label{eq:phatChuanHoa}
 \end{equation}
-Sau khi chia cho mẫu số chuẩn hóa $c_{th}\bar{D}^{(i)} + c_{dh}$ (mục~\ref{subsec:chuanHoaThuong}), mọi cặp chịu cùng một mức phạt $\phi_{dv} \cdot \max(\tau - \text{FR}, 0)$ bất kể quy mô nhu cầu. Ví dụ, cặp có tỷ lệ đáp ứng 80\% hụt 0,05 so với mục tiêu, nên với $\phi_{dv} = 3$ mức phạt là 0,15 mỗi ngày. Cách tính theo nhu cầu chỉ còn dùng trong thí nghiệm loại trừ ``phạt mức phục vụ theo nhu cầu''.
+Sau khi chia cho mẫu số chuẩn hóa $c_{th}\bar{D}^{(i)} + c_{dh}$, mọi cặp chịu cùng một mức phạt $\phi_{dv} \cdot \max(\tau - \text{FR}, 0)$ bất kể quy mô nhu cầu. Ví dụ, cặp có tỷ lệ đáp ứng 80\% hụt 0,05 so với mục tiêu, nên với $\phi_{dv} = 3$ mức phạt là 0,15 mỗi ngày. Cách tính theo nhu cầu chỉ còn dùng trong thí nghiệm loại trừ ``phạt mức phục vụ theo nhu cầu''.
 
 \subsection{Vai trò của thành phần phạt tỷ lệ đáp ứng}
 \label{subsec:fillRate}
 
-Hình phạt tỷ lệ đáp ứng tương ứng với số hạng ràng buộc trong hàm Lagrange (công thức~\ref{eq:lagrange}), với nhân tử giữ cố định bằng $\phi_{dv}$. Nhóm dùng tỷ lệ đáp ứng trên cửa sổ 30 ngày thay vì thiếu hàng từng ngày, vì nhu cầu gián đoạn làm tín hiệu theo ngày rất nhiễu. Hình phạt này không có dạng chênh lệch thế năng ở mục~\ref{subsec:rewardDecomposition} nên làm thay đổi chính sách tối ưu. Đây là chủ ý của nhóm, vì mục đích là đẩy chính sách tới vùng đạt mức phục vụ.
+Hình phạt tỷ lệ đáp ứng tương ứng với số hạng ràng buộc trong hàm Lagrange ở công thức~(\ref{eq:lagrange}), với nhân tử giữ cố định bằng $\phi_{dv}$. Nhóm dùng tỷ lệ đáp ứng trên cửa sổ 30 ngày thay vì thiếu hàng từng ngày, vì nhu cầu gián đoạn làm tín hiệu theo ngày rất nhiễu. Hình phạt này không có dạng chênh lệch thế năng đã nêu ở Chương~\ref{chap:chapter2} nên làm thay đổi chính sách tối ưu. Đây là chủ ý của nhóm, vì mục đích là đẩy chính sách tới vùng đạt mức phục vụ.
 
 Tích $c_{th} \cdot \bar{D}^{(i)}$ quy đổi độ hụt tỷ lệ đáp ứng, một đại lượng không thứ nguyên, về cùng thang tiền tệ với bốn thành phần chi phí. Tích này xấp xỉ chi phí thiếu hàng của một ngày hụt hoàn toàn ở mức nhu cầu trung bình. Ở đây $c_{th}$ là hằng số chung cho toàn hệ thống, vì mục tiêu 85\% áp dụng đồng loạt cho mọi mặt hàng.
 
@@ -458,7 +416,6 @@ Hình phạt mức phục vụ chỉ là tín hiệu huấn luyện, nên không
 \end{equation}
 là tổng chi phí vận hành (\textit{total operating cost}), còn $P_t$ là hình phạt mức phục vụ (\textit{service-level penalty}).
 
-\subsubsection{Ràng buộc mềm và kiểm tra tính khả thi}
 
 Mục tiêu nghiệp vụ được phát biểu thành bài toán có ràng buộc:
 \begin{equation}
@@ -471,7 +428,7 @@ Khi huấn luyện, ràng buộc được đưa vào dưới dạng ràng buộc
 \subsection{Công thức và tham số chi phí}
 \label{subsec:thamSoChiPhi}
 
-Bốn thành phần đầu là chi phí vận hành thực phát sinh, còn thành phần thứ năm chỉ là tín hiệu huấn luyện. Phần thưởng của cặp $i$ là tổng âm của năm thành phần, chia cho mẫu số chuẩn hóa của cặp (mục~\ref{subsec:chuanHoaThuong}). Mô hình chính tính phạt mức phục vụ theo công thức~(\ref{eq:phatChuanHoa}).
+Bốn thành phần đầu là chi phí vận hành thực phát sinh, còn thành phần thứ năm chỉ là tín hiệu huấn luyện. Phần thưởng của cặp $i$ là tổng âm của năm thành phần, chia cho mẫu số chuẩn hóa của cặp, được định nghĩa ở phần chuẩn hóa phần thưởng theo từng cặp. Mô hình chính tính phạt mức phục vụ theo công thức~(\ref{eq:phatChuanHoa}). Bảng~\ref{tab:thamsoChiPhi} tổng hợp công thức và đơn giá của từng thành phần chi phí, phần thưởng của một cặp trong một ngày.
 
 \begin{table}[H]
     \centering
@@ -514,7 +471,7 @@ trong đó mẫu số là chi phí của một ngày vận hành xấu điển h
 
 Cả 300 tác tử dùng chung một mạng nơ-ron \parencite{gupta2017}, gồm hai phần tách rời. Mạng Actor có hai lớp ẩn kết nối đầy đủ, mỗi lớp 128 nơ-ron, hàm kích hoạt Tanh, và lớp cuối tuyến tính với softmax cho phân phối xác suất trên $K = 6$ mức đặt hàng. Mạng Critic có cấu trúc tương tự nhưng tham số riêng, cho ra giá trị $V_\phi(o_i^t)$.
 
-Quyết định của một tác tử và cách trọng số được cập nhật đi theo ba chặng (Hình~\ref{fig:kienTrucAC}). Ở chặng vào, quan sát 44 chiều của cặp $i$ đi đồng thời vào hai mạng. Ở chặng ra, Actor cho 6 logit, qua softmax thành xác suất của 6 mức đặt hàng, còn Critic cho một giá trị. Ở chặng cập nhật, GAE được tính riêng cho từng cặp trên dữ liệu của một vòng thu thập, rồi toàn bộ mẫu được làm phẳng thành $1024 \times 300 = 307.200$ mẫu để cập nhật hai mạng bằng hai bộ tối ưu riêng.
+Quyết định của một tác tử và cách trọng số được cập nhật đi theo ba chặng, được vẽ ở Hình~\ref{fig:kienTrucAC}. Ở chặng vào, quan sát 44 chiều của cặp $i$ đi đồng thời vào hai mạng. Ở chặng ra, Actor cho 6 logit, qua softmax thành xác suất của 6 mức đặt hàng, còn Critic cho một giá trị. Ở chặng cập nhật, GAE được tính riêng cho từng cặp trên dữ liệu của một vòng thu thập, rồi toàn bộ mẫu được làm phẳng thành $1024 \times 300 = 307.200$ mẫu để cập nhật hai mạng bằng hai bộ tối ưu riêng.
 
 \begin{figure}[H]
     \centering
@@ -557,26 +514,16 @@ Quyết định của một tác tử và cách trọng số được cập nh�
 
 Hai mạng không dùng chung thân vì khi dùng chung, gradient của hàm mất mát giá trị lớn gấp khoảng 293 lần gradient chính sách. Phép cắt chuẩn gradient áp cho toàn bộ tham số nên tốc độ học hiệu dụng của Actor giảm khoảng 55 lần, và entropy đứng yên gần giá trị của phân phối đều trong giai đoạn đầu. Tách hai mạng và cắt gradient riêng cho từng mạng khắc phục hiện tượng này.
 
-Các chi tiết cài đặt còn lại như sau:
-\begin{itemize}
-    \item Các lớp ẩn được khởi tạo trực giao (\textit{orthogonal}) với hệ số $\sqrt{2}$. Lớp ra của Actor dùng hệ số 0,01, của Critic dùng hệ số 1,0.
-    \item Mục tiêu giá trị được chuẩn hóa bằng trung bình và phương sai trượt.
-    \item Mỗi lượt lan truyền xuôi xử lý một lô quan sát của nhiều tác tử cùng lúc. Số tham số không phụ thuộc vào $N \times M$.
-\end{itemize}
+Về chi tiết cài đặt, các lớp ẩn được khởi tạo trực giao (\textit{orthogonal}) với hệ số $\sqrt{2}$, còn lớp ra của Actor dùng hệ số 0,01 và của Critic dùng hệ số 1,0. Mục tiêu giá trị của Critic được chuẩn hóa bằng trung bình và phương sai trượt. Mỗi lượt lan truyền xuôi xử lý một lô quan sát của nhiều tác tử cùng lúc, nên số tham số của mạng không phụ thuộc vào số tác tử $N \times M$.
 
 \subsection{Quy trình huấn luyện IPPO}
 \label{subsec:quyTrinhTrain}
 
-Quy trình huấn luyện gồm năm bước:
-\begin{enumerate}
-    \item Thu thập dữ liệu. Môi trường chạy $n_{\text{steps}} = 1024$ bước. Tại mỗi bước, cả 300 tác tử cùng chọn hành động, nên mỗi vòng thu được $1024 \times 300 = 307.200$ mẫu $(o_i, a_i, r_i, o_i')$.
-    \item Tính GAE. Lợi thế $\hat{A}_t^{(i)}$ của từng tác tử $i$ được ước lượng bằng công thức~(\ref{eq:gae}) với $\gamma = 0{,}99$ và $\lambda = 0{,}95$.
-    \item Chuẩn hóa lợi thế theo từng cặp. $\hat{A}_t^{(i)}$ được chuẩn hóa theo trung bình và độ lệch chuẩn tính riêng cho mỗi cặp kho--mặt hàng $i$, để các cặp có quy mô chi phí khác nhau đóng góp cân bằng vào gradient.
-    \item Cập nhật PPO. Hàm mục tiêu có cắt (công thức~\ref{eq:ppoclip}) được tối ưu tối đa $E = 4$ lượt (\textit{epoch}) trên toàn bộ dữ liệu vừa thu. Quá trình dừng sớm khi độ lệch KL xấp xỉ vượt 1,5 lần ngưỡng $\text{KL}_{\text{target}} = 0{,}02$. Tốc độ học của Actor là $\eta_a = 3 \times 10^{-4}$ và của Critic là $\eta_c = 1 \times 10^{-3}$. Cả hai giảm tuyến tính theo tiến độ huấn luyện.
-    \item Lặp lại. Các bước 1--4 được lặp trong 10.000 tập với mô hình chính và 1.000 tập với các thí nghiệm loại trừ. Mô hình chính được huấn luyện lặp với ba hạt giống độc lập.
-\end{enumerate}
+Mỗi vòng huấn luyện bắt đầu bằng việc thu thập dữ liệu. Môi trường chạy $n_{\text{steps}} = 1024$ bước, và tại mỗi bước cả 300 tác tử cùng chọn hành động, nên mỗi vòng thu được $1024 \times 300 = 307.200$ mẫu $(o_i, a_i, r_i, o_i')$. Từ dữ liệu này, lợi thế $\hat{A}_t^{(i)}$ của từng tác tử $i$ được ước lượng bằng công thức~(\ref{eq:gae}) với $\gamma = 0{,}99$ và $\lambda = 0{,}95$. Lợi thế sau đó được chuẩn hóa theo trung bình và độ lệch chuẩn tính riêng cho mỗi cặp kho--mặt hàng, để các cặp có quy mô chi phí khác nhau đóng góp cân bằng vào gradient.
 
-\begin{table}[H]
+Sau khi có lợi thế, hàm mục tiêu có cắt ở công thức~(\ref{eq:ppoclip}) được tối ưu tối đa $E = 4$ lượt (\textit{epoch}) trên toàn bộ dữ liệu vừa thu. Quá trình cập nhật dừng sớm khi độ lệch KL xấp xỉ vượt 1,5 lần ngưỡng $\text{KL}_{\text{target}} = 0{,}02$. Tốc độ học của Actor là $\eta_a = 3 \times 10^{-4}$ và của Critic là $\eta_c = 1 \times 10^{-3}$, cả hai giảm tuyến tính theo tiến độ huấn luyện. Vòng lặp này được lặp lại trong 10.000 tập với mô hình chính và 1.000 tập với các thí nghiệm loại trừ, và mô hình chính được huấn luyện với ba hạt giống độc lập. Các siêu tham số huấn luyện được tổng hợp ở Bảng~\ref{tab:hyperparams}.
+
+\begin{table}[htbp]
     \centering
     \caption{Siêu tham số huấn luyện}
     \label{tab:hyperparams}
@@ -608,26 +555,25 @@ Quy trình huấn luyện gồm năm bước:
 \section{Các biến thể mở rộng của mô hình}
 \label{sec:bienThe}
 
-Ngoài mô hình chính, đề tài xây dựng thêm một số biến thể. Mỗi biến thể chỉ thay đổi một thành phần để xem thành phần đó có giúp mô hình tốt hơn không. Mô hình chính được giữ nguyên để làm mốc so sánh.
+Ngoài mô hình chính, đề tài xây dựng một biến thể kết hợp học tăng cường với dự báo nhu cầu (Câu hỏi 4) và một điều kiện đánh giá có nguồn cung chung giữa các kho (Câu hỏi 5). Mô hình chính được giữ nguyên để làm mốc so sánh.
 
-\subsection{Mô hình dự báo và quan sát có dự báo}
+\subsection{Mô hình dự báo nhu cầu}
 \label{subsec:bienTheDuBao}
 
-Mô hình chính chỉ biết nhu cầu của 7 ngày trước và lịch của ngày hiện tại, chưa có thông tin về nhu cầu sắp tới. Biến thể này bổ sung dự báo nhu cầu vào quan sát.
+Mô hình chính chỉ biết nhu cầu của 7 ngày trước và lịch của ngày hiện tại, chưa có thông tin về nhu cầu sắp tới. Mô hình dự báo dưới đây cung cấp thông tin đó cho chính sách đối chứng dự báo rồi tối ưu ở Chương~\ref{chap:chapter4} và cho biến thể kết hợp dự báo.
 
-Mô hình dự báo là một mô hình LightGBM dùng chung cho cả 300 cặp, dự báo nhu cầu của ba ngày $t$, $t+1$ và $t+2$. Đầu vào của mô hình gồm:
-\begin{itemize}
-    \item Nhu cầu của 1, 7, 14 và 28 ngày trước, trung bình 7 và 28 ngày gần nhất, nhu cầu trung bình của cặp.
-    \item Tỷ lệ giá so với giá trung bình.
-    \item Thứ trong tuần, tháng, sự kiện và SNAP.
-    \item Mã kho và mã mặt hàng.
-\end{itemize}
+Mô hình dự báo là một mô hình LightGBM dùng chung cho cả 300 cặp, dự báo nhu cầu của ba ngày $t$, $t+1$ và $t+2$. Đầu vào của mô hình gồm nhu cầu của 1, 7, 14 và 28 ngày trước, trung bình 7 và 28 ngày gần nhất và nhu cầu trung bình của cặp. Ngoài lịch sử nhu cầu, mô hình nhận tỷ lệ giá so với giá trung bình, các đặc trưng lịch gồm thứ trong tuần, tháng, sự kiện, SNAP, cùng mã kho và mã mặt hàng.
 
 Hàm mất mát (bình phương hoặc Tweedie) và số lá (31 hoặc 63) được chọn trên miền xác thực. Sau đó mô hình được huấn luyện lại trên miền huấn luyện và miền xác thực để dự báo cho miền kiểm thử.
 
 Để tránh dùng dữ liệu tương lai, dự báo tại ngày $t$ chỉ dùng nhu cầu đến ngày $t - 1$. Trên miền huấn luyện, nếu dự báo bằng chính mô hình đã học dữ liệu đó thì kết quả sẽ chính xác hơn thực tế. Vì vậy miền huấn luyện được chia thành bốn khối, mỗi khối được dự báo bằng mô hình chỉ học các ngày trước khối đó. Năm đầu tiên chưa đủ dữ liệu nên dùng trung bình 28 ngày gần nhất.
 
-Quan sát được thêm hai chiều, cùng thang đo với lịch sử nhu cầu:
+\subsection{Hệ số an toàn trên nền dự báo}
+\label{subsec:bienTheDuBaoZ}
+
+Biến thể này giữ nguyên thuật toán PS-IPPO và môi trường, chỉ đổi ý nghĩa của hành động. Ở mô hình chính, tác tử chọn trực tiếp một trong sáu mức đặt. Ở biến thể này, lượng đặt được tính theo công thức~(\ref{eq:baseStock}) với dự báo LightGBM, còn tác tử chọn hệ số an toàn $z_i^t$ trong tập $\{0;\ 0{,}2;\ 0{,}4;\ 0{,}6;\ 0{,}8;\ 1{,}2\}$ cho từng cặp mỗi ngày. Lượng đặt sau đó được làm tròn về sáu mức của công thức~(\ref{eq:orderTable}).
+
+Quan sát được thêm hai chiều dự báo, cùng thang đo với lịch sử nhu cầu:
 \begin{equation}
     f_t^{(i)} = \frac{\log\bigl(1 + \frac{1}{3}\sum_{h=0}^{2} \hat{D}_{t+h}^{(i)}\bigr)}{\log\bigl(2 + 10\bar{D}^{(i)}\bigr)},
     \qquad
@@ -636,30 +582,7 @@ Quan sát được thêm hai chiều, cùng thang đo với lịch sử nhu cầ
 \end{equation}
 trong đó $\hat{D}_{t+h}^{(i)}$ là dự báo cho ngày $t+h$ và $\hat{\sigma}_t^{(i)}$ là độ lệch chuẩn sai số dự báo trong 28 ngày trước $t$. Khi đó quan sát có 46 chiều.
 
-\subsection{Hành động theo hệ số an toàn}
-\label{subsec:bienTheBaseStock}
-
-Ở mô hình chính, tác tử chọn trực tiếp một trong sáu mức đặt. Ở biến thể này, tác tử chỉ chọn hệ số an toàn $z_i^t$ trong tập $\{-0{,}5;\ 0;\ 0{,}5;\ 1;\ 1{,}5;\ 2{,}5\}$, còn lượng đặt được tính theo công thức của chính sách $(s, S)$:
-\begin{equation}
-    s_i^t = \mu_L^{(i)} + z_i^t\, \sigma_L^{(i)},
-    \qquad
-    q_i^t =
-    \begin{cases}
-        s_i^t + Q^{(i)} - \text{IP}_t^{(i)} & \text{nếu } \text{IP}_t^{(i)} \le s_i^t, \\
-        0 & \text{ngược lại,}
-    \end{cases}
-    \label{eq:baseStockAction}
-\end{equation}
-trong đó $\mu_L$, $\sigma_L$ lấy theo công thức~(\ref{eq:sSPolicy}) và $Q^{(i)}$ là lượng đặt kinh tế của cặp (công thức~\ref{eq:eoq}). Lượng đặt sau đó được làm tròn về sáu mức của công thức~(\ref{eq:orderTable}) nên môi trường không thay đổi.
-
-Hạn chế của biến thể này là hai giá trị $z$ gần nhau có thể cho cùng một mức đặt sau khi làm tròn.
-
-\subsection{Hệ số an toàn trên nền dự báo}
-\label{subsec:bienTheDuBaoZ}
-
-Hai biến thể trên còn tách rời: một biến thể có dự báo nhưng tác tử vẫn phải tự học quy tắc đặt hàng, biến thể kia có quy tắc đặt hàng nhưng chỉ dùng lịch sử 7 ngày. Biến thể này kết hợp cả hai. Lượng đặt được tính theo công thức~(\ref{eq:baseStock}) với dự báo LightGBM, còn tác tử chọn hệ số an toàn $z_i^t$ trong tập $\{0;\ 0{,}2;\ 0{,}4;\ 0{,}6;\ 0{,}8;\ 1{,}2\}$ cho từng cặp mỗi ngày. Quan sát có 46 chiều như biến thể có dự báo.
-
-Nếu mọi tác tử luôn chọn cùng một giá trị $z$, biến thể này trùng với chính sách đặt hàng theo dự báo. Vì vậy tác tử chỉ cần học cách điều chỉnh $z$ theo từng cặp và theo tình trạng kho, ví dụ giảm $z$ khi kho gần đầy.
+Nếu mọi tác tử luôn chọn cùng một giá trị $z$, biến thể này trùng với chính sách dự báo rồi tối ưu. Phần tác tử phải học là điều chỉnh $z$ theo từng cặp và theo tình trạng kho, ví dụ giảm $z$ khi kho gần đầy hoặc tăng $z$ khi sai số dự báo lớn. Cách đặt bài toán này để mô hình dự báo lo phần ước lượng nhu cầu, còn học tăng cường lo phần quyết định mức an toàn có tính đến ràng buộc kho.
 
 Tín hiệu học ở biến thể này nhỏ hơn mô hình chính, vì hai giá trị $z$ gần nhau chỉ làm lượng đặt khác nhau một ít. Do đó nhóm dùng hệ số entropy nhỏ hơn (0,005 giảm dần về 0,0005) và hệ số phạt $\phi_{dv} = 1$. Tập giá trị $z$, hệ số entropy và hệ số phạt đều được chọn trên miền xác thực.
 
@@ -684,7 +607,7 @@ Bước này diễn ra ngay sau khi ánh xạ hành động, nên chi phí đặ
 
 Mô hình chính giữ 44 chiều quan sát và không nhận tỷ lệ $g_m^{t-1}$ làm đầu vào, nên khi đánh giá nó chỉ biết nguồn cung bị cắt qua vị thế tồn kho thấp hơn. Các chính sách đối chứng cũng chỉ biết qua vị thế tồn kho, nên phần bị cắt khiến chúng tự đặt bù vào ngày sau.
 
-Cách chia theo tỷ lệ còn tạo ra động cơ đặt dư để được chia nhiều hơn. Đây là một nguyên nhân của hiệu ứng roi da \parencite{lee1997}. Vì vậy biến thể này được đánh giá thêm bằng hệ số roi da, tính trên lượng đặt trước khi bị cắt.
+Cách chia theo tỷ lệ còn tạo ra động cơ đặt dư để được chia nhiều hơn. Đây là một nguyên nhân của hiệu ứng roi da \parencite{lee1997}. Vì vậy điều kiện này được đánh giá thêm bằng hệ số roi da, tính trên lượng đặt trước khi bị cắt.
 
 \section{Thiết kế ứng dụng mô phỏng}
 \label{sec:ungDung}
@@ -701,14 +624,14 @@ Cách chia theo tỷ lệ còn tạo ra động cơ đặt dư để được ch
     \item Kịch bản tăng cầu. Người dùng nhân nhu cầu của một khoảng ngày lên rồi chạy lại các chính sách đã lưu để xem tỷ lệ đáp ứng và chi phí thay đổi thế nào.
 \end{itemize}
 
-Người quản lý cần nhìn kết quả theo kho, theo ngành hàng và toàn mạng lưới, không thể đọc 300 quyết định rời rạc. Ứng dụng do đó có một lớp tổng hợp báo cáo nằm sau các tác tử. Lớp này cộng quyết định và kết quả của các tác tử thành chi phí, tỷ lệ đáp ứng, tồn kho và số phiếu đặt hàng. Lớp tổng hợp chỉ đọc kết quả và không gửi thông tin ngược lại cho tác tử nào, nên kiến trúc phi tập trung ở mục~\ref{subsec:phoiHop} được giữ nguyên.
+Người quản lý cần nhìn kết quả theo kho, theo ngành hàng và toàn mạng lưới, không thể đọc 300 quyết định rời rạc. Ứng dụng do đó có một lớp tổng hợp báo cáo nằm sau các tác tử. Lớp này cộng quyết định và kết quả của các tác tử thành chi phí, tỷ lệ đáp ứng, tồn kho và số phiếu đặt hàng. Lớp tổng hợp chỉ đọc kết quả và không gửi thông tin ngược lại cho tác tử nào, nên kiến trúc phi tập trung của hệ tác tử được giữ nguyên.
 
 \subsection{Lớp giao tiếp ngôn ngữ qua MCP}
 \label{subsec:mcp}
 
 Ngoài giao diện màn hình, nhóm thử nghiệm một lớp giao tiếp bằng ngôn ngữ tự nhiên dựa trên Model Context Protocol (MCP). MCP là giao thức chuẩn cho phép mô hình ngôn ngữ lớn (\textit{large language model}, LLM) gọi công cụ bên ngoài theo mô hình máy chủ--máy khách. Lớp này nằm phía trên IPPO và không tham gia trả lời các câu hỏi nghiên cứu.
 
-IPPO và MCP điều phối theo hai cách khác nhau. IPPO phù hợp khi hành động là lượng đặt hàng và tín hiệu phản hồi là chi phí, còn MCP phù hợp khi hệ thống cần trò chuyện với người dùng và gọi nhiều công cụ. Hai kiến trúc được ghép theo hướng bổ sung: LLM hiểu câu hỏi và chọn công cụ, còn IPPO vẫn là nơi ra quyết định định lượng.
+IPPO và MCP điều phối theo hai cách khác nhau. IPPO phù hợp khi hành động là lượng đặt hàng và tín hiệu phản hồi là chi phí, còn MCP phù hợp khi hệ thống cần trò chuyện với người dùng và gọi nhiều công cụ. Hai kiến trúc được ghép theo hướng bổ sung: LLM hiểu câu hỏi và chọn công cụ, còn IPPO vẫn là nơi ra quyết định định lượng. Bảng~\ref{tab:soSanhMCP} so sánh cách điều phối của hai kiến trúc.
 
 \begin{table}[H]
     \centering
@@ -727,7 +650,7 @@ IPPO và MCP điều phối theo hai cách khác nhau. IPPO phù hợp khi hành
     \end{tabular}
 \end{table}
 
-Luồng xử lý đi theo thứ tự câu hỏi $\rightarrow$ chọn công cụ $\rightarrow$ thực thi $\rightarrow$ trả lời. Ví dụ, người quản lý hỏi ``tuần tới kho CA\_3 có mặt hàng nào sắp thiếu không?''. LLM chọn công cụ cảnh báo thiếu hàng. Máy chủ MCP lấy tồn kho, hàng đang về và lịch từ môi trường mô phỏng, chạy chính sách IPPO tới ngày cần xem, rồi trả danh sách mặt hàng để LLM viết câu trả lời. Bản thử nghiệm có năm công cụ và một tài nguyên, dùng chung phần lõi mô phỏng với ứng dụng.
+Luồng xử lý đi theo thứ tự câu hỏi $\rightarrow$ chọn công cụ $\rightarrow$ thực thi $\rightarrow$ trả lời. Ví dụ, người quản lý hỏi ``tuần tới kho CA\_3 có mặt hàng nào sắp thiếu không?''. LLM chọn công cụ cảnh báo thiếu hàng. Máy chủ MCP lấy tồn kho, hàng đang về và lịch từ môi trường mô phỏng, chạy chính sách IPPO tới ngày cần xem, rồi trả danh sách mặt hàng để LLM viết câu trả lời. Bản thử nghiệm có năm công cụ và một tài nguyên, dùng chung phần lõi mô phỏng với ứng dụng. Bảng~\ref{tab:congCuMCP} liệt kê các công cụ này và chức năng của từng công cụ.
 
 \begin{table}[H]
     \centering

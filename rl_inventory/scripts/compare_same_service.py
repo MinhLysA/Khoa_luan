@@ -1,30 +1,21 @@
 """
 scripts/compare_same_service.py
-======================
-[V2-25] SO SANH O CUNG MUC PHUC VU (iso-service comparison).
+===============================
+SO SANH O CUNG MUC PHUC VU (iso-service).
 
-Vi sao can script nay: so sanh tong chi phi giua hai chinh sach co fill rate
-KHAC NHAU la vo nghia. IPPO bi phat khi fill rate < muc_dv nen no tu day muc
-phuc vu len ~92%, con EOQ/(s,S)/Newsvendor duoc tinh chinh de TOI THIEU CHI PHI
-nen dung lai o ~84%. Bang so sanh thang se ket luan sai rang "IPPO dat hon".
-
-Script nay lam dung viec ma mot phan bien se yeu cau:
-  1. Do fill rate ma IPPO dat duoc tren mien TEST.
-  2. Voi TUNG baseline, tim kiem luoi tren mien TRAIN de tim cau hinh RE NHAT
-     ma van dat fill rate >= muc do (cong dung sai cho phep).
-  3. Danh gia lai cac cau hinh do tren mien TEST va bao cao canh IPPO.
-
-Ket qua luu vao results/iso_service.json (app Streamlit doc file nay).
+Vi sao can script nay: so tong chi phi giua hai chinh sach co fill KHAC NHAU la khong cong
+bang. IPPO bi phat khi fill < muc_dv nen giu fill khoang 90%, con baseline tinh chinh de toi
+thieu chi phi nen dung o khoang 85-88%. Script nay:
+  1. Quet luoi min tham so cua tung baseline tren mien VAL, giu bien Pareto (chi phi - fill),
+     danh gia bien do tren mien TEST. Bien khong phu thuoc seed IPPO nen chi quet MOT lan,
+     cache o results/baseline_frontier.json (khoa: results/baseline_frontier.key).
+  2. Chon cau hinh re nhat trong dai +-0,2 diem % quanh fill val cua IPPO; neu fill test lech
+     qua 0,2 diem thi noi suy chi phi tren duong bien test (ghi noi_suy=True).
+Ket qua: results/same_service_<tag>.json va same_service_<tag>.png. Cac phan tich phu
+(regime_analysis, sensitivity, robustness) va app demo doc same_service_main_s42.json.
 
 Cach dung:
-    python scripts/compare_same_service.py --checkpoint checkpoints/best_model_main_s42.pth
-
-[Cung muc phuc vu] --grid fine: luoi min va dai doi xung +-0,2 diem % theo tung seed. Cau hinh
-duoc chon tren val; IPPO duoc doi chieu voi chinh no tren val. Duong bien baseline
-khong phu thuoc seed nen chi quet mot lan, luu results/baseline_frontier.json.
-Neu fill test cua cau hinh chon lech IPPO qua 0,2 diem, chi phi duoc noi suy tren
-duong bien test va ghi noi_suy=True.
-    python scripts/compare_same_service.py --grid fine --checkpoint checkpoints/best_model_main_s42.pth --tag main_s42
+    python scripts/compare_same_service.py --checkpoint checkpoints/best_model_main_s42.pth --tag main_s42
 """
 
 import os
@@ -66,7 +57,8 @@ def _plot_iso(ket_qua, target_fill, out_path):
         ax.text(b.get_x() + b.get_width() / 2, b.get_height() * 1.01,
                 f"{f:.1f}%", ha="center", fontsize=9)
     ax.set_ylabel("Tổng chi phí vận hành (miền test)")
-    ax.set_title(f"So sánh ở cùng mức phục vụ (ngưỡng ≥ {target_fill*100:.2f}%)")
+    plt.xticks(rotation=30, ha="right", fontsize=8)
+    ax.set_title(f"So sánh ở cùng mức phục vụ với IPPO (fill {target_fill*100:.2f}%)")
     plt.tight_layout()
     plt.savefig(out_path, dpi=140)
     plt.close()
@@ -273,7 +265,8 @@ def chay_luoi_min(args, cfg, agent, env_tr, env_te, base_seed):
     out = res / f"same_service{tag}.json"
     out.write_text(json.dumps({"target_fill": ippo_fill, "fill_val_ippo": fill_val, "ket_qua": ket_qua},
                               indent=2, ensure_ascii=False), encoding="utf-8")
-    print(f"Da luu {out}")
+    _plot_iso(ket_qua, ippo_fill, out.with_suffix(".png"))
+    print(f"Da luu {out}, {out.with_suffix('.png').name}")
 
 
 def main():
@@ -282,12 +275,8 @@ def main():
     ap.add_argument("--checkpoint", type=str, default="checkpoints/best_model_main_s42.pth")
     ap.add_argument("--tune_episodes", type=int, default=2)
     ap.add_argument("--eval_episodes", type=int, default=10)
-    ap.add_argument("--tolerance", type=float, default=0.005,
-                    help="Cho phep baseline thap hon IPPO toi da bao nhieu fill rate")
     ap.add_argument("--tune_mode", choices=["train", "val"], default="val",
                     help="[P1-1] Mien dung de quet luoi baseline")
-    ap.add_argument("--grid", choices=["coarse", "fine"], default="coarse",
-                    help="[Cung muc phuc vu] coarse: luoi cu, tai lap so cu; fine: luoi min, dai doi xung")
     ap.add_argument("--tag", default="")
     args = ap.parse_args()
 
@@ -326,84 +315,7 @@ def main():
     agent.network.eval()
     if env_te.lagrange_dim:
         env_tr.set_lagrange(env_te.get_lagrange())
-    if args.grid == "fine":
-        chay_luoi_min(args, cfg, agent, env_tr, env_te, base_seed)
-        return
-    ippo_cost, ippo_fill = chay(env_te, agent, args.eval_episodes, base_seed, is_ppo=True)
-    target = ippo_fill - args.tolerance
-    print("=" * 72)
-    print(f"IPPO tren mien TEST : cost={ippo_cost:,.0f}   fill={ippo_fill:.2%}")
-    print(f"Muc phuc vu muc tieu cho baseline: >= {target:.2%}")
-    print("=" * 72)
-
-    # -- B2: tim kiem luoi tren mien TRAIN ----------------------------------
-    luoi = {
-        "EOQ": (EOQPolicy,
-                [dict(q_factor=qf, lead_time=lt,
-                      ordering_cost=env_tr.cp_dh, holding_cost=env_tr.cp_lk)
-                 for qf, lt in itertools.product([0.5, 1.0, 2.0, 3.0],
-                                                 [2.0, 3.0, 4.0, 5.0, 6.0])]),
-        "(s,S)": (SsPolicy,
-                  [dict(service_level=sl, q_factor=qf, lead_time=lt,
-                        ordering_cost=env_tr.cp_dh, holding_cost=env_tr.cp_lk)
-                   for sl, qf, lt in itertools.product([0.90, 0.95, 0.99, 0.999],
-                                                       [0.5, 1.0, 2.0],
-                                                       [3.0, 4.0, 5.0])]),
-        "Newsvendor": (NewsvendorPolicy,
-                       [dict(cr_override=cr, lead_time=lt,
-                             holding_cost=env_tr.cp_lk, stockout_cost=env_tr.cp_th)
-                        for cr, lt in itertools.product([0.90, 0.95, 0.99, 0.999],
-                                                        [3.0, 4.0, 5.0, 6.0])]),
-    }
-
-    ket_qua = {"IPPO": {"cost": ippo_cost, "fill": ippo_fill, "params": None}}
-    for ten, (cls, grid) in luoi.items():
-        print(f"\n[{ten}] quet {len(grid)} cau hinh tren mien TRAIN...")
-        ung_vien = []
-        for kw in grid:
-            c, f = chay(env_tr, cls(n_pairs=env_tr.n_pairs, **kw),
-                        args.tune_episodes, 7777)
-            if f >= target:
-                ung_vien.append((c, f, kw))
-        if not ung_vien:
-            print(f"   khong cau hinh nao dat fill >= {target:.1%} "
-                  f"-> baseline nay khong the sanh ngang IPPO ve muc phuc vu")
-            ket_qua[ten] = {"cost": None, "fill": None, "params": None,
-                            "khong_dat": True}
-            continue
-        ung_vien.sort(key=lambda x: x[0])
-        _, _, kw_tot = ung_vien[0]
-        c_te, f_te = chay(env_te, cls(n_pairs=env_te.n_pairs, **kw_tot),
-                          args.eval_episodes, base_seed)
-        kw_in = {k: v for k, v in kw_tot.items()
-                 if k not in ("ordering_cost", "holding_cost", "stockout_cost")}
-        print(f"   re nhat dat muc phuc vu: {kw_in}")
-        print(f"   -> TEST: cost={c_te:,.0f}  fill={f_te:.2%}")
-        ket_qua[ten] = {"cost": c_te, "fill": f_te, "params": kw_in}
-
-    # -- B3: bang tong hop ---------------------------------------------------
-    print("\n" + "=" * 72)
-    print("SO SANH O CUNG MUC PHUC VU (mien TEST)")
-    print("=" * 72)
-    print(f"{'Chinh sach':<14}{'Tong chi phi':>16}{'Fill rate':>12}{'So voi IPPO':>14}")
-    print("-" * 72)
-    for ten, r in ket_qua.items():
-        if r.get("khong_dat"):
-            print(f"{ten:<14}{'khong dat duoc muc phuc vu nay':>42}")
-            continue
-        delta = "" if ten == "IPPO" else f"{100*(ippo_cost-r['cost'])/r['cost']:+.1f}%"
-        print(f"{ten:<14}{r['cost']:>16,.0f}{r['fill']:>11.2%}{delta:>14}")
-    print("\n(So voi IPPO: so am = IPPO RE HON o cung muc phuc vu)")
-
-    out = ROOT / paths["results_dir"] / "iso_service.json"
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps({"target_fill": target, "ket_qua": ket_qua},
-                              indent=2, ensure_ascii=False), encoding="utf-8")
-    print(f"\nDa luu {out}")
-
-    fig_path = ROOT / paths["results_dir"] / "iso_service_chart.png"
-    _plot_iso(ket_qua, target, fig_path)
-    print(f"Da luu {fig_path}")
+    chay_luoi_min(args, cfg, agent, env_tr, env_te, base_seed)
 
 
 if __name__ == "__main__":

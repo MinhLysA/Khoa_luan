@@ -6,6 +6,31 @@ Cập nhật: 01/11/2026 · Chú thích: ✅ xong · 🟡 đang triển khai / c
 
 > Từ 31/10 nhóm train local, đã bỏ hai notebook Colab. Của đợt 10.000 episode (19 lần chạy, 3 seed, số trong C4 hiện tại), trên máy chỉ còn mô hình seed 42 ở `app/demo_data/best_model.pth`; code hiện tại tái lập đúng 2.052.496 và 90,65% của C4. Hai seed còn lại, ablation và log học không còn; `KLTN_final` chia sẻ trên Drive chỉ có `results/` của đợt 4.000 episode (01/10). `python run.py full` sẽ train lại (theo phương án rút gọn 01/11: 3 seed và 16 ablation), số trong C4 sẽ đổi theo. Nếu còn bản 10.000 episode đầy đủ (`checkpoints/`, `results/`), chép vào `rl_inventory/` trước khi chạy, các lần đã xong tự bỏ qua.
 
+## 0. Trạng thái 03/11 — đã train xong, còn chạy đánh giá
+
+**Train:** xong 27/27 lần chạy (3 mô hình chính, 16 ablation/Câu 3/hold-out, 3 Câu 4 `forecast_safety`, 5 thử `phi_dv`).
+Không train thêm. U1 (`forecast_obs`) và U2 (`safety_factor`) bỏ hẳn: U5 (`forecast_safety`) đã trả lời Câu 4.
+
+**Kết quả đã chốt (KET_QUA.txt):**
+- Câu 1, so trực tiếp, 3 seed: IPPO 2.055.442, fill 90,9%. Rẻ hơn (s,S) −1,7% và EOQ −17,8% (3/3 seed), đắt hơn NV theo nhóm +1,6% (3/3), đắt hơn (s,S) biết sức chứa +0,8% (2/3), đắt hơn NV dự báo +8,2% (khác loại thông tin → so ở Câu 4).
+- Câu 4 (U5), 3 seed: 1.897.517, fill 86,7%. Rẻ hơn mọi chính sách cổ điển −6,2% đến −24,1% (3/3 seed, 30/30 lần), ngang NV dự báo −0,1% (rẻ hơn có ý nghĩa 1/3 seed). Mô hình được chọn ở tập 25–50; cố định z thì trùng NV dự báo → phần lớn lợi thế do dự báo.
+- Câu 2, 3, ablation, độ bền: không đổi so với 20/10.
+
+**Còn phải chạy:** `cd rl_inventory; py -3.12 run.py eval_all` (khoảng 5–6 giờ, chạy nối tiếp được). Chi tiết ở mục "Việc cần chạy" bên dưới.
+
+**Báo cáo:** C1, C3, C4, C5, tóm tắt đã sửa theo 5 câu hỏi mới, biên dịch sạch (105 trang). Còn 10 chỗ `% [SO-MOI]` chờ số sau `eval_all` (C4: 8, C5: 2).
+
+### Việc cần chạy (người dùng tự chạy)
+
+| # | Lệnh | Sinh ra | Thay vào báo cáo |
+|---|---|---|---|
+| 1 | `py -3.12 run.py eval_all` | Lưới mịn (s,S) biết sức chứa + NV dự báo + đường biên theo nhóm (~4 giờ), cùng mức phục vụ main ×3 và U5 ×3 | C4 mục 4.4.4 (Bảng 4.9), Bảng 4.10, mục 4.7 (dòng `[SO-MOI]`); C5 đoạn Câu 1 |
+| | (cùng lệnh) | Zero-shot nguồn cung chung chặt/vừa (~20 phút) | C4 mục 4.9.2, đoạn Câu 5 ở mục 4.11; C5 |
+| | (cùng lệnh) | Chạy lại giai đoạn nhu cầu, sốc cầu, độ nhạy, độ bền với tham số "cùng mức" lưới mịn | Bảng 4.11–4.13 và 4.20 (cột "cùng mức"); thêm cột (s,S)-K vào Bảng 4.19 |
+| | (cùng lệnh) | Đánh giá lại ablation/hold-out/phi_dv với baseline vừa tinh chỉnh (số IPPO không đổi) | Kiểm tra Bảng 4.14–4.16 có lệch không |
+| 2 | Mở `results/KET_QUA.txt` | Số cuối | Tìm `[SO-MOI]` trong `Report KLTN/content/*.tex`, mỗi comment ghi mục cần lấy |
+| 3 | `Report KLTN/compile.bat` | PDF | Kiểm tra lại |
+
 ## 0a. Phương án rút gọn 01/11 (chờ giảng viên duyệt)
 
 Để đủ thời gian train, nhóm chọn: mô hình chính và U5 chỉ **3 seed** (42, 1, 2); **bỏ** U3 (Critic theo kho), U4 (số mạng), C' (phạt Lagrange theo cặp), E2 (1.000 tác tử), E3 (độ nhạy siêu tham số) và train điều kiện vận hành. **Giữ** mô hình chính, U1, U2, U5, ablation, hold-out và mọi phép đánh giá không train. Câu 5 (điều kiện vận hành) chuyển thành đánh giá zero-shot mô hình chính dưới nguồn cung chung và sức chứa 3, 8 ngày. `phi_dv` chỉ giữ 5 lần chạy thử 1.000 tập (lựa chọn rút gọn, có thể đổi lại). Khối lượng khoảng 141.000 tập (khoảng 43 giờ GPU cỡ T4) thay vì 480.000 tập (khoảng 160 giờ). Chi tiết: `TONG_HOP_THAY_DOI.md` mục 4, 5, 7; lệnh làm: `PROMPT_PHUONG_AN_3SEED.md`. **Các dòng U3, U4, C', E2, E3 ở bảng mục 0 bên dưới là kế hoạch cũ, nay đã bỏ.**

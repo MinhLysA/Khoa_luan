@@ -3,8 +3,7 @@ scripts/cost_service_frontier.py
 =====================
 [Goi C] Dat cac diem IPPO (mo hinh chinh va cac gia tri phi_dv) len cung mat
 phang chi phi - fill voi duong bien cua tung baseline, va doc chi phi tai cac muc
-phuc vu 85, 88, 90, 92%. Doc results/baseline_frontier.json (iso_service --grid
-fine) va results/summary_<tag>.json.
+phuc vu 85, 88, 90, 92%. Doc results/baseline_frontier.json (compare_same_service.py) va results/summary_<tag>.json.
 
 Cach dung:
     python scripts/cost_service_frontier.py --tags main_s42 phi20_s42 phi60_s42
