@@ -7,14 +7,21 @@
 \subsection{Môi trường cài đặt}
 \label{subsec:phanCung}
 
-Môi trường thực nghiệm được cài đặt bằng Python. Mạng Actor--Critic và thuật toán PPO được viết bằng PyTorch, còn môi trường mô phỏng tuân theo giao diện của thư viện Gymnasium \parencite{towers2024gymnasium}. Dữ liệu M5 được xử lý bằng NumPy và Pandas, các kiểm định thống kê dùng SciPy, và mô hình dự báo nhu cầu dùng LightGBM.
+Môi trường thực nghiệm được cài đặt bằng Python với các thư viện sau:
+\begin{itemize}
+    \item PyTorch cho mạng Actor--Critic và thuật toán PPO.
+    \item Gymnasium \parencite{towers2024gymnasium} cho giao diện của môi trường mô phỏng.
+    \item NumPy và Pandas để xử lý dữ liệu M5.
+    \item SciPy cho các kiểm định thống kê.
+    \item LightGBM cho mô hình dự báo nhu cầu.
+\end{itemize}
 
 \subsection{Nguồn dữ liệu và tiền xử lý}
 \label{subsec:duLieu}
 
 Đề tài dùng bộ dữ liệu M5 do Makridakis và cộng sự công bố \parencite{makridakis2022background, m5dataset}. Bộ dữ liệu gồm 30.490 chuỗi doanh số theo ngày (3.049 mặt hàng $\times$ 10 cửa hàng) trên 1.941 ngày, kèm giá bán theo tuần và lịch có ngày lễ, sự kiện, ngày trợ cấp thực phẩm SNAP. Các thống kê mô tả trong khóa luận do nhóm tự tính từ dữ liệu gốc.
 
-Nhóm phân loại dạng nhu cầu của các chuỗi theo tiêu chí của Syntetos và cộng sự \cite{syntetos2005categorization}. Tiêu chí dùng hai ngưỡng: khoảng cách trung bình giữa hai lần phát sinh nhu cầu $p = 1{,}32$ và bình phương hệ số biến thiên $CV^2 = 0{,}49$. Kostenko và Hyndman \cite{kostenko2006} sau đó chỉ ra biên chính xác là $p = 4/3$, nhưng khác biệt này không đổi kết quả phân loại dưới đây. Có 95,2\% số chuỗi thuộc hai nhóm gián đoạn (\textit{intermittent}) và gián đoạn thất thường (\textit{lumpy}). Với hai nhóm này, dự báo và công thức tồn kho dựa trên nhu cầu liên tục cho kết quả kém \parencite{croston1972, syntetos2005accuracy}. Bảng~\ref{tab:phanloainhucau} cho biết tỷ lệ chuỗi M5 thuộc từng dạng nhu cầu.
+Nhóm phân loại dạng nhu cầu của các chuỗi theo tiêu chí của Syntetos và cộng sự \cite{syntetos2005categorization}. Tiêu chí dùng hai ngưỡng: khoảng cách trung bình giữa hai lần phát sinh nhu cầu $p = 1{,}32$ và bình phương hệ số biến thiên $CV^2 = 0{,}49$. Kostenko và Hyndman \cite{kostenko2006} sau đó chỉ ra biên chính xác là $p = 4/3$, nhưng khác biệt này không đổi kết quả phân loại dưới đây. Có 95,2\% số chuỗi thuộc hai nhóm gián đoạn (\textit{intermittent}) và gián đoạn thất thường (\textit{lumpy}). Với hai nhóm này, dự báo và công thức tồn kho dựa trên nhu cầu liên tục cho kết quả kém \parencite{croston1972, syntetos2005accuracy}. Theo cách phân loại này, nhu cầu đều đặn chỉ chiếm phần rất nhỏ của bộ dữ liệu.
 
 \begin{table}[H]
     \centering
@@ -36,7 +43,7 @@ Nhóm phân loại dạng nhu cầu của các chuỗi theo tiêu chí của Syn
 
 Bộ dữ liệu gốc có nhiều cặp mà cửa hàng trên thực tế không bán mặt hàng đó. Chuỗi doanh số của các cặp này gần như bằng không suốt cả giai đoạn và chỉ thêm nhiễu vào tín hiệu học của mạng dùng chung. Nhóm giữ các mặt hàng có nhu cầu trung bình từ 0,2 đơn vị mỗi ngày trở lên tại ít nhất 80\% số cửa hàng, tính trên miền huấn luyện, được 1.762 trong 3.049 mặt hàng. Từ đó, 30 mặt hàng được chọn theo phân tầng trên ba ngành hàng (thực phẩm, đồ sở thích, đồ gia dụng) để dải quy mô nhu cầu trải rộng.
 
-Sau sàng lọc, tập thực nghiệm vẫn có 57,4\% số ngày không phát sinh giao dịch. Quy trình loại các chuỗi suy biến nhưng giữ được tính gián đoạn của nhu cầu. Bảng~\ref{tab:dacTrungDuLieu} so sánh đặc trưng nhu cầu của tập thực nghiệm với bộ dữ liệu gốc.
+Sau sàng lọc, tập thực nghiệm vẫn có 57,4\% số ngày không phát sinh giao dịch. Quy trình loại các chuỗi suy biến nhưng giữ được tính gián đoạn của nhu cầu. So với bộ dữ liệu gốc, tập thực nghiệm có nhu cầu trung bình cao hơn nhưng vẫn còn nhiều ngày không bán.
 
 \begin{table}[H]
     \centering
@@ -57,7 +64,7 @@ Sau sàng lọc, tập thực nghiệm vẫn có 57,4\% số ngày không phát 
 
 \subsubsection{Tách miền thời gian}
 
-Chuỗi 1.941 ngày được chia theo thời gian thành ba miền không chồng lấn, mỗi miền có một vai trò cố định. Mọi đại lượng ước lượng từ dữ liệu chỉ lấy từ miền huấn luyện, gồm nhu cầu trung bình $\bar{D}^{(i)}$ của bảng mức đặt hàng, sức chứa kho và mẫu số chuẩn hóa phần thưởng. Miền kiểm thử không được dùng để chọn mô hình, chỉnh phần thưởng hay tinh chỉnh chính sách đối chứng. Bảng~\ref{tab:baMien} tóm tắt khoảng ngày và vai trò của từng miền.
+Chuỗi 1.941 ngày được chia theo thời gian thành ba miền không chồng lấn, mỗi miền có một vai trò cố định. Mọi đại lượng ước lượng từ dữ liệu chỉ lấy từ miền huấn luyện, gồm nhu cầu trung bình $\bar{D}^{(i)}$ của bảng mức đặt hàng, sức chứa kho và mẫu số chuẩn hóa phần thưởng. Miền kiểm thử không được dùng để chọn mô hình, chỉnh phần thưởng hay tinh chỉnh chính sách đối chứng. Mỗi miền chỉ được dùng cho đúng một nhóm việc, theo quy định dưới đây.
 
 \begin{table}[H]
     \centering
@@ -81,7 +88,7 @@ Ngày 0 ứng với 29/01/2011. Mỗi tập huấn luyện dài 365 ngày, cắt
 \subsection{Thiết lập kịch bản mô phỏng}
 \label{subsec:kichBan}
 
-Bảng~\ref{tab:cauHinhEnv} tóm tắt các tham số môi trường dùng chung cho mọi thực nghiệm.
+Mọi thực nghiệm trong chương dùng chung một cấu hình môi trường, gồm các tham số sau.
 
 \begin{table}[H]
     \centering
@@ -104,7 +111,12 @@ Bảng~\ref{tab:cauHinhEnv} tóm tắt các tham số môi trường dùng chung
     \end{tabular}
 \end{table}
 
-Sức chứa kho $\kappa = 5{,}0$ ngày nhu cầu được chọn bằng thực nghiệm sao cho ràng buộc vừa khả thi vừa có hiệu lực. Nếu kho quá chật, với $\kappa = 3{,}0$, mức phục vụ cao nhất mà mọi chính sách đạt được chỉ là 79,5\%, nên mục tiêu 85\% trở thành bất khả thi. Ngược lại, khi $\kappa \ge 12{,}0$ thì chi phí tràn kho bằng không, các mặt hàng không còn tranh chỗ với nhau và bài toán suy biến thành 300 bài toán độc lập. Ở mức $\kappa = 5{,}0$, mục tiêu 85\% khả thi trong khi chi phí tràn kho vẫn chiếm khoảng 1--2\% tổng chi phí, đủ để sức chứa dùng chung thực sự ràng buộc quyết định của các tác tử.
+Sức chứa kho $\kappa = 5{,}0$ ngày nhu cầu được chọn bằng thực nghiệm sao cho ràng buộc vừa khả thi vừa có hiệu lực:
+\begin{itemize}
+    \item Nếu kho quá chật, với $\kappa = 3{,}0$, mức phục vụ cao nhất mà mọi chính sách đạt được chỉ là 79,5\%, nên mục tiêu 85\% trở thành bất khả thi.
+    \item Khi $\kappa \ge 12{,}0$ thì chi phí tràn kho bằng không, các mặt hàng không còn tranh chỗ với nhau và bài toán suy biến thành 300 bài toán độc lập.
+    \item Ở mức $\kappa = 5{,}0$, mục tiêu 85\% khả thi trong khi chi phí tràn kho vẫn chiếm khoảng 1--2\% tổng chi phí, đủ để sức chứa dùng chung thực sự ràng buộc quyết định của các tác tử.
+\end{itemize}
 
 \section{Phương pháp đối chứng}
 \label{sec:baselines}
@@ -114,15 +126,20 @@ IPPO được so sánh với năm chính sách đối chứng: EOQ, $(s, S)$, Ne
 \subsection{Các chính sách cổ điển}
 \label{subsec:baselineCoDien}
 
-EOQ, $(s, S)$ và Newsvendor được cài đặt theo các công thức ở Chương~\ref{chap:chapter2}. Để so sánh công bằng, nhóm thống nhất ba điểm giữa IPPO và các chính sách này.
+EOQ, $(s, S)$ và Newsvendor được cài đặt theo các công thức ở Chương~\ref{chap:chapter2}. Để so sánh công bằng, nhóm thống nhất ba điểm giữa IPPO và các chính sách này:
+\begin{itemize}
+    \item Tham số của chính sách đối chứng được tìm kiếm lưới trên miền xác thực theo đúng tiêu chí chọn mô hình IPPO. Cấu hình được chọn là cấu hình có chi phí vận hành thấp nhất trong số các cấu hình đạt tỷ lệ đáp ứng từ 85\% trở lên. Nếu không cấu hình nào đạt, cấu hình có tỷ lệ đáp ứng cao nhất được chọn.
+    \item Các chính sách dùng nhu cầu trung bình và độ lệch chuẩn ước lượng từ miền huấn luyện cùng lịch sử nhu cầu gần nhất. Chúng không biết sức chứa kho, lịch và lịch hàng về chi tiết. Đây là phần thông tin IPPO có thêm, nên đề tài bổ sung hai chính sách đối chứng có thêm thông tin ở các phần sau.
+    \item Lượng đặt của mọi phương pháp được làm tròn về mức gần nhất trong sáu mức của công thức~(\ref{eq:orderTable}), giống việc đặt hàng theo lô chuẩn.
+\end{itemize}
 
-Thứ nhất, tham số của chính sách đối chứng được tìm kiếm lưới trên miền xác thực theo đúng tiêu chí chọn mô hình IPPO. Cấu hình được chọn là cấu hình có chi phí vận hành thấp nhất trong số các cấu hình đạt tỷ lệ đáp ứng từ 85\% trở lên. Nếu không cấu hình nào đạt, cấu hình có tỷ lệ đáp ứng cao nhất được chọn.
+Mỗi chính sách cổ điển được đánh giá ở hai phiên bản:
+\begin{itemize}
+    \item Phiên bản chung dùng một bộ tham số cho cả 300 cặp.
+    \item Phiên bản theo nhóm dùng một bộ tham số riêng cho mỗi nhóm quy mô nhu cầu, gồm dưới 0,5, từ 0,5 đến 2, từ 2 đến 10 và từ 10 đơn vị mỗi ngày trở lên. Đây là chính sách đối chứng mạnh hơn và sát với cách doanh nghiệp đặt chính sách theo nhóm hàng.
+\end{itemize}
 
-Thứ hai, các chính sách dùng nhu cầu trung bình và độ lệch chuẩn ước lượng từ miền huấn luyện cùng lịch sử nhu cầu gần nhất. Chúng không biết sức chứa kho, lịch và lịch hàng về chi tiết. Đây là phần thông tin IPPO có thêm, nên đề tài bổ sung hai chính sách đối chứng có thêm thông tin ở các phần sau.
-
-Thứ ba, lượng đặt của mọi phương pháp được làm tròn về mức gần nhất trong sáu mức của công thức~(\ref{eq:orderTable}), giống việc đặt hàng theo lô chuẩn.
-
-Mỗi chính sách cổ điển được đánh giá ở hai phiên bản. Phiên bản chung dùng một bộ tham số cho cả 300 cặp. Phiên bản theo nhóm dùng một bộ tham số riêng cho mỗi nhóm quy mô nhu cầu, gồm dưới 0,5, từ 0,5 đến 2, từ 2 đến 10 và từ 10 đơn vị mỗi ngày trở lên. Phiên bản theo nhóm là chính sách đối chứng mạnh hơn và sát với cách doanh nghiệp đặt chính sách theo nhóm hàng. Tham số được chọn cho phiên bản chung của ba chính sách cổ điển được trình bày ở Bảng~\ref{tab:thamSoBaseline}.
+Với phiên bản chung, quá trình tìm kiếm lưới chọn ra các bộ tham số sau cho ba chính sách cổ điển.
 
 \begin{table}[H]
     \centering
@@ -142,7 +159,13 @@ Mỗi chính sách cổ điển được đánh giá ở hai phiên bản. Phiê
 
 Ở phiên bản theo nhóm, tham số thay đổi theo quy mô nhu cầu. Hệ số lô $q_{\text{factor}}$ của EOQ tăng từ 1,0 ở nhóm nhỏ nhất lên 3,0 ở nhóm lớn nhất. Tỷ số tới hạn $CR$ của Newsvendor lần lượt là 0,60, 0,75, 0,85 và 0,60 cho bốn nhóm. Cả ba chính sách theo nhóm có tỷ lệ đáp ứng trên miền xác thực trong khoảng 85,0--85,3\%. Tiêu chí chọn cấu hình rẻ nhất đã đẩy chúng về sát biên ràng buộc.
 
-Tỷ số tới hạn tìm được của Newsvendor ($CR = 0{,}60$) thấp hơn nhiều giá trị lý thuyết $c_{th}/(c_{th} + c_{lk}) = 10/11 \approx 0{,}909$. Nguyên nhân thứ nhất là tỷ số tới hạn cổ điển dành cho bài toán một kỳ, trong khi môi trường ở đây có nhiều kỳ, có hàng đang về và có ràng buộc sức chứa. Nguyên nhân thứ hai là tiêu chí chọn ưu tiên chi phí thấp nhất trong các cấu hình đạt 85\%, nên tham số được chọn nằm sát ngưỡng này. Kết quả này phù hợp với nhận định của Zipkin \cite{zipkin2008} rằng các chính sách cổ điển không còn được bảo đảm tối ưu khi thiếu hàng làm mất đơn.
+Tỷ số tới hạn tìm được của Newsvendor ($CR = 0{,}60$) thấp hơn nhiều giá trị lý thuyết $c_{th}/(c_{th} + c_{lk}) = 10/11 \approx 0{,}909$. Có hai nguyên nhân:
+\begin{itemize}
+    \item Tỷ số tới hạn cổ điển dành cho bài toán một kỳ, trong khi môi trường ở đây có nhiều kỳ, có hàng đang về và có ràng buộc sức chứa.
+    \item Tiêu chí chọn ưu tiên chi phí thấp nhất trong các cấu hình đạt 85\%, nên tham số được chọn nằm sát ngưỡng này.
+\end{itemize}
+
+Kết quả này phù hợp với nhận định của Zipkin \cite{zipkin2008} rằng các chính sách cổ điển không còn được bảo đảm tối ưu khi thiếu hàng làm mất đơn.
 
 \subsection{Chính sách \texorpdfstring{$(s, S)$}{(s, S)} biết sức chứa}
 \label{subsec:baselineSucChua}
@@ -174,7 +197,7 @@ Dự báo được tính trên nhu cầu gốc của cả 30 mặt hàng, nên c
 \section{Giao thức đánh giá}
 \label{sec:giaoThuc}
 
-Mỗi câu hỏi nghiên cứu được trả lời bằng một nhóm thí nghiệm riêng. Bảng~\ref{tab:cauHoiThiNghiem} nêu điều cần kiểm tra, cách kiểm tra và mục trình bày kết quả của từng câu hỏi.
+Mỗi câu hỏi nghiên cứu được trả lời bằng một nhóm thí nghiệm riêng. Với mỗi câu hỏi, nhóm xác định trước điều cần kiểm tra, cách kiểm tra và nơi trình bày kết quả, để người đọc dễ lần theo ở các mục sau.
 
 \begin{table}[H]
     \centering
@@ -197,9 +220,15 @@ Mỗi câu hỏi nghiên cứu được trả lời bằng một nhóm thí nghi
 \subsection{Quy trình đánh giá}
 \label{subsec:daHatGiong}
 
-Theo khuyến nghị của Henderson và cộng sự \cite{henderson2018} và Agarwal và cộng sự \cite{agarwal2021}, IPPO được huấn luyện độc lập với ba hạt giống ngẫu nhiên, đánh số từ 1 đến 3, mỗi hạt giống 10.000 tập. Với mỗi hạt giống, nhóm giữ lại bản lưu có chi phí trên miền xác thực thấp nhất trong các bản đạt tỷ lệ đáp ứng từ 85\% trở lên.
+Quy trình đánh giá gồm các bước sau:
+\begin{itemize}
+    \item Theo khuyến nghị của Henderson và cộng sự \cite{henderson2018} và Agarwal và cộng sự \cite{agarwal2021}, IPPO được huấn luyện độc lập với ba hạt giống ngẫu nhiên, đánh số từ 1 đến 3, mỗi hạt giống 10.000 tập.
+    \item Với mỗi hạt giống, nhóm giữ lại bản lưu có chi phí trên miền xác thực thấp nhất trong các bản đạt tỷ lệ đáp ứng từ 85\% trở lên.
+    \item Khi đánh giá, IPPO chọn hành động có xác suất cao nhất ở mỗi bước. Mỗi lần đánh giá đi qua trọn 491 ngày của miền kiểm thử với nhu cầu thực tế của M5.
+    \item Nguồn ngẫu nhiên còn lại là thời gian giao hàng, nên mỗi chính sách được đánh giá 30 lần trên cùng 30 hạt giống thời gian giao hàng.
+\end{itemize}
 
-Khi đánh giá, IPPO chọn hành động có xác suất cao nhất ở mỗi bước. Mỗi lần đánh giá đi qua trọn 491 ngày của miền kiểm thử với nhu cầu thực tế của M5. Nguồn ngẫu nhiên còn lại là thời gian giao hàng, nên mỗi chính sách được đánh giá 30 lần trên cùng 30 hạt giống thời gian giao hàng. Miền kiểm thử chỉ dài 491 ngày, nên nhóm không cắt thành 30 cửa sổ 365 ngày, vì các cửa sổ đó chồng lấn mạnh và không thể coi là các quan sát độc lập.
+Miền kiểm thử chỉ dài 491 ngày, nên nhóm không cắt thành 30 cửa sổ 365 ngày, vì các cửa sổ đó chồng lấn mạnh và không thể coi là các quan sát độc lập.
 
 Mỗi hạt giống thời gian giao hàng $j$ cho một cặp quan sát, và kiểm định được thực hiện trên hiệu $\Delta C_j = C_j^{\text{IPPO}} - C_j^{\text{đối chứng}}$. Nhóm báo cáo hiệu trung bình kèm khoảng tin cậy 95\%, kiểm định $t$ theo cặp, kiểm định hạng có dấu Wilcoxon và hệ số ảnh hưởng $d_z = \overline{\Delta C} / s_{\Delta C}$. Mỗi hạt giống huấn luyện có một kiểm định riêng, sau đó kết quả được tổng hợp giữa các hạt giống như mô tả ở phần tổng hợp thống kê bên dưới.
 
@@ -208,32 +237,48 @@ Các phân tích theo quy mô nhu cầu, theo giai đoạn nhu cầu và về h�
 \subsection{Các chỉ số đánh giá}
 \label{subsec:chiSo}
 
-Chỉ số chính là tổng chi phí vận hành, tính theo công thức~(\ref{eq:chiPhiVanHanh}), gồm bốn thành phần chi phí thực phát sinh trên toàn miền kiểm thử và 300 cặp. Hình phạt mức phục vụ chỉ là tín hiệu huấn luyện nên không được tính vào chỉ số này. Chỉ số thứ hai là tỷ lệ đáp ứng nhu cầu $\beta$, bằng tổng lượng hàng bán được chia cho tổng nhu cầu phát sinh trong cả lần đánh giá. Hai chỉ số này luôn được đọc cùng nhau, vì chi phí thấp hơn chỉ có ý nghĩa khi mức phục vụ không bị hạ xuống.
+Các phương pháp được so sánh trên các chỉ số sau:
+\begin{itemize}
+    \item Tổng chi phí vận hành, tính theo công thức~(\ref{eq:chiPhiVanHanh}), gồm bốn thành phần chi phí thực phát sinh trên toàn miền kiểm thử và 300 cặp. Hình phạt mức phục vụ chỉ là tín hiệu huấn luyện nên không được tính vào chỉ số này.
+    \item Tỷ lệ đáp ứng nhu cầu $\beta$, bằng tổng lượng hàng bán được chia cho tổng nhu cầu phát sinh trong cả lần đánh giá.
+    \item Cơ cấu chi phí theo bốn thành phần, dùng để nhận diện chiến lược mà mỗi phương pháp áp dụng.
+    \item Đường cong học gồm phần thưởng, tỷ lệ đáp ứng, entropy của chính sách và phương sai giải thích được (\textit{explained variance}) của Critic, dùng để theo dõi quá trình huấn luyện.
+    \item Hệ số roi da dưới nguồn cung chung, bằng phương sai tổng lượng đặt theo ngày chia cho phương sai tổng nhu cầu theo ngày trên toàn mạng lưới. Hệ số lớn hơn 1 cho biết chính sách khuếch đại dao động của nhu cầu lên nhà cung cấp.
+\end{itemize}
 
-Ngoài ra, cơ cấu chi phí theo bốn thành phần được dùng để nhận diện chiến lược mà mỗi phương pháp áp dụng. Quá trình huấn luyện được theo dõi qua đường cong học gồm phần thưởng, tỷ lệ đáp ứng, entropy của chính sách và phương sai giải thích được (\textit{explained variance}) của Critic. Dưới nguồn cung chung, nhóm đo thêm hệ số roi da, bằng phương sai tổng lượng đặt theo ngày chia cho phương sai tổng nhu cầu theo ngày trên toàn mạng lưới. Hệ số lớn hơn 1 cho biết chính sách khuếch đại dao động của nhu cầu lên nhà cung cấp.
+Hai chỉ số đầu luôn được đọc cùng nhau, vì chi phí thấp hơn chỉ có ý nghĩa khi mức phục vụ không bị hạ xuống.
 
 \subsection{So sánh trên đường biên chi phí--mức phục vụ}
 \label{subsec:giaoThucIso}
 
-Hai chính sách có mức phục vụ khác nhau thì không so sánh trực tiếp chi phí được, vì muốn mức phục vụ cao hơn thì phải giữ nhiều hàng hơn. Vì vậy nhóm so sánh các chính sách ở cùng một mức phục vụ.
+Hai chính sách có mức phục vụ khác nhau thì không so sánh trực tiếp chi phí được, vì muốn mức phục vụ cao hơn thì phải giữ nhiều hàng hơn. Vì vậy nhóm so sánh các chính sách ở cùng một mức phục vụ, theo ba bước:
+\begin{itemize}
+    \item Quét lưới tham số của mỗi chính sách đối chứng trên miền xác thực.
+    \item Giữ lại đường biên chi phí--mức phục vụ và đánh giá lại các cấu hình trên đường biên ở miền kiểm thử.
+    \item Ở từng hạt giống, chọn cấu hình có mức phục vụ ngang IPPO, nội suy khi cần.
+\end{itemize}
 
-Trước hết, lưới tham số của mỗi chính sách đối chứng được quét trên miền xác thực. Lưới của $(s, S)$ gồm mức phục vụ 0,80--0,99 bước 0,01 cùng hai mức 0,995 và 0,999, hệ số lô 0,25--3,0 bước 0,25 và thời gian giao hàng giả định 1--5 ngày. Lưới của Newsvendor gồm tỷ số tới hạn 0,60--0,99 bước 0,01 và thời gian giao hàng giả định 1--6 ngày. EOQ dùng hệ số lô bước 0,25 và thời gian giao hàng giả định bước 0,5 ngày. Chính sách biết sức chứa dùng lưới của $(s, S)$ với năm giá trị $\rho$, còn chính sách dự báo dùng lưới $CR$ của Newsvendor.
+Lưới tham số của mỗi chính sách đối chứng được quét trên miền xác thực. Lưới của $(s, S)$ gồm mức phục vụ 0,80--0,99 bước 0,01 cùng hai mức 0,995 và 0,999, hệ số lô 0,25--3,0 bước 0,25 và thời gian giao hàng giả định 1--5 ngày. Lưới của Newsvendor gồm tỷ số tới hạn 0,60--0,99 bước 0,01 và thời gian giao hàng giả định 1--6 ngày. EOQ dùng hệ số lô bước 0,25 và thời gian giao hàng giả định bước 0,5 ngày. Chính sách biết sức chứa dùng lưới của $(s, S)$ với năm giá trị $\rho$, còn chính sách dự báo dùng lưới $CR$ của Newsvendor.
 
 Từ kết quả quét, nhóm giữ lại đường biên chi phí--mức phục vụ, gồm các cấu hình không bị cấu hình nào khác vừa rẻ hơn vừa có mức phục vụ cao hơn, rồi đánh giá lại các cấu hình này trên miền kiểm thử. Phiên bản theo nhóm của ba chính sách cổ điển là các đối thủ mạnh nhất ở phép so sánh trực tiếp, nên cũng có đường biên riêng. Ở đó, mỗi nhóm nhu cầu chọn một cấu hình sao cho chi phí của nhóm cộng với $\mu$ lần lượng thiếu hàng là nhỏ nhất, và mỗi giá trị $\mu$ cho một điểm trên đường biên.
 
-Cuối cùng, ở từng hạt giống, nhóm chọn cấu hình rẻ nhất có tỷ lệ đáp ứng trên miền xác thực trong khoảng $\pm 0{,}2$ điểm phần trăm so với IPPO. Nếu trên miền kiểm thử cấu hình này lệch ra ngoài khoảng trên, chi phí được nội suy tuyến tính trên đường biên tại đúng mức của IPPO và được ghi rõ là nội suy. Nếu đường biên không đạt tới mức của IPPO, chính sách đó được ghi là không đạt.
+Ở từng hạt giống, nhóm chọn cấu hình rẻ nhất có tỷ lệ đáp ứng trên miền xác thực trong khoảng $\pm 0{,}2$ điểm phần trăm so với IPPO. Nếu trên miền kiểm thử cấu hình này lệch ra ngoài khoảng trên, chi phí được nội suy tuyến tính trên đường biên tại đúng mức của IPPO và được ghi rõ là nội suy. Nếu đường biên không đạt tới mức của IPPO, chính sách đó được ghi là không đạt.
 
 \subsection{Tổng hợp thống kê trên nhiều hạt giống}
 \label{subsec:thongKe}
 
-Kiểm định theo cặp xem 30 lần đánh giá là 30 quan sát, nhưng các lần này dùng cùng 491 ngày nhu cầu và chỉ khác thời gian giao hàng. Vì vậy khoảng tin cậy tính được hẹp hơn thực tế. Do đó, giá trị $p$ chỉ được dùng để so sánh trong từng hạt giống. Kết luận chung dựa trên trung bình và độ lệch chuẩn của chi phí giữa các hạt giống huấn luyện, cùng số hạt giống cho chênh lệch cùng dấu và có ý nghĩa. Một kết luận được xem là vững khi cả ba hạt giống cùng dấu.
+Kiểm định theo cặp xem 30 lần đánh giá là 30 quan sát, nhưng các lần này dùng cùng 491 ngày nhu cầu và chỉ khác thời gian giao hàng. Vì vậy khoảng tin cậy tính được hẹp hơn thực tế. Do đó, giá trị $p$ chỉ được dùng để so sánh trong từng hạt giống, còn kết luận chung dựa trên các đại lượng sau:
+\begin{itemize}
+    \item Trung bình và độ lệch chuẩn của chi phí giữa các hạt giống huấn luyện.
+    \item Số hạt giống cho chênh lệch cùng dấu và có ý nghĩa. Một kết luận được xem là vững khi cả ba hạt giống cùng dấu.
+\end{itemize}
 
 Khi tách kết quả theo giai đoạn nhu cầu, số ngày của mỗi nhóm ít và các ngày liền nhau có tự tương quan. Khoảng tin cậy khi đó được ước lượng bằng bootstrap theo khối 7 ngày, lặp 2.000 lần, để giữ mối liên hệ giữa các ngày liền nhau \parencite{kunsch1989}.
 
 \subsection{Thiết kế các thí nghiệm mở rộng}
 \label{subsec:thiNghiemMoRong}
 
-Mỗi thí nghiệm mở rộng chỉ thay đổi một thành phần so với mô hình chính, các thành phần còn lại giữ nguyên. Quy tắc kết luận được đặt trước khi chạy: một biến thể được xem là tốt hơn khi chênh lệch chi phí có cùng dấu và có ý nghĩa ở cả ba hạt giống. Bảng~\ref{tab:thiNghiemMoRong} mô tả các thí nghiệm mở rộng, số lần chạy và đối tượng so sánh.
+Mỗi thí nghiệm mở rộng chỉ thay đổi một thành phần so với mô hình chính, các thành phần còn lại giữ nguyên. Quy tắc kết luận được đặt trước khi chạy: một biến thể được xem là tốt hơn khi chênh lệch chi phí có cùng dấu và có ý nghĩa ở cả ba hạt giống. Hai thí nghiệm mở rộng được thiết kế theo đúng nguyên tắc đó, mỗi thí nghiệm có số lần chạy và đối tượng so sánh riêng.
 
 \begin{table}[H]
     \centering
@@ -255,7 +300,24 @@ Mỗi thí nghiệm mở rộng chỉ thay đổi một thành phần so với m
 
 Các thí nghiệm trên giữ nguyên môi trường. Câu hỏi 5 đổi điều kiện vận hành của môi trường đánh giá để xem mô hình đã huấn luyện còn bền không. Nhóm không huấn luyện lại mô hình dưới các điều kiện này (\textit{zero-shot}), nên kết quả chỉ cho biết độ bền của mô hình chính, chưa cho biết mô hình học được gì nếu được huấn luyện trong từng điều kiện.
 
-Điều kiện quan trọng nhất là nguồn cung chung giữa các kho, mô tả ở Chương~\ref{chap:chapter3}, với hai mức $\rho = 3$ và $\rho = 2$. Đây là điều kiện duy nhất mà quyết định của kho này ảnh hưởng trực tiếp tới lượng hàng kho khác nhận được. Ba nhóm điều kiện còn lại lần lượt thay đổi từng yếu tố của môi trường gốc. Sức chứa kho được đặt bằng 4 hoặc 6 ngày nhu cầu thay cho 5 ngày. Thời gian giao hàng luôn bằng 3 ngày, hoặc ngẫu nhiên 2--3 ngày thay cho 1--3 ngày. Nhu cầu được tăng hoặc giảm 20\% trên toàn miền kiểm thử.
+Điều kiện quan trọng nhất là nguồn cung chung giữa các kho, mô tả ở Chương~\ref{chap:chapter3}, với hai mức $\rho = 3$ và $\rho = 2$. Đây là điều kiện duy nhất mà quyết định của kho này ảnh hưởng trực tiếp tới lượng hàng kho khác nhận được. Ba nhóm điều kiện còn lại lần lượt thay đổi từng yếu tố của môi trường gốc:
+\begin{itemize}
+    \item Sức chứa kho:
+    \begin{itemize}
+        \item 4 ngày nhu cầu.
+        \item 6 ngày nhu cầu, thay cho 5 ngày của môi trường gốc.
+    \end{itemize}
+    \item Thời gian giao hàng:
+    \begin{itemize}
+        \item Luôn bằng 3 ngày.
+        \item Ngẫu nhiên 2--3 ngày, thay cho 1--3 ngày của môi trường gốc.
+    \end{itemize}
+    \item Mức nhu cầu:
+    \begin{itemize}
+        \item Tăng 20\% trên toàn miền kiểm thử.
+        \item Giảm 20\% trên toàn miền kiểm thử.
+    \end{itemize}
+\end{itemize}
 
 Hai mức $\rho$ được chọn bằng cách chạy thử các chính sách đã có. Khi chưa tinh chỉnh lại, $\rho = 3$ làm tỷ lệ đáp ứng của $(s, S)$ và Newsvendor dự báo giảm khoảng 2 điểm phần trăm, $\rho = 2$ làm giảm khoảng 4 điểm. Ở $\rho = 1{,}5$ mức giảm đã gần 6 điểm và tỷ lệ đáp ứng xuống dưới 83\%, vì đơn đặt theo lô thường vượt trần của ngày đó.
 
@@ -264,7 +326,13 @@ Mô hình chính giữ nguyên tham số đã học cho môi trường gốc. V�
 \section{Câu hỏi 1: IPPO so với các chính sách đối chứng}
 \label{sec:ketQua}
 
-Mục này đi theo bốn bước. Trước hết nhóm kiểm tra mô hình đã học ổn định hay chưa. Tiếp theo, IPPO được so trực tiếp với các chính sách đối chứng, rồi so ở cùng mức phục vụ. Cuối cùng, kết quả được tách theo giai đoạn nhu cầu để xem IPPO có lợi trong trường hợp nào.
+Mục này đi theo bốn bước:
+\begin{itemize}
+    \item Kiểm tra mô hình đã học ổn định hay chưa.
+    \item So trực tiếp IPPO với các chính sách đối chứng.
+    \item So ở cùng mức phục vụ.
+    \item Tách kết quả theo giai đoạn nhu cầu để xem IPPO có lợi trong trường hợp nào.
+\end{itemize}
 
 \subsection{Quá trình huấn luyện và tính hội tụ}
 \label{subsec:hoiTu}
@@ -278,7 +346,13 @@ Quá trình huấn luyện hội tụ ổn định ở cả Actor lẫn Critic. 
     \label{fig:duongCongHoc}
 \end{figure}
 
-Phần thưởng tăng từ $-$17,59 triệu ở tập đầu lên quanh $-$1,61 triệu ở 200 tập cuối, tương ứng tổng chi phí giảm khoảng 91\% so với chính sách khởi tạo ngẫu nhiên. Đường cong đi ngang từ khoảng tập 1.200 và không sụp đổ sau đó. Tỷ lệ đáp ứng vượt 85\% từ khoảng tập 80 rồi duy trì quanh 91\%, nên ràng buộc mức phục vụ được thỏa mãn từ rất sớm. Entropy của chính sách giảm từ 1,779, gần giá trị $\ln 6$ của phân phối đều, xuống 0,138 ở tập cuối, cho thấy chính sách đã định hình rõ thay vì chọn hành động ngẫu nhiên. Về phía Critic, phương sai giải thích được vượt 0,6 sau khoảng 50 tập và dao động quanh 0,84 ở 200 tập cuối.
+Diễn biến của bốn chỉ số như sau:
+\begin{itemize}
+    \item Phần thưởng tăng từ $-$17,59 triệu ở tập đầu lên quanh $-$1,61 triệu ở 200 tập cuối, tương ứng tổng chi phí giảm khoảng 91\% so với chính sách khởi tạo ngẫu nhiên. Đường cong đi ngang từ khoảng tập 1.200 và không sụp đổ sau đó.
+    \item Tỷ lệ đáp ứng vượt 85\% từ khoảng tập 80 rồi duy trì quanh 91\%, nên ràng buộc mức phục vụ được thỏa mãn từ rất sớm.
+    \item Entropy của chính sách giảm từ 1,779, gần giá trị $\ln 6$ của phân phối đều, xuống 0,138 ở tập cuối, cho thấy chính sách đã định hình rõ thay vì chọn hành động ngẫu nhiên.
+    \item Phương sai giải thích được của Critic vượt 0,6 sau khoảng 50 tập và dao động quanh 0,84 ở 200 tập cuối.
+\end{itemize}
 
 
 Hai hạt giống còn lại cho kết quả cùng bậc, với entropy cuối 0,126 và 0,125, phương sai giải thích được 0,84. Ở cả ba hạt giống, chi phí xác thực tốt nhất trong 20\% số tập cuối chỉ lệch 0,2--1,6\% so với phần trước đó. Vì vậy 10.000 tập là đủ để hội tụ.
@@ -288,7 +362,7 @@ Hai hạt giống còn lại cho kết quả cùng bậc, với entropy cuối 0
 
 Khi mỗi phương pháp dùng cấu hình tốt nhất của mình, IPPO có tổng chi phí xấp xỉ các chính sách cổ điển tốt nhất trong khi tỷ lệ đáp ứng cao hơn rõ rệt. Trên miền kiểm thử, IPPO rẻ hơn $(s, S)$ 1,7\% và rẻ hơn EOQ 17,8\%. Với EOQ theo nhóm, Newsvendor và $(s, S)$ theo nhóm, chênh lệch chi phí dưới 1\%. Hai chính sách rẻ hơn IPPO là Newsvendor theo nhóm, thấp hơn 1,6\%, và $(s, S)$ biết sức chứa, thấp hơn 0,8\%. Đổi lại, tỷ lệ đáp ứng của IPPO đạt 90,9\%, cao hơn khoảng 4--5 điểm phần trăm so với các chính sách theo nhóm, $(s, S)$ và $(s, S)$ biết sức chứa. Không chính sách nào xuống dưới mục tiêu 85\%.
 
-Kết quả của IPPO là trung bình của ba hạt giống huấn luyện, mỗi hạt giống đánh giá 30 lần. Các chính sách đối chứng là tất định nên kết quả là trung bình trên 30 lần đánh giá dùng chung hạt giống thời gian giao hàng với IPPO. Bảng~\ref{tab:ketQuaChiPhi} trình bày tổng chi phí, tỷ lệ đáp ứng và bốn thành phần chi phí của từng phương pháp.
+Kết quả của IPPO là trung bình của ba hạt giống huấn luyện, mỗi hạt giống đánh giá 30 lần. Các chính sách đối chứng là tất định nên kết quả là trung bình trên 30 lần đánh giá dùng chung hạt giống thời gian giao hàng với IPPO. Bên cạnh tổng chi phí và tỷ lệ đáp ứng, bốn thành phần chi phí của từng phương pháp cũng được tách riêng để thấy mỗi phương pháp tiết kiệm ở đâu.
 
 \begin{table}[htbp]
     \centering
@@ -324,7 +398,12 @@ Kết quả của IPPO là trung bình của ba hạt giống huấn luyện, m�
 
 Các chính sách đối chứng tối thiểu chi phí sát ràng buộc 85\%. IPPO cũng tối thiểu chi phí dưới ràng buộc đó nhưng dừng ở mức phục vụ cao hơn. Vì vậy trong phép so sánh này, IPPO nâng được mức phục vụ mà tổng chi phí vẫn ngang các chính sách mạnh nhất.
 
-Kiểm định theo cặp xác nhận các nhận xét trên. Ba so sánh cho kết quả nhất quán trên cả ba hạt giống là IPPO rẻ hơn $(s, S)$, rẻ hơn EOQ và đắt hơn Newsvendor theo nhóm. Với $(s, S)$ theo nhóm và Newsvendor, dấu của chênh lệch đổi giữa các hạt giống, nên hai bên được xem là ngang nhau. Với $(s, S)$ biết sức chứa, IPPO đắt hơn có ý nghĩa ở hai hạt giống và không khác biệt ở hạt giống còn lại.
+Kiểm định theo cặp xác nhận các nhận xét trên:
+\begin{itemize}
+    \item Ba so sánh cho kết quả nhất quán trên cả ba hạt giống là IPPO rẻ hơn $(s, S)$, rẻ hơn EOQ và đắt hơn Newsvendor theo nhóm.
+    \item Với $(s, S)$ theo nhóm và Newsvendor, dấu của chênh lệch đổi giữa các hạt giống, nên hai bên được xem là ngang nhau.
+    \item Với $(s, S)$ biết sức chứa, IPPO đắt hơn có ý nghĩa ở hai hạt giống và không khác biệt ở hạt giống còn lại.
+\end{itemize}
 
 Lấy hạt giống 1 làm ví dụ, IPPO rẻ hơn $(s, S)$ trung bình 39.169 đơn vị mỗi lần đánh giá, với khoảng tin cậy 95\% từ 34.404 đến 43.933 và $p = 1{,}7 \times 10^{-16}$. IPPO rẻ hơn ở cả 30 lần đánh giá. Ngược lại, IPPO đắt hơn Newsvendor theo nhóm 29.554 đơn vị, với khoảng tin cậy 95\% từ 26.140 đến 32.967, và không lần nào rẻ hơn. Chênh lệch với $(s, S)$ theo nhóm là +0,2\% và không có ý nghĩa thống kê ($p = 0{,}088$).
 
@@ -335,7 +414,13 @@ Lấy hạt giống 1 làm ví dụ, IPPO rẻ hơn $(s, S)$ trung bình 39.169 
 
 IPPO học được một chiến lược khác với các chính sách cổ điển là tích trữ nhiều hơn để giảm thiếu hàng. Hình~\ref{fig:soSanhBaseline} so sánh các phương pháp theo (a) tổng chi phí, (b) tỷ lệ đáp ứng và (c) chi phí thành phần.
 
-Chi phí lưu kho của IPPO cao hơn $(s, S)$ 14,3\% và cao hơn Newsvendor theo nhóm 28,0\%, nhưng chi phí thiếu hàng lại thấp hơn hai chính sách này khoảng 34--36\%. So với $(s, S)$, phần tiết kiệm ở thiếu hàng lớn hơn phần tăng ở lưu kho, nên tổng chi phí của IPPO thấp hơn. So với các chính sách theo nhóm, hai phần gần như bù trừ nhau, nên tổng chi phí xấp xỉ bằng nhau. Chi phí tràn kho của IPPO chiếm khoảng 2,3\% tổng chi phí, thấp hơn $(s, S)$ với 3,2\% và EOQ với 11,7\%, nhưng cao hơn hai bản Newsvendor. Về tần suất đặt hàng, IPPO đặt trung bình 35.628 đơn mỗi lần đánh giá, nhiều hơn $(s, S)$ với 30.367 đơn nhưng ít hơn Newsvendor với 48.825 đơn.
+Cơ cấu chi phí của IPPO có các đặc điểm sau:
+\begin{itemize}
+    \item Chi phí lưu kho cao hơn $(s, S)$ 14,3\% và cao hơn Newsvendor theo nhóm 28,0\%, nhưng chi phí thiếu hàng lại thấp hơn hai chính sách này khoảng 34--36\%.
+    \item So với $(s, S)$, phần tiết kiệm ở thiếu hàng lớn hơn phần tăng ở lưu kho, nên tổng chi phí của IPPO thấp hơn. So với các chính sách theo nhóm, hai phần gần như bù trừ nhau, nên tổng chi phí xấp xỉ bằng nhau.
+    \item Chi phí tràn kho chiếm khoảng 2,3\% tổng chi phí, thấp hơn $(s, S)$ với 3,2\% và EOQ với 11,7\%, nhưng cao hơn hai bản Newsvendor.
+    \item IPPO đặt trung bình 35.628 đơn mỗi lần đánh giá, nhiều hơn $(s, S)$ với 30.367 đơn nhưng ít hơn Newsvendor với 48.825 đơn.
+\end{itemize}
 
 \begin{figure}[H]
     \centering
@@ -352,9 +437,15 @@ Mức phục vụ cao hơn của IPPO đến từ lượng tồn kho đệm, kh�
 % [SO-MOI] So cua hat giong 1 (dot 20/10); thay bang KET_QUA.txt muc 1 (cung muc phuc vu, 3 hat giong) sau khi chay eval_all
 Khi phải đạt mức phục vụ ngang IPPO, mọi chính sách cổ điển đều đắt hơn IPPO. Ở phép so sánh trực tiếp, IPPO dừng ở mức phục vụ 90,65\% (hạt giống 1), còn các chính sách đối chứng dừng ở 85,8--89,5\%. Các phương pháp nằm ở những điểm khác nhau trên đường đánh đổi giữa chi phí và mức phục vụ, nên so tổng chi phí là chưa đủ.
 
-Để loại yếu tố này, chi phí của từng chính sách được đọc trên đường biên tại đúng mức phục vụ của IPPO, theo giao thức so sánh trên đường biên chi phí--mức phục vụ đã nêu. Khi phải phục vụ ngang IPPO, $(s, S)$ đắt hơn IPPO 13,3\%, Newsvendor đắt hơn 8,0\% và EOQ đắt hơn 22,3\%. Lợi thế vẫn giữ được trước các phiên bản theo nhóm, là những đối thủ mạnh nhất ở phép so sánh trực tiếp, với mức chênh từ 7,3\% đến 9,8\%. Phiên bản $(s, S)$ biết sức chứa cũng đắt hơn IPPO 9,2\%. Chính sách duy nhất rẻ hơn IPPO ở cùng mức phục vụ là Newsvendor dự báo, với chênh lệch 4,3\%. Chính sách này dùng thông tin dự báo mà IPPO không có, và được so sánh kỹ hơn ở phần tiếp theo.
+Để loại yếu tố này, chi phí của từng chính sách được đọc trên đường biên tại đúng mức phục vụ của IPPO, theo giao thức so sánh trên đường biên chi phí--mức phục vụ đã nêu. Khi phải phục vụ ngang IPPO:
+\begin{itemize}
+    \item $(s, S)$ đắt hơn IPPO 13,3\%, Newsvendor đắt hơn 8,0\% và EOQ đắt hơn 22,3\%.
+    \item Lợi thế vẫn giữ được trước các phiên bản theo nhóm, là những chính sách đối chứng mạnh nhất ở phép so sánh trực tiếp, với mức chênh từ 7,3\% đến 9,8\%.
+    \item Phiên bản $(s, S)$ biết sức chứa cũng đắt hơn IPPO 9,2\%.
+    \item Chính sách duy nhất rẻ hơn IPPO là Newsvendor dự báo, với chênh lệch 4,3\%. Chính sách này dùng thông tin dự báo mà IPPO không có, và được so sánh kỹ hơn ở phần tiếp theo.
+\end{itemize}
 
-Chi phí và tỷ lệ đáp ứng của từng chính sách khi đạt mức phục vụ của IPPO được trình bày ở Bảng~\ref{tab:isoService}.
+Khi mọi chính sách được đưa về đúng mức phục vụ của IPPO, chi phí của từng chính sách thay đổi như sau.
 
 \begin{table}[H]
     \centering
@@ -392,7 +483,7 @@ Khoảng cách bắt nguồn từ cách điều chỉnh của chính sách cổ 
 \subsection{So sánh với chính sách có thêm thông tin}
 \label{subsec:soSanhThongTin}
 
-IPPO giữ lợi thế trước chính sách biết sức chứa khi so ở cùng mức phục vụ, nhưng chính sách dùng dự báo nhu cầu rẻ hơn IPPO. Mô hình chính chỉ nhận lịch sử 7 ngày và lịch của ngày hiện tại, còn chính sách dự báo nhận dự báo LightGBM cho ba ngày tới. Hai bên vì vậy không dùng cùng loại thông tin. Phép so sánh cùng loại thông tin được thực hiện ở Câu hỏi 4. Bảng~\ref{tab:soSanhThongTin} so sánh IPPO với chính sách biết sức chứa, chính sách dự báo và mốc biết trước nhu cầu, khi so trực tiếp và khi so ở cùng mức phục vụ.
+IPPO giữ lợi thế trước chính sách biết sức chứa khi so ở cùng mức phục vụ, nhưng chính sách dùng dự báo nhu cầu rẻ hơn IPPO. Mô hình chính chỉ nhận lịch sử 7 ngày và lịch của ngày hiện tại, còn chính sách dự báo nhận dự báo LightGBM cho ba ngày tới. Hai bên vì vậy không dùng cùng loại thông tin. Phép so sánh cùng loại thông tin được thực hiện ở Câu hỏi 4. Đặt IPPO cạnh ba chính sách có thêm thông tin, cả khi so trực tiếp lẫn khi so ở cùng mức phục vụ, sẽ thấy loại thông tin nào tạo ra khác biệt.
 
 % [SO-MOI] Dong cung muc phuc vu va moc biet truoc la so hat giong 1 (dot 20/10); thay bang KET_QUA.txt muc 1 va 4 sau khi chay eval_all
 \begin{table}[H]
@@ -426,11 +517,25 @@ Học tăng cường không rẻ hơn ở mọi giai đoạn nhu cầu, nhưng g
 
 \subsubsection{Thiết kế thực nghiệm}
 
-Mỗi ngày trong miền kiểm thử được gán nhãn theo hai cách. Cách thứ nhất dựa trên mức biến động của nhu cầu. Với mỗi ngày $t$ và mỗi kho $w$, nhóm tính độ lệch $\bigl|D_t^{(w)} / \overline{D}_{28}^{(w)} - 1\bigr|$ giữa tổng nhu cầu của kho và trung bình 28 ngày trước đó, rồi lấy trung bình trên 10 kho. Các ngày được chia theo tam phân vị thành ba nhóm ổn định ($\le 20{,}3\%$), trung bình và biến động ($> 30{,}8\%$), mỗi nhóm khoảng 164 ngày.
+Mỗi ngày trong miền kiểm thử được gán nhãn theo hai cách:
+\begin{itemize}
+    \item Theo mức biến động của nhu cầu. Với mỗi ngày $t$ và mỗi kho $w$, nhóm tính độ lệch $\bigl|D_t^{(w)} / \overline{D}_{28}^{(w)} - 1\bigr|$ giữa tổng nhu cầu của kho và trung bình 28 ngày trước đó, rồi lấy trung bình trên 10 kho. Các ngày được chia theo tam phân vị thành ba nhóm, mỗi nhóm khoảng 164 ngày:
+    \begin{itemize}
+        \item Ổn định, độ lệch $\le 20{,}3\%$.
+        \item Trung bình.
+        \item Biến động, độ lệch $> 30{,}8\%$.
+    \end{itemize}
+    \item Theo lịch, gồm năm nhóm:
+    \begin{itemize}
+        \item Ngày có sự kiện, 43 ngày.
+        \item Ngày SNAP, 240 ngày.
+        \item Cuối tuần, 141 ngày.
+        \item Mùa lễ tháng 11--12, 61 ngày.
+        \item Ngày thường không sự kiện, không SNAP, không cuối tuần, 164 ngày.
+    \end{itemize}
+\end{itemize}
 
-Cách thứ hai dựa trên lịch. Các nhóm gồm ngày có sự kiện với 43 ngày, ngày SNAP với 240 ngày, cuối tuần với 141 ngày, mùa lễ tháng 11--12 với 61 ngày, và ngày thường không sự kiện, không SNAP, không cuối tuần với 164 ngày.
-
-Ngoài các giai đoạn tự nhiên, thực nghiệm tạo sốc cầu nhân tạo: nhu cầu của 28 ngày (1650--1677) được nhân với 1,5 (tăng đột biến) hoặc 0,5 (sụt giảm). Tỷ lệ đáp ứng và chi phí được đo trong 28 ngày trước, trong và sau cú sốc. Bên cạnh sáu chính sách đối chứng tinh chỉnh trực tiếp, thực nghiệm dùng thêm hai chính sách đã chỉnh về cùng mức phục vụ với IPPO. Tỷ lệ đáp ứng và chi phí mỗi ngày của IPPO và $(s,S)$ trong từng giai đoạn được trình bày ở Bảng~\ref{tab:theoGiaiDoan}.
+Ngoài các giai đoạn tự nhiên, thực nghiệm tạo sốc cầu nhân tạo: nhu cầu của 28 ngày (1650--1677) được nhân với 1,5 (tăng đột biến) hoặc 0,5 (sụt giảm). Tỷ lệ đáp ứng và chi phí được đo trong 28 ngày trước, trong và sau cú sốc. Bên cạnh sáu chính sách đối chứng tinh chỉnh trực tiếp, thực nghiệm dùng thêm hai chính sách đã chỉnh về cùng mức phục vụ với IPPO. Trước hết, tỷ lệ đáp ứng và chi phí mỗi ngày của IPPO được đặt cạnh $(s,S)$ trong từng giai đoạn.
 % [SO-MOI] Cot/dong "cung muc phuc vu" o bang giai doan, bang CI va bang soc cau dang theo tham so luoi tho (phong dai); thay bang KET_QUA.txt muc 6a, 6b sau khi chay eval_all
 
 \begin{table}[H]
@@ -502,7 +607,7 @@ Khi nhu cầu biến động, ưu thế của IPPO nằm ở độ bền của m
 
 Ở cùng mức phục vụ, IPPO rẻ hơn trong mọi giai đoạn, từ 20,1\% đến 29,2\% so với $(s,S)$ và từ 12,7\% đến 20,1\% so với Newsvendor. Tuy nhiên, hai chính sách cùng mức phục vụ này giữ tỷ lệ đáp ứng cao hơn IPPO ở hầu hết các nhóm ngày, nên khoảng cách trên có phần bị phóng đại.
 
-Mùa lễ cuối năm là giai đoạn yếu nhất của IPPO. Tỷ lệ đáp ứng thấp nhất (88,3\%), và IPPO đắt hơn Newsvendor theo nhóm 10,1\%, có ý nghĩa thống kê. Mùa lễ chỉ gồm 9 tuần trong miền kiểm thử và miền huấn luyện chỉ chứa khoảng ba mùa lễ, nên đây là điểm yếu cần theo dõi. Tác tử cũng gần như không khai thác đặc trưng lịch, như phần kiểm tra chính sách đã học cho thấy. Bảng~\ref{tab:socCau} trình bày tỷ lệ đáp ứng và chi phí mỗi ngày của các chính sách trước, trong và sau cú sốc cầu.
+Mùa lễ cuối năm là giai đoạn yếu nhất của IPPO. Tỷ lệ đáp ứng thấp nhất (88,3\%), và IPPO đắt hơn Newsvendor theo nhóm 10,1\%, có ý nghĩa thống kê. Mùa lễ chỉ gồm 9 tuần trong miền kiểm thử và miền huấn luyện chỉ chứa khoảng ba mùa lễ, nên đây là điểm yếu cần theo dõi. Tác tử cũng gần như không khai thác đặc trưng lịch, như phần kiểm tra chính sách đã học cho thấy. Với cú sốc cầu nhân tạo, các chính sách được theo dõi trong 28 ngày trước, trong và sau cú sốc.
 
 \begin{table}[H]
     \centering
@@ -538,13 +643,24 @@ Mùa lễ cuối năm là giai đoạn yếu nhất của IPPO. Tỷ lệ đáp 
 
 IPPO phục hồi tốt hơn sau cú sốc, nhất là khi nhu cầu sụt rồi quay lại. Hình~\ref{fig:socCau} vẽ tỷ lệ đáp ứng theo ngày, làm mượt bằng trung bình trượt 7 ngày, với vùng tô đỏ là 28 ngày bị sốc.
 
-Khi nhu cầu tăng 50\%, mọi chính sách đều mất khoảng 6--10 điểm tỷ lệ đáp ứng. Ở mức phục vụ gần như nhau trong thời gian sốc, IPPO tốn ít hơn Newsvendor trực tiếp 13,2\% và ít hơn $(s,S)$ trực tiếp 16,8\%. Sau cú sốc, tỷ lệ đáp ứng của IPPO phục hồi lên 93,3\%. Khi nhu cầu sụt 50\% rồi hồi phục, khác biệt còn rõ hơn. Tỷ lệ đáp ứng của $(s,S)$ và Newsvendor trực tiếp giảm xuống 82,9\% và 83,4\%, của hai chính sách cùng mức phục vụ giảm xuống 90,5\% và 89,2\%, trong khi IPPO giữ được 90,8\%.
+Kết quả ở hai loại sốc như sau:
+\begin{itemize}
+    \item Khi nhu cầu tăng 50\%, mọi chính sách đều mất khoảng 6--10 điểm tỷ lệ đáp ứng. Ở mức phục vụ gần như nhau trong thời gian sốc, IPPO tốn ít hơn Newsvendor trực tiếp 13,2\% và ít hơn $(s,S)$ trực tiếp 16,8\%. Sau cú sốc, tỷ lệ đáp ứng của IPPO phục hồi lên 93,3\%.
+    \item Khi nhu cầu sụt 50\% rồi hồi phục, khác biệt còn rõ hơn. Tỷ lệ đáp ứng của $(s,S)$ và Newsvendor trực tiếp giảm xuống 82,9\% và 83,4\%, của hai chính sách cùng mức phục vụ giảm xuống 90,5\% và 89,2\%, trong khi IPPO giữ được 90,8\%.
+\end{itemize}
 
 Khi nhu cầu hồi phục, ước lượng $\mu$ và $\sigma$ từ cửa sổ 7 ngày của chính sách cổ điển vẫn phản ánh giai đoạn nhu cầu thấp nên chúng đặt quá ít. IPPO kết hợp lịch sử 7 ngày với đặc trưng quy mô dài hạn $\log(1 + \bar{D}^{(i)})$, nên bền hơn trước nhiễu ngắn hạn. Đổi lại, IPPO có thể phản ứng chậm hơn nếu nhu cầu thay đổi lâu dài.
 
 \subsubsection{Nhận xét chung}
 
-Học tăng cường không đạt chi phí thấp hơn ở mọi giai đoạn. Khi nhu cầu ổn định, chính sách cổ điển tinh chỉnh tốt rẻ hơn IPPO vài phần trăm, và mùa lễ là giai đoạn IPPO kém nhất. Ưu thế của IPPO tập trung ở những lúc nhu cầu thay đổi. Mức phục vụ của IPPO bền hơn khi nhu cầu biến động và khi hồi phục sau cú sụt. Chi phí của IPPO thấp hơn $(s,S)$ ở ngày có sự kiện và cuối tuần, và thấp hơn các chính sách cùng mức phục vụ khi phải chống đỡ sốc tăng cầu. Miền kiểm thử chỉ dài 491 ngày và mùa lễ chỉ có 9 tuần, nên kết luận theo giai đoạn, nhất là về mùa lễ, cần được đọc thận trọng.
+Học tăng cường không đạt chi phí thấp hơn ở mọi giai đoạn. Khi nhu cầu ổn định, chính sách cổ điển tinh chỉnh tốt rẻ hơn IPPO vài phần trăm, và mùa lễ là giai đoạn IPPO kém nhất. Ưu thế của IPPO tập trung ở những lúc nhu cầu thay đổi:
+\begin{itemize}
+    \item Mức phục vụ bền hơn khi nhu cầu biến động và khi hồi phục sau cú sụt.
+    \item Chi phí thấp hơn $(s,S)$ ở ngày có sự kiện và cuối tuần.
+    \item Chi phí thấp hơn các chính sách cùng mức phục vụ khi phải chống đỡ sốc tăng cầu.
+\end{itemize}
+
+Miền kiểm thử chỉ dài 491 ngày và mùa lễ chỉ có 9 tuần, nên kết luận theo giai đoạn, nhất là về mùa lễ, cần được đọc thận trọng.
 
 \section{Câu hỏi 2: chia sẻ tham số và mặt hàng chưa gặp}
 \label{sec:cau2}
@@ -556,9 +672,13 @@ Một mạng dùng chung có thể làm tốt ở nhóm mặt hàng này nhưng 
 
 Chia sẻ tham số giữ được hiệu năng ở các nhóm nhu cầu trung bình và cao, nhưng mức phục vụ ở nhóm bán chậm thấp hơn $(s, S)$. Một bộ trọng số điều khiển 300 cặp có nhu cầu từ dưới 0,1 đến gần 143 đơn vị mỗi ngày. Tỷ lệ đáp ứng toàn hệ thống có trọng số theo nhu cầu, nên chưa cho biết chính sách có đồng đều giữa các nhóm hay không. Vì vậy 300 cặp được chia thành bốn nhóm theo nhu cầu trung bình $\bar{D}^{(i)}$.
 
-Ở hai nhóm có nhu cầu từ 2 đơn vị mỗi ngày trở lên, IPPO tốt hơn $(s, S)$ trên cả hai tiêu chí. Tỷ lệ đáp ứng cao hơn 3,8 điểm phần trăm ở nhóm trung bình và 9,4 điểm ở nhóm cao, trong khi chi phí thấp hơn lần lượt 11,2\% và 18,9\%. Các cặp nhu cầu lớn chiếm phần lớn tổng chi phí của hệ thống, nên đây cũng là nơi tạo ra phần lớn lợi thế chi phí của IPPO. Ngược lại, ở hai nhóm nhu cầu thấp, IPPO có mức phục vụ thấp hơn và chi phí nhỉnh hơn. Ở nhóm rất thấp, tỷ lệ đáp ứng của IPPO thấp hơn $(s, S)$ 10,1 điểm.
+Kết quả khác nhau rõ giữa hai nửa:
+\begin{itemize}
+    \item Ở hai nhóm có nhu cầu từ 2 đơn vị mỗi ngày trở lên, IPPO tốt hơn $(s, S)$ trên cả hai tiêu chí. Tỷ lệ đáp ứng cao hơn 3,8 điểm phần trăm ở nhóm trung bình và 9,4 điểm ở nhóm cao, trong khi chi phí thấp hơn lần lượt 11,2\% và 18,9\%. Các cặp nhu cầu lớn chiếm phần lớn tổng chi phí của hệ thống, nên đây cũng là nơi tạo ra phần lớn lợi thế chi phí của IPPO.
+    \item Ở hai nhóm nhu cầu thấp, IPPO có mức phục vụ thấp hơn và chi phí nhỉnh hơn. Ở nhóm rất thấp, tỷ lệ đáp ứng của IPPO thấp hơn $(s, S)$ 10,1 điểm.
+\end{itemize}
 
-Chi phí trong bảng là chi phí cục bộ trung bình của mỗi cặp, gồm cả hình phạt mức phục vụ trong công thức~(\ref{eq:localReward}), nên khác chi phí vận hành dùng trong phép so sánh trực tiếp. Bảng~\ref{tab:theoQuyMo} trình bày tỷ lệ đáp ứng và chi phí mỗi cặp của IPPO và $(s,S)$ trong bốn nhóm quy mô nhu cầu.
+Chi phí trong bảng là chi phí cục bộ trung bình của mỗi cặp, gồm cả hình phạt mức phục vụ trong công thức~(\ref{eq:localReward}), nên khác chi phí vận hành dùng trong phép so sánh trực tiếp. Kết quả của bốn nhóm quy mô nhu cầu được đặt cạnh nhau để thấy chỗ mạnh, chỗ yếu của mạng dùng chung.
 
 \begin{table}[H]
     \centering
@@ -601,9 +721,13 @@ Mỗi thí nghiệm loại trừ bỏ hoặc thay một thành phần của mô 
 \subsection{Thiết kế tín hiệu phần thưởng}
 \label{subsec:ablationReward}
 
-Phần thưởng phân rã cục bộ có chuẩn hóa theo cặp là cần thiết. Câu hỏi 3 được trả lời bằng hai thí nghiệm loại trừ, mỗi thí nghiệm giữ nguyên mạng, tốc độ học, ngân sách 1.000 tập và môi trường của lần chạy tham chiếu. Thí nghiệm thứ nhất dùng phần thưởng toàn cục. Mọi tác tử nhận cùng một tín hiệu là tổng phần thưởng của cả mạng lưới theo công thức~(\ref{eq:mucTieuDoi}), chia cho tổng mẫu số chuẩn hóa để giữ cùng thang đo. Thí nghiệm thứ hai bỏ chuẩn hóa theo cặp. Phần thưởng của mọi cặp được chia cho cùng một hằng số, nên các cặp có nhu cầu lớn chi phối tín hiệu học.
+Phần thưởng phân rã cục bộ có chuẩn hóa theo cặp là cần thiết. Câu hỏi 3 được trả lời bằng hai thí nghiệm loại trừ, mỗi thí nghiệm giữ nguyên mạng, tốc độ học, ngân sách 1.000 tập và môi trường của lần chạy tham chiếu. Hai thí nghiệm gồm:
+\begin{itemize}
+    \item Phần thưởng toàn cục. Mọi tác tử nhận cùng một tín hiệu là tổng phần thưởng của cả mạng lưới theo công thức~(\ref{eq:mucTieuDoi}), chia cho tổng mẫu số chuẩn hóa để giữ cùng thang đo.
+    \item Bỏ chuẩn hóa theo cặp. Phần thưởng của mọi cặp được chia cho cùng một hằng số, nên các cặp có nhu cầu lớn chi phối tín hiệu học.
+\end{itemize}
 
-Kết quả của hai thí nghiệm trên ba hạt giống được trình bày ở Bảng~\ref{tab:ablationReward}.
+Mỗi thí nghiệm được so với lần chạy tham chiếu cùng hạt giống, để loại phần chênh lệch do hạt giống gây ra.
 
 \begin{table}[H]
     \centering
@@ -629,7 +753,14 @@ Kết quả của hai thí nghiệm trên ba hạt giống được trình bày 
     \ghichu{Mỗi lần chạy 1.000 tập, đánh giá trên miền kiểm thử. Cột cuối là chênh lệch so với lần tham chiếu cùng hạt giống. Dấu $^{*}$: kiểm định theo cặp có ý nghĩa ($p < 0{,}05$).}
 \end{table}
 
-Cả hai biến thể đều kém hơn rõ rệt lần tham chiếu ở cả ba hạt giống. Phần thưởng toàn cục làm tổng chi phí tăng trung bình 419,6\%, và ở hạt giống 2 và 3, biến thể này không đạt tỷ lệ đáp ứng 85\% trên miền xác thực. Bỏ chuẩn hóa theo cặp làm tổng chi phí tăng trung bình 214,3\%. Các mức tăng này lớn hơn rất nhiều so với dao động chi phí giữa ba hạt giống của lần tham chiếu, chỉ ở mức 1,6\%. Entropy cuối huấn luyện của hai biến thể vẫn cao, lần lượt 0,74 và 0,48 ở hạt giống 1 so với 0,19 của tham chiếu, cho thấy chính sách của chúng còn gần ngẫu nhiên.
+Cả hai biến thể đều kém hơn rõ rệt lần tham chiếu ở cả ba hạt giống:
+\begin{itemize}
+    \item Phần thưởng toàn cục làm tổng chi phí tăng trung bình 419,6\%, và ở hạt giống 2 và 3, biến thể này không đạt tỷ lệ đáp ứng 85\% trên miền xác thực.
+    \item Bỏ chuẩn hóa theo cặp làm tổng chi phí tăng trung bình 214,3\%.
+    \item Các mức tăng này lớn hơn rất nhiều so với dao động chi phí giữa ba hạt giống của lần tham chiếu, chỉ ở mức 1,6\%.
+\end{itemize}
+
+Entropy cuối huấn luyện của hai biến thể vẫn cao, lần lượt 0,74 và 0,48 ở hạt giống 1 so với 0,19 của tham chiếu, cho thấy chính sách của chúng còn gần ngẫu nhiên.
 
 Phương sai giải thích được của Critic cho thấy nguyên nhân. Ở hạt giống 1, chỉ số này là 1,00 khi không chuẩn hóa và 0,96 với phần thưởng toàn cục, cao hơn mức 0,72 của tham chiếu, trong khi chính sách lại học kém hơn. Khi lợi tức của các cặp chênh nhau nhiều bậc, Critic chỉ cần khớp vài cặp nhu cầu lớn là đạt phương sai giải thích được cao, còn lợi thế của đa số cặp bán chậm chỉ còn là nhiễu. Kết quả khớp với lập luận khi thiết kế phép chuẩn hóa phần thưởng ở Chương~\ref{chap:chapter3}. Các lần chạy chỉ dài 1.000 tập, nên hai biến thể có thể chỉ học chậm hơn chứ chưa chắc kém hơn khi đã hội tụ.
 
@@ -643,7 +774,15 @@ Mức chênh 13,2\% lớn hơn nhiều dao động giữa các hạt giống, ph
 \subsection{Các thí nghiệm loại trừ khác}
 \label{subsec:ablationKhac}
 
-Trong các thí nghiệm loại trừ còn lại, chỉ việc bỏ tín hiệu cấp kho gây thay đổi lớn. Khi không có tín hiệu này, tổng chi phí tăng 141,5\% và trong 20\% số tập cuối, mô hình không đạt 85\% trên miền xác thực. Các thay đổi khác đều nhỏ. Bỏ đặc trưng lịch làm chi phí giảm 1,6\% và thêm đặc trưng sự kiện sắp tới làm chi phí giảm 0,8\%, cả hai nằm trong dao động giữa các hạt giống. Phạt mức phục vụ theo nhu cầu rẻ hơn 2,5\%, chỉ hơi vượt dao động này. Thí nghiệm khởi động với lịch sử nhu cầu được đánh giá trong môi trường khác, nên chỉ so sánh được qua chênh lệch với $(s,S)$ trong cùng môi trường, ở mức $-$1,1\%. Mỗi thí nghiệm này chỉ có hạt giống 1, nên chênh lệch nhỏ hơn mức dao động 1,6\% giữa các hạt giống chưa đủ để kết luận.
+Trong các thí nghiệm loại trừ còn lại, chỉ việc bỏ tín hiệu cấp kho gây thay đổi lớn:
+\begin{itemize}
+    \item Khi không có tín hiệu cấp kho, tổng chi phí tăng 141,5\% và trong 20\% số tập cuối, mô hình không đạt 85\% trên miền xác thực.
+    \item Bỏ đặc trưng lịch làm chi phí giảm 1,6\% và thêm đặc trưng sự kiện sắp tới làm chi phí giảm 0,8\%, cả hai nằm trong dao động giữa các hạt giống.
+    \item Phạt mức phục vụ theo nhu cầu rẻ hơn 2,5\%, chỉ hơi vượt dao động này.
+    \item Thí nghiệm khởi động với lịch sử nhu cầu được đánh giá trong môi trường khác, nên chỉ so sánh được qua chênh lệch với $(s,S)$ trong cùng môi trường, ở mức $-$1,1\%.
+\end{itemize}
+
+Mỗi thí nghiệm này chỉ có hạt giống 1, nên chênh lệch nhỏ hơn mức dao động 1,6\% giữa các hạt giống chưa đủ để kết luận.
 
 \begin{table}[H]
     \centering
@@ -672,7 +811,7 @@ Không có bằng chứng rằng đặc trưng lịch giúp ích, nhất quán v
 \section{Câu hỏi 4: kết hợp học tăng cường với dự báo nhu cầu}
 \label{sec:cau4}
 
-Khi được cấp dự báo nhu cầu và chọn hệ số an toàn trên nền dự báo theo thiết kế ở Chương~\ref{chap:chapter3}, PS-IPPO đạt chi phí ngang chính sách dự báo rồi tối ưu. Biến thể này rẻ hơn mọi chính sách cổ điển từ 6,2\% đến 24,1\% ở cả ba hạt giống. Biến thể được huấn luyện 10.000 tập với ba hạt giống và đánh giá theo đúng giao thức của mô hình chính. Kết quả được tổng hợp ở Bảng~\ref{tab:cau4}.
+Khi được cấp dự báo nhu cầu và chọn hệ số an toàn trên nền dự báo theo thiết kế ở Chương~\ref{chap:chapter3}, PS-IPPO đạt chi phí ngang chính sách dự báo rồi tối ưu. Biến thể này rẻ hơn mọi chính sách cổ điển từ 6,2\% đến 24,1\% ở cả ba hạt giống. Biến thể được huấn luyện 10.000 tập với ba hạt giống và đánh giá theo đúng giao thức của mô hình chính. Kết quả của từng hạt giống được đặt cạnh mô hình chính và mọi chính sách đối chứng.
 
 \begin{table}[H]
     \centering
@@ -718,7 +857,12 @@ Chi phí thấp chưa đủ để tin một chính sách. Mục này kiểm tra 
 \subsection{Kiểm tra trạng thái và phần thưởng bằng thực nghiệm}
 \label{subsec:kiemTraStateReward}
 
-Thiết kế trạng thái ở Bảng~\ref{tab:doiChieuState} và phần thưởng ở công thức~(\ref{eq:localReward}) của Chương~\ref{chap:chapter3} được kiểm tra lại bằng thực nghiệm. Phần này trả lời ba câu hỏi: chính sách có hành vi hợp lý về nghiệp vụ không, tác tử có khai thác kẽ hở của phần thưởng không, và trạng thái có chứa biến dư thừa không.
+Thiết kế trạng thái ở Bảng~\ref{tab:doiChieuState} và phần thưởng ở công thức~(\ref{eq:localReward}) của Chương~\ref{chap:chapter3} được kiểm tra lại bằng thực nghiệm. Phần này trả lời ba câu hỏi:
+\begin{itemize}
+    \item Chính sách có hành vi hợp lý về nghiệp vụ không.
+    \item Tác tử có khai thác kẽ hở của phần thưởng không.
+    \item Trạng thái có chứa biến dư thừa không.
+\end{itemize}
 
 Phép kiểm tra dùng 10 lần đánh giá trên miền kiểm thử, so với $(s,S)$ cùng mức phục vụ. Hình~\ref{fig:hanhVi} gồm (a) xác suất đặt hàng theo số ngày tồn kho, (b) phân bố tỷ lệ đáp ứng của 300 cặp và (c) mức tăng chi phí khi xáo trộn từng nhóm đặc trưng.
 
@@ -731,7 +875,15 @@ Phép kiểm tra dùng 10 lần đánh giá trên miền kiểm thử, so với 
 
 \subsubsection{Tính hợp lý về nghiệp vụ}
 
-Hành vi đặt hàng của IPPO hợp lý về nghiệp vụ. Hình~\ref{fig:hanhVi}a vẽ xác suất đặt hàng theo số ngày tồn kho, tính bằng vị thế tồn kho chia cho nhu cầu trung bình. Khi còn 1--2 ngày hàng, IPPO đặt hàng trong gần 100\% trường hợp. Tồn kho càng nhiều thì xác suất đặt càng giảm, gần như đơn điệu, từ 57\% khi còn 2--3 ngày xuống 8\% khi còn trên 8 ngày. Tương quan hạng Spearman giữa số ngày tồn kho và mức đặt là $-$0,42, mạnh hơn mức $-$0,17 của $(s,S)$ cùng mức phục vụ. IPPO cũng đặt hàng thận trọng, chỉ dùng mức đặt lớn nhất ở 1,3\% số quyết định. Nhờ vậy chi phí tràn kho chỉ chiếm 2,0\% tổng chi phí, so với 17,1\% của $(s,S)$ cùng mức phục vụ.
+Hành vi đặt hàng của IPPO hợp lý về nghiệp vụ. Hình~\ref{fig:hanhVi}a vẽ xác suất đặt hàng theo số ngày tồn kho, tính bằng vị thế tồn kho chia cho nhu cầu trung bình. Hành vi này thể hiện qua các điểm sau:
+\begin{itemize}
+    \item Khi còn 1--2 ngày hàng, IPPO đặt hàng trong gần 100\% trường hợp.
+    \item Tồn kho càng nhiều thì xác suất đặt càng giảm, gần như đơn điệu, từ 57\% khi còn 2--3 ngày xuống 8\% khi còn trên 8 ngày.
+    \item Tương quan hạng Spearman giữa số ngày tồn kho và mức đặt là $-$0,42, mạnh hơn mức $-$0,17 của $(s,S)$ cùng mức phục vụ.
+    \item IPPO đặt hàng thận trọng, chỉ dùng mức đặt lớn nhất ở 1,3\% số quyết định.
+\end{itemize}
+
+Nhờ vậy chi phí tràn kho chỉ chiếm 2,0\% tổng chi phí, so với 17,1\% của $(s,S)$ cùng mức phục vụ.
 
 Có một điểm bất thường. Khi tồn kho dưới 1 ngày, IPPO chỉ đặt hàng trong 73\% trường hợp, thấp hơn nhóm 1--2 ngày. Các trường hợp này có thể tập trung ở cặp bán rất chậm, nhưng nhóm chưa kiểm tra.
 
@@ -774,9 +926,18 @@ Tầm quan trọng hoán vị đo mức chính sách đã học dựa vào một
 \subsection{Đặc trưng lịch, giá và mùa lễ}
 \label{subsec:lichGia}
 
-Tác tử dùng rất ít tín hiệu lịch và giá, và mùa lễ là giai đoạn nó yếu nhất. Trong 44 chiều quan sát có 20 chiều lịch, 7 chiều thứ trong tuần, 1 tín hiệu giá và 16 chiều lịch sử, trạng thái. Tác tử chỉ thấy lịch của ngày hiện tại, không nhận dự báo nhu cầu tường minh. Ba phép đo khác nhau cho kết quả nhất quán. Khi xáo trộn ở bước suy luận, nhóm lịch làm chi phí tăng 5,3\% còn tín hiệu giá làm chi phí tăng dưới 1\%, theo số liệu ở Bảng~\ref{tab:tamQuanTrong}. Khi huấn luyện lại sau khi bỏ đặc trưng lịch, hoặc thêm đặc trưng sự kiện sắp tới, chi phí chỉ đổi trong phạm vi dao động giữa các hạt giống, theo số liệu ở Bảng~\ref{tab:ablationKhac}. Hai thí nghiệm này chỉ có một hạt giống và 1.000 tập. Ở mùa lễ, tỷ lệ đáp ứng của IPPO thấp nhất trong các giai đoạn. So với $(s,S)$, chi phí cao hơn 8,2\% nhưng khoảng tin cậy còn chứa 0 vì mùa lễ chỉ có 9 tuần. So với Newsvendor theo nhóm, chi phí cao hơn 10,1\% và khác biệt có ý nghĩa, theo số liệu ở Bảng~\ref{tab:ciGiaiDoan}.
+Tác tử dùng rất ít tín hiệu lịch và giá, và mùa lễ là giai đoạn nó yếu nhất. Trong 44 chiều quan sát có 20 chiều lịch, 7 chiều thứ trong tuần, 1 tín hiệu giá và 16 chiều lịch sử, trạng thái. Tác tử chỉ thấy lịch của ngày hiện tại, không nhận dự báo nhu cầu tường minh. Ba phép đo khác nhau cho kết quả nhất quán:
+\begin{itemize}
+    \item Khi xáo trộn ở bước suy luận, nhóm lịch làm chi phí tăng 5,3\% còn tín hiệu giá làm chi phí tăng dưới 1\%, theo số liệu ở Bảng~\ref{tab:tamQuanTrong}.
+    \item Khi huấn luyện lại sau khi bỏ đặc trưng lịch, hoặc thêm đặc trưng sự kiện sắp tới, chi phí chỉ đổi trong phạm vi dao động giữa các hạt giống, theo số liệu ở Bảng~\ref{tab:ablationKhac}. Hai thí nghiệm này chỉ có một hạt giống và 1.000 tập.
+    \item Ở mùa lễ, tỷ lệ đáp ứng của IPPO thấp nhất trong các giai đoạn. So với $(s,S)$, chi phí cao hơn 8,2\% nhưng khoảng tin cậy còn chứa 0 vì mùa lễ chỉ có 9 tuần. So với Newsvendor theo nhóm, chi phí cao hơn 10,1\% và khác biệt có ý nghĩa, theo số liệu ở Bảng~\ref{tab:ciGiaiDoan}.
+\end{itemize}
 
-Có hai giả thuyết cho kết quả này, cả hai đều chưa được kiểm chứng riêng. Thứ nhất, lịch sử nhu cầu 7 ngày đã chứa phần lớn tín hiệu mùa vụ ngắn hạn, nên đặc trưng lịch thêm được ít thông tin. Thứ hai, miền huấn luyện chỉ có khoảng ba mùa lễ, quá ít để mạng học được quy luật tăng cầu cuối năm từ các cờ nhị phân.
+Có hai giả thuyết cho kết quả này, cả hai đều chưa được kiểm chứng riêng:
+\begin{itemize}
+    \item Lịch sử nhu cầu 7 ngày đã chứa phần lớn tín hiệu mùa vụ ngắn hạn, nên đặc trưng lịch thêm được ít thông tin.
+    \item Miền huấn luyện chỉ có khoảng ba mùa lễ, quá ít để mạng học được quy luật tăng cầu cuối năm từ các cờ nhị phân.
+\end{itemize}
 
 \section{Câu hỏi 5: độ bền khi điều kiện vận hành thay đổi}
 \label{sec:cau5}
@@ -785,9 +946,14 @@ Có hai giả thuyết cho kết quả này, cả hai đều chưa được ki�
 \label{subsec:doBenMoiTruong}
 
 % [SO-MOI] Them cot (s,S) biet suc chua (KET_QUA.txt muc 5a) sau khi chay eval_all; Newsvendor du bao thuoc loai thong tin khac, de o Cau 4
-Chính sách đã học bền với thay đổi sức chứa và thời gian giao hàng, và rẻ hơn mọi chính sách đối chứng khi nhu cầu tăng. Thí nghiệm chỉ thay đổi môi trường đánh giá, còn mọi chính sách được giữ nguyên và không huấn luyện lại. Khi sức chứa và thời gian giao hàng thay đổi, IPPO vẫn rẻ hơn $(s,S)$ và EOQ ở mọi kịch bản, và so với các chính sách theo nhóm thì ngang hoặc đắt hơn tối đa 4,6\%. Khi nhu cầu tăng 20\%, IPPO rẻ hơn cả sáu chính sách đối chứng, với mức chênh từ 3,3\% đến 21,4\%. Kết quả bất lợi duy nhất xuất hiện khi nhu cầu giảm 20\%. Khi đó IPPO đắt hơn năm trong sáu chính sách đối chứng, từ 4,2\% đến 8,7\%, vì vẫn giữ tỷ lệ đáp ứng 93,3\%, cao hơn mức cần thiết.
+Chính sách đã học bền với thay đổi sức chứa và thời gian giao hàng, và rẻ hơn mọi chính sách đối chứng khi nhu cầu tăng. Thí nghiệm chỉ thay đổi môi trường đánh giá, còn mọi chính sách được giữ nguyên và không huấn luyện lại:
+\begin{itemize}
+    \item Khi sức chứa và thời gian giao hàng thay đổi, IPPO vẫn rẻ hơn $(s,S)$ và EOQ ở mọi kịch bản, và so với các chính sách theo nhóm thì ngang hoặc đắt hơn tối đa 4,6\%.
+    \item Khi nhu cầu tăng 20\%, IPPO rẻ hơn cả sáu chính sách đối chứng, với mức chênh từ 3,3\% đến 21,4\%.
+    \item Kết quả bất lợi duy nhất xuất hiện khi nhu cầu giảm 20\%. Khi đó IPPO đắt hơn năm trong sáu chính sách đối chứng, từ 4,2\% đến 8,7\%, vì vẫn giữ tỷ lệ đáp ứng 93,3\%, cao hơn mức cần thiết.
+\end{itemize}
 
-Chi tiết từng kịch bản được trình bày ở Bảng~\ref{tab:doBen}.
+Mỗi kịch bản chỉ đổi một yếu tố của môi trường gốc, nên tác động của từng yếu tố có thể đọc riêng.
 
 \begin{table}[H]
     \centering
@@ -827,7 +993,7 @@ Các kết quả trên dựa trên một bộ đơn giá giả định và một
 \subsection{Độ nhạy của kết luận theo đơn giá chi phí}
 \label{subsec:doNhay}
 
-Kết luận ở cùng mức phục vụ giữ nguyên dấu khi đơn giá thay đổi, còn kết luận so trực tiếp phụ thuộc tỷ số $c_{th}/c_{lk}$. Để kiểm tra, các đại lượng vật lý của mỗi chính sách trên miền kiểm thử (đơn vị--ngày lưu kho, đơn vị thiếu hàng, số lần đặt, đơn vị tràn kho) được ghi lại. Tổng chi phí sau đó được tính lại trên 36 bộ đơn giá, với $c_{lk} \in \{0{,}5;\ 1;\ 2\}$, $c_{th} \in \{5;\ 10;\ 20;\ 40\}$ và $c_{dh} \in \{2;\ 5;\ 10\}$. Các chính sách không được huấn luyện hay tinh chỉnh lại, nên kết quả cho biết các chính sách đã có xếp hạng thế nào nếu chi phí được định giá khác đi. Bảng~\ref{tab:doNhay} trình bày chênh lệch chi phí của IPPO khi $c_{dh} = 5$ với các tổ hợp $c_{lk}$ và $c_{th}$.
+Kết luận ở cùng mức phục vụ giữ nguyên dấu khi đơn giá thay đổi, còn kết luận so trực tiếp phụ thuộc tỷ số $c_{th}/c_{lk}$. Để kiểm tra, các đại lượng vật lý của mỗi chính sách trên miền kiểm thử (đơn vị--ngày lưu kho, đơn vị thiếu hàng, số lần đặt, đơn vị tràn kho) được ghi lại. Tổng chi phí sau đó được tính lại trên 36 bộ đơn giá, với $c_{lk} \in \{0{,}5;\ 1;\ 2\}$, $c_{th} \in \{5;\ 10;\ 20;\ 40\}$ và $c_{dh} \in \{2;\ 5;\ 10\}$. Các chính sách không được huấn luyện hay tinh chỉnh lại, nên kết quả cho biết các chính sách đã có xếp hạng thế nào nếu chi phí được định giá khác đi. Với chi phí đặt hàng giữ ở $c_{dh} = 5$, chênh lệch chi phí của IPPO thay đổi theo hai đơn giá còn lại như sau.
 
 % [SO-MOI] So "cung muc phuc vu" trong bang va doan duoi dang theo tham so luoi tho; thay bang KET_QUA.txt muc 6c sau khi chay eval_all
 \begin{table}[H]
@@ -848,7 +1014,20 @@ Kết luận ở cùng mức phục vụ giữ nguyên dấu khi đơn giá thay
     \ghichu{Mỗi ô ghi chênh lệch so với $(s,S)$ trực tiếp / so với $(s,S)$ cùng mức phục vụ. Âm là IPPO rẻ hơn.}
 \end{table}
 
-Trên cả 36 bộ đơn giá, kết luận ở cùng mức phục vụ không đổi. IPPO rẻ hơn $(s,S)$ ở cả 36 bộ, với mức chênh từ 8,1\% đến 35,4\%, và rẻ hơn Newsvendor ở cả 36 bộ, với mức chênh từ 2,1\% đến 25,6\%. Ở phép so trực tiếp, kết quả phụ thuộc đơn giá nhiều hơn. IPPO rẻ hơn $(s,S)$ ở 26 bộ và rẻ hơn Newsvendor ở 24 bộ, còn EOQ là chính sách duy nhất mà IPPO rẻ hơn ở cả 36 bộ. Với các chính sách theo nhóm, IPPO chỉ rẻ hơn ở 18 bộ so với $(s,S)$ theo nhóm, 21 bộ so với Newsvendor theo nhóm và 24 bộ so với EOQ theo nhóm.
+Trên cả 36 bộ đơn giá:
+\begin{itemize}
+    \item Kết luận ở cùng mức phục vụ không đổi:
+    \begin{itemize}
+        \item IPPO rẻ hơn $(s,S)$ ở cả 36 bộ, với mức chênh từ 8,1\% đến 35,4\%.
+        \item IPPO rẻ hơn Newsvendor ở cả 36 bộ, với mức chênh từ 2,1\% đến 25,6\%.
+    \end{itemize}
+    \item Ở phép so trực tiếp, kết quả phụ thuộc đơn giá nhiều hơn:
+    \begin{itemize}
+        \item IPPO rẻ hơn $(s,S)$ ở 26 bộ và rẻ hơn Newsvendor ở 24 bộ.
+        \item EOQ là chính sách duy nhất mà IPPO rẻ hơn ở cả 36 bộ.
+        \item Với các chính sách theo nhóm, IPPO chỉ rẻ hơn ở 18 bộ so với $(s,S)$ theo nhóm, 21 bộ so với Newsvendor theo nhóm và 24 bộ so với EOQ theo nhóm.
+    \end{itemize}
+\end{itemize}
 
 Khi thiếu hàng đắt so với lưu kho, IPPO rẻ hơn vì giữ mức phục vụ cao hơn. Khi lưu kho đắt và thiếu hàng rẻ, $(s,S)$ chấp nhận thiếu hàng nhiều hơn nên lại rẻ hơn. So với các chính sách theo nhóm, IPPO không có ưu thế chi phí ổn định ở phép so trực tiếp.
 
@@ -856,15 +1035,32 @@ Khi thiếu hàng đắt so với lưu kho, IPPO rẻ hơn vì giữ mức phụ
 \label{sec:thaoLuan}
 
 % [SO-MOI] Khoang 7,3--22,3% la so cung muc phuc vu cua hat giong 1; cap nhat theo KET_QUA.txt muc 1 sau khi chay eval_all
-Đối với Câu hỏi 1, PS-IPPO có tổng chi phí thấp hơn các chính sách cổ điển khi so ở cùng mức phục vụ. Khi phải đạt mức phục vụ ngang IPPO, các chính sách cổ điển đắt hơn IPPO từ 7,3\% đến 22,3\%, kể cả phiên bản theo nhóm và phiên bản biết sức chứa. Khi mỗi phương pháp dùng cấu hình tốt nhất của mình, IPPO rẻ hơn $(s, S)$ và EOQ ở cả ba hạt giống, ngang các chính sách theo nhóm, đồng thời giữ mức phục vụ cao hơn 4--5 điểm phần trăm. Ưu thế này không đồng đều theo thời gian. IPPO rẻ hơn $(s,S)$ rõ nhất ở ngày có sự kiện, cuối tuần và khi có sốc tăng cầu, còn khi nhu cầu ổn định hoặc vào mùa lễ, chính sách tinh chỉnh theo nhóm ngang hoặc rẻ hơn IPPO.
+Đối với Câu hỏi 1, PS-IPPO có tổng chi phí thấp hơn các chính sách cổ điển khi so ở cùng mức phục vụ:
+\begin{itemize}
+    \item Khi phải đạt mức phục vụ ngang IPPO, các chính sách cổ điển đắt hơn IPPO từ 7,3\% đến 22,3\%, kể cả phiên bản theo nhóm và phiên bản biết sức chứa.
+    \item Khi mỗi phương pháp dùng cấu hình tốt nhất của mình, IPPO rẻ hơn $(s, S)$ và EOQ ở cả ba hạt giống, ngang EOQ theo nhóm và $(s, S)$ theo nhóm, đắt hơn Newsvendor theo nhóm 1,6\%. Đổi lại, IPPO giữ mức phục vụ cao hơn 4--5 điểm phần trăm.
+    \item Ưu thế này không đồng đều theo thời gian. IPPO rẻ hơn $(s,S)$ rõ nhất ở ngày có sự kiện, cuối tuần và khi có sốc tăng cầu, còn khi nhu cầu ổn định hoặc vào mùa lễ, chính sách tinh chỉnh theo nhóm ngang hoặc rẻ hơn IPPO.
+\end{itemize}
 
-Đối với Câu hỏi 2, mạng dùng chung hoạt động tốt ở nhóm nhu cầu trung bình, nhóm nhu cầu cao và trên mặt hàng chưa gặp, nhưng chưa tốt ở nhóm bán chậm. Ở hai nhóm nhu cầu lớn, IPPO tốt hơn $(s, S)$ cả về chi phí lẫn mức phục vụ. Chính sách học được cũng áp dụng được cho mặt hàng chưa gặp khi huấn luyện mà không suy giảm. Ở nhóm bán chậm, IPPO hạ mức phục vụ vì đó là lựa chọn rẻ hơn theo hàm mục tiêu cấp hệ thống.
+Đối với Câu hỏi 2, mạng dùng chung hoạt động tốt ở nhóm nhu cầu trung bình, nhóm nhu cầu cao và trên mặt hàng chưa gặp, nhưng chưa tốt ở nhóm bán chậm:
+\begin{itemize}
+    \item Ở hai nhóm nhu cầu lớn, IPPO tốt hơn $(s, S)$ cả về chi phí lẫn mức phục vụ.
+    \item Chính sách học được cũng áp dụng được cho mặt hàng chưa gặp khi huấn luyện mà không suy giảm.
+    \item Ở nhóm bán chậm, IPPO hạ mức phục vụ vì đó là lựa chọn rẻ hơn theo hàm mục tiêu cấp hệ thống.
+\end{itemize}
 
 Đối với Câu hỏi 3, phần thưởng phân rã cục bộ có chuẩn hóa theo cặp là thành phần cần thiết để mô hình học ổn định. Thay bằng phần thưởng toàn cục hoặc bỏ chuẩn hóa theo cặp đều làm chi phí tăng hơn gấp ba ở cả ba hạt giống. Phương sai giải thích được của Critic trong hai biến thể vẫn cao, cho thấy nguyên nhân là vài cặp nhu cầu lớn chi phối tín hiệu học, khiến đa số cặp bán chậm không học được.
 
 Đối với Câu hỏi 4, kết hợp dự báo nhu cầu giúp giảm chi phí 7,7\% so với mô hình chính. Khi tác tử chọn hệ số an toàn trên nền dự báo, PS-IPPO đạt chi phí ngang Newsvendor dự báo và rẻ hơn mọi chính sách cổ điển từ 6,2\% đến 24,1\% ở cả ba hạt giống. Phần lớn lợi thế chi phí này đến từ dự báo. Học tăng cường đóng góp ở việc tự chọn mức an toàn theo từng cặp mà không cần quét lưới tham số, nhưng chưa tạo được khoảng cách chi phí đáng kể so với một cấu hình dự báo đã tinh chỉnh.
 
-Đối với Câu hỏi 5, mô hình đã huấn luyện giữ được hiệu quả khi phần lớn điều kiện vận hành thay đổi. Với thay đổi sức chứa và thời gian giao hàng, IPPO vẫn rẻ hơn $(s,S)$ và EOQ. Khi nhu cầu tăng 20\%, IPPO rẻ hơn mọi chính sách đối chứng. Khi nhu cầu giảm, IPPO đắt hơn vì tiếp tục giữ mức phục vụ cao. Đây là đánh giá không huấn luyện lại, nên đề tài chưa kết luận được mô hình sẽ học gì nếu được huấn luyện trong từng điều kiện.
+Đối với Câu hỏi 5, mô hình đã huấn luyện giữ được hiệu quả khi phần lớn điều kiện vận hành thay đổi:
+\begin{itemize}
+    \item Với thay đổi sức chứa và thời gian giao hàng, IPPO vẫn rẻ hơn $(s,S)$ và EOQ.
+    \item Khi nhu cầu tăng 20\%, IPPO rẻ hơn mọi chính sách đối chứng.
+    \item Khi nhu cầu giảm, IPPO đắt hơn vì tiếp tục giữ mức phục vụ cao.
+\end{itemize}
+
+Đây là đánh giá không huấn luyện lại, nên đề tài chưa kết luận được mô hình sẽ học gì nếu được huấn luyện trong từng điều kiện.
 % [SO-MOI] Them mot cau ket luan ve nguon cung chung (KET_QUA.txt muc 5b) sau khi chay eval_all
 
 Ngoài các câu hỏi trên, kết quả còn cho thấy vai trò của ràng buộc sức chứa. Khi sức chứa đủ rộng, bài toán suy biến thành 300 bài toán độc lập, như phân tích khi thiết lập kịch bản mô phỏng. Chính sức chứa dùng chung tạo nên bản chất đa tác tử của bài toán: bỏ tín hiệu cấp kho khi huấn luyện làm chi phí tăng hơn gấp đôi. Đây cũng là yếu tố mà hai công trình gần nhất chưa mô hình hóa: Zhu và Wu \cite{zhu2026spatiotemporal} giả định nguồn cung không giới hạn, còn Nam và cộng sự \cite{jeong2026alca} chỉ xét một kho.

@@ -15,9 +15,10 @@ import streamlit as st
 
 import core
 
-st.set_page_config(page_title="Mô phỏng chính sách đặt hàng", layout="wide")
+st.set_page_config(page_title="Mô phỏng chính sách đặt hàng", page_icon=str(core.APP / "logo_icon.png"),
+                   layout="wide")
 st.markdown(core.CSS, unsafe_allow_html=True)
-st.logo(str(core.APP / "logo.svg"), size="large")
+st.logo(str(core.APP / "logo.png"), size="large", icon_image=str(core.APP / "logo_icon.png"))
 
 if not (core.DEMO / "meta.json").exists():
     st.error("Chưa có app/demo_data/. Chạy `python run.py demo_data` một lần rồi mở lại.")

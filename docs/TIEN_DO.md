@@ -30,6 +30,8 @@ Không train thêm. U1 (`forecast_obs`) và U2 (`safety_factor`) bỏ hẳn: U5 
 | | (cùng lệnh) | Đánh giá lại ablation/hold-out/phi_dv với baseline vừa tinh chỉnh (số IPPO không đổi) | Kiểm tra Bảng 4.14–4.16 có lệch không |
 | 2 | Mở `results/KET_QUA.txt` | Số cuối | Tìm `[SO-MOI]` trong `Report KLTN/content/*.tex`, mỗi comment ghi mục cần lấy |
 | 3 | `Report KLTN/compile.bat` | PDF | Kiểm tra lại |
+| 4 | `cd rl_inventory; py -3.12 run.py demo_data` (máy có `checkpoints/best_model_main_s42.pth` và `results/`), rồi commit `app/demo_data/` | Mô hình hạt giống 1 mới + `app/demo_data/ketqua/*.json` (summary, multiseed main và dự báo, rq3, theo quy mô, sốc cầu) | Demo hiện số 3 hạt giống và thẻ Câu 4 trên mọi máy, không cần `results/` |
+| 5 | Sửa số "7–22%" trong `Report KLTN/build_poster.py` theo KET_QUA.txt mục 1, chạy `py -3.13 build_poster.py` | Poster | Đang là số hạt giống 1, giống chỗ `[SO-MOI]` ở C4 |
 
 ## 0a. Phương án rút gọn 01/11 (chờ giảng viên duyệt)
 
@@ -56,12 +58,12 @@ Mọi tính năng mới nằm sau cờ, tắt mặc định; mô hình chính gi
 | A6 đồng bộ số | 🟡 `export_tex_numbers.py` sinh `so_lieu.tex` và quét số cũ | Cần `KET_QUA.txt` sau khi train xong |
 | B1 lưới mịn | ✅ `compare_same_service.py --grid fine` | Thay 25,7%, 17,3% ở C4, C5, abstract |
 | B2 (s,S) biết sức chứa | ✅ `CapacityAwareSs`, tune, evaluate, common, test | Bảng, phương pháp đối chứng C4 |
-| B3 fill theo nhóm | ✅ `service_by_group.py` | Bảng C4, C5 |
+| B3 fill theo nhóm | ✅ (04/11 đã xóa `service_by_group.py`) | — |
 | B4 dự báo rồi tối ưu | ✅ `forecast_demand.py`, `ForecastNewsvendor` | Bảng C4 |
-| B5 seed 3, 4, thống kê | ✅ `run_experiments.py`, `multi_seed_stats.py` | Đã đổi: chỉ 3 seed (bỏ seed 3, 4); mục thống kê C4; p-value xuống phụ lục |
+| B5 seed 3, 4, thống kê | ✅ `run_experiments.py` (04/11 đã xóa `multi_seed_stats.py`) | Đã đổi: chỉ 3 seed (bỏ seed 3, 4); mục thống kê C4; p-value xuống phụ lục |
 | Gói C `phi_dv` | ✅ 5 config, `cost_service_frontier.py` | `train phi_thu` (chỉ chạy thử 1.000 tập); bỏ bước chọn 2 giá trị và train 10.000 tập (rút gọn) |
 | Gói D tái lập | ✅ README, `.gitignore` (gỡ `graphify-out/` khỏi git), đánh dấu file lỗi thời | Release `v1.0-final` |
-| U1, U2, E1 | ✅ cờ, config, test, `policy_structure.py` | Train U1, U2 (E1 chỉ phân tích), viết C4. E3 đã bỏ |
+| U1, U2, E1 | Đã bỏ (04/11): U5 trả lời Câu 4; xóa config U1, U2 và `policy_structure.py` | — |
 | ~~U4, U3, C', E2~~ | Đã bỏ khỏi đợt thực nghiệm (01/11). Code từng xong; không train, không báo cáo | — |
 | C2, tài liệu tham khảo | ✅ thêm 8 nguồn, đã đối chiếu tác giả, trang, DOI; bảng so sánh có hàng chính sách đối chứng; sửa câu CD-PPO theo bài gốc | Maggiar 2025 là poster workshop NeurIPS, không viết là hội nghị chính |
 | C5 hướng phát triển | ✅ bảng 9 hướng | Thêm mục X chưa làm kèm lý do; viết lại hạn chế theo kết quả mới |
@@ -84,7 +86,7 @@ Mọi tính năng mới nằm sau cờ, tắt mặc định; mô hình chính gi
 | App Streamlit 4 trang + MCP prototype | ✅ |
 | **Đợt train cuối (3 main + 16 ablation/hold-out)** | ✅ 19/19 (20/10); file số liệu gốc không còn trên máy, chỉ còn mô hình seed 42 |
 | Báo cáo LaTeX (102 trang) | 🟡 lý thuyết, phương pháp và kết luận đã cập nhật theo số seed 42; số cuối chờ train xong |
-| Poster | ⬜ tạm gác; `Report KLTN/Poster.pptx` hiện là poster của đề tài khác (phát hiện xâm nhập mạng) |
+| Poster | 🟡 04/11: `Report KLTN/Poster_KLTN.pptx` dựng trên khung Khoa CNTT (`Poster.pptx` là mẫu của đề tài khác), sinh lại bằng `build_poster.py`; số cùng mức phục vụ 7,3–22,3% chờ `eval_all` |
 
 ---
 
@@ -113,7 +115,7 @@ Mọi tính năng mới nằm sau cờ, tắt mặc định; mô hình chính gi
 - [x] Đánh giá trọn 491 ngày test × 30 seed lead time, kiểm định theo cặp (paired t, Wilcoxon, d_z)
 - [x] iso-service, regime (bootstrap khối 7 ngày), policy behavior, scale groups, sensitivity, robustness (zero-shot)
 - [x] Tổng hợp đa hạt giống (`multiseed_main.json`), tổng hợp RQ3 theo seed (`rq3_multiseed.json`)
-- [x] `generate_summary.py` → `TONG_HOP_SO_LIEU.txt`
+- [x] `generate_summary.py` → `TONG_HOP_SO_LIEU.txt` (04/11 đã xóa script)
 
 ### Hạ tầng chạy
 - [x] `scripts/run_experiments.py` (train tự resume, eval toàn pipeline, status, chế độ nhiều phiên song song)
@@ -184,7 +186,6 @@ Rủi ro đã biết: Newsvendor tune theo nhóm có thể rẻ hơn IPPO → k�
 - [ ] Xóa mọi câu "sơ bộ", "đang chờ train" (C4.tex dòng 328, 375, 388, 515, 529, 582–602, 1007; C5.tex 101, 183)
 - [ ] Quyết định TODO `C3.tex:631`: có thêm cấu hình chi phí phụ (vd c_th = 3) hay không
 - [ ] Đối chiếu mọi % trong Abstract/Poster/slide với bảng/hình
-- [ ] Chạy lại `generate_summary.py` → `TONG_HOP_SO_LIEU.txt` (bản hiện tại là số cũ)
 - [ ] Cập nhật số liệu Poster
 
 ### Kiểm tra
@@ -274,5 +275,5 @@ Xem bảng hướng phát triển ở C5 (9 hướng cần dữ liệu, hệ th�
 | D2, D3 | Demo chỉ suy luận, dùng `demo_data` | ✅ |
 | D4 | Bộ lọc kho/ngành + bảng KPI tổng hợp (trang Kết quả, trang Đơn đặt hàng) | ✅ |
 | D5 | Luồng phiếu: nháp → duyệt/từ chối, gom phiếu | ✅ |
-| Poster | Tạm gác. Khi làm: poster đúng đề tài (file hiện tại là đề tài khác), dùng số sau khi train xong | ⬜ |
+| Poster | Bản 04/11 `Report KLTN/Poster_KLTN.pptx`; cập nhật số cùng mức phục vụ sau `eval_all` | 🟡 |
 | K5 | Chuẩn bị số thời gian train/ablation để trả lời (có trong van_dap) | 🟡 |

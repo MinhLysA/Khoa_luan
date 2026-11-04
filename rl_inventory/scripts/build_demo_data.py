@@ -112,6 +112,17 @@ def main():
             "policies": list(pols)}
     (OUT / "meta.json").write_text(json.dumps(meta, indent=2, ensure_ascii=False),
                                    encoding="utf-8")
+    # Kết quả đánh giá mà app đọc: chép theo vào gói (results/ không có trong git)
+    res = ROOT / cfg["paths"]["results_dir"]
+    kq = OUT / "ketqua"
+    kq.mkdir(exist_ok=True)
+    for name in [f"summary_{a.tag}.json", f"same_service_{a.tag}.json", "multiseed_main.json",
+                 "multiseed_forecast_safety.json", "rq3_multiseed.json", "scale_group_v2_main.json",
+                 "regime_analysis_main.json"]:
+        if (res / name).exists():
+            shutil.copy(res / name, kq / name)
+        else:
+            print(f"  (thieu results/{name}, the tuong ung trong app se an)")
     size = sum(p.stat().st_size for p in OUT.iterdir()) / 1e6
     print(f"Da luu {OUT} ({size:.1f} MB)")
 

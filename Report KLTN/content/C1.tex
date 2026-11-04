@@ -11,21 +11,37 @@ Trong bán lẻ hiện đại, hàng hóa được lưu trữ tại nhiều kho 
 
 Đề tài sử dụng bộ dữ liệu bán lẻ M5 của Walmart. Bộ dữ liệu ghi nhận doanh số theo ngày của 3.049 mặt hàng tại 10 cửa hàng ở ba bang California, Texas và Wisconsin, trong 1.941 ngày từ 29/01/2011 đến 22/05/2016. Kết hợp cửa hàng và mặt hàng tạo thành 30.490 chuỗi nhu cầu theo ngày.
 
-Dữ liệu này có hai đặc điểm gây khó cho việc đặt hàng lại. Thứ nhất, nhu cầu của từng mặt hàng tại từng cửa hàng rất nhỏ, trung bình 1,13 đơn vị mỗi ngày và trung vị chỉ 0,45 đơn vị. Thứ hai, nhu cầu không đều. Trung bình 68\% số ngày không có giao dịch, và khoảng 95\% số chuỗi thuộc nhóm nhu cầu gián đoạn. Với dữ liệu như vậy, các công thức tồn kho dựa trên giả định nhu cầu liên tục và phân phối chuẩn không còn phù hợp. Doanh nghiệp cần một cách ra quyết định thay đổi theo tình hình từng ngày, thay vì dùng một bộ tham số cố định.
+Dữ liệu này có hai đặc điểm gây khó cho việc đặt hàng lại:
+\begin{itemize}
+    \item Nhu cầu của từng mặt hàng tại từng cửa hàng rất nhỏ, trung bình 1,13 đơn vị mỗi ngày và trung vị chỉ 0,45 đơn vị.
+    \item Nhu cầu không đều. Trung bình 68\% số ngày không có giao dịch, và khoảng 95\% số chuỗi thuộc nhóm nhu cầu gián đoạn.
+\end{itemize}
+
+Với dữ liệu như vậy, các công thức tồn kho dựa trên giả định nhu cầu liên tục và phân phối chuẩn không còn phù hợp. Doanh nghiệp cần một cách ra quyết định thay đổi theo tình hình từng ngày, thay vì dùng một bộ tham số cố định.
 
 \subsection{Thách thức trong việc tối ưu hóa chính sách đặt hàng lại}
 \label{subsec:thachthuc}
 
-Khó khăn đầu tiên của bài toán là nhu cầu và thời gian giao hàng đều không biết trước. Khi thời gian giao hàng ngẫu nhiên, đơn hàng có thể về không đúng thứ tự, nên công thức tồn kho an toàn cổ điển chỉ còn là xấp xỉ.
-
-Các loại chi phí lại ảnh hưởng ngược chiều nhau. Giảm tồn kho giúp giảm chi phí lưu kho nhưng dễ thiếu hàng, còn đặt lô lớn giúp giảm số lần đặt nhưng làm tăng chi phí lưu kho và dễ tràn kho. Trong khi đó, doanh nghiệp vẫn phải giữ một mức phục vụ tối thiểu. Trong đề tài, tỷ lệ đáp ứng nhu cầu phải đạt từ 85\% trở lên.
-
-Hai khó khăn còn lại đến từ quy mô của mạng lưới. Các mặt hàng trong cùng kho dùng chung sức chứa, mặt hàng này đặt nhiều thì mặt hàng khác có ít chỗ hơn, nên không thể xử lý từng mặt hàng một cách riêng lẻ. Đồng thời, với 10 kho, 30 mặt hàng và 6 mức đặt cho mỗi cặp, không gian hành động chung có $6^{300}$ phần tử, không thể tìm kiếm hết bằng một phương pháp tập trung.
+Bài toán đặt hàng lại cho nhiều kho, nhiều mặt hàng có các khó khăn chính sau:
+\begin{itemize}
+    \item Nhu cầu và thời gian giao hàng đều không biết trước. Khi thời gian giao hàng ngẫu nhiên, đơn hàng có thể về không đúng thứ tự, nên công thức tồn kho an toàn cổ điển chỉ còn là xấp xỉ.
+    \item Các loại chi phí ảnh hưởng ngược chiều nhau. Giảm tồn kho giúp giảm chi phí lưu kho nhưng dễ thiếu hàng. Đặt lô lớn giúp giảm số lần đặt nhưng làm tăng chi phí lưu kho và dễ tràn kho.
+    \item Doanh nghiệp phải giữ một mức phục vụ tối thiểu. Trong đề tài, tỷ lệ đáp ứng nhu cầu phải đạt từ 85\% trở lên.
+    \item Các mặt hàng trong cùng kho dùng chung sức chứa. Mặt hàng này đặt nhiều thì mặt hàng khác có ít chỗ hơn, nên không thể xử lý từng mặt hàng một cách riêng lẻ.
+    \item Số trường hợp cần xét rất lớn. Với 10 kho, 30 mặt hàng và 6 mức đặt cho mỗi cặp, không gian hành động chung có $6^{300}$ phần tử, không thể tìm kiếm hết bằng một phương pháp tập trung.
+\end{itemize}
 
 \subsection{Hạn chế của phương pháp truyền thống và sự cần thiết của học tăng cường đa tác tử}
 \label{subsec:khoangtrong}
 
-Ba chính sách tồn kho cổ điển thường được sử dụng là lượng đặt hàng kinh tế (EOQ), chính sách $(s, S)$ và mô hình người bán báo (Newsvendor). EOQ giả định nhu cầu biết trước, đều theo thời gian và không xảy ra thiếu hàng. Chính sách $(s, S)$ tối ưu cho trường hợp một kho, nhu cầu độc lập giữa các kỳ và khách hàng chấp nhận chờ khi thiếu hàng. Newsvendor chỉ xét một chu kỳ và không tính tới hàng đang trên đường về. Các giả định này không còn đúng với bài toán của đề tài, vì nhu cầu ngẫu nhiên, thời gian giao hàng thay đổi, các mặt hàng dùng chung sức chứa và phần nhu cầu không đáp ứng được sẽ bị mất.
+Ba chính sách tồn kho cổ điển thường được sử dụng là lượng đặt hàng kinh tế (EOQ), chính sách $(s, S)$ và mô hình người bán báo (Newsvendor). Mỗi chính sách đều dựa trên những giả định riêng:
+\begin{itemize}
+    \item EOQ giả định nhu cầu biết trước, đều theo thời gian và không xảy ra thiếu hàng.
+    \item $(s, S)$ tối ưu cho trường hợp một kho, nhu cầu độc lập giữa các kỳ và khách hàng chấp nhận chờ khi thiếu hàng.
+    \item Newsvendor chỉ xét một chu kỳ và không tính tới hàng đang trên đường về.
+\end{itemize}
+
+Các giả định này không còn đúng với bài toán của đề tài, vì nhu cầu ngẫu nhiên, thời gian giao hàng thay đổi, các mặt hàng dùng chung sức chứa và phần nhu cầu không đáp ứng được sẽ bị mất.
 
 Học tăng cường (\textit{reinforcement learning}, RL) là một cách tiếp cận khác. Thay vì giả định trước phân phối nhu cầu, tác tử học cách ra quyết định thông qua việc thử và nhận phản hồi từ môi trường. Tuy nhiên, nếu dùng một tác tử cho cả mạng lưới thì số hành động phải xét là quá lớn.
 
@@ -33,7 +49,13 @@ Học tăng cường đa tác tử (\textit{multi-agent reinforcement learning},
 
 Phần lớn nghiên cứu học tăng cường cho tồn kho được thực hiện ở quy mô nhỏ, với nhu cầu sinh theo phân phối lý thuyết. Hai công trình gần nhất với đề tài vẫn chưa xét đồng thời nhiều kho và sức chứa dùng chung. Khi so sánh, các chính sách cổ điển cũng thường không biết sức chứa, không có dự báo nhu cầu và được so ở mức phục vụ khác với học tăng cường.
 
-Từ những khoảng trống trên, đề tài mở rộng học tăng cường đa tác tử tới hàng trăm cặp kho--mặt hàng bằng chia sẻ tham số, với phần thưởng được thiết kế cho các cặp có quy mô nhu cầu chênh nhau nhiều bậc. Sức chứa hữu hạn của từng kho được đưa trực tiếp vào môi trường mô phỏng. Mô hình được so sánh với các chính sách đối chứng có thông tin tương đương, ở cùng mức phục vụ, trên dữ liệu bán lẻ thực tế. Ngoài ra, đề tài kết hợp học tăng cường với dự báo nhu cầu, thay vì xem hai cách tiếp cận là đối thủ của nhau.
+Đề tài được thực hiện để bổ sung các điểm sau:
+\begin{itemize}
+    \item Mở rộng học tăng cường đa tác tử tới hàng trăm cặp kho--mặt hàng bằng chia sẻ tham số, với phần thưởng được thiết kế cho các cặp có quy mô nhu cầu chênh nhau nhiều bậc.
+    \item Đưa sức chứa hữu hạn của từng kho trực tiếp vào môi trường mô phỏng.
+    \item So sánh với các chính sách đối chứng có thông tin tương đương, ở cùng mức phục vụ, trên dữ liệu bán lẻ thực tế.
+    \item Kết hợp học tăng cường với dự báo nhu cầu, thay vì xem hai cách tiếp cận là tách biệt.
+\end{itemize}
 
 \section{Mục tiêu và câu hỏi nghiên cứu}
 \label{sec:muctieu}
@@ -42,14 +64,14 @@ Từ những khoảng trống trên, đề tài mở rộng học tăng cường
 \label{subsec:muctieu}
 
 Mục tiêu chung của đề tài là xây dựng một mô hình học tăng cường để các tác tử tự quyết định đặt hàng lại mỗi ngày, nhằm giảm tổng chi phí vận hành mà vẫn giữ mức phục vụ tối thiểu. Các mục tiêu cụ thể gồm:
-\begin{enumerate}[label=(\arabic*)]
+\begin{itemize}
     \item Xây dựng môi trường mô phỏng tồn kho nhiều kho, nhiều mặt hàng với nhu cầu từ bộ dữ liệu M5. Môi trường có thời gian giao hàng ngẫu nhiên, sức chứa kho, bốn thành phần chi phí và mục tiêu mức phục vụ.
     \item Thiết kế phần thưởng riêng cho từng cặp kho--mặt hàng, kèm hình phạt mức phục vụ tính trên cửa sổ trượt.
     \item Cài đặt và huấn luyện thuật toán IPPO (\textit{Independent Proximal Policy Optimization}) với chia sẻ tham số cho 300 cặp kho--mặt hàng, cùng một biến thể kết hợp dự báo nhu cầu.
     \item Đánh giá mô hình so với các chính sách cổ điển, chính sách biết sức chứa và chính sách dự báo rồi tối ưu, với nhiều lần huấn luyện độc lập và kiểm định thống kê.
     \item Kiểm tra độ bền của mô hình đã huấn luyện khi điều kiện vận hành thay đổi, gồm nguồn cung có giới hạn dùng chung giữa các kho, sức chứa, thời gian giao hàng và mức nhu cầu, mà không huấn luyện lại.
     \item Xây dựng ứng dụng mô phỏng để xem kết quả, phiếu đề nghị đặt hàng và kịch bản tăng cầu.
-\end{enumerate}
+\end{itemize}
 
 \subsection{Câu hỏi nghiên cứu}
 \label{subsec:cauhoi}
@@ -80,9 +102,15 @@ Mức phục vụ tối thiểu 85\% được xác định trước khi thực n
 \subsection{Phạm vi trong đề tài}
 \label{subsec:phamvitrong}
 
-Đề tài xét một hệ thống 10 kho và 30 mặt hàng, tạo thành 300 cặp ra quyết định. Dữ liệu là bộ M5, gồm doanh số theo ngày, giá bán và lịch có ngày lễ, ngày trợ cấp thực phẩm SNAP. Mỗi tập huấn luyện dài 365 ngày, thời gian giao hàng ngẫu nhiên từ một đến ba ngày. Trong mô hình chính, các kho hoạt động song song và độc lập về nguồn cung, còn ràng buộc giữa các mặt hàng đến từ sức chứa kho dùng chung. Nguồn cung chung giữa các kho chỉ được xét khi đánh giá độ bền của mô hình đã huấn luyện.
-
-Đầu ra của mô hình là yêu cầu đặt hàng lại, gồm số lượng và thời điểm đặt cho từng cặp kho--mặt hàng. Mô hình được so sánh với EOQ, $(s, S)$, Newsvendor, phiên bản $(s, S)$ biết sức chứa và phiên bản Newsvendor dùng dự báo nhu cầu. Tham số của mọi chính sách được chọn trên miền xác thực. Các chỉ số đánh giá gồm tổng chi phí vận hành, tỷ lệ đáp ứng nhu cầu và cơ cấu chi phí, trong đó chi phí được so sánh cả ở cùng một mức phục vụ.
+Phạm vi dữ liệu và thực nghiệm của đề tài như sau:
+\begin{itemize}
+    \item Hệ thống gồm 10 kho và 30 mặt hàng, tạo thành 300 cặp ra quyết định. Mỗi tập huấn luyện dài 365 ngày. Thời gian giao hàng ngẫu nhiên từ một đến ba ngày.
+    \item Trong mô hình chính, các kho hoạt động song song và độc lập về nguồn cung. Ràng buộc giữa các mặt hàng đến từ sức chứa kho dùng chung. Nguồn cung chung giữa các kho chỉ được xét khi đánh giá độ bền của mô hình đã huấn luyện.
+    \item Dữ liệu là bộ M5, gồm doanh số theo ngày, giá bán và lịch có ngày lễ, ngày trợ cấp thực phẩm SNAP.
+    \item Đầu ra của mô hình là yêu cầu đặt hàng lại, gồm số lượng và thời điểm đặt cho từng cặp kho--mặt hàng.
+    \item Phương pháp đối chứng gồm EOQ, $(s, S)$, Newsvendor, phiên bản $(s, S)$ biết sức chứa và phiên bản Newsvendor dùng dự báo nhu cầu. Tham số của mọi chính sách được chọn trên miền xác thực.
+    \item Chỉ số đánh giá gồm tổng chi phí vận hành, tỷ lệ đáp ứng nhu cầu và cơ cấu chi phí. Chi phí được so sánh cả ở cùng một mức phục vụ.
+\end{itemize}
 
 \subsection{Giới hạn phạm vi}
 \label{subsec:phamvingoai}
@@ -101,7 +129,13 @@ Các nội dung sau nằm ngoài phạm vi đề tài:
 \section{Phương pháp nghiên cứu}
 \label{sec:phuongphap}
 
-Đề tài được thực hiện qua bốn bước. Bước đầu tiên là nghiên cứu tài liệu về lý thuyết tồn kho ngẫu nhiên, học tăng cường và học tăng cường đa tác tử. Từ đó, bài toán được mô hình hóa thành quá trình quyết định Markov phi tập trung có quan sát bộ phận. Tiếp theo, nhóm xây dựng môi trường mô phỏng từ dữ liệu M5 và thiết kế quan sát, hành động, phần thưởng cho tác tử. Ở bước thứ ba, PS-IPPO được huấn luyện với nhiều hạt giống, còn các chính sách đối chứng được tinh chỉnh trên cùng miền xác thực theo cùng tiêu chí chọn. Cuối cùng, mọi phương pháp được đánh giá trên miền kiểm thử, cả khi mỗi phương pháp dùng cấu hình tốt nhất của mình lẫn khi các phương pháp có cùng mức phục vụ, kèm kiểm định thống kê theo cặp cho từng hạt giống.
+Đề tài được thực hiện theo bốn bước:
+\begin{itemize}
+    \item Nghiên cứu tài liệu về lý thuyết tồn kho ngẫu nhiên, học tăng cường và học tăng cường đa tác tử, sau đó mô hình hóa bài toán thành quá trình quyết định Markov phi tập trung có quan sát bộ phận.
+    \item Xây dựng môi trường mô phỏng từ dữ liệu M5, thiết kế quan sát, hành động và phần thưởng cho tác tử.
+    \item Huấn luyện PS-IPPO với nhiều hạt giống và tinh chỉnh các chính sách đối chứng trên cùng miền xác thực, theo cùng tiêu chí chọn.
+    \item Đánh giá trên miền kiểm thử, cả khi mỗi phương pháp dùng cấu hình tốt nhất của mình lẫn khi các phương pháp có cùng mức phục vụ, kèm kiểm định thống kê theo cặp cho từng hạt giống.
+\end{itemize}
 
 \section{Ý nghĩa khoa học và thực tiễn của đề tài}
 \label{sec:ynghia}
@@ -119,4 +153,11 @@ Các nội dung sau nằm ngoài phạm vi đề tài:
 \section{Bố cục của khóa luận}
 \label{sec:bocuc}
 
-Khóa luận gồm năm chương. Chương~\ref{chap:tongquan} giới thiệu bối cảnh, mục tiêu, câu hỏi nghiên cứu, phạm vi, phương pháp và ý nghĩa của đề tài. Chương~\ref{chap:chapter2} trình bày lý thuyết kiểm soát tồn kho ngẫu nhiên, dự báo rồi tối ưu, nền tảng học tăng cường, học tăng cường đa tác tử và các công trình liên quan. Chương~\ref{chap:chapter3} mô tả cách mô hình hóa bài toán, thiết kế quan sát, hành động, phần thưởng, kiến trúc mạng, các biến thể mở rộng và ứng dụng mô phỏng. Chương~\ref{chap:chapter4} báo cáo cấu hình thực nghiệm, phương pháp đối chứng, giao thức đánh giá và kết quả. Chương~\ref{chap:chapter5} tổng kết kết quả, nêu hạn chế và hướng phát triển.
+Khóa luận gồm năm chương:
+\begin{itemize}
+    \item Chương~\ref{chap:tongquan} giới thiệu bối cảnh, mục tiêu, câu hỏi nghiên cứu, phạm vi, phương pháp và ý nghĩa của đề tài.
+    \item Chương~\ref{chap:chapter2} trình bày lý thuyết kiểm soát tồn kho ngẫu nhiên, dự báo rồi tối ưu, nền tảng học tăng cường, học tăng cường đa tác tử và các công trình liên quan.
+    \item Chương~\ref{chap:chapter3} mô tả cách mô hình hóa bài toán, thiết kế quan sát, hành động, phần thưởng, kiến trúc mạng, các biến thể mở rộng và ứng dụng mô phỏng.
+    \item Chương~\ref{chap:chapter4} báo cáo cấu hình thực nghiệm, phương pháp đối chứng, giao thức đánh giá và kết quả.
+    \item Chương~\ref{chap:chapter5} tổng kết kết quả, nêu hạn chế và hướng phát triển.
+\end{itemize}

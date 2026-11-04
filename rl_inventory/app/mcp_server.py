@@ -189,10 +189,12 @@ def _kpi(kq):
 def ket_qua_tong_hop() -> str:
     """Ket qua danh gia chinh thuc (results/*.json) de LLM trich dan so lieu."""
     out = {}
-    for name in ["same_service_main_s42.json", "summary_main_s42.json", "regime_analysis_main.json"]:
-        p = ROOT / "results" / name
-        if p.exists():
-            out[name] = json.loads(p.read_text(encoding="utf-8"))
+    for name in ["multiseed_main.json", "multiseed_forecast_safety.json", "same_service_main_s42.json",
+                 "summary_main_s42.json", "regime_analysis_main.json"]:
+        for d in (ROOT / "results", APP_DIR / "demo_data" / "ketqua"):
+            if (d / name).exists():
+                out[name] = json.loads((d / name).read_text(encoding="utf-8"))
+                break
     return json.dumps(out, ensure_ascii=False)[:20000]
 
 

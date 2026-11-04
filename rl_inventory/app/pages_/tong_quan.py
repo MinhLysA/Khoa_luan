@@ -12,6 +12,7 @@ sm = core.summary(meta)
 ms = core.read_results("multiseed_main.json")
 qm = core.read_results("scale_group_v2_main.json")
 rq3 = core.read_results("rq3_multiseed.json")
+fs = core.read_results("multiseed_forecast_safety.json")
 soc = core.shock_results()
 
 # Nhãn lời thường cho nhóm quy mô cầu và biến thể phần thưởng (chỉ là tên, số vẫn đọc từ file)
@@ -44,18 +45,28 @@ cao_nhat = ip.fill_rate_mean >= df["fill_rate_mean"].max()
 # --------------------------------------------------------------------------- #
 # Bốn số chính
 # --------------------------------------------------------------------------- #
+# Số chính là trung bình các lần huấn luyện độc lập (multiseed_main.json) như báo cáo;
+# chỉ khi chưa có file đó mới dùng một lần huấn luyện (summary_<tag>.json).
+fill_tb = ms["ippo_fill_mean"] if ms else ip.fill_rate_mean
+cost_tb = ms["ippo_cost_mean"] if ms else ip.total_cost_mean
+n_ht = len(ms["seeds"]) if ms else 1
 k = st.columns(4)
-k[0].markdown(core.kpi("Đáp ứng nhu cầu khách", core.pct(ip.fill_rate_mean),
-                       f"Cao nhất trong {len(df)} cách" if cao_nhat else f"Mục tiêu {core.pct(muc_dv, 0)}",
-                       "good" if ip.fill_rate_mean >= muc_dv else "warn"), unsafe_allow_html=True)
-k[1].markdown(core.kpi("Tổng chi phí", core.num(ip.total_cost_mean),
-                       "đơn vị chi phí trong mô phỏng"), unsafe_allow_html=True)
-for col, b in zip(k[2:], ["EOQ", "(s,S)"]):
-    if b in per:
-        g = per[b]["gap_percent"]
-        col.markdown(core.kpi(f"So với {b}", f"{'rẻ hơn' if g < 0 else 'đắt hơn'} {core.num(abs(g), 1)}%",
-                              f"rẻ hơn ở {per[b]['n_ippo_cheaper']}/{per[b]['n']} lượt chạy",
-                              "good" if g < 0 else "warn"), unsafe_allow_html=True)
+k[0].markdown(core.kpi("Đáp ứng nhu cầu khách", core.pct(fill_tb),
+                       f"Mục tiêu {core.pct(muc_dv, 0)}" + (", cao nhất" if cao_nhat else ""),
+                       "good" if fill_tb >= muc_dv else "warn"), unsafe_allow_html=True)
+k[1].markdown(core.kpi("Tổng chi phí", core.num(cost_tb),
+                       f"trung bình {n_ht} lần huấn luyện" if ms else "đơn vị chi phí trong mô phỏng"),
+              unsafe_allow_html=True)
+for col, b in zip(k[2:], ["(s,S)", "EOQ"]):
+    if ms and b in ms["gap_vs_baseline"]:
+        gv = ms["gap_vs_baseline"][b]
+        g, ghi = gv["mean"], f"rẻ hơn ở {gv['n_seeds_re_hon']}/{gv['n_seeds']} lần huấn luyện"
+    elif b in per:
+        g, ghi = per[b]["gap_percent"], f"rẻ hơn ở {per[b]['n_ippo_cheaper']}/{per[b]['n']} lượt chạy"
+    else:
+        continue
+    col.markdown(core.kpi(f"So với {b}", f"{'rẻ hơn' if g < 0 else 'đắt hơn'} {core.num(abs(g), 1)}%",
+                          ghi, "good" if g < 0 else "warn"), unsafe_allow_html=True)
 
 # --------------------------------------------------------------------------- #
 # 1. Chi phí   2. Đáp ứng nhu cầu
@@ -174,6 +185,32 @@ with c2:
                      "Có: " + "; ".join(f"{t} làm chi phí <b>gấp {core.num(r, 1)} lần</b>" for t, r in xau) + ".",
                      core.thanh(dong),
                      f"Các biến thể học cùng số lượt, trung bình {len(next(iter(rq3.values()))['seeds'])} lần huấn luyện.")
+
+# --------------------------------------------------------------------------- #
+# Câu 4. Kết hợp dự báo nhu cầu (biến thể chọn hệ số an toàn trên nền dự báo)
+# --------------------------------------------------------------------------- #
+if fs:
+    c_fs = fs["ippo_cost_mean"]
+    dong = [dict(ten="IPPO kết hợp dự báo", phu=f"trung bình {len(fs['seeds'])} lần huấn luyện",
+                 v=c_fs, nhan=core.num(c_fs), me=True),
+            dict(ten="IPPO", phu="mô hình chính, không có dự báo", v=cost_tb, nhan=core.num(cost_tb))]
+    dong += [dict(ten=core.ten_cs(p)[0], phu=core.ten_cs(p)[1], v=df.loc[p, "total_cost_mean"],
+                  nhan=core.num(df.loc[p, "total_cost_mean"])) for p in df.sort_values("total_cost_mean").index
+             if p != "IPPO"]
+    gv = fs["gap_vs_baseline"]
+    co_dien = [b for b in gv if "dự báo" not in b]
+    re_ca = [b for b in co_dien if gv[b]["n_seeds_re_hon"] == gv[b]["n_seeds"]]
+    dap = f"Chi phí giảm <b>{core.num((c_fs - cost_tb) / cost_tb * -100, 1)}%</b> so với IPPO không có dự báo"
+    if co_dien and len(re_ca) == len(co_dien):
+        ds = sorted(-gv[b]["mean"] for b in co_dien)
+        dap += f"; rẻ hơn <b>mọi cách truyền thống</b> từ {core.num(ds[0], 1)}% đến {core.num(ds[-1], 1)}% ở cả {len(fs['seeds'])} lần"
+    if "Newsvendor dự báo" in gv:
+        g = gv["Newsvendor dự báo"]
+        dap += (f"; {'ngang' if g['n_seeds_significant'] < g['n_seeds'] else ('rẻ hơn' if g['mean'] < 0 else 'đắt hơn')}"
+                f" Newsvendor dùng cùng dự báo ({dau(g['mean'])})")
+    core.the_hoi("q7", "Kết hợp dự báo nhu cầu giúp được gì?", dap + ".", core.thanh(dong, lo=0),
+                 "Tác tử chọn mức an toàn trên nền dự báo LightGBM cho ba ngày tới, thay vì chọn thẳng lượng đặt. "
+                 "Phần lớn lợi thế đến từ dự báo; học tăng cường tự chọn mức an toàn cho từng mặt hàng.")
 
 # --------------------------------------------------------------------------- #
 # 7. Báo cáo tổng hợp theo kho / ngành hàng (chỉ đọc kết quả mô phỏng, không điều khiển tác tử)

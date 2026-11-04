@@ -247,9 +247,18 @@ def obs_labels(env, meta) -> list:
 # --------------------------------------------------------------------------- #
 # Số liệu báo cáo (results/) - không hardcode, thiếu file thì trả None
 # --------------------------------------------------------------------------- #
+def _tim_ket_qua(name: str):
+    """results/<name> nếu có, không thì bản đóng gói app/demo_data/ketqua/<name> (đi kèm git,
+    để máy chạy demo không cần thư mục results/)."""
+    for d in (RESULTS, DEMO / "ketqua"):
+        if (d / name).exists():
+            return d / name
+    return None
+
+
 def read_results(name: str):
-    p = RESULTS / name
-    if not p.exists():
+    p = _tim_ket_qua(name)
+    if p is None:
         return None
     return pd.read_csv(p) if p.suffix == ".csv" else json.loads(p.read_text(encoding="utf-8"))
 
@@ -262,7 +271,7 @@ def summary(meta):
 
 def shock_results():
     """Kết quả kịch bản sốc cầu (scripts/regime_analysis.py) nếu đã chạy."""
-    for p in sorted(RESULTS.glob("regime_analysis*.json")):
+    for p in sorted(RESULTS.glob("regime_analysis*.json")) + sorted((DEMO / "ketqua").glob("regime_analysis*.json")):
         b2 = json.loads(p.read_text(encoding="utf-8")).get("B2_shock")
         if b2 and b2.get("results"):
             return p.name, b2
@@ -377,6 +386,8 @@ table.bang tbody th {{ font-weight: 700; }}
   margin-right: 6px; background: var(--bar); vertical-align: -1px; }}
 .chu-giai span.me::before {{ background: var(--accent); }}
 .chu-giai span.tg::before {{ width: 2px; border-radius: 0; height: 12px; background: var(--bad); }}
+/* Logo huy hiệu Double L nhiều chi tiết: cho cao hơn cỡ mặc định 32px của st.logo */
+[data-testid="stHeaderLogo"], [data-testid="stSidebarLogo"], img[data-testid="stLogo"] {{ height: 3.4rem; max-height: 3.4rem; }}
 </style>
 """
 

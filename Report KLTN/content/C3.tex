@@ -11,7 +11,7 @@ Tác tử được thiết kế từ quy trình vận hành thực tế của kh
 
 \subsubsection{Quy trình vận hành một ngày}
 
-Mỗi ngày, công việc bổ sung hàng cho một mặt hàng tại một kho diễn ra qua năm bước nối tiếp nhau. Bảng~\ref{tab:quyTrinhNgay} đặt mỗi bước cạnh thành phần tương ứng của mô hình học tăng cường. Môi trường mô phỏng cũng thực hiện các bước này theo đúng thứ tự trên.
+Mỗi ngày, công việc bổ sung hàng cho một mặt hàng tại một kho diễn ra qua năm bước nối tiếp nhau. Đặt mỗi bước cạnh thành phần tương ứng của mô hình học tăng cường giúp thấy ngay phần nào của nghiệp vụ trở thành quan sát, hành động hay phần thưởng. Môi trường mô phỏng cũng thực hiện các bước này theo đúng thứ tự trên.
 
 \begin{table}[H]
     \centering
@@ -45,34 +45,33 @@ Các tác tử không độc lập với nhau. Ở bước nhận hàng, các m�
 
 \begin{figure}[htbp]
     \centering
-    \begin{tikzpicture}[
-        node distance=5mm and 9mm,
-        khoi/.style={draw, rounded corners, align=center, minimum width=4.2cm,
-                     minimum height=1.0cm, font=\small},
-        ghichu/.style={align=left, font=\footnotesize, text width=5.4cm},
-        mui/.style={-{Stealth[length=2.5mm]}, thick}]
-        \node[khoi, fill=orange!15] (nc) {Nhu cầu khách hàng\\(chuỗi bán hàng M5 Walmart)};
-        \node[khoi, fill=gray!12, below=of nc] (kho) {Mạng lưới kho\\(10 kho $\times$ 30 mặt hàng)};
-        \node[khoi, fill=blue!10, below=of kho] (tt) {Trạng thái tồn kho};
-        \node[khoi, fill=green!15, below=of tt] (ma) {Hệ đa tác tử IPPO\\(300 tác tử, chung $\theta$)};
-        \node[khoi, fill=green!8, below=of ma] (qd) {Quyết định bổ sung hàng\\(lượng đặt $q_i$ mỗi cặp)};
-        \node[khoi, fill=red!10, below=of qd] (cp) {Chi phí \& mức phục vụ};
-        \node[khoi, fill=blue!10, below=of cp] (ttm) {Trạng thái tồn kho mới};
-
-        \draw[mui] (nc) -- (kho);
-        \draw[mui] (kho) -- (tt);
-        \draw[mui] (tt) -- (ma);
-        \draw[mui] (ma) -- (qd);
-        \draw[mui] (qd) -- (cp);
-        \draw[mui] (cp) -- (ttm);
-        \draw[mui, dashed] (ttm.west) -- ++(-1.1,0) |- node[pos=0.25, left, font=\footnotesize, align=right]{ngày\\$t+1$} (tt.west);
-
-        \node[ghichu, right=of nc] {Bán lẻ theo ngày, có mùa vụ, ngày lễ, SNAP; nhiều mặt hàng bán gián đoạn};
-        \node[ghichu, right=of kho] {Mỗi kho có sức chứa $W_w$ dùng chung cho 30 mặt hàng; nhà cung cấp giao sau 1--3 ngày};
-        \node[ghichu, right=of tt] {Tồn kho, hàng đang về, lịch sử bán, mức đầy của kho, lịch};
-        \node[ghichu, right=of ma] {Mỗi tác tử quyết định cho đúng một cặp (kho, mặt hàng) từ quan sát của riêng nó};
-        \node[ghichu, right=of qd] {Chọn 1 trong 6 mức đặt, tỷ lệ theo nhu cầu trung bình của cặp};
-        \node[ghichu, right=of cp] {Lưu kho, thiếu hàng, đặt hàng, tràn kho; tỷ lệ đáp ứng so với mục tiêu 85\%};
+    \begin{tikzpicture}[soDo, font=\small]
+        % Kho ở giữa
+        \pic at (0,0) {kho=0.62};
+        \node[nhan, font=\scriptsize] at (1.15,1.42) {$u_t^{(w)}$};
+        \node[nhan, font=\small\bfseries, anchor=north] at (0.15,-0.08) {Kho $w$};
+        \node[nhan, anchor=north] at (0.15,-0.5) {30 mặt hàng, sức chứa $W_w$};
+        % Khách hàng bên trái
+        \pic at (-4.6,0.05) {khach};
+        \node[nhan, font=\small\bfseries, anchor=north] at (-4.6,-0.08) {Khách hàng};
+        \node[nhan, anchor=north] at (-4.6,-0.5) {nhu cầu $D_t^{(i)}$ từ M5};
+        % Nhà cung cấp bên phải
+        \pic at (4.6,0.1) {xe};
+        \node[nhan, font=\small\bfseries, anchor=north] at (4.6,-0.08) {Nhà cung cấp};
+        \node[nhan, anchor=north] at (4.6,-0.5) {giao sau 1--3 ngày};
+        % Hệ tác tử phía trên
+        \node[khungTacTu, minimum width=6.2cm, minimum height=1.05cm] (tt) at (0,3.2)
+            {\textbf{300 tác tử PS-IPPO}\\ \footnotesize mỗi tác tử quyết định cho một cặp (kho, mặt hàng)};
+        % Chi phí phía dưới
+        \node[khungChiPhi, minimum width=6.2cm, minimum height=1.05cm] (cp) at (0,-2.6)
+            {\textbf{Chi phí và mức phục vụ trong ngày}\\ \footnotesize lưu kho, thiếu hàng, đặt hàng, tràn kho; tỷ lệ đáp ứng so với 85\%};
+        % Luồng
+        \draw[muiTen] (0,1.55) -- node[nhan, right, pos=0.45]{quan sát $o_i^t$ (44 chiều)} (tt.south);
+        \draw[muiCam] (tt.east) -| node[nhan, pos=0.72, right]{đơn đặt $q_i$\\ (1 trong 6 mức)} (4.6,1.0);
+        \draw[muiCam] (3.65,0.45) -- node[nhan, above]{hàng về} node[nhan, below]{theo chỗ trống} (1.45,0.45);
+        \draw[muiTen] (-0.95,0.45) -- node[nhan, above]{bán $\min(I_t, D_t)$} node[nhan, below]{phần thiếu bị mất} (-3.85,0.45);
+        \draw[muiDo] (0,-0.95) -- (cp.north);
+        \draw[muiXanh, dashed] (cp.west) -| (-5.9,3.2) -- node[nhan, above, text=khoXanh!70!black]{phần thưởng $r_i^t$} node[nhan, below, text=khoXanh!70!black, font=\scriptsize]{sang ngày $t+1$} (tt.west);
     \end{tikzpicture}
     \caption{Mô hình khái niệm của bài toán bổ sung hàng đa kho}
     \label{fig:moHinhKhaiNiem}
@@ -81,7 +80,13 @@ Các tác tử không độc lập với nhau. Ở bước nhận hàng, các m�
 \subsection{Mô tả mạng lưới}
 \label{subsec:mangLuoi}
 
-Hệ thống gồm $N = 10$ kho hoạt động song song và độc lập về nguồn cung. Mỗi kho lưu trữ $M = 30$ mặt hàng, tạo thành 300 cặp kho--mặt hàng. Mỗi cặp đặt hàng từ nhà cung cấp bên ngoài với thời gian giao hàng ngẫu nhiên $L \sim \mathrm{Uniform}\{1, 2, 3\}$ ngày, còn nhu cầu hằng ngày $D_t^{(i)}$ của cặp lấy từ chuỗi doanh số thực tế của bộ dữ liệu M5 \parencite{makridakis2022background}. Mỗi kho có sức chứa hữu hạn $W_w$ dùng chung cho mọi mặt hàng trong kho.
+Mạng lưới có các đặc điểm sau:
+\begin{itemize}
+    \item Hệ thống gồm $N = 10$ kho hoạt động song song và độc lập về nguồn cung. Mỗi kho lưu trữ $M = 30$ mặt hàng, tạo thành 300 cặp kho--mặt hàng.
+    \item Mỗi cặp đặt hàng từ nhà cung cấp bên ngoài với thời gian giao hàng ngẫu nhiên $L \sim \mathrm{Uniform}\{1, 2, 3\}$ ngày.
+    \item Nhu cầu hằng ngày $D_t^{(i)}$ của cặp lấy từ chuỗi doanh số thực tế của bộ dữ liệu M5 \parencite{makridakis2022background}.
+    \item Mỗi kho có sức chứa hữu hạn $W_w$ dùng chung cho mọi mặt hàng trong kho.
+\end{itemize}
 
 Mỗi kho trong đề tài là một trong 10 cửa hàng của M5, được xem như một điểm lưu trữ độc lập. Bộ dữ liệu không có thông tin về diện tích kho, nên sức chứa là giả định của đề tài, đặt theo số ngày nhu cầu của từng kho.
 
@@ -93,28 +98,40 @@ Chuỗi 1.941 ngày của M5 được chia theo thời gian thành ba miền kh�
 
 \begin{figure}[H]
     \centering
-    \begin{tikzpicture}[font=\small, x=0.93cm]
-        \fill[blue!15]   (0,0)     rectangle (7.57,0.8);
-        \fill[orange!20] (7.57,0)  rectangle (10.46,0.8);
-        \fill[green!20]  (10.46,0) rectangle (14,0.8);
-        \draw (0,0) rectangle (14,0.8);
-        \draw (7.57,0) -- (7.57,0.8);
-        \draw (10.46,0) -- (10.46,0.8);
-        \node at (3.8,0.4) {Huấn luyện (1.050 ngày)};
-        \node at (9.0,0.4) {Xác thực (400)};
-        \node at (12.2,0.4) {Kiểm thử (491)};
-        \foreach \x/\t in {0/{29/01/2011}, 7.57/{14/12/2013}, 10.46/{18/01/2015}, 14/{22/05/2016}}
-            \node[font=\footnotesize, anchor=north] at (\x,-0.05) {\t};
-        \node[font=\footnotesize, anchor=south] at (0,0.85) {ngày 0};
-        \node[font=\footnotesize, anchor=south] at (7.57,0.85) {1050};
-        \node[font=\footnotesize, anchor=south] at (10.46,0.85) {1450};
-        \node[font=\footnotesize, anchor=south] at (14,0.85) {1941};
+    \begin{tikzpicture}[soDo, font=\small, x=0.98cm]
+        \fill[khoNavy!18] (0,0) rectangle (7.57,0.85);
+        \fill[khoCam!30] (7.57,0) rectangle (10.46,0.85);
+        \fill[khoXanh!30] (10.46,0) rectangle (14,0.85);
+        \draw[khoNavy, line width=0.6pt] (0,0) rectangle (14,0.85);
+        \draw[khoNavy, line width=0.6pt] (7.57,0) -- (7.57,0.85) (10.46,0) -- (10.46,0.85);
+        \node[text=khoNavy] at (3.8,0.425) {\textbf{Huấn luyện} (1.050 ngày)};
+        \node[text=khoNavy] at (9.0,0.425) {\textbf{Xác thực} (400)};
+        \node[text=khoNavy, align=center, font=\footnotesize] at (13.05,0.425) {\textbf{Kiểm thử}\\ (491)};
+        \foreach \x/\t/\a in {0/{29/01/2011}/north west, 7.57/{14/12/2013}/north, 10.46/{18/01/2015}/north, 14/{22/05/2016}/north east}
+            \node[nhan, anchor=\a] at (\x,-0.05) {\t};
+        \foreach \x/\t/\a in {0/{ngày 0}/south west, 7.57/{1050}/south, 10.46/{1450}/south, 14/{1941}/south east}
+            \node[nhan, anchor=\a, font=\scriptsize] at (\x,0.9) {\t};
+        % một tập huấn luyện 365 ngày
+        \draw[decorate, decoration={brace, amplitude=5pt, mirror}, khoNavy, line width=0.6pt] (2.0,-0.55) -- (4.66,-0.55)
+            node[nhan, midway, below=5pt]{một tập = 365 ngày,\\ cắt từ miền huấn luyện};
+        % cửa sổ sốc cầu
+        \fill[khoDo!55] (11.9,0) rectangle (12.08,0.85);
+        \draw[khoDo, line width=0.6pt, -{Stealth[length=2mm]}] (11.2,-0.8) node[nhan, text=khoDo, anchor=north]{sốc cầu nhân tạo\\ ngày 1650--1677} -- (11.95,-0.08);
+        % đánh giá
+        \draw[decorate, decoration={brace, amplitude=5pt}, khoXanh!70!black, line width=0.6pt] (10.5,1.4) -- (13.96,1.4)
+            node[nhan, midway, above=5pt]{mỗi lần đánh giá chạy trọn 491 ngày};
     \end{tikzpicture}
     \caption{Ba miền dữ liệu trên trục thời gian của M5}
     \label{fig:trucThoiGian}
 \end{figure}
 
-Bên trong các miền dữ liệu, mô hình còn dùng một số khoảng thời gian cố định. Quan sát của tác tử chứa lịch sử nhu cầu 7 ngày gần nhất, còn tỷ lệ đáp ứng được tính trên cửa sổ trượt 30 ngày. Mỗi tập (\textit{episode}) huấn luyện dài 365 ngày, và mỗi vòng thu thập dữ liệu (\textit{rollout}) gồm 1024 bước.
+Bên trong các miền dữ liệu, mô hình còn dùng các khoảng thời gian cố định sau:
+\begin{itemize}
+    \item Quan sát của tác tử chứa lịch sử nhu cầu 7 ngày gần nhất.
+    \item Tỷ lệ đáp ứng được tính trên cửa sổ trượt 30 ngày.
+    \item Mỗi tập (\textit{episode}) huấn luyện dài 365 ngày.
+    \item Mỗi vòng thu thập dữ liệu (\textit{rollout}) gồm 1024 bước.
+\end{itemize}
 
 \subsection{Thiết lập bài toán dưới dạng MDP đa tác tử}
 \label{subsec:mdpDaTacTu}
@@ -123,50 +140,58 @@ Bài toán có 300 tác tử nhưng chỉ có một mạng chính sách $\pi_\th
 
 \begin{figure}[H]
     \centering
-    \resizebox{\textwidth}{!}{%
-    \begin{tikzpicture}[
-        tt/.style={circle, draw, fill=green!20, minimum size=8.5mm, inner sep=0pt, font=\footnotesize},
-        khoi/.style={draw, rounded corners, align=center, font=\small, inner sep=4pt},
-        mui/.style={-{Stealth[length=2mm]}, thick},
-        nhan/.style={font=\footnotesize, align=center}]
-        % Moi truong dung chung (ve truoc de nam duoi)
-        \draw[dashed, rounded corners] (-0.3,-0.95) rectangle (13.3,2.75);
-        \node[nhan, anchor=south] at (6.5,-0.9) {\small Môi trường dùng chung: nhu cầu M5, hàng đang về, chi phí, mức đầy kho};
-        % Ba kho dai dien
-        \foreach \x/\w in {0/1, 4.6/2, 9.8/10} {
-            \draw[rounded corners, fill=gray!8] (\x,-0.05) rectangle ++(3.5,2.45);
-            \node[anchor=north west, font=\small\bfseries] at (\x+0.05,2.38) {Kho \w};
-            \node[tt] at (\x+0.55,1.35) {$A_{\w,1}$};
-            \node[tt] at (\x+1.5,1.35) {$A_{\w,2}$};
-            \node at (\x+2.2,1.35) {$\cdots$};
-            \node[tt] at (\x+2.95,1.35) {$A_{\w,30}$};
-            \node[khoi, fill=blue!8, font=\footnotesize, minimum width=3.2cm] at (\x+1.75,0.4) {sức chứa $W_{\w}$ chung $\Rightarrow u_t^{(\w)}$};
-            \draw[mui] (\x+1.2,2.4) -- node[nhan, left]{$o_i^t$} (\x+1.2,3.9);
-            \draw[mui] (\x+2.3,3.9) -- node[nhan, right]{$a_i^t$} (\x+2.3,2.4);
+    \begin{tikzpicture}[soDo, font=\small]
+        \tikzset{tacTu/.style={circle, fill=khoXanh, inner sep=0pt, minimum size=1.6mm}}
+        % Chính sách dùng chung
+        \node[khungDam, minimum width=14.4cm, minimum height=0.95cm] (cs) at (7.2,4.55)
+            {\textbf{Chính sách dùng chung}:\ Actor $\pi_\theta(a \mid o_i)$, Critic $V_\phi(o_i)$, một bộ trọng số cho 300 tác tử};
+        % Ba kho
+        \foreach \x/\w/\f in {0.2/1/0.55, 5.1/2/0.8, 10.4/10/0.4} {
+            \draw[khoNavy!60, fill=khoNen, rounded corners=4pt, line width=0.6pt] (\x,0) rectangle ++(3.8,2.6);
+            \node[anchor=north west, font=\small\bfseries, text=khoNavy] at (\x+0.08,2.58) {Kho \w};
+            \foreach \r in {0,...,4} \foreach \c in {0,...,5}
+                \node[tacTu] at (\x+0.45+\c*0.42, 0.45+\r*0.36) {};
+            \draw[khoNavy, line width=0.5pt] (\x+3.15,0.3) rectangle (\x+3.45,2.0);
+            \fill[khoCam] (\x+3.15,0.3) rectangle (\x+3.45,{0.3+1.7*\f});
+            \node[nhan, font=\scriptsize] at (\x+3.3,2.25) {$u_t^{(\w)}$};
+            \draw[muiTen] (\x+1.0,2.65) -- node[nhan, left]{$o_i^t$} (\x+1.0,4.05);
+            \draw[muiCam] (\x+2.2,4.05) -- node[nhan, right]{$a_i^t$} (\x+2.2,2.65);
         }
-        \node[font=\Large] at (9.2,1.2) {$\cdots$};
-        % Chinh sach dung chung
-        \node[khoi, fill=green!12, minimum width=13.6cm, minimum height=0.9cm] at (6.5,4.35)
-            {\textbf{Chính sách dùng chung}: Actor $\pi_\theta(a \mid o_i)$ + Critic $V_\phi(o_i)$ --- một bộ trọng số cho cả 300 tác tử};
-        % Khach hang, nha cung cap
-        \node[khoi, fill=orange!15] (kh) at (2.5,-2.0) {Khách hàng: nhu cầu $D_t^{(i)}$};
-        \node[khoi, fill=orange!15] (ncc) at (10.5,-2.0) {Nhà cung cấp: giao sau 1--3 ngày};
-        \draw[mui] (kh.north) -- (2.5,-0.95);
-        \draw[mui] (10.2,-0.95) -- node[nhan, left]{đơn $q_i$} (10.2,-1.7);
-        \draw[mui] (10.8,-1.7) -- node[nhan, right]{hàng về} (10.8,-0.95);
-        % Chu thich
-        \node[font=\footnotesize, text width=13.4cm, align=justify, anchor=north] at (6.5,-2.6)
-            {Mỗi tác tử $A_{w,j}$ quyết định lượng đặt cho mặt hàng $j$ tại kho $w$. Đầu vào là quan sát $o_i^t$ 44 chiều, đầu ra là mức đặt $a_i^t \in \{0,\dots,5\}$. Không có tác tử điều phối và không trao đổi thông điệp trực tiếp. Các tác tử phối hợp gián tiếp qua (1) mức đầy kho $u_t^{(w)}$ do môi trường gửi lại cho 30 tác tử cùng kho, (2) phạt tràn kho khi cùng tranh sức chứa, (3) trọng số dùng chung khi huấn luyện.};
-    \end{tikzpicture}}
+        \node[font=\Large, text=khoNavy] at (9.65,1.3) {$\cdots$};
+        % Môi trường
+        \draw[khoNavy!50, dashed, rounded corners=6pt, line width=0.6pt] (0.0,-0.75) rectangle (14.4,3.0);
+        \node[nhan, anchor=south] at (7.2,-0.72) {Môi trường mô phỏng: nhu cầu M5, hàng đang về, chi phí, sức chứa từng kho};
+        % Khách hàng, chú thích, nhà cung cấp
+        \pic at (1.5,-2.35) {khach};
+        \node[nhan, anchor=west] at (2.15,-1.95) {Khách hàng\\ nhu cầu $D_t^{(i)}$};
+        \draw[muiTen] (1.5,-1.35) -- (1.5,-0.78);
+        \node[tacTu] at (4.5,-1.75) {};
+        \node[nhan, anchor=west] at (4.65,-1.75) {một tác tử (kho, mặt hàng)};
+        \fill[khoCam] (4.42,-2.32) rectangle (4.58,-2.07);
+        \node[nhan, anchor=west] at (4.65,-2.2) {mức đầy kho $u_t^{(w)}$};
+        \pic at (10.6,-2.3) {xe};
+        \node[nhan, anchor=west] at (11.55,-1.95) {Nhà cung cấp\\ giao sau 1--3 ngày};
+        \draw[muiCam] (10.3,-0.78) -- node[nhan, left]{đơn $q_i$} (10.3,-1.4);
+        \draw[muiCam] (11.0,-1.4) -- node[nhan, right]{hàng về} (11.0,-0.78);
+    \end{tikzpicture}
     \caption{Kiến trúc đa tác tử dùng chung một chính sách}
     \label{fig:kienTrucDaTacTu}
 \end{figure}
 
 \subsubsection{Phân rã nhiệm vụ và thiết kế tác tử}
 
-Có hai cách chia nhiệm vụ cho các tác tử. Cách thứ nhất là chia theo chức năng (\textit{functional decomposition}), trong đó mỗi tác tử làm một khâu, ví dụ một tác tử tổng hợp thông tin và một tác tử điều phối. Cách thứ hai là chia theo điểm ra quyết định (\textit{decision-point decomposition}), trong đó mỗi tác tử ứng với đúng một nơi cần ra quyết định.
+Có hai cách chia nhiệm vụ cho các tác tử:
+\begin{itemize}
+    \item Chia theo chức năng (\textit{functional decomposition}). Mỗi tác tử làm một khâu, ví dụ một tác tử tổng hợp thông tin và một tác tử điều phối.
+    \item Chia theo điểm ra quyết định (\textit{decision-point decomposition}). Mỗi tác tử ứng với đúng một nơi cần ra quyết định.
+\end{itemize}
 
-Nhóm chọn cách thứ hai vì ba lý do. Trong thực tế, người phụ trách một mặt hàng tại một kho chính là người quyết định đặt hàng cho mặt hàng đó. Chia theo chức năng lại cần thêm phần truyền thông giữa các tác tử, trong khi nghiệp vụ gốc không có thành phần này. Ngoài ra, khi hành động của mỗi tác tử chính là lượng đặt hàng, tác tử nhận đúng chi phí do quyết định của mình gây ra, nên tín hiệu học rõ ràng hơn.
+Nhóm chọn cách thứ hai vì các lý do sau:
+\begin{itemize}
+    \item Trong thực tế, người phụ trách một mặt hàng tại một kho chính là người quyết định đặt hàng cho mặt hàng đó.
+    \item Chia theo chức năng cần thêm phần truyền thông giữa các tác tử, trong khi nghiệp vụ gốc không có thành phần này.
+    \item Khi hành động của mỗi tác tử chính là lượng đặt hàng, tác tử nhận đúng chi phí do quyết định của mình gây ra, nên tín hiệu học rõ ràng hơn.
+\end{itemize}
 
 Do đó số tác tử bằng số cặp kho--mặt hàng, $N \times M = 300$.
 
@@ -183,7 +208,7 @@ Hai tín hiệu cấp kho là mức sử dụng sức chứa $u_t^{(w(i))} = \su
     \caption{Mã hóa các biến trạng thái trong vector quan sát}
     \label{tab:doiChieuState}
     \small
-    \begin{tabular}{|>{\raggedright\arraybackslash}p{2.0cm}|>{\raggedright\arraybackslash}p{3.1cm}|c|>{\raggedright\arraybackslash}p{4.4cm}|>{\raggedright\arraybackslash}p{3.4cm}|}
+    \begin{tabular}{|>{\raggedright\arraybackslash}p{2.0cm}|>{\raggedright\arraybackslash}p{3.1cm}|c|>{\raggedright\arraybackslash}p{4.0cm}|>{\raggedright\arraybackslash}p{3.15cm}|}
         \hline
         Nhóm & Biến & Chiều & Mã hóa, thang đo & Ghi chú \\
         \hline
@@ -222,15 +247,19 @@ trong đó $\bar{D}^{(i)}$ là nhu cầu trung bình một ngày của cặp $i$
 
 \subsubsection{Hàm chuyển trạng thái}
 
-Mỗi ngày, môi trường mô phỏng cập nhật trạng thái theo một thứ tự cố định. Đầu tiên, hành động $a_i^t \in \{0,\ldots,5\}$ của mỗi tác tử được ánh xạ sang lượng đặt hàng $q_i(a_i^t)$ theo bảng mức tương đối ở công thức~(\ref{eq:orderTable}). Tiếp theo, hàng ở vị trí 0 của hàng đợi giao, là hàng đến hạn ngày $t$, được đưa vào kho.
-
-Ngay khi nhập hàng, ràng buộc sức chứa được áp dụng. Nếu lượng hàng mới về kho $w$ vượt chỗ trống còn lại $W_w - \sum_{j \in w} I^{(j)}$, phần vượt của hàng mới về bị từ chối và được chia theo tỷ trọng hàng về của từng mặt hàng, tính theo công thức~(\ref{eq:tranKho}). Tồn kho cũ không bị ảnh hưởng. Sau đó hàng đợi giao dịch trái một vị trí, và đơn hàng mới được ghi vào vị trí $L-1$ với $L \sim \mathrm{Uniform}\{1, 2, 3\}$. Thời gian giao hàng ngẫu nhiên này là nguồn ngẫu nhiên thứ nhất của môi trường.
-
-Nguồn ngẫu nhiên thứ hai là nhu cầu $D_t^{(i)}$, lấy từ chuỗi M5 thực tế. Kho bán $\min(I_t^{(i)}, D_t^{(i)})$ đơn vị, phần thiếu bị mất hoàn toàn. Cuối ngày, nhu cầu và lượng đáp ứng được ghi vào lịch sử 7 ngày, tỷ lệ đáp ứng trên cửa sổ trượt 30 ngày được cập nhật, rồi môi trường tính phần thưởng $r_i^t$ và chuyển sang ngày $t+1$.
+Mỗi ngày, môi trường mô phỏng thực hiện sáu bước theo đúng thứ tự sau:
+\begin{itemize}
+    \item Ánh xạ hành động. Hành động $a_i^t \in \{0,\ldots,5\}$ của mỗi tác tử được đổi sang lượng đặt hàng $q_i(a_i^t)$ theo bảng mức tương đối ở công thức~(\ref{eq:orderTable}).
+    \item Nhận hàng. Hàng ở vị trí 0 của hàng đợi giao, là hàng đến hạn ngày $t$, được đưa vào kho.
+    \item Áp ràng buộc sức chứa. Nếu lượng hàng mới về kho $w$ vượt chỗ trống còn lại $W_w - \sum_{j \in w} I^{(j)}$, phần vượt của hàng mới về bị từ chối và được chia theo tỷ trọng hàng về của từng mặt hàng, tính theo công thức~(\ref{eq:tranKho}). Tồn kho cũ không bị ảnh hưởng.
+    \item Ghi đơn mới. Hàng đợi giao dịch trái một vị trí, và đơn hàng mới được ghi vào vị trí $L-1$ với $L \sim \mathrm{Uniform}\{1, 2, 3\}$. Thời gian giao hàng ngẫu nhiên này là nguồn ngẫu nhiên thứ nhất của môi trường.
+    \item Bán hàng. Nhu cầu $D_t^{(i)}$ lấy từ chuỗi M5 thực tế là nguồn ngẫu nhiên thứ hai. Kho bán $\min(I_t^{(i)}, D_t^{(i)})$ đơn vị, phần thiếu bị mất hoàn toàn.
+    \item Ghi nhận kết quả. Nhu cầu và lượng đáp ứng được ghi vào lịch sử 7 ngày, tỷ lệ đáp ứng trên cửa sổ trượt 30 ngày được cập nhật, rồi môi trường tính phần thưởng $r_i^t$ và chuyển sang ngày $t+1$.
+\end{itemize}
 
 \subsubsection{Tổng hợp các thành phần MDP}
 
-Mỗi ngày, cả 300 tác tử cùng chạy một vòng tương tác $s_t \rightarrow a_t \rightarrow r_t, s_{t+1}$ với cùng tham số $\theta, \phi$, như minh họa ở Hình~\ref{fig:vongLapRL}. Các khái niệm chung của học tăng cường ứng với những thành phần cụ thể của hệ thống kho. Bảng~\ref{tab:anhXaMDP} nêu từng thành phần của mô hình học tăng cường, nội dung cụ thể trong hệ thống kho và nơi trình bày chi tiết.
+Mỗi ngày, cả 300 tác tử cùng chạy một vòng tương tác $s_t \rightarrow a_t \rightarrow r_t, s_{t+1}$ với cùng tham số $\theta, \phi$, như minh họa ở Hình~\ref{fig:vongLapRL}. Các khái niệm chung của học tăng cường ứng với những thành phần cụ thể của hệ thống kho. Mỗi thành phần dưới đây được gắn với nội dung cụ thể trong hệ thống kho và nơi trình bày chi tiết.
 
 \begin{table}[htbp]
     \centering
@@ -256,33 +285,41 @@ Mỗi ngày, cả 300 tác tử cùng chạy một vòng tương tác $s_t \righ
 
 \begin{figure}[H]
     \centering
-    \begin{tikzpicture}[
-        khoi/.style={draw, rounded corners, align=center, font=\small, inner sep=5pt},
-        mui/.style={-{Stealth[length=2.5mm]}, thick},
-        nhan/.style={font=\footnotesize, align=center}]
-        \node[khoi, fill=green!15, minimum width=4.6cm, minimum height=2.2cm] (ag)
-            {\textbf{Tác tử $i$}\\ cặp (kho $w$, mặt hàng $j$)\\[2pt]
-             Actor $\pi_\theta(a \mid o_i^t)$\\ Critic $V_\phi(o_i^t)$};
-        \node[khoi, fill=blue!8, minimum width=4.9cm, minimum height=2.2cm, right=3.2cm of ag] (env)
-            {\textbf{Môi trường kho}\\[2pt]
-             \footnotesize 1. nhận hàng, kiểm tra sức chứa\\
-             \footnotesize 2. ghi đơn mới vào hàng đợi giao\\
-             \footnotesize 3. nhu cầu $D_t^{(i)}$ phát sinh, bán hàng\\
-             \footnotesize 4. tính chi phí, cập nhật tỷ lệ đáp ứng};
-        \node[khoi, fill=yellow!15, below=1.3cm of ag, minimum width=4.6cm] (buf)
-            {Bộ đệm dữ liệu $(o, a, r, V)$\\ GAE tính riêng cho từng tác tử\\ cập nhật PPO cho $\theta, \phi$};
-
-        \draw[mui] ([yshift=7mm]ag.east) -- node[nhan, above]{hành động $a_i^t$ $\Rightarrow$ đặt $q_i$} ([yshift=7mm]env.west);
-        \draw[mui] ([yshift=0mm]env.west) -- node[nhan, above]{phần thưởng $r_i^t$} ([yshift=0mm]ag.east);
-        \draw[mui] ([yshift=-7mm]env.west) -- node[nhan, above]{quan sát mới $o_i^{t+1}$} ([yshift=-7mm]ag.east);
-        \draw[mui, dashed] ([xshift=-1cm]ag.south) -- node[nhan, left]{lưu kinh nghiệm} ([xshift=-1cm]buf.north);
-        \draw[mui, dashed] ([xshift=1cm]buf.north) -- node[nhan, right]{cập nhật trọng số} ([xshift=1cm]ag.south);
+    \begin{tikzpicture}[soDo, font=\small]
+        \tikzset{buoc/.style={circle, fill=khoNavy, text=white, font=\scriptsize\bfseries, inner sep=0pt, minimum size=4mm}}
+        % Bản sao mờ phía sau thể hiện 300 tác tử
+        \node[khungTacTu, minimum width=4.4cm, minimum height=2.9cm, fill=khoXanh!5, draw=khoXanh!40] at (0.24,-0.24) {};
+        \node[khungTacTu, minimum width=4.4cm, minimum height=2.9cm, fill=khoXanh!7, draw=khoXanh!60] at (0.12,-0.12) {};
+        \node[khungTacTu, minimum width=4.4cm, minimum height=2.9cm] (ag) at (0,0)
+            {\textbf{Tác tử $i$}\\ cặp (kho $w$, mặt hàng $j$)\\[4pt]
+             Actor $\pi_\theta(a \mid o_i^t)$\\ Critic $V_\phi(o_i^t)$\\[3pt] \footnotesize $\times$300, cùng $\theta, \phi$};
+        % Môi trường kho
+        \node[khung, minimum width=5.6cm, minimum height=3.6cm, anchor=west] (env) at (5.2,0) {};
+        \node[font=\small\bfseries, text=khoNavy, anchor=north] at (env.north) {Môi trường kho, một ngày};
+        \foreach \i/\t in {1/{đổi $a_i^t$ thành lượng đặt $q_i$},
+                           2/{nhận hàng đến hạn},
+                           3/{áp sức chứa, từ chối phần tràn},
+                           4/{ghi đơn mới, về sau 1--3 ngày},
+                           5/{bán hàng theo nhu cầu M5},
+                           6/{tính chi phí, tỷ lệ đáp ứng, $r_i^t$}} {
+            \node[buoc] at (5.55,1.22-\i*0.43+0.43*0.25) {\i};
+            \node[anchor=west, font=\footnotesize] at (5.8,1.22-\i*0.43+0.43*0.25) {\t};
+        }
+        % Ba mũi tên giữa
+        \draw[muiCam] ([yshift=8mm]ag.east) -- node[nhan, above]{hành động $a_i^t$} ([yshift=8mm]ag.east -| env.west);
+        \draw[muiXanh] (env.west |- ag.east) -- node[nhan, above, text=khoXanh!70!black]{phần thưởng $r_i^t$} (ag.east);
+        \draw[muiTen] ([yshift=-8mm]env.west |- ag.east) -- node[nhan, above]{quan sát $o_i^{t+1}$} ([yshift=-8mm]ag.east);
+        % Bộ đệm và cập nhật
+        \node[khung, fill=khoCam!10, draw=khoCam!80, minimum width=13.0cm, minimum height=0.9cm, anchor=north west] (buf)
+            at (-2.2,-2.35) {\textbf{Bộ đệm 1024 bước $\times$ 300 tác tử} $\rightarrow$ GAE từng cặp $\rightarrow$ cập nhật PPO $\theta, \phi$};
+        \draw[muiTen, dashed] (-1.2,-1.45) -- node[nhan, left]{lưu $(o, a, r, V)$} (-1.2,-2.35);
+        \draw[muiXanh, dashed] (1.2,-2.35) -- node[nhan, right, text=khoXanh!70!black]{trọng số mới} (1.2,-1.45);
     \end{tikzpicture}
     \caption{Vòng tương tác học tăng cường của một tác tử}
     \label{fig:vongLapRL}
 \end{figure}
 
-Cả 300 tác tử có vai trò giống nhau và dùng chung một bộ trọng số, nên một bảng đặc tả duy nhất mô tả đầy đủ hệ thống. Bảng~\ref{tab:dacTaTacTu} là bảng đặc tả đó.
+Cả 300 tác tử có vai trò giống nhau và dùng chung một bộ trọng số, nên chỉ cần một bảng đặc tả là mô tả đầy đủ hệ thống.
 
 \begin{table}[htbp]
     \centering
@@ -316,7 +353,7 @@ Mỗi kho $w$ có sức chứa hữu hạn $W_w$ dùng chung cho cả $M$ mặt 
 \end{equation}
 trong đó $\bar{D}^{(w,j)}$ là nhu cầu trung bình một ngày của mặt hàng $j$ tại kho $w$ trên miền huấn luyện.
 
-Sức chứa được tính riêng cho từng kho vì nhu cầu giữa các kho chênh nhau tới 4,5 lần. Với một sức chứa chung, kho lớn nhất chỉ tích trữ được khoảng 1,4 ngày nhu cầu trong khi hàng có thể về sau ba ngày. Khi đó không chính sách nào tránh được cùng lúc phạt tràn kho và phạt mức phục vụ. Nhu cầu trung bình và sức chứa tương ứng của từng kho được trình bày ở Bảng~\ref{tab:sucChuaKho}.
+Sức chứa được tính riêng cho từng kho vì nhu cầu giữa các kho chênh nhau tới 4,5 lần. Với một sức chứa chung, kho lớn nhất chỉ tích trữ được khoảng 1,4 ngày nhu cầu trong khi hàng có thể về sau ba ngày. Khi đó không chính sách nào tránh được cùng lúc phạt tràn kho và phạt mức phục vụ. Khi tính riêng theo công thức trên, kho lớn nhất CA\_3 có sức chứa gấp hơn bốn lần kho nhỏ nhất WI\_1.
 
 \begin{table}[H]
     \centering
@@ -348,7 +385,12 @@ Ví dụ, nếu kho còn 100 chỗ trống mà có 150 đơn vị hàng mới v�
 
 Hệ thống không có tác tử điều phối trung tâm, và các tác tử không trao đổi thông tin trực tiếp với nhau. Về nghiệp vụ, quyết định đặt hàng lại được đưa ra cho từng mặt hàng tại từng kho. Về thuật toán, mô hình chính dùng học độc lập để kiểm tra xem phối hợp gián tiếp đã đủ hay chưa.
 
-Về thiết kế, các tác tử liên hệ gián tiếp với nhau qua ba kênh. Kênh thứ nhất là quan sát. Mỗi tác tử thấy mức sử dụng sức chứa $u_t^{(w(i))}$ của kho mình, một đại lượng do môi trường tính từ tồn kho của cả 30 mặt hàng. Kênh thứ hai là phần thưởng. Phạt tràn kho được chia theo tỷ trọng hàng mới về theo công thức~(\ref{eq:tranKho}), nên tác tử nào đặt nhiều khi kho đã chật sẽ bị phạt nặng hơn. Kênh thứ ba là trọng số dùng chung. Kinh nghiệm của mọi tác tử cùng cập nhật một chính sách, nên điều một cặp học được cũng có ích cho các cặp khác.
+Về thiết kế, các tác tử liên hệ gián tiếp với nhau qua ba kênh:
+\begin{itemize}
+    \item Quan sát. Mỗi tác tử thấy mức sử dụng sức chứa $u_t^{(w(i))}$ của kho mình, một đại lượng do môi trường tính từ tồn kho của cả 30 mặt hàng.
+    \item Phần thưởng. Phạt tràn kho được chia theo tỷ trọng hàng mới về theo công thức~(\ref{eq:tranKho}), nên tác tử nào đặt nhiều khi kho đã chật sẽ bị phạt nặng hơn.
+    \item Trọng số dùng chung. Kinh nghiệm của mọi tác tử cùng cập nhật một chính sách, nên điều một cặp học được cũng có ích cho các cặp khác.
+\end{itemize}
 
 Các kênh này chỉ tạo điều kiện để tác tử tính đến nhau. Tác tử có thực sự dùng chúng hay không được kiểm tra bằng thực nghiệm ở Chương~\ref{chap:chapter4}.
 
@@ -383,11 +425,26 @@ Mỗi tác tử $i$ nhận phần thưởng riêng dựa trên chi phí của ch
     \end{split}
     \label{eq:localReward}
 \end{equation}
-trong đó $I_t^{(i)+} = \max(I_t^{(i)}, 0)$ là mức tồn kho dương, $U_t^{(i)} = \max(D_t^{(i)} - I_t^{(i)}, 0)$ là lượng nhu cầu không được đáp ứng, và $O_t^{(i)}$ là lượng hàng tràn kho, bằng phần vượt sức chứa. $\text{FR}_t^{(i, w)}$ là tỷ lệ đáp ứng trên cửa sổ trượt $w = 30$ ngày và $\tau = 0{,}85$ là ngưỡng mức phục vụ mục tiêu. $\bar{D}^{(i)}$ là nhu cầu trung bình một ngày của cặp $i$ trên miền huấn luyện, cùng đại lượng dùng trong bảng mức đặt hàng ở công thức~(\ref{eq:orderTable}).
+trong đó:
+\begin{itemize}
+    \item $I_t^{(i)+} = \max(I_t^{(i)}, 0)$ là mức tồn kho dương.
+    \item $U_t^{(i)} = \max(D_t^{(i)} - I_t^{(i)}, 0)$ là lượng nhu cầu không được đáp ứng.
+    \item $O_t^{(i)}$ là lượng hàng tràn kho, bằng phần vượt sức chứa.
+    \item $\text{FR}_t^{(i, w)}$ là tỷ lệ đáp ứng trên cửa sổ trượt $w = 30$ ngày.
+    \item $\tau = 0{,}85$ là ngưỡng mức phục vụ mục tiêu.
+    \item $\bar{D}^{(i)}$ là nhu cầu trung bình một ngày của cặp $i$ trên miền huấn luyện, cùng đại lượng dùng trong bảng mức đặt hàng ở công thức~(\ref{eq:orderTable}).
+\end{itemize}
 
 \subsubsection{Ý nghĩa nghiệp vụ của từng thành phần}
 
-Mỗi thành phần của phần thưởng ứng với một khoản chi phí thực tế của doanh nghiệp. Chi phí lưu kho là chi phí cơ hội của tiền hàng tồn đọng cộng với chi phí mặt bằng. Chi phí thiếu hàng là doanh thu và thiện chí khách hàng bị mất. Chi phí đặt hàng là chi phí cố định mỗi lần đặt đơn, gồm xử lý đơn và vận chuyển. Phạt tràn kho là tổn thất khi hàng bị từ chối nhập vì kho đầy. Riêng phạt mức phục vụ thể hiện cam kết giữ tỷ lệ đáp ứng tối thiểu 85\% và không được tính vào chi phí vận hành.
+Mỗi thành phần của phần thưởng ứng với một khoản chi phí thực tế của doanh nghiệp:
+\begin{itemize}
+    \item Chi phí lưu kho là chi phí cơ hội của tiền hàng tồn đọng cộng với chi phí mặt bằng.
+    \item Chi phí thiếu hàng là doanh thu và thiện chí khách hàng bị mất.
+    \item Chi phí đặt hàng là chi phí cố định mỗi lần đặt đơn, gồm xử lý đơn và vận chuyển.
+    \item Phạt tràn kho là tổn thất khi hàng bị từ chối nhập vì kho đầy.
+    \item Phạt mức phục vụ thể hiện cam kết giữ tỷ lệ đáp ứng tối thiểu 85\% và không được tính vào chi phí vận hành.
+\end{itemize}
 
 Mọi thành phần chi phí đều không âm, nên phần thưởng luôn nhỏ hơn hoặc bằng 0. Giá trị âm không có nghĩa là mô hình kém. Phần thưởng tăng dần về 0 nghĩa là tổng chi phí giảm dần. Độ lớn tuyệt đối phụ thuộc đơn giá, quy mô nhu cầu, số tác tử và độ dài một tập, nên phần thưởng chỉ được so tương đối giữa các giai đoạn huấn luyện. Khi so với chính sách cổ điển, kết quả được quy đổi về chi phí vận hành.
 
@@ -428,7 +485,7 @@ Khi huấn luyện, ràng buộc được đưa vào dưới dạng ràng buộc
 \subsection{Công thức và tham số chi phí}
 \label{subsec:thamSoChiPhi}
 
-Bốn thành phần đầu là chi phí vận hành thực phát sinh, còn thành phần thứ năm chỉ là tín hiệu huấn luyện. Phần thưởng của cặp $i$ là tổng âm của năm thành phần, chia cho mẫu số chuẩn hóa của cặp, được định nghĩa ở phần chuẩn hóa phần thưởng theo từng cặp. Mô hình chính tính phạt mức phục vụ theo công thức~(\ref{eq:phatChuanHoa}). Bảng~\ref{tab:thamsoChiPhi} tổng hợp công thức và đơn giá của từng thành phần chi phí, phần thưởng của một cặp trong một ngày.
+Bốn thành phần đầu là chi phí vận hành thực phát sinh, còn thành phần thứ năm chỉ là tín hiệu huấn luyện. Phần thưởng của cặp $i$ là tổng âm của năm thành phần, chia cho mẫu số chuẩn hóa của cặp, được định nghĩa ở phần chuẩn hóa phần thưởng theo từng cặp. Mô hình chính tính phạt mức phục vụ theo công thức~(\ref{eq:phatChuanHoa}). Gom lại, phần thưởng của một cặp trong một ngày gồm năm thành phần với công thức và đơn giá như sau.
 
 \begin{table}[H]
     \centering
@@ -471,42 +528,64 @@ trong đó mẫu số là chi phí của một ngày vận hành xấu điển h
 
 Cả 300 tác tử dùng chung một mạng nơ-ron \parencite{gupta2017}, gồm hai phần tách rời. Mạng Actor có hai lớp ẩn kết nối đầy đủ, mỗi lớp 128 nơ-ron, hàm kích hoạt Tanh, và lớp cuối tuyến tính với softmax cho phân phối xác suất trên $K = 6$ mức đặt hàng. Mạng Critic có cấu trúc tương tự nhưng tham số riêng, cho ra giá trị $V_\phi(o_i^t)$.
 
-Quyết định của một tác tử và cách trọng số được cập nhật đi theo ba chặng, được vẽ ở Hình~\ref{fig:kienTrucAC}. Ở chặng vào, quan sát 44 chiều của cặp $i$ đi đồng thời vào hai mạng. Ở chặng ra, Actor cho 6 logit, qua softmax thành xác suất của 6 mức đặt hàng, còn Critic cho một giá trị. Ở chặng cập nhật, GAE được tính riêng cho từng cặp trên dữ liệu của một vòng thu thập, rồi toàn bộ mẫu được làm phẳng thành $1024 \times 300 = 307.200$ mẫu để cập nhật hai mạng bằng hai bộ tối ưu riêng.
+Quyết định của một tác tử và cách trọng số được cập nhật đi theo ba chặng, được vẽ ở Hình~\ref{fig:kienTrucAC}:
+\begin{itemize}
+    \item Chặng vào. Quan sát 44 chiều của cặp $i$ đi đồng thời vào hai mạng.
+    \item Chặng ra. Actor cho 6 logit, qua softmax thành xác suất của 6 mức đặt hàng, còn Critic cho một giá trị.
+    \item Chặng cập nhật. GAE được tính riêng cho từng cặp trên dữ liệu của một vòng thu thập, rồi toàn bộ mẫu được làm phẳng thành $1024 \times 300 = 307.200$ mẫu để cập nhật hai mạng bằng hai bộ tối ưu riêng.
+\end{itemize}
 
 \begin{figure}[H]
     \centering
-    \begin{tikzpicture}[
-        lop/.style={draw, rounded corners, align=center, font=\footnotesize,
-                    minimum height=0.95cm, minimum width=1.7cm, inner sep=3pt},
-        mui/.style={-{Stealth[length=2.2mm]}, thick},
-        nhan/.style={font=\footnotesize, align=center}]
-        \node[lop, fill=blue!8, minimum height=2.5cm] (o) {Quan sát\\ $o_i^t \in [0,1]^{44}$};
-        \node[lop, fill=green!15, right=0.9cm of o, yshift=0.78cm] (a1) {128 nơ-ron\\ Tanh};
-        \node[lop, fill=green!15, right=0.4cm of a1] (a2) {128 nơ-ron\\ Tanh};
-        \node[lop, fill=green!15, right=0.4cm of a2] (a3) {6 logit};
-        \node[lop, fill=green!25, right=0.4cm of a3] (pi) {Softmax\\ $\pi_\theta(a \mid o_i^t)$};
-        \node[lop, fill=orange!15, right=0.9cm of o, yshift=-0.78cm] (c1) {128 nơ-ron\\ Tanh};
-        \node[lop, fill=orange!15, right=0.4cm of c1] (c2) {128 nơ-ron\\ Tanh};
-        \node[lop, fill=orange!15, right=0.4cm of c2] (c3) {1 giá trị};
-        \node[lop, fill=orange!25, right=0.4cm of c3] (v) {$V_\phi(o_i^t)$};
-        \node[lop, fill=yellow!15, below=1.0cm of c1, xshift=0.6cm, minimum width=3.2cm] (gae)
-            {GAE tính riêng\\ cho từng cặp};
-        \node[lop, fill=yellow!15, right=0.5cm of gae, minimum width=3.2cm] (lo)
-            {Làm phẳng thành\\ 307.200 mẫu};
-        \node[lop, fill=yellow!15, right=0.5cm of lo, minimum width=3.2cm] (opt)
-            {Hai bộ tối ưu riêng\\ cắt gradient riêng};
-        \draw[mui] (o.east |- a1) -- (a1);
-        \draw[mui] (o.east |- c1) -- (c1);
-        \draw[mui] (a1) -- (a2);
-        \draw[mui] (a2) -- (a3);
-        \draw[mui] (a3) -- (pi);
-        \draw[mui] (c1) -- (c2);
-        \draw[mui] (c2) -- (c3);
-        \draw[mui] (c3) -- (v);
-        \draw[mui] (gae) -- (lo);
-        \draw[mui] (lo) -- (opt);
-        \node[nhan, above=0.08cm of a2] {Actor, tham số $\theta$};
-        \node[nhan, below=0.08cm of c2, xshift=1.8cm] {Critic, tham số $\phi$};
+    \begin{tikzpicture}[soDo, font=\small]
+        \tikzset{
+            noron/.style={circle, draw=#1, fill=#1!15, line width=0.5pt, inner sep=0pt, minimum size=3.2mm},
+            lienKet/.style={draw=#1!35, line width=0.3pt}}
+        % Vector quan sát 44 chiều chia theo nhóm đặc trưng
+        \foreach \y/\h/\c/\t in {0/0.6/khoNavy!80/{tồn kho, hàng về},
+                                 0.6/0.8/khoCam!80/{nhu cầu 7 ngày},
+                                 1.4/0.4/khoXanh!80/{tín hiệu cấp kho},
+                                 1.8/0.45/khoDo!65/{quy mô, giá, đáp ứng},
+                                 2.25/1.35/khoNavy!35/{lịch, 27 chiều}} {
+            \filldraw[fill=\c, draw=white, line width=0.6pt] (0,\y) rectangle (0.5,\y+\h);
+            \node[anchor=east, font=\scriptsize, text=khoNavy] at (-0.08,\y+\h/2) {\t};
+        }
+        \draw[khoNavy, line width=0.6pt] (0,0) rectangle (0.5,3.6);
+        \node[nhan, anchor=north] at (0.25,-0.05) {$o_i^t$, 44 chiều};
+        % Actor phía trên, Critic phía dưới
+        \foreach \nhanh/\yc/\cl in {A/2.85/khoXanh, C/0.75/khoCam} {
+            \foreach \lop/\x in {1/2.0, 2/3.3} {
+                \foreach \k in {0,...,3} \node[noron=\cl] (\nhanh\lop\k) at (\x,\yc-0.6+\k*0.4) {};
+            }
+            \foreach \i in {0,...,3} \foreach \j in {0,...,3} \draw[lienKet=\cl] (\nhanh1\i) -- (\nhanh2\j);
+            \foreach \i in {0,...,3} \draw[lienKet=\cl] (0.5,1.8) -- (\nhanh1\i);
+        }
+        \node[font=\scriptsize, text=khoXanh!60!black] at (2.65,1.92) {2 lớp $\times$ 128, Tanh};
+        \node[font=\scriptsize, text=khoCam!70!black] at (2.65,-0.18) {2 lớp $\times$ 128, Tanh};
+        \node[font=\small\bfseries, text=khoXanh!60!black] at (2.65,3.85) {Actor, tham số $\theta$};
+        \node[font=\small\bfseries, text=khoCam!70!black] at (2.65,-0.6) {Critic, tham số $\phi$};
+        % Đầu ra Actor: phân phối trên 6 mức đặt
+        \foreach \i/\p/\m in {0/0.25/0, 1/0.55/{0,5}, 2/1.0/1, 3/0.62/2, 4/0.3/3, 5/0.12/5} {
+            \filldraw[fill=khoXanh!75, draw=khoXanh!60!black, line width=0.3pt] (4.45+\i*0.44,2.45) rectangle ++(0.32,\p);
+            \node[font=\tiny, text=khoNavy, anchor=north] at (4.61+\i*0.44,2.43) {\m};
+        }
+        \draw[khoNavy, line width=0.4pt] (4.35,2.45) -- (7.0,2.45);
+        \foreach \j in {0,...,3} \draw[lienKet=khoXanh] (A2\j) -- (4.35,2.85);
+        \node[nhan, anchor=south] at (5.67,3.55) {$\pi_\theta(a \mid o_i^t)$};
+        \node[nhan, font=\scriptsize, anchor=north] at (5.67,2.18) {6 mức đặt, bội số của $\bar{D}^{(i)} \bar{L}$};
+        % Đầu ra Critic
+        \node[circle, draw=khoCam!80!black, fill=khoCam!25, minimum size=7mm, inner sep=0pt] (V) at (5.0,0.75) {$V$};
+        \foreach \j in {0,...,3} \draw[lienKet=khoCam] (C2\j) -- (V);
+        \node[nhan, anchor=north] at (5.0,0.3) {$V_\phi(o_i^t)$};
+        % Khối cập nhật
+        \node[khung, align=left, font=\footnotesize, text width=4.15cm, anchor=west] (up) at (8.0,1.8)
+            {\textbf{Cập nhật sau mỗi vòng}\\[2pt]
+             \textcolor{khoNavy}{\textbf{1.}} GAE riêng từng cặp\\
+             \textcolor{khoNavy}{\textbf{2.}} chuẩn hóa lợi thế\\
+             \textcolor{khoNavy}{\textbf{3.}} làm phẳng 307.200 mẫu\\
+             \textcolor{khoNavy}{\textbf{4.}} cập nhật \textcolor{khoXanh!60!black}{$\theta$} và \textcolor{khoCam!80!black}{$\phi$} bằng\\ \hspace*{1em}hai bộ tối ưu riêng};
+        \draw[muiXanh, dashed] (up.west |- 0,2.85) -- (7.15,2.85);
+        \draw[muiCam, dashed] (up.west |- 0,0.75) -- (V.east);
     \end{tikzpicture}
     \caption{Kiến trúc Actor--Critic và luồng cập nhật}
     \label{fig:kienTrucAC}
@@ -514,14 +593,26 @@ Quyết định của một tác tử và cách trọng số được cập nh�
 
 Hai mạng không dùng chung thân vì khi dùng chung, gradient của hàm mất mát giá trị lớn gấp khoảng 293 lần gradient chính sách. Phép cắt chuẩn gradient áp cho toàn bộ tham số nên tốc độ học hiệu dụng của Actor giảm khoảng 55 lần, và entropy đứng yên gần giá trị của phân phối đều trong giai đoạn đầu. Tách hai mạng và cắt gradient riêng cho từng mạng khắc phục hiện tượng này.
 
-Về chi tiết cài đặt, các lớp ẩn được khởi tạo trực giao (\textit{orthogonal}) với hệ số $\sqrt{2}$, còn lớp ra của Actor dùng hệ số 0,01 và của Critic dùng hệ số 1,0. Mục tiêu giá trị của Critic được chuẩn hóa bằng trung bình và phương sai trượt. Mỗi lượt lan truyền xuôi xử lý một lô quan sát của nhiều tác tử cùng lúc, nên số tham số của mạng không phụ thuộc vào số tác tử $N \times M$.
+Các chi tiết cài đặt còn lại như sau:
+\begin{itemize}
+    \item Các lớp ẩn được khởi tạo trực giao (\textit{orthogonal}) với hệ số $\sqrt{2}$, còn lớp ra của Actor dùng hệ số 0,01 và của Critic dùng hệ số 1,0.
+    \item Mục tiêu giá trị của Critic được chuẩn hóa bằng trung bình và phương sai trượt.
+    \item Mỗi lượt lan truyền xuôi xử lý một lô quan sát của nhiều tác tử cùng lúc, nên số tham số của mạng không phụ thuộc vào số tác tử $N \times M$.
+\end{itemize}
 
 \subsection{Quy trình huấn luyện IPPO}
 \label{subsec:quyTrinhTrain}
 
-Mỗi vòng huấn luyện bắt đầu bằng việc thu thập dữ liệu. Môi trường chạy $n_{\text{steps}} = 1024$ bước, và tại mỗi bước cả 300 tác tử cùng chọn hành động, nên mỗi vòng thu được $1024 \times 300 = 307.200$ mẫu $(o_i, a_i, r_i, o_i')$. Từ dữ liệu này, lợi thế $\hat{A}_t^{(i)}$ của từng tác tử $i$ được ước lượng bằng công thức~(\ref{eq:gae}) với $\gamma = 0{,}99$ và $\lambda = 0{,}95$. Lợi thế sau đó được chuẩn hóa theo trung bình và độ lệch chuẩn tính riêng cho mỗi cặp kho--mặt hàng, để các cặp có quy mô chi phí khác nhau đóng góp cân bằng vào gradient.
+Quy trình huấn luyện gồm năm bước:
+\begin{itemize}
+    \item Thu thập dữ liệu. Môi trường chạy $n_{\text{steps}} = 1024$ bước, và tại mỗi bước cả 300 tác tử cùng chọn hành động, nên mỗi vòng thu được $1024 \times 300 = 307.200$ mẫu $(o_i, a_i, r_i, o_i')$.
+    \item Ước lượng lợi thế. Lợi thế $\hat{A}_t^{(i)}$ của từng tác tử $i$ được ước lượng bằng công thức~(\ref{eq:gae}) với $\gamma = 0{,}99$ và $\lambda = 0{,}95$.
+    \item Chuẩn hóa lợi thế theo trung bình và độ lệch chuẩn tính riêng cho mỗi cặp kho--mặt hàng, để các cặp có quy mô chi phí khác nhau đóng góp cân bằng vào gradient.
+    \item Cập nhật mạng. Hàm mục tiêu có cắt ở công thức~(\ref{eq:ppoclip}) được tối ưu tối đa $E = 4$ lượt (\textit{epoch}) trên toàn bộ dữ liệu vừa thu, dừng sớm khi độ lệch KL xấp xỉ vượt 1,5 lần ngưỡng $\text{KL}_{\text{target}} = 0{,}02$. Tốc độ học của Actor là $\eta_a = 3 \times 10^{-4}$ và của Critic là $\eta_c = 1 \times 10^{-3}$, cả hai giảm tuyến tính theo tiến độ huấn luyện.
+    \item Lặp lại vòng trên trong 10.000 tập với mô hình chính và 1.000 tập với các thí nghiệm loại trừ. Mô hình chính được huấn luyện với ba hạt giống độc lập.
+\end{itemize}
 
-Sau khi có lợi thế, hàm mục tiêu có cắt ở công thức~(\ref{eq:ppoclip}) được tối ưu tối đa $E = 4$ lượt (\textit{epoch}) trên toàn bộ dữ liệu vừa thu. Quá trình cập nhật dừng sớm khi độ lệch KL xấp xỉ vượt 1,5 lần ngưỡng $\text{KL}_{\text{target}} = 0{,}02$. Tốc độ học của Actor là $\eta_a = 3 \times 10^{-4}$ và của Critic là $\eta_c = 1 \times 10^{-3}$, cả hai giảm tuyến tính theo tiến độ huấn luyện. Vòng lặp này được lặp lại trong 10.000 tập với mô hình chính và 1.000 tập với các thí nghiệm loại trừ, và mô hình chính được huấn luyện với ba hạt giống độc lập. Các siêu tham số huấn luyện được tổng hợp ở Bảng~\ref{tab:hyperparams}.
+Toàn bộ siêu tham số dùng trong quy trình trên được gom lại để tiện tra cứu.
 
 \begin{table}[htbp]
     \centering
@@ -555,14 +646,31 @@ Sau khi có lợi thế, hàm mục tiêu có cắt ở công thức~(\ref{eq:pp
 \section{Các biến thể mở rộng của mô hình}
 \label{sec:bienThe}
 
-Ngoài mô hình chính, đề tài xây dựng một biến thể kết hợp học tăng cường với dự báo nhu cầu (Câu hỏi 4) và một điều kiện đánh giá có nguồn cung chung giữa các kho (Câu hỏi 5). Mô hình chính được giữ nguyên để làm mốc so sánh.
+Ngoài mô hình chính, đề tài xây dựng hai phần mở rộng:
+\begin{itemize}
+    \item Một biến thể kết hợp học tăng cường với dự báo nhu cầu, dùng cho Câu hỏi 4.
+    \item Một điều kiện đánh giá có nguồn cung chung giữa các kho, dùng cho Câu hỏi 5.
+\end{itemize}
+
+Mô hình chính được giữ nguyên để làm mốc so sánh.
 
 \subsection{Mô hình dự báo nhu cầu}
 \label{subsec:bienTheDuBao}
 
 Mô hình chính chỉ biết nhu cầu của 7 ngày trước và lịch của ngày hiện tại, chưa có thông tin về nhu cầu sắp tới. Mô hình dự báo dưới đây cung cấp thông tin đó cho chính sách đối chứng dự báo rồi tối ưu ở Chương~\ref{chap:chapter4} và cho biến thể kết hợp dự báo.
 
-Mô hình dự báo là một mô hình LightGBM dùng chung cho cả 300 cặp, dự báo nhu cầu của ba ngày $t$, $t+1$ và $t+2$. Đầu vào của mô hình gồm nhu cầu của 1, 7, 14 và 28 ngày trước, trung bình 7 và 28 ngày gần nhất và nhu cầu trung bình của cặp. Ngoài lịch sử nhu cầu, mô hình nhận tỷ lệ giá so với giá trung bình, các đặc trưng lịch gồm thứ trong tuần, tháng, sự kiện, SNAP, cùng mã kho và mã mặt hàng.
+Mô hình dự báo là một mô hình LightGBM dùng chung cho cả 300 cặp, dự báo nhu cầu của ba ngày $t$, $t+1$ và $t+2$. Đầu vào của mô hình gồm:
+\begin{itemize}
+    \item Lịch sử nhu cầu:
+    \begin{itemize}
+        \item Nhu cầu của 1, 7, 14 và 28 ngày trước.
+        \item Trung bình 7 và 28 ngày gần nhất.
+        \item Nhu cầu trung bình của cặp.
+    \end{itemize}
+    \item Tỷ lệ giá so với giá trung bình.
+    \item Đặc trưng lịch gồm thứ trong tuần, tháng, sự kiện và SNAP.
+    \item Mã kho và mã mặt hàng.
+\end{itemize}
 
 Hàm mất mát (bình phương hoặc Tweedie) và số lá (31 hoặc 63) được chọn trên miền xác thực. Sau đó mô hình được huấn luyện lại trên miền huấn luyện và miền xác thực để dự báo cho miền kiểm thử.
 
@@ -631,7 +739,7 @@ Người quản lý cần nhìn kết quả theo kho, theo ngành hàng và toà
 
 Ngoài giao diện màn hình, nhóm thử nghiệm một lớp giao tiếp bằng ngôn ngữ tự nhiên dựa trên Model Context Protocol (MCP). MCP là giao thức chuẩn cho phép mô hình ngôn ngữ lớn (\textit{large language model}, LLM) gọi công cụ bên ngoài theo mô hình máy chủ--máy khách. Lớp này nằm phía trên IPPO và không tham gia trả lời các câu hỏi nghiên cứu.
 
-IPPO và MCP điều phối theo hai cách khác nhau. IPPO phù hợp khi hành động là lượng đặt hàng và tín hiệu phản hồi là chi phí, còn MCP phù hợp khi hệ thống cần trò chuyện với người dùng và gọi nhiều công cụ. Hai kiến trúc được ghép theo hướng bổ sung: LLM hiểu câu hỏi và chọn công cụ, còn IPPO vẫn là nơi ra quyết định định lượng. Bảng~\ref{tab:soSanhMCP} so sánh cách điều phối của hai kiến trúc.
+IPPO và MCP điều phối theo hai cách khác nhau. IPPO phù hợp khi hành động là lượng đặt hàng và tín hiệu phản hồi là chi phí, còn MCP phù hợp khi hệ thống cần trò chuyện với người dùng và gọi nhiều công cụ. Hai kiến trúc được ghép theo hướng bổ sung: LLM hiểu câu hỏi và chọn công cụ, còn IPPO vẫn là nơi ra quyết định định lượng. Khác biệt giữa hai cách điều phối thể hiện ở bốn khía cạnh sau.
 
 \begin{table}[H]
     \centering
@@ -650,7 +758,7 @@ IPPO và MCP điều phối theo hai cách khác nhau. IPPO phù hợp khi hành
     \end{tabular}
 \end{table}
 
-Luồng xử lý đi theo thứ tự câu hỏi $\rightarrow$ chọn công cụ $\rightarrow$ thực thi $\rightarrow$ trả lời. Ví dụ, người quản lý hỏi ``tuần tới kho CA\_3 có mặt hàng nào sắp thiếu không?''. LLM chọn công cụ cảnh báo thiếu hàng. Máy chủ MCP lấy tồn kho, hàng đang về và lịch từ môi trường mô phỏng, chạy chính sách IPPO tới ngày cần xem, rồi trả danh sách mặt hàng để LLM viết câu trả lời. Bản thử nghiệm có năm công cụ và một tài nguyên, dùng chung phần lõi mô phỏng với ứng dụng. Bảng~\ref{tab:congCuMCP} liệt kê các công cụ này và chức năng của từng công cụ.
+Luồng xử lý đi theo thứ tự câu hỏi $\rightarrow$ chọn công cụ $\rightarrow$ thực thi $\rightarrow$ trả lời. Ví dụ, người quản lý hỏi ``tuần tới kho CA\_3 có mặt hàng nào sắp thiếu không?''. LLM chọn công cụ cảnh báo thiếu hàng. Máy chủ MCP lấy tồn kho, hàng đang về và lịch từ môi trường mô phỏng, chạy chính sách IPPO tới ngày cần xem, rồi trả danh sách mặt hàng để LLM viết câu trả lời. Bản thử nghiệm dùng chung phần lõi mô phỏng với ứng dụng, gồm năm công cụ và một tài nguyên với chức năng như sau.
 
 \begin{table}[H]
     \centering

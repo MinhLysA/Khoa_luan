@@ -42,6 +42,56 @@
 \usepackage{graphicx}
 \usepackage{tikz}
 \usetikzlibrary{calc, arrows.meta, positioning, fit, backgrounds}
+% --- SƠ ĐỒ: bảng màu và biểu tượng dùng chung (tồn kho đa kho) ---
+\usetikzlibrary{shapes.geometric, decorations.pathreplacing, shadows}
+\definecolor{khoNavy}{HTML}{1F3A5F}
+\definecolor{khoCam}{HTML}{E07B24}
+\definecolor{khoXanh}{HTML}{2A9D8F}
+\definecolor{khoDo}{HTML}{C0392B}
+\definecolor{khoNen}{HTML}{F3F5F8}
+\tikzset{
+    % Cỡ chữ cố định trong sơ đồ, không phụ thuộc cỡ chữ 13pt của thân bài
+    soDo/.style={execute at begin picture={%
+        \renewcommand\small{\fontsize{10.95}{13.6}\selectfont}%
+        \renewcommand\footnotesize{\fontsize{10}{12}\selectfont}%
+        \renewcommand\scriptsize{\fontsize{8}{9.5}\selectfont}%
+        \renewcommand\tiny{\fontsize{6}{7}\selectfont}}},
+    khung/.style={draw=khoNavy!60, fill=khoNen, rounded corners=3pt, line width=0.6pt,
+                  align=center, font=\small, inner sep=4pt},
+    khungTacTu/.style={khung, draw=khoXanh, fill=khoXanh!10},
+    khungDam/.style={khung, draw=khoNavy, fill=khoNavy, text=white},
+    khungChiPhi/.style={khung, draw=khoDo!70, fill=khoDo!7},
+    nhan/.style={font=\footnotesize, text=khoNavy, align=center},
+    muiTen/.style={-{Stealth[length=2.6mm, width=2mm]}, line width=0.9pt, draw=khoNavy},
+    muiCam/.style={muiTen, draw=khoCam},
+    muiXanh/.style={muiTen, draw=khoXanh},
+    muiDo/.style={muiTen, draw=khoDo},
+    % Nhà kho: #1 = mức đầy (0..1) của thanh sức chứa
+    pics/kho/.style={code={
+        \fill[khoNavy!12] (-0.9,0) rectangle (0.9,0.95);
+        \draw[khoNavy, line width=0.8pt] (-0.9,0) -- (-0.9,0.95) -- (0,1.45) -- (0.9,0.95) -- (0.9,0) -- cycle;
+        \fill[khoNavy!45] (-0.3,0) rectangle (0.3,0.6);
+        \foreach \x in {-0.3,-0.1,0.1} \draw[khoNavy!70, line width=0.3pt] (\x+0.1,0) -- (\x+0.1,0.6);
+        \foreach \x/\y in {-0.75/0, -0.75/0.22, 0.45/0, 0.45/0.22}
+            \filldraw[fill=khoCam!70, draw=khoCam!90!black, line width=0.3pt] (\x,\y) rectangle ++(0.26,0.2);
+        \draw[khoNavy, line width=0.5pt] (1.05,0) rectangle (1.25,1.2);
+        \fill[khoCam] (1.05,0) rectangle (1.25,{1.2*#1});
+    }},
+    % Xe tải giao hàng
+    pics/xe/.style={code={
+        \filldraw[fill=khoCam!80, draw=khoCam!70!black, line width=0.5pt, rounded corners=1pt] (-0.9,0.15) rectangle (0.3,0.85);
+        \filldraw[fill=khoNavy!80, draw=khoNavy, line width=0.5pt, rounded corners=1.5pt] (0.32,0.15) -- (0.32,0.65) -- (0.6,0.65) -- (0.85,0.4) -- (0.85,0.15) -- cycle;
+        \fill[white!85!khoNavy] (0.4,0.42) rectangle (0.58,0.6);
+        \foreach \x in {-0.6,0.55} \filldraw[fill=khoNavy, draw=white, line width=0.5pt] (\x,0.13) circle (0.13);
+    }},
+    % Khách hàng
+    pics/khach/.style={code={
+        \foreach \x/\c in {-0.35/khoNavy!55, 0.35/khoNavy!55, 0/khoNavy} {
+            \fill[\c] (\x,0.78) circle (0.17);
+            \fill[\c] (\x-0.27,0.05) .. controls (\x-0.27,0.55) and (\x+0.27,0.55) .. (\x+0.27,0.05) -- cycle;
+        }
+    }},
+}
 \usepackage{float}
 \usepackage{placeins}  % \FloatBarrier: giữ bảng, hình của chương trước mục tóm tắt
 % Trang chỉ chứa bảng/hình: đặt từ đầu trang thay vì căn giữa theo chiều dọc (tránh khoảng trắng lớn phía trên).
@@ -252,7 +302,7 @@
 }
 \renewcommand{\labelitemi}{--}
 \renewcommand{\labelitemii}{+}
-\renewcommand{\labelitemiii}{*}
+\renewcommand{\labelitemiii}{\textbullet}
 \renewcommand{\labelitemiv}{$\cdot$}
 
 \setlist[itemize,1]{
@@ -265,6 +315,14 @@
 % Ý con của một gạch đầu dòng dùng dấu "+", nhãn thẳng hàng với chữ của ý cha.
 \setlist[itemize,2]{
     label=+,
+    labelindent=0pt,
+    leftmargin=*,
+    align=left,
+    labelsep=0.35cm
+}
+% Ý nhỏ hơn dấu "+" dùng dấu chấm.
+\setlist[itemize,3]{
+    label=\textbullet,
     labelindent=0pt,
     leftmargin=*,
     align=left,
