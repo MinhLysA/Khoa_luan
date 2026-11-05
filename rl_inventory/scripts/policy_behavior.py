@@ -29,12 +29,15 @@ from common import ROOT, load_config, load_data, make_env, make_policies
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
+
+PHAY = FuncFormatter(lambda v, _: f"{v:g}".replace(".", ","))
 
 COVER_BINS = [0, 1, 2, 3, 5, 8, np.inf]
 
 
-TEN_NHOM = {"inventory": "Tồn kho & vị thế tồn kho", "demand_history": "Lịch sử cầu 7 ngày",
-            "pipeline": "Hàng đang về (pipeline)", "fill_rate": "Fill rate 30 ngày",
+TEN_NHOM = {"inventory": "Tồn kho & vị thế tồn kho", "demand_history": "Lịch sử nhu cầu 7 ngày",
+            "pipeline": "Hàng đang về", "fill_rate": "Tỷ lệ đáp ứng 30 ngày",
             "scale": "Đặc trưng quy mô", "warehouse": "Tín hiệu cấp kho",
             "price": "Tín hiệu giá", "event_lookahead": "Sự kiện sắp tới",
             "forecast": "Dự báo nhu cầu", "lagrange": "Nhân tử Lagrange",
@@ -170,31 +173,35 @@ def main():
 
 
 def _plot(beh, perm, thr, path):
+    plt.rcParams.update({"axes.spines.top": False, "axes.spines.right": False})
     fig, axes = plt.subplots(1, 3, figsize=(17, 4.6))
     for name, b in beh.items():
         labels = [r["cover_days"] for r in b["bins"]]
-        axes[0].plot(labels, [r["p_order"] * 100 for r in b["bins"]], "o-", label=name)
-    axes[0].set_xlabel("Số ngày tồn kho (vị thế tồn kho / cầu TB)")
+        axes[0].plot(labels, [r["p_order"] * 100 for r in b["bins"]], "o-", label=name.replace("(cùng mức PV)", "cùng mức phục vụ"))
+    axes[0].set_xlabel("Số ngày tồn kho (vị thế tồn kho / nhu cầu TB)")
     axes[0].set_ylabel("Xác suất đặt hàng (%)")
-    axes[0].set_title("Quyết định đặt hàng theo mức tồn kho")
+    axes[0].set_title("(a) Quyết định đặt hàng theo mức tồn kho")
     axes[0].legend(fontsize=8)
 
     bins = np.linspace(0.4, 1.0, 31)
     for name, b in beh.items():
-        axes[1].hist(b["_fill_pair"], bins=bins, alpha=0.55, label=name)
+        axes[1].hist(b["_fill_pair"], bins=bins, alpha=0.55, label=name.replace("(cùng mức PV)", "cùng mức phục vụ"))
     axes[1].axvline(thr, c="k", ls="--", lw=1, label=f"Ngưỡng {thr:.0%}")
-    axes[1].set_xlabel("Fill rate của từng cặp kho-SKU")
+    axes[1].set_xlabel("Tỷ lệ đáp ứng của từng cặp kho–mặt hàng")
     axes[1].set_ylabel("Số cặp")
-    axes[1].set_title("Phân bố fill rate theo cặp")
+    axes[1].set_title("(b) Phân bố tỷ lệ đáp ứng theo cặp")
     axes[1].legend(fontsize=8)
 
     items = sorted(perm.items(), key=lambda kv: kv[1]["delta_cost_percent"])
     axes[2].barh([k for k, _ in items], [v["delta_cost_percent"] for _, v in items],
                  color="#4C72B0")
     axes[2].set_xlabel("Chi phí tăng khi xáo trộn nhóm đặc trưng (%)")
-    axes[2].set_title("Mức quan trọng của các nhóm trạng thái")
+    axes[2].set_title("(c) Mức quan trọng của các nhóm trạng thái")
+    for a in axes[:2]:                                   # dau thap phan kieu Viet (truc so)
+        a.yaxis.set_major_formatter(PHAY)
+    axes[1].xaxis.set_major_formatter(PHAY)
     plt.tight_layout()
-    plt.savefig(path, dpi=140)
+    plt.savefig(path, dpi=200)
     plt.close()
 
 

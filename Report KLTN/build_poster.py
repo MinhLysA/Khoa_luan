@@ -320,7 +320,7 @@ bullets(XR, y, CW, 4.2, "Kết luận", [
     [("Phục vụ tốt hơn, chi phí tương đương: ", B),
      ("tỷ lệ đáp ứng cao hơn chính sách cổ điển 1,4–5,3 điểm; rẻ hơn (s,S), EOQ ở cả 3 hạt giống, "
       "chỉ đắt hơn Newsvendor theo nhóm 1,6%.", {})],
-    [("Ở cùng mức phục vụ, ", B), ("chính sách cổ điển phải tốn thêm 7–22% chi phí.", {})],
+    [("Ở cùng mức phục vụ, ", B), ("chính sách cổ điển phải tốn thêm 7–16% chi phí, EOQ trên 22%.", {})],
     [("Dự báo nhu cầu là thông tin đáng giá nhất: ", B),
      ("kết hợp dự báo rẻ hơn mọi chính sách cổ điển 6,2–24,1%, ngang Newsvendor dùng cùng dự báo.", {})],
     [("Thiết kế phần thưởng quyết định việc học: ", B),

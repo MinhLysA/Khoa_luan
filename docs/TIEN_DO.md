@@ -1,37 +1,33 @@
 # Theo dõi tiến độ khóa luận (PS-IPPO tồn kho đa kho)
 
-Cập nhật: 01/11/2026 · Chú thích: ✅ xong · 🟡 đang triển khai / chờ train · ⬜ chưa làm · ⚠️ cần tự kiểm tra
+Cập nhật: 05/11/2026 · Chú thích: ✅ xong · 🟡 đang triển khai / chờ train · ⬜ chưa làm · ⚠️ cần tự kiểm tra
 
 > **[25/09/2026] Quyết định thiết kế:** Bật `include_price_signal: true` → môi trường dùng **44 chiều** (thêm tín hiệu giảm giá [V3-4]). Cần cập nhật Chương 3 báo cáo (Bảng đối chiếu biến trạng thái, công thức obs\_per\_pair, mô tả đặc trưng giá) trước khi nộp.
 
 > Từ 31/10 nhóm train local, đã bỏ hai notebook Colab. Của đợt 10.000 episode (19 lần chạy, 3 seed, số trong C4 hiện tại), trên máy chỉ còn mô hình seed 42 ở `app/demo_data/best_model.pth`; code hiện tại tái lập đúng 2.052.496 và 90,65% của C4. Hai seed còn lại, ablation và log học không còn; `KLTN_final` chia sẻ trên Drive chỉ có `results/` của đợt 4.000 episode (01/10). `python run.py full` sẽ train lại (theo phương án rút gọn 01/11: 3 seed và 16 ablation), số trong C4 sẽ đổi theo. Nếu còn bản 10.000 episode đầy đủ (`checkpoints/`, `results/`), chép vào `rl_inventory/` trước khi chạy, các lần đã xong tự bỏ qua.
 
-## 0. Trạng thái 03/11 — đã train xong, còn chạy đánh giá
+## 0. Trạng thái 05/11 — đã chạy xong eval_all, đã điền số vào báo cáo
 
-**Train:** xong 27/27 lần chạy (3 mô hình chính, 16 ablation/Câu 3/hold-out, 3 Câu 4 `forecast_safety`, 5 thử `phi_dv`).
-Không train thêm. U1 (`forecast_obs`) và U2 (`safety_factor`) bỏ hẳn: U5 (`forecast_safety`) đã trả lời Câu 4.
+**Train:** xong 27/27 lần chạy. **Đánh giá:** `eval_all` xong 04/11 01:37, `KET_QUA.txt` sinh 05/11.
 
 **Kết quả đã chốt (KET_QUA.txt):**
-- Câu 1, so trực tiếp, 3 seed: IPPO 2.055.442, fill 90,9%. Rẻ hơn (s,S) −1,7% và EOQ −17,8% (3/3 seed), đắt hơn NV theo nhóm +1,6% (3/3), đắt hơn (s,S) biết sức chứa +0,8% (2/3), đắt hơn NV dự báo +8,2% (khác loại thông tin → so ở Câu 4).
-- Câu 4 (U5), 3 seed: 1.897.517, fill 86,7%. Rẻ hơn mọi chính sách cổ điển −6,2% đến −24,1% (3/3 seed, 30/30 lần), ngang NV dự báo −0,1% (rẻ hơn có ý nghĩa 1/3 seed). Mô hình được chọn ở tập 25–50; cố định z thì trùng NV dự báo → phần lớn lợi thế do dự báo.
-- Câu 2, 3, ablation, độ bền: không đổi so với 20/10.
+- Câu 1, so trực tiếp, 3 seed: IPPO 2.055.442, fill 90,9%. Rẻ hơn (s,S) −1,7% và EOQ −17,8% (3/3 seed); đắt hơn NV theo nhóm +1,6%, (s,S) biết sức chứa +0,8%, NV dự báo +8,2% (khác loại thông tin).
+- Câu 1, cùng mức phục vụ (lưới mịn), 3/3 seed: đối chứng cổ điển đắt hơn IPPO 7,3–16,3% (EOQ 22,3% và 29,2%; seed 1 EOQ không đạt mức fill). NV dự báo rẻ hơn IPPO 3,3–4,3%. Giữ ở 36/36 bộ đơn giá và mọi giai đoạn nhu cầu.
+- Câu 4: 1.897.517, fill 86,7%. Rẻ hơn mọi chính sách cổ điển 6,2–24,1% (so trực tiếp) và 6,0–17,8% (cùng mức phục vụ); ngang NV dự báo (−0,1%).
+- Câu 5, nguồn cung chung (zero-shot, đối chứng tinh chỉnh lại): rẻ hơn mọi chính sách cổ điển 1,1–15,3% (vừa) và 2,8–22,4% (chặt).
 
-**Còn phải chạy:** `cd rl_inventory; py -3.12 run.py eval_all` (khoảng 5–6 giờ, chạy nối tiếp được). Chi tiết ở mục "Việc cần chạy" bên dưới.
+**Báo cáo:** đã thay hết `[SO-MOI]` ở C4, C5; thêm số vào tóm tắt VN/EN; viết mục nguồn cung chung (Bảng `tab:nguonCung`). Hình C4 vẽ lại bằng `rl_inventory/scripts/ve_hinh_bao_cao.py` (nhãn tiếng Việt, số mới).
 
-**Báo cáo:** C1, C3, C4, C5, tóm tắt đã sửa theo 5 câu hỏi mới, biên dịch sạch (105 trang). Còn 10 chỗ `% [SO-MOI]` chờ số sau `eval_all` (C4: 8, C5: 2).
+**⚠️ Rủi ro cần biết:** NV dự báo tinh chỉnh ra tỷ lệ tới hạn 0,60, đúng cận dưới của lưới (`tune_baselines.py`, `compare_same_service.py`). Nếu bị hỏi "NV dự báo có rẻ hơn nữa không nếu hạ CR", câu trả lời trung thực là chưa thử; mở rộng lưới xuống 0,5 cần chạy lại tune + đường biên NV dự báo.
 
-### Việc cần chạy (người dùng tự chạy)
+### Việc còn lại (người dùng tự làm)
 
-| # | Lệnh | Sinh ra | Thay vào báo cáo |
-|---|---|---|---|
-| 1 | `py -3.12 run.py eval_all` | Lưới mịn (s,S) biết sức chứa + NV dự báo + đường biên theo nhóm (~4 giờ), cùng mức phục vụ main ×3 và U5 ×3 | C4 mục 4.4.4 (Bảng 4.9), Bảng 4.10, mục 4.7 (dòng `[SO-MOI]`); C5 đoạn Câu 1 |
-| | (cùng lệnh) | Zero-shot nguồn cung chung chặt/vừa (~20 phút) | C4 mục 4.9.2, đoạn Câu 5 ở mục 4.11; C5 |
-| | (cùng lệnh) | Chạy lại giai đoạn nhu cầu, sốc cầu, độ nhạy, độ bền với tham số "cùng mức" lưới mịn | Bảng 4.11–4.13 và 4.20 (cột "cùng mức"); thêm cột (s,S)-K vào Bảng 4.19 |
-| | (cùng lệnh) | Đánh giá lại ablation/hold-out/phi_dv với baseline vừa tinh chỉnh (số IPPO không đổi) | Kiểm tra Bảng 4.14–4.16 có lệch không |
-| 2 | Mở `results/KET_QUA.txt` | Số cuối | Tìm `[SO-MOI]` trong `Report KLTN/content/*.tex`, mỗi comment ghi mục cần lấy |
-| 3 | `Report KLTN/compile.bat` | PDF | Kiểm tra lại |
-| 4 | `cd rl_inventory; py -3.12 run.py demo_data` (máy có `checkpoints/best_model_main_s42.pth` và `results/`), rồi commit `app/demo_data/` | Mô hình hạt giống 1 mới + `app/demo_data/ketqua/*.json` (summary, multiseed main và dự báo, rq3, theo quy mô, sốc cầu) | Demo hiện số 3 hạt giống và thẻ Câu 4 trên mọi máy, không cần `results/` |
-| 5 | Sửa số "7–22%" trong `Report KLTN/build_poster.py` theo KET_QUA.txt mục 1, chạy `py -3.13 build_poster.py` | Poster | Đang là số hạt giống 1, giống chỗ `[SO-MOI]` ở C4 |
+| # | Việc | Ghi chú |
+|---|---|---|
+| 1 | Dựng lại poster: `py -3.13 build_poster.py` (máy có `python-pptx`) | Số "7–22%" đã sửa thành "7–16%, EOQ trên 22%" trong `build_poster.py` |
+| 2 | `cd rl_inventory; py -3.12 run.py demo_data` rồi commit `app/demo_data/` | Demo hiện số 3 hạt giống và thẻ Câu 4 |
+| 3 | Kiểm tra tác giả bài SSRN (Nam và cộng sự) | ⚠️ |
+| 4 | Commit | |
 
 ## 0a. Phương án rút gọn 01/11 (chờ giảng viên duyệt)
 
@@ -43,7 +39,7 @@ Không train thêm. U1 (`forecast_obs`) và U2 (`safety_factor`) bỏ hẳn: U5 
 | `run.py check` | ✅ 01/11: GPU RTX 3050 Laptop (cuda), đã cài `lightgbm`; thiếu `data/raw` (không chặn dự báo) |
 | `run.py full --quick` trên code cuối | ⬜ lượt 01/11 dừng giữa chừng ở bước U5 theo chủ ý, chưa chạy trọn |
 | Train thật theo phương án | ⬜ |
-| Thay số vào C4, C5, abstract (các chỗ `[SO-MOI]`) | ⬜ sau khi train |
+| Thay số vào C4, C5, abstract (các chỗ `[SO-MOI]`) | ✅ 05/11 |
 
 ## 0. Phương án 31/10: code đã xong, chờ chạy
 
@@ -68,7 +64,7 @@ Mọi tính năng mới nằm sau cờ, tắt mặc định; mô hình chính gi
 | C2, tài liệu tham khảo | ✅ thêm 8 nguồn, đã đối chiếu tác giả, trang, DOI; bảng so sánh có hàng chính sách đối chứng; sửa câu CD-PPO theo bài gốc | Maggiar 2025 là poster workshop NeurIPS, không viết là hội nghị chính |
 | C5 hướng phát triển | ✅ bảng 9 hướng | Thêm mục X chưa làm kèm lý do; viết lại hạn chế theo kết quả mới |
 | Lý thuyết và phương pháp C1–C4 | ✅ 31/10: thêm lý thuyết dự báo, CMDP, CTDE, biến thể mở rộng, hai đối thủ mới, giao thức đường biên, thống kê | — |
-| Phần kết quả C4, C5, abstract | ⬜ | Viết sau khi có số; mọi chỗ cần đổi có comment `% [SO-MOI]` |
+| Phần kết quả C4, C5, abstract | ✅ 05/11 | Đã điền số từ `KET_QUA.txt` |
 
 ---
 
@@ -86,7 +82,7 @@ Mọi tính năng mới nằm sau cờ, tắt mặc định; mô hình chính gi
 | App Streamlit 4 trang + MCP prototype | ✅ |
 | **Đợt train cuối (3 main + 16 ablation/hold-out)** | ✅ 19/19 (20/10); file số liệu gốc không còn trên máy, chỉ còn mô hình seed 42 |
 | Báo cáo LaTeX (102 trang) | 🟡 lý thuyết, phương pháp và kết luận đã cập nhật theo số seed 42; số cuối chờ train xong |
-| Poster | 🟡 04/11: `Report KLTN/Poster_KLTN.pptx` dựng trên khung Khoa CNTT (`Poster.pptx` là mẫu của đề tài khác), sinh lại bằng `build_poster.py`; số cùng mức phục vụ 7,3–22,3% chờ `eval_all` |
+| Poster | 🟡 04/11: `Report KLTN/Poster_KLTN.pptx` dựng trên khung Khoa CNTT (`Poster.pptx` là mẫu của đề tài khác), sinh lại bằng `build_poster.py`; 05/11 đã sửa số trong `build_poster.py`, cần chạy lại script |
 
 ---
 

@@ -192,7 +192,9 @@ NGAN = {"(s,S)": "(s,S)", "(s,S) theo nhóm": "(s,S)-N", "EOQ": "EOQ", "EOQ theo
         "Newsvendor": "NV", "Newsvendor theo nhóm": "NV-N",
         "(s,S) biết sức chứa": "(s,S)-K", "Newsvendor dự báo": "NV-DB",
         "(s,S) (cùng mức PV)": "(s,S)=PV", "Newsvendor (cùng mức PV)": "NV=PV",
-        "(s,S) biết sức chứa (cùng mức PV)": "(s,S)-K=PV", "Newsvendor dự báo (cùng mức PV)": "NV-DB=PV"}
+        "(s,S) biết sức chứa (cùng mức PV)": "(s,S)-K=PV", "Newsvendor dự báo (cùng mức PV)": "NV-DB=PV",
+        "EOQ (cùng mức PV)": "EOQ=PV", "EOQ theo nhóm (cùng mức PV)": "EOQ-N=PV",
+        "(s,S) theo nhóm (cùng mức PV)": "(s,S)-N=PV", "Newsvendor theo nhóm (cùng mức PV)": "NV-N=PV"}
 ABL = ["abl_reward_cu", "abl_trunk", "abl_nocal", "abl_nowh", "abl_event", "abl_warm"]
 GACH = "=" * 100
 

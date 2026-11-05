@@ -38,6 +38,9 @@ from forecast_demand import du_bao_lai
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
+
+PHAY = FuncFormatter(lambda v, _: f"{v:g}".replace(".", ","))
 
 VOL_GROUPS = ["Ổn định", "Trung bình", "Biến động"]
 
@@ -212,7 +215,8 @@ def main():
            "n_days_per_group": {g: int(m.sum()) for g, m in groups.items()},
            "B1_regimes": b1, "B1_cost_gap_IPPO_vs_percent": gaps,
            "B1_cost_gap_ci95_block_bootstrap": ci,
-           "B2_shock": {"start": s0, "len": L, "results": b2}}
+           "B2_shock": {"start": s0, "len": L, "results": b2,
+                        "daily_fill_from_day": pre[0], "daily_fill": traj}}
     p = out_dir / f"regime_analysis{suffix}.json"
     p.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"Da luu {p}")
@@ -220,54 +224,77 @@ def main():
     _plot(b1, gaps, traj, s0, L, pre, out_dir, suffix)
 
 
+# Hinh dua vao bao cao: chi 5 chinh sach co trong bang (day du so lieu nam o JSON).
+# Mau theo thu tu bang mau phan loai da kiem dinh (xanh duong, cam, xanh ngoc, vang, hong).
+HINH = {"IPPO": ("IPPO", "#2a78d6"),
+        "(s,S)": ("(s,S)", "#eb6834"),
+        "Newsvendor": ("Newsvendor", "#1baf7a"),
+        "(s,S) (cùng mức PV)": ("(s,S) cùng mức phục vụ", "#eda100"),
+        "Newsvendor (cùng mức PV)": ("Newsvendor cùng mức phục vụ", "#e87ba4")}
+
+
 def _plot(b1, gaps, traj, s0, L, pre, out_dir, suffix):
-    names = list(b1)
+    plt.rcParams.update({"axes.spines.top": False, "axes.spines.right": False})
+    names = [n for n in HINH if n in b1]
     cats = VOL_GROUPS + [g for g in b1["IPPO"] if g not in VOL_GROUPS
                          and g != "Toàn miền test"]
-    fig, axes = plt.subplots(1, 2, figsize=(15, 4.8))
+    nhan_cat = [c.replace("Mùa lễ (T11-T12)", "Mùa lễ") for c in cats]
+    fig, axes = plt.subplots(1, 2, figsize=(14, 4.6))
     w = 0.8 / len(names)
     x = np.arange(len(cats))
     for i, n in enumerate(names):
-        axes[0].bar(x + i * w, [b1[n][c]["fill_rate"] * 100 for c in cats], w, label=n)
+        axes[0].bar(x + i * w, [b1[n][c]["fill_rate"] * 100 for c in cats], w * 0.9,
+                    label=HINH[n][0], color=HINH[n][1])
     axes[0].set_xticks(x + 0.4 - w / 2)
-    axes[0].set_xticklabels(cats, rotation=25, ha="right")
-    axes[0].set_ylim(60, 100)
-    axes[0].set_ylabel("Fill rate (%)")
-    axes[0].set_title("Fill rate theo giai đoạn nhu cầu")
-    axes[0].legend(fontsize=7)
+    axes[0].set_xticklabels(nhan_cat, rotation=25, ha="right")
+    axes[0].set_ylim(75, 96)
+    axes[0].set_ylabel("Tỷ lệ đáp ứng (%)")
+    axes[0].set_title("(a) Tỷ lệ đáp ứng theo giai đoạn")
+    axes[0].grid(axis="y", alpha=0.3)
+    axes[0].legend(fontsize=8, ncol=2, loc="upper right")
 
-    refs = [r for r in gaps if "cùng mức" in r] or list(gaps)
-    w2 = 0.8 / len(refs)
+    refs = [r for r in ("(s,S) (cùng mức PV)", "Newsvendor (cùng mức PV)") if r in gaps]
+    w2 = 0.8 / max(len(refs), 1)
     for i, r in enumerate(refs):
-        axes[1].bar(x + i * w2, [gaps[r][c] for c in cats], w2, label=f"IPPO so với {r}")
-    axes[1].axhline(0, c="k", lw=0.8)
+        axes[1].bar(x + i * w2, [gaps[r][c] for c in cats], w2 * 0.9,
+                    label=f"So với {HINH[r][0]}", color=HINH[r][1])
+    axes[1].axhline(0, c="#52514e", lw=0.8)
     axes[1].set_xticks(x + 0.4 - w2 / 2)
-    axes[1].set_xticklabels(cats, rotation=25, ha="right")
-    axes[1].set_ylabel("Chênh lệch chi phí/ngày (%)\n(âm = IPPO rẻ hơn)")
-    axes[1].set_title("Chênh lệch chi phí IPPO theo giai đoạn")
-    lo = min(min(gaps[r][c] for c in cats) for r in refs)
-    axes[1].set_ylim(min(lo * 1.35, -1), max(0, max(max(gaps[r][c] for c in cats) for r in refs)) + 1)
-    axes[1].legend(fontsize=7, loc="lower left")
+    axes[1].set_xticklabels(nhan_cat, rotation=25, ha="right")
+    axes[1].set_ylabel("Chênh lệch chi phí mỗi ngày (%)\n(âm là IPPO rẻ hơn)")
+    axes[1].set_title("(b) Chênh lệch chi phí của IPPO ở cùng mức phục vụ")
+    axes[1].grid(axis="y", alpha=0.3)
+    thap = min(min(gaps[r][c] for c in cats) for r in refs) if refs else -1
+    axes[1].set_ylim(thap * 1.35, 0.5)                  # chua cho cho chu giai duoi cac cot
+    axes[1].legend(fontsize=8, loc="lower right")
+    for a in fig.axes:                                   # dau thap phan kieu Viet
+        a.yaxis.set_major_formatter(PHAY)
     plt.tight_layout()
-    plt.savefig(out_dir / f"regime_analysis{suffix}.png", dpi=140)
+    plt.savefig(out_dir / f"regime_analysis{suffix}.png", dpi=200)
     plt.close()
 
+    traj = {f: tr for f, tr in traj.items() if f in ("1.5", "0.5")}
     if not traj:
         return
     fig, axes = plt.subplots(1, len(traj), figsize=(7 * len(traj), 4.2), squeeze=False)
+    tieu_de = {"1.5": "(a) Nhu cầu tăng 50%", "0.5": "(b) Nhu cầu giảm 50%"}
     for ax, (f, tr) in zip(axes[0], traj.items()):
-        for n, v in tr.items():
-            v = np.asarray(v, float)
+        for n in [n for n in HINH if n in tr]:
+            v = np.asarray(tr[n], float)
             k = 7
             sm = np.convolve(np.nan_to_num(v, nan=1.0), np.ones(k) / k, mode="valid")
-            ax.plot(np.arange(len(sm)) + pre[0] + k - 1, sm * 100, label=n, lw=1.3)
-        ax.axvspan(s0, s0 + L, color="red", alpha=0.1, label="Cửa sổ sốc")
-        ax.set_title(f"Sốc cầu x{f}: fill rate ngày (trượt 7 ngày)")
-        ax.set_xlabel("Chỉ số ngày (M5)")
-        ax.set_ylabel("Fill rate (%)")
-        ax.legend(fontsize=7)
+            ax.plot(np.arange(len(sm)) + pre[0] + k - 1, sm * 100, label=HINH[n][0],
+                    color=HINH[n][1], lw=2.4 if n == "IPPO" else 1.4)
+        ax.axvspan(s0, s0 + L, color="#e34948", alpha=0.08, label="28 ngày bị sốc")
+        ax.set_title(tieu_de.get(f, f"Nhu cầu nhân {f}"))
+        ax.set_xlabel("Ngày trong dữ liệu M5")
+        ax.set_ylabel("Tỷ lệ đáp ứng, trung bình trượt 7 ngày (%)")
+        ax.grid(alpha=0.3)
+        ax.legend(fontsize=8, loc="lower left")
+    for a in fig.axes:
+        a.yaxis.set_major_formatter(PHAY)
     plt.tight_layout()
-    plt.savefig(out_dir / f"shock_test{suffix}.png", dpi=140)
+    plt.savefig(out_dir / f"shock_test{suffix}.png", dpi=200)
     plt.close()
 
 
