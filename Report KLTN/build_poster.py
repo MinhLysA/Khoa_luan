@@ -1,6 +1,7 @@
 """Dựng poster KLTN trên khung mẫu Khoa CNTT TDTU (Report KLTN/Poster.pptx)."""
 import copy
 import io
+import os
 import sys
 
 import qrcode
@@ -15,7 +16,7 @@ from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
 from pptx.oxml.ns import qn
 from pptx.util import Inches, Pt
 
-ROOT = r"D:/A.NĂM 4/KHÓA LUẬN TỐT NGHIỆP/Khoa_luan/Report KLTN"
+ROOT = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")
 SRC, OUT = f"{ROOT}/Poster.pptx", sys.argv[1] if len(sys.argv) > 1 else f"{ROOT}/Poster_KLTN.pptx"
 REPO_URL = "https://github.com/MinhLysA/Khoa_luan"
 
@@ -257,10 +258,9 @@ y = ribbon(XL, 16.3, "KẾT QUẢ THỰC NGHIỆM")
 _, tf = textbox(XL, y, CW, 0.45, "Tên biểu đồ")
 add_par(tf, [("Tổng chi phí vận hành trên 491 ngày kiểm thử (triệu đơn vị)", {"bold": True, "size": 18})],
         align=PP_ALIGN.LEFT, first=True)
-# [SO-MOI-NV] so cua Newsvendor (3 dong) va cac y "1,6%", "ngang Newsvendor" ben duoi doi sau run.py nv_lai
 data = [("EOQ", 2500198), ("(s,S)", 2091665), ("EOQ nhóm", 2074745), ("Newsvendor", 2062190),
         ("PS-IPPO", 2055442), ("(s,S) nhóm", 2048883), ("(s,S) biết sức chứa", 2039654),
-        ("Newsvendor nhóm", 2022942), ("Newsvendor dự báo", 1899732), ("PS-IPPO + dự báo", 1897517)]
+        ("Newsvendor nhóm", 2021883), ("PS-IPPO + dự báo", 1897517), ("Newsvendor dự báo", 1892876)]
 CH_H = 6.0
 cd = CategoryChartData()
 cd.categories = [d[0] for d in data]
@@ -320,7 +320,7 @@ y += 2 * 1.42 + 0.12
 bullets(XR, y, CW, 4.4, "Kết luận", [
     [("Phục vụ tốt hơn, chi phí tương đương: ", B),
      ("tỷ lệ đáp ứng cao hơn chính sách cổ điển 1,4–5,3 điểm; rẻ hơn (s,S), EOQ ở cả 3 hạt giống, "
-      "chỉ đắt hơn Newsvendor theo nhóm 1,6%.", {})],
+      "chỉ đắt hơn Newsvendor theo nhóm 1,7%.", {})],
     [("Ở cùng mức phục vụ, ", B), ("chính sách cổ điển phải tốn thêm 7–16% chi phí, EOQ trên 22%.", {})],
     [("Dự báo nhu cầu là thông tin đáng giá nhất: ", B),
      ("kết hợp dự báo rẻ hơn mọi chính sách cổ điển 6,2–24,1%, ngang Newsvendor dùng cùng dự báo.", {})],

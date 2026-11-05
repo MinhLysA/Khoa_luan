@@ -1,8 +1,7 @@
 # PS-IPPO cho quản lý tồn kho đa kho — Hướng dẫn chạy
 
 10 kho × 30 mặt hàng = 300 tác tử, dữ liệu M5 Walmart, quan sát 44 chiều.
-Tiến độ: **[../docs/TIEN_DO.md](../docs/TIEN_DO.md)** · Tổng hợp thay đổi:
-**[../docs/TONG_HOP_THAY_DOI.md](../docs/TONG_HOP_THAY_DOI.md)** · Vấn đáp: **[../docs/van_dap.md](../docs/van_dap.md)**.
+Tiến độ: **[../docs/TIEN_DO.md](../docs/TIEN_DO.md)** · Vấn đáp: **[../docs/van_dap.md](../docs/van_dap.md)**.
 
 Trên máy nhóm, `python` trần là bản MSYS2 thiếu thư viện: mọi lệnh dưới đây chạy bằng `py -3.12`.
 
@@ -123,7 +122,6 @@ rl_inventory/
 │   ├── sensitivity.py            độ nhạy đơn giá chi phí
 │   ├── robustness.py             độ bền zero-shot (sức chứa, lead time, nhu cầu ±20%)
 │   ├── build_results.py          sinh results/KET_QUA.txt (theo 5 câu hỏi) + bảng tra tên
-│   ├── export_tex_numbers.py     sinh Report KLTN/so_lieu.tex, quét số cũ trong tài liệu
 │   ├── plot_learning_curve.py    đường học
 │   └── data_preprocessing.py     tiền xử lý M5
 ├── app/                          Streamlit, mcp_server.py

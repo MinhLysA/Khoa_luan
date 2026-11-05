@@ -26,39 +26,21 @@
         "lead_time": 3.0
       },
       "noi_suy": true,
+      "fill_cau_hinh": 0.9000308204461933,
       "delta_ippo_percent": -13.27471955223648
     },
-    "Newsvendor": {
-      "cost": 2230264.791449261,
-      "fill": 0.9064528765091453,
-      "params": {
-        "cr_override": 0.8,
-        "lead_time": 4.0
-      },
-      "noi_suy": true,
-      "delta_ippo_percent": -7.970740671531528
-    },
     "(s,S) biết sức chứa": {
-      "cost": null,
-      "fill": 0.860807097619246,
+      "cost": 2245276.836866732,
+      "fill": 0.9064528765091453,
       "params": {
         "service_level": 0.8,
         "q_factor": 0.75,
         "lead_time": 4.0,
-        "kappa": 1.0
-      },
-      "noi_suy": false,
-      "khong_dat": true
-    },
-    "Newsvendor dự báo": {
-      "cost": 1968560.7270723884,
-      "fill": 0.9064528765091453,
-      "params": {
-        "cr_override": 0.67,
-        "lead_time": 3.0
+        "kappa": 1.2
       },
       "noi_suy": true,
-      "delta_ippo_percent": 4.263797423552473
+      "fill_cau_hinh": 0.906835776564528,
+      "delta_ippo_percent": -8.586053401833038
     },
     "EOQ theo nhóm": {
       "cost": 2275501.6252923766,
@@ -110,18 +92,41 @@
         }
       },
       "noi_suy": true,
+      "fill_cau_hinh": 0.9092514707167251,
       "delta_ippo_percent": -7.286306062754344
     },
+    "Newsvendor": {
+      "cost": 2230264.791449261,
+      "fill": 0.9064528765091453,
+      "params": {
+        "cr_override": 0.79,
+        "lead_time": 4.0
+      },
+      "noi_suy": true,
+      "fill_cau_hinh": 0.907235740686604,
+      "delta_ippo_percent": -7.970740671531528
+    },
+    "Newsvendor dự báo": {
+      "cost": 1968560.7270723884,
+      "fill": 0.9064528765091453,
+      "params": {
+        "cr_override": 0.71,
+        "lead_time": 3.0
+      },
+      "noi_suy": true,
+      "fill_cau_hinh": 0.9055854621642204,
+      "delta_ippo_percent": 4.263797423552473
+    },
     "Newsvendor theo nhóm": {
-      "cost": 2243057.3243911727,
+      "cost": 2236585.6482469286,
       "fill": 0.9064528765091453,
       "params": {
         "0": {
-          "cr_override": 0.8,
+          "cr_override": 0.71,
           "lead_time": 4.0
         },
         "1": {
-          "cr_override": 0.94,
+          "cr_override": 0.89,
           "lead_time": 3.0
         },
         "2": {
@@ -129,12 +134,13 @@
           "lead_time": 4.0
         },
         "3": {
-          "cr_override": 0.83,
-          "lead_time": 4.0
+          "cr_override": 0.38,
+          "lead_time": 5.0
         }
       },
       "noi_suy": true,
-      "delta_ippo_percent": -8.4955990060811
+      "fill_cau_hinh": 0.9036700093894242,
+      "delta_ippo_percent": -8.230826293500272
     }
   }
 }

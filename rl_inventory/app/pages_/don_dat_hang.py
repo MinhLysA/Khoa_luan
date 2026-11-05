@@ -56,8 +56,10 @@ with st.container(border=True, key="ds_phieu"):
 
 ma = st.selectbox("Mở phiếu", list(df["Mã phiếu"].unique()))
 mo = df[df["Mã phiếu"] == ma]
+if thong_bao := st.session_state.pop("thong_bao", None):
+    st.toast(thong_bao)
 with st.container(border=True, key="chi_tiet_phieu"):
-    core.muc(2, "Chi tiết phiếu", ma)
+    core.muc(2, "Chi tiết phiếu", f"{ma} · {core.tom_tat_phieu(mo)['Trạng thái'].iloc[0]}")
     view = mo[LINE_COLS].copy()
     view.insert(0, "Bỏ dòng", mo["Trạng thái"] == "Đã bỏ")
     ed = st.data_editor(view, hide_index=True, column_config=COLCFG,
@@ -65,13 +67,20 @@ with st.container(border=True, key="chi_tiet_phieu"):
                         key=f"ed_{ma}_{st.session_state.get('ver', 0)}")
 
 b1, b2, _ = st.columns([1, 1, 5])
-for col, nut, trang_thai in ((b1, "Duyệt phiếu", "Đã duyệt"), (b2, "Từ chối phiếu", "Từ chối")):
-    if col.button(nut, type="primary" if nut == "Duyệt phiếu" else "secondary"):
-        bo = ed["Bỏ dòng"].to_numpy()
-        df.loc[mo.index[bo], "Trạng thái"] = "Đã bỏ"
-        df.loc[mo.index[~bo], "Trạng thái"] = trang_thai
-        st.session_state.ver += 1
-        st.rerun()
+duyet_bam = b1.button("Duyệt phiếu", type="primary")
+tu_choi_bam = b2.button("Từ chối phiếu")
+if duyet_bam:
+    bo = ed["Bỏ dòng"].to_numpy()
+    df.loc[mo.index[bo], "Trạng thái"] = "Đã bỏ"
+    df.loc[mo.index[~bo], "Trạng thái"] = "Đã duyệt"
+    st.session_state.thong_bao = f"Đã duyệt {ma}: {int((~bo).sum())} dòng gửi phòng mua hàng, bỏ {int(bo.sum())} dòng."
+if tu_choi_bam:
+    # Tu choi ca phieu: khong dong nao duoc gui, bo qua cac o "Bo dong"
+    df.loc[mo.index, "Trạng thái"] = "Từ chối"
+    st.session_state.thong_bao = f"Đã từ chối {ma}: không dòng nào được gửi phòng mua hàng."
+if duyet_bam or tu_choi_bam:
+    st.session_state.ver += 1
+    st.rerun()
 
 st.caption("Phạm vi dừng ở phiếu gửi phòng mua hàng. Báo giá, chọn nhà cung cấp và gửi đơn do phòng mua hàng thực hiện.")
 duyet = df[df["Trạng thái"] == "Đã duyệt"].assign(**{"Ngày lập": f"{phieu['ngay']:%Y-%m-%d}",

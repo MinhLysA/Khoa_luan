@@ -43,6 +43,8 @@
     "warm_start_history": false,
     "obs_drop": [],
     "include_event_lookahead": false,
+    "include_forecast": false,
+    "lagrange_per_pair": false,
     "sku_indices": null,
     "reward_mode": "local",
     "test_full_horizon": true,
@@ -90,6 +92,10 @@
     "min_fill_to_save": 0.85,
     "normalize_adv_per_pair": true,
     "shared_trunk": false,
+    "action_mode": "direct",
+    "batch_mode": "flat",
+    "param_groups": null,
+    "critic_context": null,
     "total_episodes": 10000
   },
   "stores": [
@@ -143,6 +149,7 @@
     "IPPO",
     "EOQ",
     "(s,S)",
-    "Newsvendor"
+    "Newsvendor",
+    "(s,S) biết sức chứa"
   ]
 }
