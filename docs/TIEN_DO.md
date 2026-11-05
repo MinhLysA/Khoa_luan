@@ -4,7 +4,7 @@ Cập nhật: 05/11/2026 · Chú thích: ✅ xong · 🟡 đang triển khai / c
 
 > **[25/09/2026] Quyết định thiết kế:** Bật `include_price_signal: true` → môi trường dùng **44 chiều** (thêm tín hiệu giảm giá [V3-4]). Cần cập nhật Chương 3 báo cáo (Bảng đối chiếu biến trạng thái, công thức obs\_per\_pair, mô tả đặc trưng giá) trước khi nộp.
 
-> Từ 31/10 nhóm train local, đã bỏ hai notebook Colab. Của đợt 10.000 episode (19 lần chạy, 3 seed, số trong C4 hiện tại), trên máy chỉ còn mô hình seed 42 ở `app/demo_data/best_model.pth`; code hiện tại tái lập đúng 2.052.496 và 90,65% của C4. Hai seed còn lại, ablation và log học không còn; `KLTN_final` chia sẻ trên Drive chỉ có `results/` của đợt 4.000 episode (01/10). `python run.py full` sẽ train lại (theo phương án rút gọn 01/11: 3 seed và 16 ablation), số trong C4 sẽ đổi theo. Nếu còn bản 10.000 episode đầy đủ (`checkpoints/`, `results/`), chép vào `rl_inventory/` trước khi chạy, các lần đã xong tự bỏ qua.
+> Từ 31/10 nhóm train local trên máy MinhLysA (RTX 3050); `checkpoints/`, `results/` chỉ có trên máy đó (không đưa lên git). Máy còn lại chỉ có `app/demo_data/` (mô hình 23/10) và `results/` cũ của đợt chạy thử 31/10, không dùng cho báo cáo.
 
 ## 0. Trạng thái 05/11 — đã chạy xong eval_all, đã điền số vào báo cáo
 
@@ -18,16 +18,18 @@ Cập nhật: 05/11/2026 · Chú thích: ✅ xong · 🟡 đang triển khai / c
 
 **Báo cáo:** đã thay hết `[SO-MOI]` ở C4, C5; thêm số vào tóm tắt VN/EN; viết mục nguồn cung chung (Bảng `tab:nguonCung`). Hình C4 vẽ lại bằng `rl_inventory/scripts/ve_hinh_bao_cao.py` (nhãn tiếng Việt, số mới).
 
-**⚠️ Rủi ro cần biết:** NV dự báo tinh chỉnh ra tỷ lệ tới hạn 0,60, đúng cận dưới của lưới (`tune_baselines.py`, `compare_same_service.py`). Nếu bị hỏi "NV dự báo có rẻ hơn nữa không nếu hạ CR", câu trả lời trung thực là chưa thử; mở rộng lưới xuống 0,5 cần chạy lại tune + đường biên NV dự báo.
+**⚠️ Đang sửa: Newsvendor bị chặn ở cận dưới lưới.** Newsvendor dự báo tinh chỉnh ra tỷ lệ tới hạn 0,60, đúng cận dưới cũ của lưới, mà vẫn cho fill 88,1% > 85% trên val, nên cấu hình rẻ hơn có thể bị bỏ sót (Newsvendor theo nhóm cũng chọn 0,60 cho 2 nhóm). Ảnh hưởng chính: kết luận Câu 4 "ngang Newsvendor dự báo (−0,1%)" có thể đổi. 05/11 đã mở lưới xuống 0,30 (`tune_baselines.py` `CR_LUOI`, `compare_same_service.py` `luoi_min`) và thêm lệnh `run.py nv_lai`. Mọi chỗ cần cập nhật có comment `% [SO-MOI-NV]` (C4: 13, C5: 1, `build_poster.py`: 1).
 
-### Việc còn lại (người dùng tự làm)
+### Việc còn lại
 
 | # | Việc | Ghi chú |
 |---|---|---|
-| 1 | Dựng lại poster: `py -3.13 build_poster.py` (máy có `python-pptx`) | Số "7–22%" đã sửa thành "7–16%, EOQ trên 22%" trong `build_poster.py` |
-| 2 | `cd rl_inventory; py -3.12 run.py demo_data` rồi commit `app/demo_data/` | Demo hiện số 3 hạt giống và thẻ Câu 4 |
-| 3 | Kiểm tra tác giả bài SSRN (Nam và cộng sự) | ⚠️ |
-| 4 | Commit | |
+| 1 | Máy MinhLysA: `git pull`, rồi `cd rl_inventory; py -3.12 run.py nv_lai` | Xóa tham số baseline, `same_service_*.json`, phần Newsvendor trong `baseline_frontier.json`, rồi chạy `eval` (các đường biên khác lấy từ cache). Đánh giá lại các bước phụ thuộc tham số baseline, khoảng vài giờ, ngắt thì chạy lại cùng lệnh |
+| 2 | Mở `results/KET_QUA.txt`, sửa các chỗ `[SO-MOI-NV]`, xóa comment; `ve_hinh_bao_cao.py` vẽ lại hình đường biên | Nếu Newsvendor dự báo rẻ hơn hẳn biến thể dự báo thì viết lại Câu 4 theo số (C4, C5, tóm tắt, poster) |
+| 3 | `py -3.12 run.py demo_data` rồi commit `app/demo_data/` | Demo hiện số 3 hạt giống và thẻ Câu 4 (sau bước 1 để có số Newsvendor mới) |
+| 4 | Dựng lại poster `py -3.13 build_poster.py`, biên dịch báo cáo | Poster 05/11 đã thêm ý Câu 5 (nguồn cung chung) |
+| 5 | Kiểm tra tác giả bài SSRN (Nam và cộng sự) | ⚠️ |
+| 6 | Slide bảo vệ | Chưa có |
 
 ## 0a. Phương án rút gọn 01/11 (chờ giảng viên duyệt)
 
@@ -75,14 +77,14 @@ Mọi tính năng mới nằm sau cờ, tắt mặc định; mô hình chính gi
 | Dữ liệu M5 + tiền xử lý (10 kho × 30 SKU = 300 cặp) | ✅ |
 | Môi trường Gymnasium | ✅ |
 | Thuật toán PS-IPPO | ✅ |
-| 3 baseline (EOQ, (s,S), Newsvendor) + tune trên val | ✅ code · 🟡 chạy lại trong đợt cuối |
-| Script đánh giá / phân tích | ✅ code · 🟡 chờ số liệu đợt cuối |
+| 3 baseline (EOQ, (s,S), Newsvendor) + tune trên val | ✅ · 🟡 Newsvendor tinh chỉnh lại với lưới CR mở rộng (`run.py nv_lai`) |
+| Script đánh giá / phân tích | ✅ `eval_all` xong 04/11 |
 | Test tự động | ✅ 74/74 pass với **44 chiều** (31/10; thêm test cho phần mở rộng) |
 | `run.py full` + `run_experiments.py` (train local) | ✅ |
 | App Streamlit 4 trang + MCP prototype | ✅ |
-| **Đợt train cuối (3 main + 16 ablation/hold-out)** | ✅ 19/19 (20/10); file số liệu gốc không còn trên máy, chỉ còn mô hình seed 42 |
-| Báo cáo LaTeX (102 trang) | 🟡 lý thuyết, phương pháp và kết luận đã cập nhật theo số seed 42; số cuối chờ train xong |
-| Poster | 🟡 04/11: `Report KLTN/Poster_KLTN.pptx` dựng trên khung Khoa CNTT (`Poster.pptx` là mẫu của đề tài khác), sinh lại bằng `build_poster.py`; 05/11 đã sửa số trong `build_poster.py`, cần chạy lại script |
+| **Đợt train cuối** | ✅ 27/27 lần chạy (máy MinhLysA) |
+| Báo cáo LaTeX (109 trang) | ✅ số 3 hạt giống, biên dịch sạch · 🟡 các chỗ `[SO-MOI-NV]` |
+| Poster | 🟡 04/11: `Report KLTN/Poster_KLTN.pptx` dựng trên khung Khoa CNTT (`Poster.pptx` là mẫu của đề tài khác), sinh lại bằng `build_poster.py`; 05/11 đã dựng lại theo số mới, thêm ý Câu 5 · 🟡 số Newsvendor sau `nv_lai` |
 
 ---
 

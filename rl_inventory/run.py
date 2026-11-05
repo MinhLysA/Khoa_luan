@@ -6,6 +6,7 @@ Dot thuc nghiem cuoi (so lieu bao cao; danh sach lan chay o scripts/run_experime
     full             test -> train toan bo -> danh gia -> results/KET_QUA.txt
                      --quick: thu ca day chuyen tren ban sao, moi lan train 3 episode
     eval_all         chi danh gia + moi phan tich -> KET_QUA.txt (bo qua buoc da co ket qua moi)
+    nv_lai           tinh chinh lai Newsvendor (luoi CR mo rong 0,30-0,99) roi danh gia lai phan phu thuoc
     tonghop          dung lai KET_QUA.txt tu ket qua da co (vai giay)
     status           tien do tung lan chay
     train_main       chi train mo hinh chinh (3 seed x ppo.total_episodes)
@@ -67,7 +68,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("lenh", choices=["full", "status", "train_main", "train_ablations", "eval_all",
-                                     "tonghop", "forecast", "app", "demo_data", "data", "test", "check"])
+                                     "tonghop", "forecast", "nv_lai", "app", "demo_data", "data", "test", "check"])
     ap.add_argument("--quick", action="store_true", help="full: thu ca day chuyen tren ban sao")
     a = ap.parse_args()
 
@@ -83,7 +84,7 @@ def main():
         sys.exit(code)
 
     global LOG
-    if a.lenh in ("full", "train_main", "train_ablations", "eval_all"):
+    if a.lenh in ("full", "train_main", "train_ablations", "eval_all", "nv_lai"):
         (ROOT / "logs").mkdir(exist_ok=True)
         LOG = open(ROOT / "logs" / f"{a.lenh}.txt", "a", encoding="utf-8")
         LOG.write(f"\n===== {time.strftime('%Y-%m-%d %H:%M:%S')}  python run.py {a.lenh} =====\n")
@@ -106,6 +107,22 @@ def main():
     elif a.lenh == "train_ablations":
         sh(CAMPAIGN + ["train", "ablations"])
     elif a.lenh == "eval_all":
+        sh(CAMPAIGN + ["eval", "--n_eval", str(eval_eps)])
+    elif a.lenh == "nv_lai":
+        # Tinh chinh lai moi ban Newsvendor voi luoi CR mo rong, roi danh gia lai nhung gi phu thuoc.
+        # Duong bien cac baseline khac giu nguyen trong cache, chi quet lai phan Newsvendor.
+        import json
+        R = ROOT / "results"
+        xoa = [*R.glob("baseline_params*.json"), *R.glob("same_service_*.json"),
+               *R.glob("shared_supply_*/baseline_params*.json")]
+        for p in xoa:
+            p.unlink()
+        bien = R / "baseline_frontier.json"
+        if bien.exists():
+            d = json.loads(bien.read_text(encoding="utf-8"))
+            bien.write_text(json.dumps({k: v for k, v in d.items() if "Newsvendor" not in k},
+                                       indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"Da xoa {len(xoa)} file ket qua phu thuoc Newsvendor; chay lai danh gia.")
         sh(CAMPAIGN + ["eval", "--n_eval", str(eval_eps)])
     elif a.lenh == "tonghop":
         sh(CAMPAIGN + ["tonghop"])

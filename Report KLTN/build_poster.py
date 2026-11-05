@@ -257,6 +257,7 @@ y = ribbon(XL, 16.3, "KẾT QUẢ THỰC NGHIỆM")
 _, tf = textbox(XL, y, CW, 0.45, "Tên biểu đồ")
 add_par(tf, [("Tổng chi phí vận hành trên 491 ngày kiểm thử (triệu đơn vị)", {"bold": True, "size": 18})],
         align=PP_ALIGN.LEFT, first=True)
+# [SO-MOI-NV] so cua Newsvendor (3 dong) va cac y "1,6%", "ngang Newsvendor" ben duoi doi sau run.py nv_lai
 data = [("EOQ", 2500198), ("(s,S)", 2091665), ("EOQ nhóm", 2074745), ("Newsvendor", 2062190),
         ("PS-IPPO", 2055442), ("(s,S) nhóm", 2048883), ("(s,S) biết sức chứa", 2039654),
         ("Newsvendor nhóm", 2022942), ("Newsvendor dự báo", 1899732), ("PS-IPPO + dự báo", 1897517)]
@@ -312,20 +313,22 @@ stats = [("90,9%", "tỷ lệ đáp ứng, mục tiêu 85%", PURPLE),
          ("−7,7%", "chi phí khi kết hợp dự báo (đáp ứng 86,7%)", ORANGE)]
 sw = (CW - 0.25) / 2
 for i, (big, lab, col) in enumerate(stats):
-    c, ctf = card(XR + (i % 2) * (sw + 0.25), y + (i // 2) * 1.62, sw, 1.47, f"Chỉ số {i}")
-    add_par(ctf, [(big, {"bold": True, "color": col, "size": 34})], align=PP_ALIGN.CENTER, after=0, first=True)
+    c, ctf = card(XR + (i % 2) * (sw + 0.25), y + (i // 2) * 1.42, sw, 1.3, f"Chỉ số {i}")
+    add_par(ctf, [(big, {"bold": True, "color": col, "size": 32})], align=PP_ALIGN.CENTER, after=0, first=True)
     add_par(ctf, [(lab, {"color": TEXT, "size": 15})], align=PP_ALIGN.CENTER, after=0)
-y += 2 * 1.62 + 0.15
-bullets(XR, y, CW, 4.2, "Kết luận", [
+y += 2 * 1.42 + 0.12
+bullets(XR, y, CW, 4.4, "Kết luận", [
     [("Phục vụ tốt hơn, chi phí tương đương: ", B),
      ("tỷ lệ đáp ứng cao hơn chính sách cổ điển 1,4–5,3 điểm; rẻ hơn (s,S), EOQ ở cả 3 hạt giống, "
       "chỉ đắt hơn Newsvendor theo nhóm 1,6%.", {})],
     [("Ở cùng mức phục vụ, ", B), ("chính sách cổ điển phải tốn thêm 7–16% chi phí, EOQ trên 22%.", {})],
     [("Dự báo nhu cầu là thông tin đáng giá nhất: ", B),
      ("kết hợp dự báo rẻ hơn mọi chính sách cổ điển 6,2–24,1%, ngang Newsvendor dùng cùng dự báo.", {})],
+    [("Bền khi các kho dùng chung nguồn cung: ", B),
+     ("không huấn luyện lại vẫn rẻ hơn mọi chính sách cổ điển 1,1–22,4%, nguồn cung càng chặt càng rõ.", {})],
     [("Thiết kế phần thưởng quyết định việc học: ", B),
      ("dùng phần thưởng chung toàn mạng hoặc bỏ chuẩn hóa theo cặp làm chi phí tăng gấp ba đến gấp năm.", {})]],
-    size=20)
+    size=19)
 
 # ===== HÀNG DƯỚI CẢ BỀ NGANG: MÔ PHỎNG KẾT QUẢ (ảnh chụp ứng dụng) =====
 Y_MP = 24.55

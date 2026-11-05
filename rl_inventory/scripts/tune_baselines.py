@@ -33,6 +33,11 @@ from baselines.traditional_policies import (
     build_env_state, demand_group_index, expand_group_params, DEMAND_GROUP_NAMES, DEMAND_GROUP_EDGES)
 
 
+# Ty so toi han cua Newsvendor: mo xuong 0,30 vi tren val, CR = 0,60 (can duoi cu) van cho fill
+# cao hon 85% (Newsvendor du bao: 88,1%), nen can duoi cu dang chan cau hinh re hon.
+CR_LUOI = [0.30, 0.40, 0.50, 0.60, 0.75, 0.85, 0.90, 0.95, 0.99]
+
+
 def danh_gia(env, policy, n_episodes, base_seed):
     """Tra ve (chi phi trung binh, fill rate trung binh)."""
     costs, fills = [], []
@@ -105,7 +110,7 @@ def main():
         "Newsvendor": (NewsvendorPolicy, [dict(cr_override=float(cr), lead_time=lt,
                                                holding_cost=env.cp_lk, stockout_cost=env.cp_th)
                                           for cr, lt in itertools.product(
-                                              [0.60, 0.75, 0.85, 0.90, 0.95, 0.99],
+                                              CR_LUOI,
                                               [1.0, LT, 3.0, 4.0])]),
         # [Biet suc chua] (s,S) biet suc chua: them kappa vao luoi cua (s,S)
         "(s,S) biết sức chứa": (CapacityAwareSs, [
@@ -122,7 +127,7 @@ def main():
         F, sigma = load_forecast(results_dir)
         luoi["Newsvendor dự báo"] = (ForecastNewsvendor, [
             dict(cr_override=float(cr), lead_time=lt, forecast=F, sigma=sigma)
-            for cr, lt in itertools.product([0.60, 0.75, 0.85, 0.90, 0.95, 0.99],
+            for cr, lt in itertools.product(CR_LUOI,
                                             [1.0, 2.0, 3.0, 4.0])])
     results, chi_tiet = {}, {}
     for ten, (cls, grid) in luoi.items():

@@ -92,7 +92,7 @@ def luoi_min(env, results_dir):
     tc = dict(ordering_cost=env.cp_dh, holding_cost=env.cp_lk)
     sl = [round(x, 2) for x in np.arange(0.80, 1.0, 0.01)] + [0.995, 0.999]
     qf = [round(x, 2) for x in np.arange(0.25, 3.01, 0.25)]
-    cr = [round(x, 2) for x in np.arange(0.60, 1.0, 0.01)]
+    cr = [round(x, 2) for x in np.arange(0.30, 1.0, 0.01)]   # cung can duoi voi tune_baselines.CR_LUOI
     out = {
         "EOQ": (EOQPolicy, [dict(q_factor=q, lead_time=float(l), **tc) for q, l in itertools.product(
             qf, np.arange(1.0, 6.01, 0.5))]),
