@@ -473,6 +473,15 @@ Hình phạt mức phục vụ chỉ là tín hiệu huấn luyện, nên không
 \end{equation}
 là tổng chi phí vận hành (\textit{total operating cost}), còn $P_t$ là hình phạt mức phục vụ (\textit{service-level penalty}).
 
+Mỗi khoản trong công thức~(\ref{eq:chiPhiVanHanh}) là tổng trên cả 300 cặp kho--mặt hàng. Chi phí vận hành của riêng cặp $i$ trong ngày $t$, gọi tắt là chi phí của cặp, gồm bốn khoản phát sinh tại đúng cặp đó:
+\begin{equation}
+    C_t^{(i)} = c_{lk} \cdot I_t^{(i)+} + c_{th} \cdot U_t^{(i)} + c_{dh} \cdot \mathbb{1}(a_i^t > 0) + p_{tk} \cdot O_t^{(i)},
+    \qquad
+    C_t^{\text{vận hành}} = \sum_{i=1}^{300} C_t^{(i)}.
+    \label{eq:chiPhiCap}
+\end{equation}
+Phần tràn kho của cặp là phần hàng mới về của cặp bị từ chối, chia theo công thức~(\ref{eq:tranKho}). Chi phí của cặp chính là phần chi phí trong phần thưởng $r_i^t$ của tác tử $i$, nên mỗi tác tử chỉ chịu chi phí do quyết định của mình gây ra.
+
 
 Mục tiêu nghiệp vụ được phát biểu thành bài toán có ràng buộc:
 \begin{equation}
