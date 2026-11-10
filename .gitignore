@@ -35,3 +35,6 @@ TONG_HOP_SO_LIEU.txt
 *.xdv
 Report KLTN/*.log
 texput.log
+
+# File khoa tam cua Office khi dang mo tai lieu
+~$*

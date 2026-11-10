@@ -233,110 +233,67 @@ def anh(path, x, y, w, name, khung=None):
 
 def chu_thich(x, y, w, text):
     _, tf = textbox(x, y, w, 0.45, f"Chú thích {text[:20]}")
-    add_par(tf, [(text, {"size": 15, "color": MUTED, "italic": True})], align=PP_ALIGN.CENTER, first=True)
+    add_par(tf, [(text, {"size": 16, "color": MUTED, "italic": True})], align=PP_ALIGN.CENTER, first=True)
 
 
-# ===== CỘT TRÁI: TÓM TẮT, DỮ LIỆU, KẾT QUẢ =====
+# ===== HÀNG 1: TÓM TẮT | DỮ LIỆU =====
 y = ribbon(XL, 8.6, "TÓM TẮT")
-_, tf = textbox(XL, y, CW, 3.4, "Tóm tắt")
+_, tf = textbox(XL, y, CW, 2.4, "Tóm tắt")
 add_par(tf, "Quản lý tồn kho cho mạng lưới nhiều kho, nhiều mặt hàng phải cân bằng chi phí lưu kho, thiếu hàng, "
             "đặt hàng và tràn kho, trong khi nhu cầu thưa, khó đoán và các mặt hàng dùng chung sức chứa kho. "
             "Đề tài xây dựng mô hình PS-IPPO: 300 tác tử học tăng cường dùng chung tham số, mỗi tác tử quyết "
             "định lượng đặt cho một cặp kho – mặt hàng. Trên dữ liệu M5 Walmart, PS-IPPO đạt tỷ lệ đáp ứng "
-            "90,9%, rẻ hơn (s,S) và EOQ; khi kết hợp dự báo nhu cầu, mô hình rẻ hơn mọi chính sách cổ điển.",
-        size=20, first=True)
-
-y = ribbon(XL, 12.25, "DỮ LIỆU")
-bullets(XL, y, CW, 3.3, "Dữ liệu", [
+            "90,9% và rẻ hơn mọi chính sách cổ điển khi so ở cùng mức phục vụ.",
+        size=19, first=True)
+y = ribbon(XR, 8.6, "DỮ LIỆU")
+bullets(XR, y, CW, 2.4, "Dữ liệu", [
     [("M5 Walmart: ", B), ("doanh số theo ngày, 29/01/2011 – 22/05/2016 (1.941 ngày)", {})],
-    ("+", [("10 cửa hàng × 30 mặt hàng = 300 cặp kho – mặt hàng", {})]),
-    ("+", [("57,4% số ngày không bán; giá bán và lịch sự kiện, SNAP", {})]),
+    ("+", [("10 cửa hàng × 30 mặt hàng = 300 cặp; 57,4% số ngày không bán", {})]),
     [("Chia theo thời gian: ", B), ("huấn luyện 1.050 ngày · xác thực 400 · kiểm thử 491", {})],
-    [("Mô phỏng: ", B), ("sức chứa mỗi kho = 5 ngày nhu cầu, giao hàng sau 1–3 ngày", {})]], size=20)
+    [("Mô phỏng: ", B), ("sức chứa mỗi kho = 5 ngày nhu cầu, giao hàng sau 1–3 ngày", {})]], size=19)
 
-y = ribbon(XL, 16.3, "KẾT QUẢ THỰC NGHIỆM")
-_, tf = textbox(XL, y, CW, 0.45, "Tên biểu đồ")
-add_par(tf, [("Tổng chi phí vận hành trên 491 ngày kiểm thử (triệu đơn vị)", {"bold": True, "size": 18})],
-        align=PP_ALIGN.LEFT, first=True)
-data = [("EOQ", 2500198), ("(s,S)", 2091665), ("EOQ nhóm", 2074745), ("Newsvendor", 2062190),
-        ("PS-IPPO", 2055442), ("(s,S) nhóm", 2048883), ("(s,S) biết sức chứa", 2039654),
-        ("Newsvendor nhóm", 2021883), ("PS-IPPO + dự báo", 1897517), ("Newsvendor dự báo", 1892876)]
-CH_H = 6.0
-cd = CategoryChartData()
-cd.categories = [d[0] for d in data]
-cd.add_series("Tổng chi phí", [round(v / 1e6, 3) for _, v in data])
-gf = s.shapes.add_chart(XL_CHART_TYPE.BAR_CLUSTERED, Inches(XL), Inches(y + 0.45), Inches(CW), Inches(CH_H), cd)
-gf.name = "Biểu đồ tổng chi phí"
-ch_ = gf.chart
-ch_.has_legend = False
-ch_.has_title = False
-ch_.font.name, ch_.font.size = FONT, Pt(16)
-plot = ch_.plots[0]
-plot.gap_width = 40
-ser = plot.series[0]
-for i, (name, v) in enumerate(data):
-    la_ippo = name.startswith("PS-IPPO")
-    pt = ser.points[i]
-    pt.format.fill.solid()
-    pt.format.fill.fore_color.rgb = ORANGE if la_ippo else GREY_BAR
-    dtf = pt.data_label.text_frame
-    pt.data_label.position = XL_LABEL_POSITION.OUTSIDE_END
-    dtf.text = f"{v / 1e6:.2f}".replace(".", ",")
-    style(dtf.paragraphs[0].runs[0], size=16, bold=la_ippo, color=ORANGE if la_ippo else TEXT)
-va = ch_.value_axis
-va.minimum_scale, va.maximum_scale = 1.6, 2.6
-va.visible = False
-va.has_major_gridlines = False
-ca = ch_.category_axis
-ca.tick_labels.font.size = Pt(16)
-ca.tick_labels.font.name = FONT
-ca.format.line.color.rgb = RGBColor(0xBF, 0xBF, 0xBF)
-_, tf = textbox(XL, y + 0.5 + CH_H, CW, 0.75, "Ghi chú biểu đồ")
-add_par(tf, [("Trung bình 3 hạt giống, trục bắt đầu từ 1,6 triệu; “nhóm”: tinh chỉnh theo nhóm mặt hàng. "
-              "Tỷ lệ đáp ứng: PS-IPPO 90,9%, kết hợp dự báo 86,7%, chính sách cổ điển 85,6–89,5%.",
+# ===== HÀNG 2: MÔ HÌNH ĐỀ XUẤT (sơ đồ kiến trúc đa tác tử, trải hết bề ngang) =====
+y = ribbon(XL, 11.5, "MÔ HÌNH ĐỀ XUẤT: PS-IPPO")
+WM = 17.6
+y = anh(f"{ROOT}/media/kien_truc_da_tac_tu.png", XL + (FULL - WM) / 2, y + 0.12, WM, "Sơ đồ kiến trúc PS-IPPO", khung=ROSE)
+_, tf = textbox(XL, y + 0.25, FULL, 0.4, "Ghi chú mô hình")
+add_par(tf, [("300 tác tử = 10 kho × 30 mặt hàng  ·  mỗi tác tử quan sát 44 chiều, chọn 1 trong 6 mức đặt  ·  "
+              "Actor và Critic 2 lớp × 128 dùng chung  ·  phần thưởng chuẩn hóa theo từng cặp", {"size": 17, "color": TEXT})],
+        align=PP_ALIGN.CENTER, first=True)
+
+# ===== HÀNG 3: KẾT QUẢ THỰC NGHIỆM | KẾT LUẬN =====
+Y3 = 19.1
+y = ribbon(XL, Y3, "KẾT QUẢ THỰC NGHIỆM")
+yb = anh(f"{ROOT}/media/poster_ket_qua.png", XL, y + 0.05, CW, "Biểu đồ kết quả")   # vẽ bằng poster_bieu_do.py
+_, tf = textbox(XL, yb + 0.05, CW, 0.3, "Ghi chú biểu đồ")
+add_par(tf, [("Trung bình 3 hạt giống, 491 ngày kiểm thử · thanh đậm/nhạt: mức rẻ hơn thấp nhất/cao nhất",
               {"size": 14, "color": MUTED, "italic": True})], align=PP_ALIGN.LEFT, first=True)
 
-# ===== CỘT PHẢI: MÔ HÌNH ĐỀ XUẤT, KẾT LUẬN =====
-y = ribbon(XR, 8.6, "MÔ HÌNH ĐỀ XUẤT: PS-IPPO")
-y = anh(f"{ROOT}/media/poster_mo_hinh.png", XR + 0.15, y + 0.15, CW - 0.3, "Sơ đồ PS-IPPO", khung=ROSE)
-bullets(XR, y + 0.35, CW, 2.9, "Điểm thiết kế", [
-    [("IPPO: ", B), ("mỗi cặp kho – mặt hàng là một tác tử PPO, tự quyết từ quan sát 44 chiều của mình.", {})],
-    [("Chia sẻ tham số (PS): ", B),
-     ("hai mạng Actor và Critic tách rời (2 lớp × 128), một bộ trọng số cho cả 300 tác tử.", {})],
-    [("Phần thưởng cục bộ ", B), ("chuẩn hóa theo quy mô từng cặp; mục tiêu đáp ứng 85% là phạt mềm.", {})]],
-    size=20)
-
-y = ribbon(XR, 16.5, "KẾT LUẬN")
-stats = [("90,9%", "tỷ lệ đáp ứng, mục tiêu 85%", PURPLE),
-         ("−1,7%", "chi phí so với (s,S), cả 3 hạt giống", PURPLE),
-         ("−17,8%", "chi phí so với EOQ, cả 3 hạt giống", PURPLE),
-         ("−7,7%", "chi phí khi kết hợp dự báo (đáp ứng 86,7%)", ORANGE)]
-sw = (CW - 0.25) / 2
-for i, (big, lab, col) in enumerate(stats):
-    c, ctf = card(XR + (i % 2) * (sw + 0.25), y + (i // 2) * 1.42, sw, 1.3, f"Chỉ số {i}")
-    add_par(ctf, [(big, {"bold": True, "color": col, "size": 32})], align=PP_ALIGN.CENTER, after=0, first=True)
-    add_par(ctf, [(lab, {"color": TEXT, "size": 15})], align=PP_ALIGN.CENTER, after=0)
-y += 2 * 1.42 + 0.12
+y = ribbon(XR, Y3, "KẾT LUẬN")
 bullets(XR, y, CW, 4.4, "Kết luận", [
     [("Phục vụ tốt hơn, chi phí tương đương: ", B),
-     ("tỷ lệ đáp ứng cao hơn chính sách cổ điển 1,4–5,3 điểm; rẻ hơn (s,S), EOQ ở cả 3 hạt giống, "
-      "chỉ đắt hơn Newsvendor theo nhóm 1,7%.", {})],
-    [("Ở cùng mức phục vụ, ", B), ("chính sách cổ điển phải tốn thêm 7–16% chi phí, EOQ trên 22%.", {})],
-    [("Dự báo nhu cầu là thông tin đáng giá nhất: ", B),
-     ("kết hợp dự báo rẻ hơn mọi chính sách cổ điển 6,2–24,1%, ngang Newsvendor dùng cùng dự báo.", {})],
+     ("tỷ lệ đáp ứng 90,9%, cao hơn chính sách cổ điển 1,4–5,3 điểm; tổng chi phí rẻ hơn (s,S) 1,7% và EOQ 17,8%.", {})],
+    [("Ở cùng mức phục vụ, ", B), ("PS-IPPO rẻ hơn mọi chính sách cổ điển 7,3–16,3%, rẻ hơn EOQ trên 22%.", {})],
+    [("Chống sốc cầu tốt hơn: ", B),
+     ("khi nhu cầu tăng 50% trong 28 ngày, chi phí mỗi ngày ít hơn Newsvendor 13,2%, ít hơn (s,S) 16,8%; "
+      "sau sốc tỷ lệ đáp ứng lên 93,3%.", {})],
+    [("Kết hợp dự báo nhu cầu: ", B),
+     ("rẻ hơn mọi chính sách cổ điển 6,2–24,1%, ngang Newsvendor dùng cùng dự báo.", {})],
     [("Bền khi các kho dùng chung nguồn cung: ", B),
-     ("không huấn luyện lại vẫn rẻ hơn mọi chính sách cổ điển 1,1–22,4%, nguồn cung càng chặt càng rõ.", {})],
+     ("không huấn luyện lại vẫn rẻ hơn mọi chính sách cổ điển 1,1–22,4%.", {})],
     [("Thiết kế phần thưởng quyết định việc học: ", B),
      ("dùng phần thưởng chung toàn mạng hoặc bỏ chuẩn hóa theo cặp làm chi phí tăng gấp ba đến gấp năm.", {})]],
-    size=19)
+    size=18)
 
-# ===== HÀNG DƯỚI CẢ BỀ NGANG: MÔ PHỎNG KẾT QUẢ (ảnh chụp ứng dụng) =====
-Y_MP = 24.55
-y = ribbon(XL, Y_MP, "MÔ PHỎNG KẾT QUẢ")
-yb = anh(f"{ROOT}/media/poster_phieu.png", XL, y + 0.05, CW, "Ảnh phiếu đề nghị", khung=GREY_BAR)
-chu_thich(XL, yb + 0.12, CW, "Phiếu đề nghị đặt hàng do mô hình lập cho kho K01")
-yb = anh(f"{ROOT}/media/poster_chi_tiet.png", XR, y + 0.05, CW, "Ảnh diễn biến mặt hàng", khung=GREY_BAR)
-chu_thich(XR, yb + 0.12, CW, "Tồn kho, nhu cầu và các lần đặt hàng của một mặt hàng")
+# ===== HÀNG 4: MÔ PHỎNG SỐC CẦU TRÊN ỨNG DỤNG (hai biểu đồ chụp từ demo) =====
+y = ribbon(XL, 24.4, "MÔ PHỎNG SỐC CẦU TRÊN ỨNG DỤNG")
+H4 = 4.0
+w1 = H4 * 1340 / 625
+w2 = FULL - w1 - 0.5
+yb = anh(f"{ROOT}/media/poster_soc_dap_ung.png", XL, y + 0.1, w1, "Ảnh tỷ lệ đáp ứng khi sốc", khung=GREY_BAR)
+chu_thich(XL, yb + 0.2, w1, "Tỷ lệ đáp ứng theo ngày, nhu cầu tăng ×1,5 trong 28 ngày (vùng cam)")
+yb = anh(f"{ROOT}/media/poster_soc_dat_hang.png", XL + w1 + 0.5, y + 0.1, w2, "Ảnh đặt hàng khi sốc", khung=GREY_BAR)
+chu_thich(XL + w1 + 0.5, yb + 0.2, w2, "Lượng đặt hàng của IPPO và Newsvendor bám theo nhu cầu toàn mạng")
 
 prs.save(OUT)
 print("saved", OUT)

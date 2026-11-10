@@ -11,7 +11,7 @@ Bài toán kiểm soát tồn kho xác định thời điểm và số lượng 
 \begin{itemize}
     \item Chi phí lưu kho $C_{\text{hold}} = c_{lk} \cdot \max(I_t, 0)$ tỷ lệ với lượng hàng tồn dương trong kho, gồm chi phí vốn, bảo quản và kho bãi.
     \item Chi phí thiếu hàng $C_{\text{stock}} = c_{th} \cdot \max(D_t - I_t, 0)$ phát sinh khi nhu cầu vượt lượng hàng có sẵn. Trong mô hình mất đơn hàng (\textit{lost sales}), phần nhu cầu không được đáp ứng bị mất hẳn thay vì chuyển sang kỳ sau \parencite{zipkin2008}.
-    \item Chi phí đặt hàng cố định $C_{\text{order}} = c_{dh} \cdot \mathbb{1}(a_t > 0)$ phát sinh mỗi lần hệ thống đặt hàng, bất kể số lượng đặt.
+    \item Chi phí đặt hàng cố định $C_{\text{order}} = c_{dh} \cdot \mathbf{1}(a_t > 0)$ phát sinh mỗi lần hệ thống đặt hàng, bất kể số lượng đặt.
     \item Phạt tràn kho $C_{\text{over}} = p_{tk} \cdot \max(I_t + q_t - W, 0)$ phát sinh khi tổng hàng tồn và hàng nhập vượt sức chứa $W$ của kho, với $q_t$ là lượng hàng nhập kho trong kỳ.
 \end{itemize}
 

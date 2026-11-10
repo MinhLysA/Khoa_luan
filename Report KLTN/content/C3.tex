@@ -136,44 +136,11 @@ Bên trong các miền dữ liệu, mô hình còn dùng các khoảng thời gi
 \subsection{Thiết lập bài toán dưới dạng MDP đa tác tử}
 \label{subsec:mdpDaTacTu}
 
-Bài toán có 300 tác tử nhưng chỉ có một mạng chính sách $\pi_\theta$ dùng chung, nên chỉ một bộ tham số được huấn luyện. Hình~\ref{fig:kienTrucDaTacTu} minh họa kiến trúc này.
+Bài toán có 300 tác tử nhưng chỉ có một mạng chính sách $\pi_\theta$ dùng chung, nên chỉ một bộ tham số được huấn luyện. Hình~\ref{fig:kienTrucDaTacTu} minh họa kiến trúc này với ba tác tử đại diện. Mỗi cặp kho--mặt hàng là một tác tử, ví dụ Agent A phụ trách mặt hàng 1 của kho 1. Tác tử nhận quan sát $o$ và phần thưởng $r$ của riêng cặp mình từ môi trường, rồi trả về mức đặt hàng $a$. Agent A và Agent B cùng thuộc kho 1 nên dùng chung sức chứa $W_1$: đặt nhiều cho mặt hàng này thì mặt hàng kia dễ bị từ chối nhập. Đây là kênh ghép nối giữa các tác tử khi vận hành. Cả 300 tác tử dùng chung một chính sách gồm Actor $\pi_\theta$ và Critic $V_\phi$ (các đường nét đứt). Khối huấn luyện PPO gom kinh nghiệm $(o, a, r)$ của mọi tác tử, cập nhật $\theta, \phi$ rồi đưa trọng số mới về chính sách dùng chung.
 
 \begin{figure}[H]
     \centering
-    \begin{tikzpicture}[soDo, font=\small]
-        \tikzset{tacTu/.style={circle, fill=khoXanh, inner sep=0pt, minimum size=1.6mm}}
-        % Chính sách dùng chung
-        \node[khungDam, minimum width=14.4cm, minimum height=0.95cm] (cs) at (7.2,4.55)
-            {\textbf{Chính sách dùng chung}:\ Actor $\pi_\theta(a \mid o_i)$, Critic $V_\phi(o_i)$, một bộ trọng số cho 300 tác tử};
-        % Ba kho
-        \foreach \x/\w/\f in {0.2/1/0.55, 5.1/2/0.8, 10.4/10/0.4} {
-            \draw[khoNavy!60, fill=khoNen, rounded corners=4pt, line width=0.6pt] (\x,0) rectangle ++(3.8,2.6);
-            \node[anchor=north west, font=\small\bfseries, text=khoNavy] at (\x+0.08,2.58) {Kho \w};
-            \foreach \r in {0,...,4} \foreach \c in {0,...,5}
-                \node[tacTu] at (\x+0.45+\c*0.42, 0.45+\r*0.36) {};
-            \draw[khoNavy, line width=0.5pt] (\x+3.15,0.3) rectangle (\x+3.45,2.0);
-            \fill[khoCam] (\x+3.15,0.3) rectangle (\x+3.45,{0.3+1.7*\f});
-            \node[nhan, font=\scriptsize] at (\x+3.3,2.25) {$u_t^{(\w)}$};
-            \draw[muiTen] (\x+1.0,2.65) -- node[nhan, left]{$o_i^t$} (\x+1.0,4.05);
-            \draw[muiCam] (\x+2.2,4.05) -- node[nhan, right]{$a_i^t$} (\x+2.2,2.65);
-        }
-        \node[font=\Large, text=khoNavy] at (9.65,1.3) {$\cdots$};
-        % Môi trường
-        \draw[khoNavy!50, dashed, rounded corners=6pt, line width=0.6pt] (0.0,-0.75) rectangle (14.4,3.0);
-        \node[nhan, anchor=south] at (7.2,-0.72) {Môi trường mô phỏng: nhu cầu M5, hàng đang về, chi phí, sức chứa từng kho};
-        % Khách hàng, chú thích, nhà cung cấp
-        \pic at (1.5,-2.35) {khach};
-        \node[nhan, anchor=west] at (2.15,-1.95) {Khách hàng\\ nhu cầu $D_t^{(i)}$};
-        \draw[muiTen] (1.5,-1.35) -- (1.5,-0.78);
-        \node[tacTu] at (4.5,-1.75) {};
-        \node[nhan, anchor=west] at (4.65,-1.75) {một tác tử (kho, mặt hàng)};
-        \fill[khoCam] (4.42,-2.32) rectangle (4.58,-2.07);
-        \node[nhan, anchor=west] at (4.65,-2.2) {mức đầy kho $u_t^{(w)}$};
-        \pic at (10.6,-2.3) {xe};
-        \node[nhan, anchor=west] at (11.55,-1.95) {Nhà cung cấp\\ giao sau 1--3 ngày};
-        \draw[muiCam] (10.3,-0.78) -- node[nhan, left]{đơn $q_i$} (10.3,-1.4);
-        \draw[muiCam] (11.0,-1.4) -- node[nhan, right]{hàng về} (11.0,-0.78);
-    \end{tikzpicture}
+    \includegraphics[width=\textwidth]{media/kien_truc_da_tac_tu.png}
     \caption{Kiến trúc đa tác tử dùng chung một chính sách}
     \label{fig:kienTrucDaTacTu}
 \end{figure}
@@ -285,36 +252,7 @@ Mỗi ngày, cả 300 tác tử cùng chạy một vòng tương tác $s_t \righ
 
 \begin{figure}[H]
     \centering
-    \begin{tikzpicture}[soDo, font=\small]
-        \tikzset{buoc/.style={circle, fill=khoNavy, text=white, font=\scriptsize\bfseries, inner sep=0pt, minimum size=4mm}}
-        % Bản sao mờ phía sau thể hiện 300 tác tử
-        \node[khungTacTu, minimum width=4.4cm, minimum height=2.9cm, fill=khoXanh!5, draw=khoXanh!40] at (0.24,-0.24) {};
-        \node[khungTacTu, minimum width=4.4cm, minimum height=2.9cm, fill=khoXanh!7, draw=khoXanh!60] at (0.12,-0.12) {};
-        \node[khungTacTu, minimum width=4.4cm, minimum height=2.9cm] (ag) at (0,0)
-            {\textbf{Tác tử $i$}\\ cặp (kho $w$, mặt hàng $j$)\\[4pt]
-             Actor $\pi_\theta(a \mid o_i^t)$\\ Critic $V_\phi(o_i^t)$\\[3pt] \footnotesize $\times$300, cùng $\theta, \phi$};
-        % Môi trường kho
-        \node[khung, minimum width=5.6cm, minimum height=3.6cm, anchor=west] (env) at (5.2,0) {};
-        \node[font=\small\bfseries, text=khoNavy, anchor=north] at (env.north) {Môi trường kho, một ngày};
-        \foreach \i/\t in {1/{đổi $a_i^t$ thành lượng đặt $q_i$},
-                           2/{nhận hàng đến hạn},
-                           3/{áp sức chứa, từ chối phần tràn},
-                           4/{ghi đơn mới, về sau 1--3 ngày},
-                           5/{bán hàng theo nhu cầu M5},
-                           6/{tính chi phí, tỷ lệ đáp ứng, $r_i^t$}} {
-            \node[buoc] at (5.55,1.22-\i*0.43+0.43*0.25) {\i};
-            \node[anchor=west, font=\footnotesize] at (5.8,1.22-\i*0.43+0.43*0.25) {\t};
-        }
-        % Ba mũi tên giữa
-        \draw[muiCam] ([yshift=8mm]ag.east) -- node[nhan, above]{hành động $a_i^t$} ([yshift=8mm]ag.east -| env.west);
-        \draw[muiXanh] (env.west |- ag.east) -- node[nhan, above, text=khoXanh!70!black]{phần thưởng $r_i^t$} (ag.east);
-        \draw[muiTen] ([yshift=-8mm]env.west |- ag.east) -- node[nhan, above]{quan sát $o_i^{t+1}$} ([yshift=-8mm]ag.east);
-        % Bộ đệm và cập nhật
-        \node[khung, fill=khoCam!10, draw=khoCam!80, minimum width=13.0cm, minimum height=0.9cm, anchor=north west] (buf)
-            at (-2.2,-2.35) {\textbf{Bộ đệm 1024 bước $\times$ 300 tác tử} $\rightarrow$ GAE từng cặp $\rightarrow$ cập nhật PPO $\theta, \phi$};
-        \draw[muiTen, dashed] (-1.2,-1.45) -- node[nhan, left]{lưu $(o, a, r, V)$} (-1.2,-2.35);
-        \draw[muiXanh, dashed] (1.2,-2.35) -- node[nhan, right, text=khoXanh!70!black]{trọng số mới} (1.2,-1.45);
-    \end{tikzpicture}
+    \includegraphics[width=\textwidth]{media/vong_hoc_tang_cuong.png}
     \caption{Vòng tương tác học tăng cường của một tác tử}
     \label{fig:vongLapRL}
 \end{figure}
@@ -417,7 +355,7 @@ Mỗi tác tử $i$ nhận phần thưởng riêng dựa trên chi phí của ch
     r_i^t = {} & -\bigl(
     c_{lk} \cdot I_t^{(i)+} +
     c_{th} \cdot U_t^{(i)} +
-    c_{dh} \cdot \mathbb{1}(a_i^t > 0) +
+    c_{dh} \cdot \mathbf{1}(a_i^t > 0) +
     p_{tk} \cdot O_t^{(i)}
     \bigr) \\
     & - \phi_{dv} \cdot c_{th} \cdot \bar{D}^{(i)} \cdot
@@ -475,7 +413,7 @@ là tổng chi phí vận hành (\textit{total operating cost}), còn $P_t$ là 
 
 Mỗi khoản trong công thức~(\ref{eq:chiPhiVanHanh}) là tổng trên cả 300 cặp kho--mặt hàng. Chi phí vận hành của riêng cặp $i$ trong ngày $t$, gọi tắt là chi phí của cặp, gồm bốn khoản phát sinh tại đúng cặp đó:
 \begin{equation}
-    C_t^{(i)} = c_{lk} \cdot I_t^{(i)+} + c_{th} \cdot U_t^{(i)} + c_{dh} \cdot \mathbb{1}(a_i^t > 0) + p_{tk} \cdot O_t^{(i)},
+    C_t^{(i)} = c_{lk} \cdot I_t^{(i)+} + c_{th} \cdot U_t^{(i)} + c_{dh} \cdot \mathbf{1}(a_i^t > 0) + p_{tk} \cdot O_t^{(i)},
     \qquad
     C_t^{\text{vận hành}} = \sum_{i=1}^{300} C_t^{(i)}.
     \label{eq:chiPhiCap}
@@ -507,7 +445,7 @@ Bốn thành phần đầu là chi phí vận hành thực phát sinh, còn thà
         \hline
         Lưu kho    & $c_{lk}$    & 1,0 /đơn vị/ngày & $c_{lk} \cdot I_t^{(i)+}$ & Vận hành \\ \hline
         Thiếu hàng & $c_{th}$    & 10,0 /đơn vị     & $c_{th} \cdot U_t^{(i)}$ & Vận hành \\ \hline
-        Đặt hàng   & $c_{dh}$    & 5,0 /lần đặt     & $c_{dh} \cdot \mathbb{1}(a_i^t > 0)$ & Vận hành \\ \hline
+        Đặt hàng   & $c_{dh}$    & 5,0 /lần đặt     & $c_{dh} \cdot \mathbf{1}(a_i^t > 0)$ & Vận hành \\ \hline
         Tràn kho   & $p_{tk}$    & 5,0 /đơn vị tràn & $p_{tk} \cdot O_t^{(i)}$ & Vận hành \\ \hline
         Phạt mức phục vụ & $\phi_{dv}$ & 3,0 & Công thức~(\ref{eq:phatChuanHoa}) & Huấn luyện \\
         \hline
@@ -546,56 +484,7 @@ Quyết định của một tác tử và cách trọng số được cập nh�
 
 \begin{figure}[H]
     \centering
-    \begin{tikzpicture}[soDo, font=\small]
-        \tikzset{
-            noron/.style={circle, draw=#1, fill=#1!15, line width=0.5pt, inner sep=0pt, minimum size=3.2mm},
-            lienKet/.style={draw=#1!35, line width=0.3pt}}
-        % Vector quan sát 44 chiều chia theo nhóm đặc trưng
-        \foreach \y/\h/\c/\t in {0/0.6/khoNavy!80/{tồn kho, hàng về},
-                                 0.6/0.8/khoCam!80/{nhu cầu 7 ngày},
-                                 1.4/0.4/khoXanh!80/{tín hiệu cấp kho},
-                                 1.8/0.45/khoDo!65/{quy mô, giá, đáp ứng},
-                                 2.25/1.35/khoNavy!35/{lịch, 27 chiều}} {
-            \filldraw[fill=\c, draw=white, line width=0.6pt] (0,\y) rectangle (0.5,\y+\h);
-            \node[anchor=east, font=\scriptsize, text=khoNavy] at (-0.08,\y+\h/2) {\t};
-        }
-        \draw[khoNavy, line width=0.6pt] (0,0) rectangle (0.5,3.6);
-        \node[nhan, anchor=north] at (0.25,-0.05) {$o_i^t$, 44 chiều};
-        % Actor phía trên, Critic phía dưới
-        \foreach \nhanh/\yc/\cl in {A/2.85/khoXanh, C/0.75/khoCam} {
-            \foreach \lop/\x in {1/2.0, 2/3.3} {
-                \foreach \k in {0,...,3} \node[noron=\cl] (\nhanh\lop\k) at (\x,\yc-0.6+\k*0.4) {};
-            }
-            \foreach \i in {0,...,3} \foreach \j in {0,...,3} \draw[lienKet=\cl] (\nhanh1\i) -- (\nhanh2\j);
-            \foreach \i in {0,...,3} \draw[lienKet=\cl] (0.5,1.8) -- (\nhanh1\i);
-        }
-        \node[font=\scriptsize, text=khoXanh!60!black] at (2.65,1.92) {2 lớp $\times$ 128, Tanh};
-        \node[font=\scriptsize, text=khoCam!70!black] at (2.65,-0.18) {2 lớp $\times$ 128, Tanh};
-        \node[font=\small\bfseries, text=khoXanh!60!black] at (2.65,3.85) {Actor, tham số $\theta$};
-        \node[font=\small\bfseries, text=khoCam!70!black] at (2.65,-0.6) {Critic, tham số $\phi$};
-        % Đầu ra Actor: phân phối trên 6 mức đặt
-        \foreach \i/\p/\m in {0/0.25/0, 1/0.55/{0,5}, 2/1.0/1, 3/0.62/2, 4/0.3/3, 5/0.12/5} {
-            \filldraw[fill=khoXanh!75, draw=khoXanh!60!black, line width=0.3pt] (4.45+\i*0.44,2.45) rectangle ++(0.32,\p);
-            \node[font=\tiny, text=khoNavy, anchor=north] at (4.61+\i*0.44,2.43) {\m};
-        }
-        \draw[khoNavy, line width=0.4pt] (4.35,2.45) -- (7.0,2.45);
-        \foreach \j in {0,...,3} \draw[lienKet=khoXanh] (A2\j) -- (4.35,2.85);
-        \node[nhan, anchor=south] at (5.67,3.55) {$\pi_\theta(a \mid o_i^t)$};
-        \node[nhan, font=\scriptsize, anchor=north] at (5.67,2.18) {6 mức đặt, bội số của $\bar{D}^{(i)} \bar{L}$};
-        % Đầu ra Critic
-        \node[circle, draw=khoCam!80!black, fill=khoCam!25, minimum size=7mm, inner sep=0pt] (V) at (5.0,0.75) {$V$};
-        \foreach \j in {0,...,3} \draw[lienKet=khoCam] (C2\j) -- (V);
-        \node[nhan, anchor=north] at (5.0,0.3) {$V_\phi(o_i^t)$};
-        % Khối cập nhật
-        \node[khung, align=left, font=\footnotesize, text width=4.15cm, anchor=west] (up) at (8.0,1.8)
-            {\textbf{Cập nhật sau mỗi vòng}\\[2pt]
-             \textcolor{khoNavy}{\textbf{1.}} GAE riêng từng cặp\\
-             \textcolor{khoNavy}{\textbf{2.}} chuẩn hóa lợi thế\\
-             \textcolor{khoNavy}{\textbf{3.}} làm phẳng 307.200 mẫu\\
-             \textcolor{khoNavy}{\textbf{4.}} cập nhật \textcolor{khoXanh!60!black}{$\theta$} và \textcolor{khoCam!80!black}{$\phi$} bằng\\ \hspace*{1em}hai bộ tối ưu riêng};
-        \draw[muiXanh, dashed] (up.west |- 0,2.85) -- (7.15,2.85);
-        \draw[muiCam, dashed] (up.west |- 0,0.75) -- (V.east);
-    \end{tikzpicture}
+    \includegraphics[width=\textwidth]{media/kien_truc_actor_critic.png}
     \caption{Kiến trúc Actor--Critic và luồng cập nhật}
     \label{fig:kienTrucAC}
 \end{figure}
@@ -620,6 +509,15 @@ Quy trình huấn luyện gồm năm bước:
     \item Cập nhật mạng. Hàm mục tiêu có cắt ở công thức~(\ref{eq:ppoclip}) được tối ưu tối đa $E = 4$ lượt (\textit{epoch}) trên toàn bộ dữ liệu vừa thu, dừng sớm khi độ lệch KL xấp xỉ vượt 1,5 lần ngưỡng $\text{KL}_{\text{target}} = 0{,}02$. Tốc độ học của Actor là $\eta_a = 3 \times 10^{-4}$ và của Critic là $\eta_c = 1 \times 10^{-3}$, cả hai giảm tuyến tính theo tiến độ huấn luyện.
     \item Lặp lại vòng trên trong 10.000 tập với mô hình chính và 1.000 tập với các thí nghiệm loại trừ. Mô hình chính được huấn luyện với ba hạt giống độc lập.
 \end{itemize}
+
+Quy trình trên và cách dùng mô hình sau huấn luyện được tóm tắt ở Hình~\ref{fig:quyTrinh}. Vùng A là vòng huấn luyện trên miền huấn luyện, đi theo các bước 1 đến 6. Vùng B là giai đoạn sử dụng: bản lưu có chi phí thấp nhất trên miền xác thực trong số các bản đạt tỷ lệ đáp ứng từ 85\% trở lên được chạy tất định trên miền kiểm thử và đưa vào ứng dụng, không huấn luyện lại.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{media/quy_trinh_huan_luyen.png}
+    \caption{Quy trình huấn luyện và sử dụng mô hình}
+    \label{fig:quyTrinh}
+\end{figure}
 
 Toàn bộ siêu tham số dùng trong quy trình trên được gom lại để tiện tra cứu.
 
@@ -742,6 +640,15 @@ Cách chia theo tỷ lệ còn tạo ra động cơ đặt dư để được ch
 \end{itemize}
 
 Người quản lý cần nhìn kết quả theo kho, theo ngành hàng và toàn mạng lưới, không thể đọc 300 quyết định rời rạc. Ứng dụng do đó có một lớp tổng hợp báo cáo nằm sau các tác tử. Lớp này cộng quyết định và kết quả của các tác tử thành chi phí, tỷ lệ đáp ứng, tồn kho và số phiếu đặt hàng. Lớp tổng hợp chỉ đọc kết quả và không gửi thông tin ngược lại cho tác tử nào, nên kiến trúc phi tập trung của hệ tác tử được giữ nguyên.
+
+Hình~\ref{fig:kienTrucHeThong} đặt ứng dụng vào kiến trúc chung của hệ thống. Hệ thống gồm ba lớp: lớp dữ liệu và hạ tầng ở dưới, lớp tác tử và mô phỏng ở giữa, lớp ứng dụng ở trên. Đường xanh lá là luồng huấn luyện, đường cam là luồng sử dụng. Khi sử dụng, ứng dụng nạp mô hình đã chọn từ kho lưu trữ, chạy 300 tác tử trên miền kiểm thử, rồi đưa chi phí, tỷ lệ đáp ứng và phiếu đề nghị đặt hàng lên giao diện.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{media/kien_truc_he_thong.png}
+    \caption{Kiến trúc hệ thống của ứng dụng mô phỏng}
+    \label{fig:kienTrucHeThong}
+\end{figure}
 
 \subsection{Lớp giao tiếp ngôn ngữ qua MCP}
 \label{subsec:mcp}

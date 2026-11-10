@@ -645,6 +645,26 @@ Lợi thế chi phí của IPPO tăng theo cường độ sốc. Khi nhu cầu t
 
 Khi nhu cầu hồi phục, ước lượng $\mu$ và $\sigma$ từ cửa sổ 7 ngày của chính sách cổ điển vẫn phản ánh giai đoạn nhu cầu thấp nên chúng đặt quá ít. IPPO kết hợp lịch sử 7 ngày với đặc trưng quy mô dài hạn $\log(1 + \bar{D}^{(i)})$, nên bền hơn trước nhiễu ngắn hạn. Đổi lại, IPPO có thể phản ứng chậm hơn nếu nhu cầu thay đổi lâu dài.
 
+\subsubsection{Sốc cầu chạy lại trong ứng dụng mô phỏng}
+
+Kịch bản sốc tăng cũng được chạy lại trong ứng dụng mô phỏng, ở trang kịch bản tăng cầu với kịch bản có sẵn ``tăng kéo dài'': nhu cầu toàn mạng nhân 1,5 trong 28 ngày, bắt đầu từ 06/08/2015. Ứng dụng nạp mô hình đã huấn luyện, chạy tất định một lượt và so IPPO với EOQ, $(s,S)$, Newsvendor và $(s,S)$ biết sức chứa. Hình~\ref{fig:demoSocCau} là biểu đồ tỷ lệ đáp ứng theo ngày của trang này. Đường xanh đậm là IPPO, đường cam là chính sách được chọn để so sánh (ở đây là Newsvendor), các đường xám là ba chính sách còn lại. Vùng tô cam là 28 ngày bị sốc, đường nét đứt là mục tiêu 85\%.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.82\textwidth]{media/demo_soc_dap_ung.png}
+    \caption{Tỷ lệ đáp ứng theo ngày khi chạy kịch bản sốc tăng trong ứng dụng mô phỏng}
+    \label{fig:demoSocCau}
+\end{figure}
+
+Kết quả của lượt chạy này như sau:
+\begin{itemize}
+    \item Chi phí tăng thêm so với khi không có sốc của IPPO là 58.538, thấp nhất trong năm cách đặt hàng. $(s,S)$ biết sức chứa tăng 63.246, $(s,S)$ tăng 74.622, Newsvendor tăng 75.985 và EOQ tăng 86.229.
+    \item Trong thời gian sốc, tỷ lệ đáp ứng của IPPO là 83,2\%, sát Newsvendor với 83,4\% và cao hơn $(s,S)$ với 81,7\%. Sau sốc, IPPO đạt 93,4\%, cao nhất trong năm cách đặt hàng.
+    \item IPPO thiếu thêm 4.836 đơn vị hàng, nhiều hơn Newsvendor (3.631) và $(s,S)$ (3.857). IPPO cũng cần 20 ngày để tỷ lệ đáp ứng trung bình 7 ngày trở lại 85\%, chậm hơn Newsvendor (10 ngày) và $(s,S)$ (12 ngày).
+\end{itemize}
+
+Lượt chạy trong ứng dụng cho cùng xu hướng với Bảng~\ref{tab:socCau}: IPPO tốn ít chi phí hơn khi chống đỡ sốc và có tỷ lệ đáp ứng sau sốc cao nhất. Điểm yếu là IPPO phản ứng chậm hơn ở những ngày đầu của cú sốc, vì tác tử chỉ nhận ra nhu cầu tăng qua lượng bán 7 ngày gần nhất. Số trong ứng dụng là của một lượt chạy nên có thể lệch nhẹ so với Bảng~\ref{tab:socCau}.
+
 \subsubsection{Nhận xét chung}
 
 Học tăng cường không đạt chi phí thấp hơn ở mọi giai đoạn. Khi nhu cầu ổn định, chính sách cổ điển tinh chỉnh tốt rẻ hơn IPPO vài phần trăm, và mùa lễ là giai đoạn IPPO kém nhất. Ưu thế của IPPO tập trung ở những lúc nhu cầu thay đổi:
